@@ -1,1 +1,3 @@
-﻿{"buildCommand":"cd qids-platform && npm install && npm run build","outputDirectory":"qids-platform/dist","rewrites":[{"source":"/(.*)","destination":"/index.html"}]}
+﻿{
+  "rewrites": [{ "source": "/(.*)", "destination": "/index.html" }]
+}
