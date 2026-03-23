@@ -1,6 +1,6 @@
 import React, { useState, createContext, useContext, useEffect } from 'react';
 import { BrowserRouter, Routes, Route, NavLink, useNavigate, Navigate } from 'react-router-dom';
-import { Brain, LayoutDashboard, Map, ClipboardList, Zap, TrendingUp, FileText, Settings, ChevronRight, Menu, Activity, LogOut, User, Home } from 'lucide-react';
+import { Brain, LayoutDashboard, Map, ClipboardList, Zap, TrendingUp, FileText, Settings, ChevronRight, Menu, Activity, LogOut, User, Home, BookOpen, ListChecks } from 'lucide-react';
 import { CONTEXTS } from './data/qidsData';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
@@ -18,6 +18,8 @@ import Intervention from './pages/Intervention';
 import PostIntervention from './pages/PostIntervention';
 import ReportGenerator from './pages/ReportGenerator';
 import AdminConfig from './pages/AdminConfig';
+import Questionnaires from './pages/Questionnaires';
+import InterventionPlan from './pages/InterventionPlan';
 
 export const AppContext = createContext(null);
 export const useApp = () => useContext(AppContext);
@@ -44,6 +46,8 @@ const NAV_GROUPS = [
   {
     label: 'Reports & Config',
     items: [
+      { path: '/questionnaires', label: 'Questionnaires', icon: ListChecks },
+      { path: '/intervention-plan', label: 'Intervention Plan', icon: BookOpen },
       { path: '/report', label: 'Report Generator', icon: FileText },
       { path: '/admin', label: 'Admin / Config', icon: Settings },
     ]
@@ -235,6 +239,8 @@ function AppShell() {
               <Route path="/post-intervention" element={<PostIntervention />} />
               <Route path="/report" element={<ReportGenerator />} />
               <Route path="/admin" element={<AdminConfig />} />
+              <Route path="/questionnaires" element={<Questionnaires />} />
+              <Route path="/intervention-plan" element={<InterventionPlan />} />
               <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
           </main>
