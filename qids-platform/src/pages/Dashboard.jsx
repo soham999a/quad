@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import { getUserAssessments, getUserReports } from '../services/firestoreService';
 import { PILLARS, getGrade, computeWeightedScore } from '../data/qidsData';
 import { ClipboardList, FileText, TrendingUp, Plus, Clock, ChevronRight, Activity } from 'lucide-react';
+import SeedExampleData from '../components/SeedExampleData';
 
 export default function Dashboard() {
   const { user, userProfile } = useAuth();
@@ -64,6 +65,12 @@ export default function Dashboard() {
           </div>
         ))}
       </div>
+
+      {!loading && preAssessments.length === 0 && (
+        <div style={{ marginBottom: 28 }}>
+          <SeedExampleData onDone={() => window.location.reload()} />
+        </div>
+      )}
 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
         {/* Recent Assessments */}

@@ -1,8 +1,17 @@
 import {
   collection, doc, addDoc, setDoc, getDoc, getDocs,
-  updateDoc, deleteDoc, query, where, orderBy, serverTimestamp, limit
+  updateDoc, query, where, serverTimestamp, limit
 } from 'firebase/firestore';
 import { db } from '../firebase';
+
+// Sort helper — works without composite indexes
+function sortByCreatedAt(docs) {
+  return docs.sort((a, b) => {
+    const ta = a.createdAt?.toMillis?.() ?? 0;
+    const tb = b.createdAt?.toMillis?.() ?? 0;
+    return tb - ta;
+  });
+}
 
 // ── Assessments ──────────────────────────────────────────────────────────────
 
@@ -18,33 +27,37 @@ export async function saveAssessment(uid, data) {
 
 export async function getLatestAssessment(uid) {
   try {
-    const q = query(collection(db, 'assessments'), where('uid', '==', uid), where('phase', '==', 'pre'), orderBy('createdAt', 'desc'), limit(1));
+    const q = query(collection(db, 'assessments'), where('uid', '==', uid), where('phase', '==', 'pre'));
     const snap = await getDocs(q);
-    return snap.empty ? null : { id: snap.docs[0].id, ...snap.docs[0].data() };
+    if (snap.empty) return null;
+    const sorted = sortByCreatedAt(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+    return sorted[0];
   } catch (e) { console.warn('getLatestAssessment failed:', e.message); return null; }
 }
 
 export async function getLatestPostAssessment(uid) {
   try {
-    const q = query(collection(db, 'assessments'), where('uid', '==', uid), where('phase', '==', 'post'), orderBy('createdAt', 'desc'), limit(1));
+    const q = query(collection(db, 'assessments'), where('uid', '==', uid), where('phase', '==', 'post'));
     const snap = await getDocs(q);
-    return snap.empty ? null : { id: snap.docs[0].id, ...snap.docs[0].data() };
+    if (snap.empty) return null;
+    const sorted = sortByCreatedAt(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+    return sorted[0];
   } catch (e) { console.warn('getLatestPostAssessment failed:', e.message); return null; }
 }
 
 export async function getUserAssessments(uid) {
   try {
-    const q = query(collection(db, 'assessments'), where('uid', '==', uid), orderBy('createdAt', 'desc'));
+    const q = query(collection(db, 'assessments'), where('uid', '==', uid));
     const snap = await getDocs(q);
-    return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    return sortByCreatedAt(snap.docs.map(d => ({ id: d.id, ...d.data() })));
   } catch (e) { console.warn('getUserAssessments failed:', e.message); return []; }
 }
 
 export async function getUserReports(uid) {
   try {
-    const q = query(collection(db, 'reports'), where('uid', '==', uid), orderBy('createdAt', 'desc'));
+    const q = query(collection(db, 'reports'), where('uid', '==', uid));
     const snap = await getDocs(q);
-    return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    return sortByCreatedAt(snap.docs.map(d => ({ id: d.id, ...d.data() })));
   } catch (e) { console.warn('getUserReports failed:', e.message); return []; }
 }
 

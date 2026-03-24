@@ -5,7 +5,6 @@ import { useAuth } from '../context/AuthContext';
 export default function ProtectedRoute({ children }) {
   const { user, loading } = useAuth();
 
-  // Still checking auth state — show nothing (avoids flash redirect)
   if (loading) {
     return (
       <div style={{
