@@ -102,7 +102,7 @@ export default function SeedExampleData({ onDone }) {
           style={{ flexShrink: 0, whiteSpace: 'nowrap' }}
         >
           {status === 'loading'
-            ? <><Loader size={12} style={{ animation: 'spin 1s linear infinite' }} /> Loading...</>
+            ? <><Loader size={12} className="animate-spin" /> Loading...</>
             : <><Sparkles size={12} /> Load Example</>
           }
         </button>

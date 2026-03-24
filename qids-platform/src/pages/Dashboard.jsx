@@ -23,6 +23,8 @@ export default function Dashboard() {
   const preAssessments = assessments.filter(a => a.phase === 'pre');
   const postAssessments = assessments.filter(a => a.phase === 'post');
 
+  const getLinkedPost = (preId) => postAssessments.find(p => p.linkedAssessmentId === preId) || null;
+
   return (
     <div style={{ padding: 32, maxWidth: 1100, margin: '0 auto' }} className="animate-fade">
       {/* Welcome */}
@@ -96,7 +98,7 @@ export default function Dashboard() {
               const unified = computeWeightedScore(scores);
               const grade = getGrade(unified);
               return (
-                <div key={a.id} onClick={() => navigate('/pre-intervention')} style={{
+                <div key={a.id} onClick={() => navigate('/pre-intervention', { state: { assessment: a, postAssessment: getLinkedPost(a.id) } })} style={{
                   display: 'flex', alignItems: 'center', justifyContent: 'space-between',
                   padding: '10px 12px', borderRadius: 8, cursor: 'pointer', marginBottom: 4,
                   background: 'rgba(255,255,255,0.03)', border: '1px solid var(--border-light)',

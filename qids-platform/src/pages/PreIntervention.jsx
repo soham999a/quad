@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { PILLARS, PRE_INTERVENTION_NODES, computePillarScore, computeWeightedScore, getGrade, isCritical, WEIGHTS, GRADE_BANDS } from '../data/qidsData';
 import { useApp } from '../App';
+import { useNavigate, useLocation } from 'react-router-dom';
 import ProcessNode, { NodeDetailPanel } from '../components/ProcessNode';
 import ScoreCard from '../components/ScoreCard';
 import QIDSRadar from '../components/RadarChart';
@@ -38,7 +39,11 @@ function Heatmap({ pillarScores, rawScores }) {
 }
 
 export default function PreIntervention() {
-  const { assessmentData, demoMode } = useApp();
+  const { assessmentData: ctxAssessment, demoMode } = useApp();
+  const navigate = useNavigate();
+  const location = useLocation();
+  // Use the assessment passed via route state (clicked from dashboard), else fall back to context
+  const assessmentData = location.state?.assessment || ctxAssessment;
   const [activeNode, setActiveNode] = useState(null);
   const [activeStep, setActiveStep] = useState('standardize');
 
@@ -55,7 +60,7 @@ export default function PreIntervention() {
         <div style={{ fontSize: 40, opacity: 0.3 }}>📋</div>
         <h3 style={{ fontSize: 18, fontWeight: 700 }}>No Assessment Found</h3>
         <p style={{ fontSize: 14, color: 'var(--text-muted)' }}>Complete an assessment first to view pre-intervention analysis.</p>
-        <a href="/assessment" className="btn btn-primary">Start Assessment</a>
+        <button onClick={() => navigate('/assessment')} className="btn btn-primary">Start Assessment</button>
       </div>
     );
   }
@@ -254,6 +259,19 @@ export default function PreIntervention() {
           <div style={{ fontSize: 12, fontWeight: 600, marginBottom: 8 }}>Quotient Profile</div>
           <QIDSRadar data={pillarScores} size={200} />
         </div>
+
+        {location.state?.postAssessment && (
+          <>
+            <div className="divider" />
+            <button
+              className="btn btn-primary btn-sm"
+              style={{ width: '100%', justifyContent: 'center' }}
+              onClick={() => navigate('/post-intervention', { state: { assessment: assessmentData, postAssessment: location.state.postAssessment } })}
+            >
+              View Post-Intervention →
+            </button>
+          </>
+        )}
       </div>
 
       {/* Node detail panel */}

@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { PILLARS, DEMO_SCORES, computePillarScore } from '../data/qidsData';
 import { useApp } from '../App';
 import { useAuth } from '../context/AuthContext';
+import { useNavigate } from 'react-router-dom';
 import { saveAssessment } from '../services/firestoreService';
 import { Save, RotateCcw, ChevronRight, ChevronLeft, CheckCircle, AlertCircle } from 'lucide-react';
 
@@ -138,6 +139,7 @@ function ReviewStep({ intake, rawScores }) {
 export default function Assessment() {
   const { setAssessmentData, demoMode } = useApp();
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [step, setStep] = useState(0);
   const [intake, setIntake] = useState({ name: '', age: '', institution: '', evaluator: '', purpose: '', consent: false });
   const [rawScores, setRawScores] = useState({ IQ: {}, EQ: {}, SQ: {}, AQ: {} });
@@ -172,7 +174,7 @@ export default function Assessment() {
         <h2 style={{ fontSize: 22, fontWeight: 800, marginBottom: 8 }}>Assessment Submitted</h2>
         <p style={{ fontSize: 14, color: 'var(--text-secondary)', marginBottom: 24 }}>Baseline data has been recorded. Proceed to Pre-Intervention analysis to view scores, grades, and intervention mapping.</p>
         <div style={{ display: 'flex', gap: 12, justifyContent: 'center' }}>
-          <a href="/pre-intervention" className="btn btn-primary">View Pre-Intervention Analysis</a>
+          <button onClick={() => navigate('/pre-intervention')} className="btn btn-primary">View Pre-Intervention Analysis</button>
           <button onClick={() => setSubmitted(false)} className="btn btn-secondary">New Assessment</button>
         </div>
       </div>

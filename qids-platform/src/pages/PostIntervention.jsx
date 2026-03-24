@@ -1,15 +1,148 @@
 import React, { useState } from 'react';
-import { PILLARS, POST_INTERVENTION_NODES, computePillarScore, computeWeightedScore, getGrade, getCareerProfile, getSkillShape, SKILL_SHAPES, CAREER_PROFILES } from '../data/qidsData';
+import { PILLARS, POST_INTERVENTION_NODES, DEMO_POST_SCORES, computePillarScore, computeWeightedScore, getGrade, getCareerProfile, getSkillShape, SKILL_SHAPES, CAREER_PROFILES } from '../data/qidsData';
 import { useApp } from '../App';
+import { useAuth } from '../context/AuthContext';
+import { savePostAssessment } from '../services/firestoreService';
 import ProcessNode, { NodeDetailPanel } from '../components/ProcessNode';
 import QIDSRadar from '../components/RadarChart';
-import { TrendingUp, TrendingDown, Minus, ArrowRight, Download } from 'lucide-react';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { TrendingUp, TrendingDown, Minus, ArrowRight, Download, Save, CheckCircle, ClipboardList } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Legend } from 'recharts';
 
+function PostAssessmentForm({ assessmentData, onSubmit }) {
+  const [rawScores, setRawScores] = useState(() => {
+    // Pre-fill with slightly higher scores than pre as a starting point
+    const pre = assessmentData?.rawScores || {};
+    const init = {};
+    Object.keys(PILLARS).forEach(pid => {
+      init[pid] = {};
+      PILLARS[pid].subParams.forEach(sp => {
+        init[pid][sp.id] = pre[pid]?.[sp.id] ?? 0;
+      });
+    });
+    return init;
+  });
+  const [saving, setSaving] = useState(false);
+
+  const updateScore = (pid, subId, val) =>
+    setRawScores(prev => ({ ...prev, [pid]: { ...prev[pid], [subId]: val } }));
+
+  const handleSubmit = async () => {
+    setSaving(true);
+    const pillarScores = {};
+    Object.keys(PILLARS).forEach(id => {
+      pillarScores[id] = computePillarScore(id, rawScores[id] || {});
+    });
+    await onSubmit({ rawScores, pillarScores, intake: assessmentData?.intake, timestamp: new Date().toISOString() });
+    setSaving(false);
+  };
+
+  return (
+    <div style={{ padding: 24, maxWidth: 900, margin: '0 auto' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 20 }}>
+        <ClipboardList size={18} color="#14b8a6" />
+        <h2 style={{ fontSize: 18, fontWeight: 800, margin: 0 }}>Post-Intervention Assessment</h2>
+        <div style={{ marginLeft: 'auto', padding: '4px 12px', background: 'rgba(20,184,166,0.15)', border: '1px solid rgba(20,184,166,0.3)', borderRadius: 20, fontSize: 11, color: '#2dd4bf', fontWeight: 600 }}>Phase 3</div>
+      </div>
+      <p style={{ fontSize: 13, color: 'var(--text-muted)', marginBottom: 24 }}>
+        Re-assess all four pillars after the intervention period. Adjust the sliders to reflect the student's current performance.
+      </p>
+
+      {Object.entries(PILLARS).map(([pid, pillar]) => (
+        <div key={pid} style={{ marginBottom: 20, background: 'var(--navy-4)', border: `1px solid ${pillar.color}25`, borderRadius: 14, padding: 20 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
+            <div style={{ width: 10, height: 10, borderRadius: '50%', background: pillar.color, boxShadow: `0 0 8px ${pillar.color}` }} />
+            <span style={{ fontSize: 14, fontWeight: 700, color: pillar.color }}>{pillar.label}</span>
+            <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>— {pillar.framework}</span>
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
+            {pillar.subParams.map(sp => {
+              const val = rawScores[pid]?.[sp.id] ?? 0;
+              const preVal = assessmentData?.rawScores?.[pid]?.[sp.id] ?? 0;
+              const pct = Math.round((val / sp.max) * 100);
+              return (
+                <div key={sp.id} style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid var(--border-light)', borderRadius: 10, padding: 14 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
+                    <div>
+                      <div style={{ fontSize: 13, fontWeight: 600 }}>{sp.label}</div>
+                      <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>Pre: {preVal}/{sp.max}</div>
+                    </div>
+                    <div style={{ textAlign: 'right' }}>
+                      <div style={{ fontSize: 18, fontWeight: 700, color: pillar.color }}>{val}</div>
+                      <div style={{ fontSize: 10, color: 'var(--text-muted)' }}>/ {sp.max}</div>
+                    </div>
+                  </div>
+                  <input type="range" min={0} max={sp.max} value={val}
+                    onChange={e => updateScore(pid, sp.id, parseInt(e.target.value))}
+                    style={{
+                      width: '100%', height: 6, borderRadius: 3, outline: 'none', border: 'none',
+                      padding: 0, cursor: 'pointer', appearance: 'none',
+                      background: `linear-gradient(90deg, ${pillar.color} ${pct}%, rgba(255,255,255,0.1) ${pct}%)`,
+                    }}
+                  />
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 4 }}>
+                    <span style={{ fontSize: 10, color: 'var(--text-muted)' }}>0</span>
+                    <span style={{ fontSize: 10, fontWeight: 600, color: pct >= 60 ? '#10b981' : '#ef4444' }}>{pct}%</span>
+                    <span style={{ fontSize: 10, color: 'var(--text-muted)' }}>{sp.max}</span>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      ))}
+
+      <button onClick={handleSubmit} disabled={saving} className="btn btn-primary" style={{ width: '100%', justifyContent: 'center', padding: '14px', fontSize: 14, borderRadius: 12, background: 'linear-gradient(135deg, #14b8a6, #0d9488)' }}>
+        {saving ? 'Saving...' : <><Save size={14} /> Submit Post-Assessment</>}
+      </button>
+    </div>
+  );
+}
+
 export default function PostIntervention() {
-  const { assessmentData, postData, demoMode } = useApp();
+  const { assessmentData: ctxAssessment, postData: ctxPostData, setPostData } = useApp();
+  const { user } = useAuth();
+  const navigate = useNavigate();
+  const location = useLocation();
+  // Prefer route state (clicked from dashboard) over context
+  const assessmentData = location.state?.assessment || ctxAssessment;
   const [activeNode, setActiveNode] = useState(null);
   const [activeTab, setActiveTab] = useState('comparison');
+  const [submitted, setSubmitted] = useState(false);
+
+  // postData: prefer route state, then submitted local state, then context
+  const [localPostData, setLocalPostData] = useState(location.state?.postAssessment || null);
+  const postData = localPostData || ctxPostData;
+
+  const handlePostSubmit = async (data) => {
+    if (user && assessmentData?.id) {
+      await savePostAssessment(user.uid, assessmentData.id, data);
+    }
+    setPostData(data);
+    setLocalPostData(data);
+    setSubmitted(true);
+  };
+
+  // Show form if no post data yet
+  if (!postData && !submitted) {
+    if (!assessmentData) {
+      return (
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: 'calc(100vh - 56px)', flexDirection: 'column', gap: 16 }}>
+          <div style={{ fontSize: 40, opacity: 0.3 }}>📋</div>
+          <h3 style={{ fontSize: 18, fontWeight: 700 }}>No Assessment Found</h3>
+          <p style={{ fontSize: 14, color: 'var(--text-muted)' }}>Complete a pre-assessment first before doing post-intervention.</p>
+          <button onClick={() => navigate('/assessment')} className="btn btn-primary">Start Assessment</button>
+        </div>
+      );
+    }
+    return (
+      <div style={{ overflowY: 'auto', height: 'calc(100vh - 56px)' }} className="animate-fade">
+        <PostAssessmentForm assessmentData={assessmentData} onSubmit={handlePostSubmit} />
+      </div>
+    );
+  }
+
+  if (submitted && !postData) return null;
 
   const preRaw = assessmentData?.rawScores || {};
   const postRaw = postData?.rawScores || {};
@@ -289,7 +422,7 @@ export default function PostIntervention() {
 
         <div className="divider" />
 
-        <button className="btn btn-primary btn-sm" style={{ width: '100%', justifyContent: 'center' }} onClick={() => window.location.href = '/report'}>
+        <button className="btn btn-primary btn-sm" style={{ width: '100%', justifyContent: 'center' }} onClick={() => navigate('/report')}>
           <Download size={12} /> Generate Full Report
         </button>
       </div>
