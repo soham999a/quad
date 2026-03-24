@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
-import { PILLARS, DEMO_SCORES, computePillarScore } from '../data/qidsData';
+import { PILLARS, DEMO_SCORES, computePillarScore, computeWeightedScore, getGrade } from '../data/qidsData';
 import { useApp } from '../App';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { saveAssessment } from '../services/firestoreService';
-import { Save, RotateCcw, ChevronRight, ChevronLeft, CheckCircle, AlertCircle } from 'lucide-react';
+import { Save, RotateCcw, ChevronRight, ChevronLeft, CheckCircle } from 'lucide-react';
+import { useToast } from '../components/Toast';
 
 const STEPS = ['Intake & Consent', 'IQ Assessment', 'EQ Assessment', 'SQ Assessment', 'AQ Assessment', 'Review & Submit'];
 
@@ -140,6 +141,7 @@ export default function Assessment() {
   const { setAssessmentData, demoMode } = useApp();
   const { user } = useAuth();
   const navigate = useNavigate();
+  const toast = useToast();
   const [step, setStep] = useState(0);
   const [intake, setIntake] = useState({ name: '', age: '', institution: '', evaluator: '', purpose: '', consent: false });
   const [rawScores, setRawScores] = useState({ IQ: {}, EQ: {}, SQ: {}, AQ: {} });
@@ -152,6 +154,18 @@ export default function Assessment() {
   const updateIntake = (k, v) => setIntake(prev => ({ ...prev, [k]: v }));
   const updateScore = (pillarId, subId, val) => setRawScores(prev => ({ ...prev, [pillarId]: { ...prev[pillarId], [subId]: val } }));
 
+  const handleNext = () => {
+    if (step === 0 && !intake.consent) {
+      toast('Please confirm consent before proceeding.', 'error');
+      return;
+    }
+    if (step === 0 && !intake.name.trim()) {
+      toast('Please enter the full name.', 'error');
+      return;
+    }
+    setStep(s => s + 1);
+  };
+
   const handleSubmit = async () => {
     const pillarScores = {};
     Object.keys(PILLARS).forEach(id => { pillarScores[id] = computePillarScore(id, rawScores[id] || {}); });
@@ -160,22 +174,28 @@ export default function Assessment() {
     setSaving(true);
     try {
       if (user) await saveAssessment(user.uid, data);
-    } catch (e) { console.error('Save failed:', e); }
+      toast('Assessment saved successfully!', 'success');
+    } catch (e) {
+      console.error('Save failed:', e);
+      toast('Saved locally — sync failed. Check connection.', 'error');
+    }
     setSaving(false);
     setSubmitted(true);
   };
 
   if (submitted) {
     return (
-      <div style={{ padding: 32, maxWidth: 600, margin: '0 auto', textAlign: 'center' }} className="animate-fade">
-        <div style={{ width: 64, height: 64, borderRadius: '50%', background: 'rgba(16,185,129,0.15)', border: '2px solid #10b981', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px' }}>
-          <CheckCircle size={28} color="#10b981" />
+      <div className="page-pad animate-fade" style={{ maxWidth: 600, margin: '0 auto', textAlign: 'center' }}>
+        <div style={{ width: 72, height: 72, borderRadius: '50%', background: 'rgba(16,185,129,0.15)', border: '2px solid #10b981', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 24px', boxShadow: '0 0 30px rgba(16,185,129,0.3)' }}>
+          <CheckCircle size={32} color="#10b981" />
         </div>
-        <h2 style={{ fontSize: 22, fontWeight: 800, marginBottom: 8 }}>Assessment Submitted</h2>
-        <p style={{ fontSize: 14, color: 'var(--text-secondary)', marginBottom: 24 }}>Baseline data has been recorded. Proceed to Pre-Intervention analysis to view scores, grades, and intervention mapping.</p>
-        <div style={{ display: 'flex', gap: 12, justifyContent: 'center' }}>
-          <button onClick={() => navigate('/pre-intervention')} className="btn btn-primary">View Pre-Intervention Analysis</button>
-          <button onClick={() => setSubmitted(false)} className="btn btn-secondary">New Assessment</button>
+        <h2 style={{ fontSize: 26, fontWeight: 800, marginBottom: 8 }}>Assessment Complete</h2>
+        <p style={{ fontSize: 14, color: 'var(--text-secondary)', marginBottom: 28, lineHeight: 1.7 }}>
+          Baseline data for <strong style={{ color: 'var(--text-primary)' }}>{intake.name || 'the individual'}</strong> has been recorded. Proceed to Pre-Intervention analysis to view scores, grades, and intervention mapping.
+        </p>
+        <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
+          <button onClick={() => navigate('/pre-intervention')} className="btn btn-primary btn-lg">View Pre-Intervention Analysis</button>
+          <button onClick={() => { setSubmitted(false); setStep(0); setIntake({ name: '', age: '', institution: '', evaluator: '', purpose: '', consent: false }); setRawScores({ IQ: {}, EQ: {}, SQ: {}, AQ: {} }); }} className="btn btn-secondary">New Assessment</button>
         </div>
       </div>
     );
@@ -245,7 +265,7 @@ export default function Assessment() {
             <RotateCcw size={13} /> Reset
           </button>
           {step < STEPS.length - 1 ? (
-            <button className="btn btn-primary" onClick={() => setStep(s => s + 1)}>
+            <button className="btn btn-primary" onClick={handleNext}>
               Next <ChevronRight size={14} />
             </button>
           ) : (

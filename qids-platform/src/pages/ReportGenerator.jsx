@@ -30,7 +30,7 @@ export default function ReportGenerator() {
   const handlePrint = () => window.print();
 
   return (
-    <div style={{ padding: 32, maxWidth: 1000, margin: '0 auto' }} className="animate-fade">
+    <div className="page-pad animate-fade" style={{ maxWidth: 1000, margin: '0 auto' }}>
       {/* Controls */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
         <div>
@@ -39,7 +39,7 @@ export default function ReportGenerator() {
         </div>
         <div style={{ display: 'flex', gap: 8 }}>
           <button className="btn btn-secondary" onClick={handlePrint}><Printer size={14} /> Print</button>
-          <button className="btn btn-primary"><Download size={14} /> Export PDF</button>
+          <button className="btn btn-primary" onClick={handlePrint}><Download size={14} /> Export PDF</button>
         </div>
       </div>
 

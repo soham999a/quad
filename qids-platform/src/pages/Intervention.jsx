@@ -138,7 +138,7 @@ export default function Intervention() {
       </div>
 
       {/* Main */}
-      <div style={{ flex: 1, overflowY: 'auto', padding: 24 }}>
+      <div className="panel-main" style={{ flex: 1, overflowY: 'auto', padding: 24 }}>
         {/* Phase swimlane */}
         <div style={{ marginBottom: 24 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
@@ -226,7 +226,7 @@ export default function Intervention() {
       </div>
 
       {/* Right panel */}
-      <div style={{ width: 260, borderLeft: '1px solid var(--border-light)', background: 'var(--navy-2)', padding: 20, overflowY: 'auto', flexShrink: 0 }}>
+      <div className="panel-right" style={{ width: 260, borderLeft: '1px solid var(--border-light)', background: 'var(--navy-2)', padding: 20, overflowY: 'auto', flexShrink: 0 }}>
         <div style={{ fontSize: 12, fontWeight: 600, color: '#a78bfa', marginBottom: 12 }}>Module Categories</div>
         {Object.entries(INTERVENTION_MODULES).map(([pid, mods]) => (
           <div key={pid} style={{ marginBottom: 12 }}>

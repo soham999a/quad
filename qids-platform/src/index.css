@@ -565,3 +565,52 @@ input[type="checkbox"] {
   .panel-right { width: 220px !important; }
   .page-pad { padding: 20px !important; }
 }
+
+/* ── Print Styles ── */
+@media print {
+  .desktop-sidebar,
+  .mobile-nav,
+  .mobile-menu-drawer,
+  header,
+  .btn,
+  .topbar-phases,
+  .topbar-right { display: none !important; }
+
+  body { background: white !important; color: black !important; }
+
+  #report-content {
+    border: none !important;
+    box-shadow: none !important;
+    background: white !important;
+    color: black !important;
+  }
+
+  #report-content * {
+    color: black !important;
+    border-color: #ddd !important;
+    background: white !important;
+  }
+
+  .progress-fill { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+
+  @page { margin: 20mm; }
+}
+
+/* ── Post badge on assessment rows ── */
+.post-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 2px 7px;
+  border-radius: 20px;
+  font-size: 10px;
+  font-weight: 700;
+  background: rgba(20,184,166,0.15);
+  border: 1px solid rgba(20,184,166,0.3);
+  color: #2dd4bf;
+}
+
+/* Hide export label text on small screens */
+@media (max-width: 480px) {
+  .topbar-export-label { display: none; }
+}

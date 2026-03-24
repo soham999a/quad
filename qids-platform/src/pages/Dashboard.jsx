@@ -115,6 +115,9 @@ export default function Dashboard() {
                     </div>
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    {getLinkedPost(a.id) && (
+                      <span className="post-badge">✓ Post</span>
+                    )}
                     <div style={{ padding: '3px 8px', borderRadius: 6, background: grade.bg, border: `1px solid ${grade.color}40`, fontSize: 12, fontWeight: 700, color: grade.color }}>
                       {grade.grade} · {unified}
                     </div>

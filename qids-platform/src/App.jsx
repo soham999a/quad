@@ -5,6 +5,7 @@ import { Brain, LayoutDashboard, Map, ClipboardList, Zap, TrendingUp, FileText, 
 import { CONTEXTS } from './data/qidsData';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
+import { ToastProvider } from './components/Toast';
 import { getLatestAssessment, getLatestPostAssessment } from './services/firestoreService';
 
 import Login from './pages/auth/Login';
@@ -363,15 +364,17 @@ export default function App() {
   return (
     <AuthProvider>
       <BrowserRouter>
-        <Routes>
-          <Route path="/login" element={<Login />} />
-          <Route path="/signup" element={<Signup />} />
-          <Route path="/*" element={
-            <ProtectedRoute>
-              <AppShell />
-            </ProtectedRoute>
-          } />
-        </Routes>
+        <ToastProvider>
+          <Routes>
+            <Route path="/login" element={<Login />} />
+            <Route path="/signup" element={<Signup />} />
+            <Route path="/*" element={
+              <ProtectedRoute>
+                <AppShell />
+              </ProtectedRoute>
+            } />
+          </Routes>
+        </ToastProvider>
       </BrowserRouter>
     </AuthProvider>
   );

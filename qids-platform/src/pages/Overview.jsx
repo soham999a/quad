@@ -22,7 +22,7 @@ export default function Overview() {
   const ctx = CONTEXTS.find(c => c.id === context) || CONTEXTS[0];
 
   return (
-    <div style={{ padding: 32, maxWidth: 1200, margin: '0 auto' }} className="animate-fade">
+    <div className="page-pad animate-fade" style={{ maxWidth: 1200, margin: '0 auto' }}>
       {/* Hero */}
       <div style={{
         background: 'linear-gradient(135deg, rgba(99,102,241,0.12), rgba(168,85,247,0.08), rgba(20,184,166,0.06))',

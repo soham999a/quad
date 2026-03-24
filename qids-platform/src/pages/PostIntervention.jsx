@@ -8,6 +8,7 @@ import QIDSRadar from '../components/RadarChart';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { TrendingUp, TrendingDown, Minus, ArrowRight, Download, Save, CheckCircle, ClipboardList } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Legend } from 'recharts';
+import { useToast } from '../components/Toast';
 
 function PostAssessmentForm({ assessmentData, onSubmit }) {
   const [rawScores, setRawScores] = useState(() => {
@@ -104,6 +105,7 @@ export default function PostIntervention() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+  const toast = useToast();
   // Prefer route state (clicked from dashboard) over context
   const assessmentData = location.state?.assessment || ctxAssessment;
   const [activeNode, setActiveNode] = useState(null);
@@ -115,12 +117,21 @@ export default function PostIntervention() {
   const postData = localPostData || ctxPostData;
 
   const handlePostSubmit = async (data) => {
-    if (user && assessmentData?.id) {
-      await savePostAssessment(user.uid, assessmentData.id, data);
+    try {
+      if (user && assessmentData?.id) {
+        await savePostAssessment(user.uid, assessmentData.id, data);
+      }
+      setPostData(data);
+      setLocalPostData(data);
+      setSubmitted(true);
+      toast('Post-assessment saved successfully!', 'success');
+    } catch (e) {
+      console.error('Save failed:', e);
+      toast('Saved locally — sync failed. Check connection.', 'error');
+      setPostData(data);
+      setLocalPostData(data);
+      setSubmitted(true);
     }
-    setPostData(data);
-    setLocalPostData(data);
-    setSubmitted(true);
   };
 
   // Show form if no post data yet
