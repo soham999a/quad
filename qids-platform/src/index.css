@@ -397,3 +397,171 @@ input[type="checkbox"] {
 /* ── Utility ── */
 .truncate { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .sr-only  { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0,0,0,0); }
+
+/* ── Responsive Layout ── */
+
+/* Mobile bottom nav */
+.mobile-nav {
+  display: none;
+}
+
+.mobile-topbar-logo {
+  display: none;
+}
+
+/* Responsive grid helpers */
+.grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+.grid-2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+.grid-1 { display: grid; grid-template-columns: 1fr; gap: 12px; }
+
+/* Page padding helper */
+.page-pad { padding: 32px; }
+
+@media (max-width: 768px) {
+  /* Hide desktop sidebar */
+  .desktop-sidebar { display: none !important; }
+
+  /* Show mobile nav */
+  .mobile-nav {
+    display: flex;
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    height: 60px;
+    background: var(--navy-2);
+    border-top: 1px solid var(--border-light);
+    z-index: 100;
+    align-items: stretch;
+    padding: 0 4px;
+  }
+
+  .mobile-nav-item {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    padding: 6px 4px;
+    border-radius: 10px;
+    text-decoration: none;
+    color: var(--text-muted);
+    font-size: 9px;
+    font-weight: 500;
+    transition: all 0.15s;
+    cursor: pointer;
+    background: transparent;
+    border: none;
+    font-family: 'Inter', sans-serif;
+  }
+
+  .mobile-nav-item.active {
+    color: var(--indigo);
+  }
+
+  .mobile-nav-item.active svg {
+    filter: drop-shadow(0 0 4px rgba(99,102,241,0.6));
+  }
+
+  /* Show logo in topbar on mobile */
+  .mobile-topbar-logo {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  /* Hide topbar phase buttons on mobile */
+  .topbar-phases { display: none !important; }
+
+  /* Main layout: no sidebar */
+  .app-shell-layout {
+    flex-direction: column !important;
+  }
+
+  /* Add bottom padding for mobile nav */
+  main {
+    padding-bottom: 68px !important;
+  }
+
+  /* Page padding */
+  .page-pad { padding: 16px !important; }
+
+  /* Responsive grids */
+  .grid-4 { grid-template-columns: repeat(2, 1fr) !important; }
+  .grid-2 { grid-template-columns: 1fr !important; }
+
+  /* Dashboard welcome */
+  .dashboard-welcome {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 12px !important;
+  }
+
+  /* Assessment step indicator — numbers only on mobile */
+  .step-label { display: none !important; }
+
+  /* Assessment intake grid */
+  .intake-grid { grid-template-columns: 1fr !important; }
+
+  /* Review step pillar grid */
+  .review-pillars { grid-template-columns: repeat(2, 1fr) !important; }
+
+  /* Three-panel pages (PreIntervention, PostIntervention) */
+  .three-panel { flex-direction: column !important; height: auto !important; }
+  .panel-left  { display: none !important; }
+  .panel-right { display: none !important; }
+  .panel-main  { padding: 16px !important; }
+
+  /* Score cards 2-col on mobile */
+  .score-grid-4 { grid-template-columns: repeat(2, 1fr) !important; }
+
+  /* Unified score + weight grid */
+  .unified-grid { grid-template-columns: 1fr !important; }
+
+  /* Grade bands — scroll */
+  .grade-bands { overflow-x: auto !important; }
+  .grade-bands > div { min-width: 480px; }
+
+  /* Post intervention comparison cards */
+  .post-compare-grid { grid-template-columns: repeat(2, 1fr) !important; }
+
+  /* Topbar compact */
+  .topbar-right { gap: 6px !important; }
+  .topbar-right select { max-width: 110px; font-size: 11px; }
+
+  /* Card padding */
+  .card { padding: 14px !important; }
+
+  /* Hide right panel radar in pre/post */
+  .panel-right-radar { display: none; }
+
+  /* Mobile menu drawer */
+  .mobile-menu-drawer {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: var(--navy-2);
+    z-index: 200;
+    overflow-y: auto;
+    padding: 20px;
+    animation: fadeIn 0.2s ease;
+  }
+}
+
+@media (max-width: 480px) {
+  .grid-4 { grid-template-columns: repeat(2, 1fr) !important; }
+  .score-grid-4 { grid-template-columns: repeat(2, 1fr) !important; }
+  .post-compare-grid { grid-template-columns: 1fr 1fr !important; }
+
+  h1 { font-size: 18px !important; }
+  h2 { font-size: 16px !important; }
+
+  .btn-lg { padding: 10px 16px !important; font-size: 13px !important; }
+}
+
+@media (min-width: 769px) and (max-width: 1024px) {
+  /* Tablet: collapsed sidebar by default, adjust grids */
+  .grid-4 { grid-template-columns: repeat(2, 1fr) !important; }
+  .score-grid-4 { grid-template-columns: repeat(2, 1fr) !important; }
+  .panel-left { width: 200px !important; }
+  .panel-right { width: 220px !important; }
+  .page-pad { padding: 20px !important; }
+}

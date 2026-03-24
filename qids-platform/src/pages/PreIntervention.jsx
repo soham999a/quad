@@ -56,7 +56,7 @@ export default function PreIntervention() {
 
   if (!assessmentData) {
     return (
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: 'calc(100vh - 56px)', flexDirection: 'column', gap: 16 }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: 'calc(100vh - 52px)', flexDirection: 'column', gap: 16 }}>
         <div style={{ fontSize: 40, opacity: 0.3 }}>📋</div>
         <h3 style={{ fontSize: 18, fontWeight: 700 }}>No Assessment Found</h3>
         <p style={{ fontSize: 14, color: 'var(--text-muted)' }}>Complete an assessment first to view pre-intervention analysis.</p>
@@ -66,9 +66,9 @@ export default function PreIntervention() {
   }
 
   return (
-    <div style={{ display: 'flex', height: 'calc(100vh - 56px)' }} className="animate-fade">
+    <div className="three-panel animate-fade" style={{ display: 'flex', height: 'calc(100vh - 52px)' }}>
       {/* Left sidebar */}
-      <div style={{ width: 260, borderRight: '1px solid var(--border-light)', background: 'var(--navy-2)', padding: 20, overflowY: 'auto', flexShrink: 0 }}>
+      <div className="panel-left" style={{ width: 260, borderRight: '1px solid var(--border-light)', background: 'var(--navy-2)', padding: 20, overflowY: 'auto', flexShrink: 0 }}>
         <div style={{ marginBottom: 16 }}>
           <div style={{ padding: '4px 10px', background: 'rgba(99,102,241,0.15)', border: '1px solid rgba(99,102,241,0.3)', borderRadius: 20, fontSize: 11, color: '#818cf8', fontWeight: 600, display: 'inline-block', marginBottom: 10 }}>Pre-Intervention</div>
           <h3 style={{ fontSize: 15, fontWeight: 700, marginBottom: 4 }}>Standardize & Score</h3>
@@ -100,7 +100,7 @@ export default function PreIntervention() {
       </div>
 
       {/* Main canvas */}
-      <div style={{ flex: 1, overflowY: 'auto', padding: 24 }}>
+      <div className="panel-main" style={{ flex: 1, overflowY: 'auto', padding: 24 }}>
         {/* Phase swimlane */}
         <div style={{ marginBottom: 24 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
@@ -124,14 +124,14 @@ export default function PreIntervention() {
         </div>
 
         {/* Scores grid */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12, marginBottom: 20 }}>
+        <div className="score-grid-4" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12, marginBottom: 20 }}>
           {Object.entries(PILLARS).map(([id, pillar]) => (
             <ScoreCard key={id} pillar={pillar} score={pillarScores[id]} showWeight />
           ))}
         </div>
 
         {/* Unified score + grade */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 20 }}>
+        <div className="unified-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 20 }}>
           <div style={{
             background: 'var(--navy-4)', border: '1px solid var(--border)', borderRadius: 14, padding: 20,
             background: `linear-gradient(135deg, ${overallGrade.bg}, rgba(0,0,0,0.2))`,
@@ -189,7 +189,8 @@ export default function PreIntervention() {
         {/* Grade bands reference */}
         <div className="card">
           <h4 style={{ fontSize: 13, fontWeight: 600, marginBottom: 12 }}>Grade Band Reference</h4>
-          <div style={{ display: 'flex', gap: 8 }}>
+          <div className="grade-bands">
+            <div style={{ display: 'flex', gap: 8 }}>
             {GRADE_BANDS.map(b => (
               <div key={b.grade} style={{
                 flex: 1, padding: '10px 8px', borderRadius: 8, textAlign: 'center',
@@ -201,11 +202,12 @@ export default function PreIntervention() {
               </div>
             ))}
           </div>
+          </div>
         </div>
       </div>
 
       {/* Right panel */}
-      <div style={{ width: 280, borderLeft: '1px solid var(--border-light)', background: 'var(--navy-2)', padding: 20, overflowY: 'auto', flexShrink: 0 }}>
+      <div className="panel-right" style={{ width: 280, borderLeft: '1px solid var(--border-light)', background: 'var(--navy-2)', padding: 20, overflowY: 'auto', flexShrink: 0 }}>
         <div style={{ display: 'flex', gap: 4, marginBottom: 16, background: 'var(--navy-4)', padding: 4, borderRadius: 8 }}>
           {['Technical', 'Quotients', 'Modules'].map(t => (
             <button key={t} style={{

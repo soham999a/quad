@@ -1,6 +1,7 @@
 import React, { useState, createContext, useContext, useEffect } from 'react';
-import { BrowserRouter, Routes, Route, NavLink, useNavigate, Navigate } from 'react-router-dom';
-import { Brain, LayoutDashboard, Map, ClipboardList, Zap, TrendingUp, FileText, Settings, ChevronRight, Menu, Activity, LogOut, User, Home, BookOpen, ListChecks } from 'lucide-react';
+import { BrowserRouter, Routes, Route, NavLink, useNavigate, Navigate, useLocation } from 'react-router-dom';
+import { Brain, LayoutDashboard, Map, ClipboardList, Zap, TrendingUp, FileText, Settings,
+  ChevronRight, Menu, Activity, LogOut, Home, BookOpen, ListChecks, X } from 'lucide-react';
 import { CONTEXTS } from './data/qidsData';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
@@ -54,16 +55,24 @@ const NAV_GROUPS = [
   },
 ];
 
+// Bottom nav items (most used, max 5)
+const MOBILE_NAV = [
+  { path: '/dashboard', label: 'Home', icon: Home },
+  { path: '/assessment', label: 'Assess', icon: ClipboardList },
+  { path: '/pre-intervention', label: 'Pre', icon: Activity },
+  { path: '/post-intervention', label: 'Post', icon: TrendingUp },
+  { path: '/report', label: 'Report', icon: FileText },
+];
+
 const PHASE_COLORS = { '/pre-intervention': '#6366f1', '/intervention': '#a855f7', '/post-intervention': '#14b8a6' };
 
 function Sidebar({ collapsed, setCollapsed }) {
   const { user, userProfile, logout } = useAuth();
   const navigate = useNavigate();
-
   const handleLogout = async () => { await logout(); navigate('/login'); };
 
   return (
-    <aside style={{
+    <aside className="desktop-sidebar" style={{
       width: collapsed ? 60 : 228,
       minHeight: '100vh',
       background: 'var(--navy-2)',
@@ -73,7 +82,6 @@ function Sidebar({ collapsed, setCollapsed }) {
       flexShrink: 0, position: 'sticky', top: 0, height: '100vh',
       overflow: 'hidden', zIndex: 20,
     }}>
-      {/* Logo */}
       <div style={{ padding: '16px 12px', borderBottom: '1px solid var(--border-light)', display: 'flex', alignItems: 'center', gap: 10, minHeight: 60 }}>
         <div style={{
           width: 36, height: 36, borderRadius: 11, flexShrink: 0,
@@ -91,7 +99,6 @@ function Sidebar({ collapsed, setCollapsed }) {
         )}
       </div>
 
-      {/* Nav */}
       <nav style={{ flex: 1, padding: '8px 8px', overflowY: 'auto' }}>
         {NAV_GROUPS.map(group => (
           <div key={group.label} style={{ marginBottom: 4 }}>
@@ -110,13 +117,9 @@ function Sidebar({ collapsed, setCollapsed }) {
                   textDecoration: 'none', fontSize: 13, fontWeight: isActive ? 600 : 400,
                   color: isActive ? 'white' : 'var(--text-secondary)',
                   background: isActive
-                    ? phaseColor
-                      ? `linear-gradient(135deg, ${phaseColor}25, ${phaseColor}10)`
-                      : 'linear-gradient(135deg, rgba(99,102,241,0.2), rgba(139,92,246,0.1))'
+                    ? phaseColor ? `linear-gradient(135deg, ${phaseColor}25, ${phaseColor}10)` : 'linear-gradient(135deg, rgba(99,102,241,0.2), rgba(139,92,246,0.1))'
                     : 'transparent',
-                  borderLeft: isActive
-                    ? `2px solid ${phaseColor || 'var(--indigo)'}`
-                    : '2px solid transparent',
+                  borderLeft: isActive ? `2px solid ${phaseColor || 'var(--indigo)'}` : '2px solid transparent',
                   transition: 'all 0.15s cubic-bezier(0.4,0,0.2,1)',
                   whiteSpace: 'nowrap', overflow: 'hidden',
                   justifyContent: collapsed ? 'center' : 'flex-start',
@@ -131,7 +134,6 @@ function Sidebar({ collapsed, setCollapsed }) {
         ))}
       </nav>
 
-      {/* User + logout */}
       {user && (
         <div style={{ padding: '8px', borderTop: '1px solid var(--border-light)' }}>
           {!collapsed && (
@@ -164,7 +166,6 @@ function Sidebar({ collapsed, setCollapsed }) {
         </div>
       )}
 
-      {/* Collapse toggle */}
       <button onClick={() => setCollapsed(!collapsed)} style={{
         margin: '6px 8px 8px', padding: '7px', borderRadius: 8,
         background: 'rgba(255,255,255,0.03)', border: '1px solid var(--border-light)',
@@ -180,25 +181,131 @@ function Sidebar({ collapsed, setCollapsed }) {
   );
 }
 
+function MobileNav({ onMenuOpen }) {
+  const location = useLocation();
+  return (
+    <nav className="mobile-nav">
+      {MOBILE_NAV.map(({ path, label, icon: Icon }) => {
+        const isActive = path === '/' ? location.pathname === '/' : location.pathname.startsWith(path);
+        return (
+          <NavLink key={path} to={path} end={path === '/'} className={`mobile-nav-item${isActive ? ' active' : ''}`}>
+            <Icon size={18} />
+            <span>{label}</span>
+          </NavLink>
+        );
+      })}
+      <button className="mobile-nav-item" onClick={onMenuOpen}>
+        <Menu size={18} />
+        <span>More</span>
+      </button>
+    </nav>
+  );
+}
+
+function MobileMenuDrawer({ onClose }) {
+  const { user, userProfile, logout } = useAuth();
+  const navigate = useNavigate();
+  const handleLogout = async () => { await logout(); onClose(); navigate('/login'); };
+
+  return (
+    <div className="mobile-menu-drawer">
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <div style={{ width: 32, height: 32, borderRadius: 10, background: 'linear-gradient(135deg, #6366f1, #a855f7)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <Brain size={15} color="white" />
+          </div>
+          <div>
+            <div style={{ fontSize: 14, fontWeight: 800, fontFamily: 'Space Grotesk' }}>QIDS</div>
+            <div style={{ fontSize: 9, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.8px' }}>Intelligence Platform</div>
+          </div>
+        </div>
+        <button onClick={onClose} style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid var(--border-light)', borderRadius: 8, padding: 8, cursor: 'pointer', color: 'var(--text-muted)' }}>
+          <X size={16} />
+        </button>
+      </div>
+
+      {user && (
+        <div style={{ padding: '10px 12px', marginBottom: 16, display: 'flex', alignItems: 'center', gap: 10, background: 'rgba(255,255,255,0.03)', borderRadius: 10, border: '1px solid var(--border-light)' }}>
+          <div style={{ width: 34, height: 34, borderRadius: '50%', background: 'linear-gradient(135deg, #6366f1, #a855f7)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+            <span style={{ fontSize: 13, fontWeight: 800, color: 'white' }}>
+              {(userProfile?.name || user.displayName || user.email || 'U')[0].toUpperCase()}
+            </span>
+          </div>
+          <div>
+            <div style={{ fontSize: 13, fontWeight: 600 }}>{userProfile?.name || user.displayName || 'User'}</div>
+            <div style={{ fontSize: 11, color: 'var(--text-muted)', textTransform: 'capitalize' }}>{userProfile?.role || 'individual'}</div>
+          </div>
+        </div>
+      )}
+
+      {NAV_GROUPS.map(group => (
+        <div key={group.label} style={{ marginBottom: 16 }}>
+          <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.8px', marginBottom: 6, paddingLeft: 4 }}>
+            {group.label}
+          </div>
+          {group.items.map(({ path, label, icon: Icon }) => (
+            <NavLink key={path} to={path} end={path === '/' || path === '/dashboard'}
+              onClick={onClose}
+              style={({ isActive }) => ({
+                display: 'flex', alignItems: 'center', gap: 10,
+                padding: '10px 12px', borderRadius: 10, marginBottom: 2,
+                textDecoration: 'none', fontSize: 14, fontWeight: isActive ? 600 : 400,
+                color: isActive ? 'white' : 'var(--text-secondary)',
+                background: isActive ? 'linear-gradient(135deg, rgba(99,102,241,0.2), rgba(139,92,246,0.1))' : 'transparent',
+                borderLeft: isActive ? '2px solid var(--indigo)' : '2px solid transparent',
+              })}>
+              <Icon size={15} style={{ flexShrink: 0 }} />
+              {label}
+            </NavLink>
+          ))}
+        </div>
+      ))}
+
+      <div style={{ marginTop: 8, paddingTop: 16, borderTop: '1px solid var(--border-light)' }}>
+        <button onClick={handleLogout} style={{
+          width: '100%', display: 'flex', alignItems: 'center', gap: 10,
+          padding: '10px 12px', borderRadius: 10, cursor: 'pointer',
+          background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)',
+          color: '#f87171', fontSize: 14, fontFamily: 'Inter', fontWeight: 500,
+        }}>
+          <LogOut size={15} />
+          Sign Out
+        </button>
+      </div>
+    </div>
+  );
+}
+
 function TopBar({ context, setContext }) {
   return (
     <header style={{
       height: 52, background: 'rgba(8,13,26,0.9)', borderBottom: '1px solid var(--border-light)',
       display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-      padding: '0 20px', position: 'sticky', top: 0, zIndex: 10,
-      backdropFilter: 'blur(12px)',    }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+      padding: '0 16px', position: 'sticky', top: 0, zIndex: 10,
+      backdropFilter: 'blur(12px)',
+    }}>
+      {/* Mobile: show logo */}
+      <div className="mobile-topbar-logo">
+        <div style={{ width: 28, height: 28, borderRadius: 8, background: 'linear-gradient(135deg, #6366f1, #a855f7)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <Brain size={13} color="white" />
+        </div>
+        <span style={{ fontSize: 13, fontWeight: 800, fontFamily: 'Space Grotesk' }}>QIDS</span>
+      </div>
+
+      {/* Desktop: phase buttons */}
+      <div className="topbar-phases" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
         {['All Phases', 'Pre-Intervention', 'Intervention', 'Post-Intervention'].map(p => (
           <button key={p} className="btn btn-ghost btn-sm" style={{ fontSize: 11 }}>{p}</button>
         ))}
       </div>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+
+      <div className="topbar-right" style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
         <select value={context} onChange={e => setContext(e.target.value)} style={{ width: 'auto', padding: '5px 10px', fontSize: 12 }}>
           {CONTEXTS.map(c => <option key={c.id} value={c.id}>{c.icon} {c.label}</option>)}
         </select>
         <NavLink to="/report" style={{ textDecoration: 'none' }}>
           <button className="btn btn-primary btn-sm">
-            <FileText size={12} /> Export
+            <FileText size={12} /> <span className="topbar-export-label">Export</span>
           </button>
         </NavLink>
       </div>
@@ -211,9 +318,9 @@ function AppShell() {
   const [context, setContext] = useState('individual');
   const [assessmentData, setAssessmentData] = useState(null);
   const [postData, setPostData] = useState(null);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { user } = useAuth();
 
-  // Load latest assessment from Firestore on login
   useEffect(() => {
     if (!user) return;
     getLatestAssessment(user.uid).then(a => { if (a) setAssessmentData(a); });
@@ -222,7 +329,7 @@ function AppShell() {
 
   return (
     <AppContext.Provider value={{ context, setContext, assessmentData, setAssessmentData, postData, setPostData, demoMode: false }}>
-      <div style={{ display: 'flex', minHeight: '100vh' }}>
+      <div className="app-shell-layout" style={{ display: 'flex', minHeight: '100vh' }}>
         <Sidebar collapsed={collapsed} setCollapsed={setCollapsed} />
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0 }}>
           <TopBar context={context} setContext={setContext} />
@@ -245,6 +352,8 @@ function AppShell() {
             </Routes>
           </main>
         </div>
+        <MobileNav onMenuOpen={() => setMobileMenuOpen(true)} />
+        {mobileMenuOpen && <MobileMenuDrawer onClose={() => setMobileMenuOpen(false)} />}
       </div>
     </AppContext.Provider>
   );

@@ -26,11 +26,11 @@ export default function Dashboard() {
   const getLinkedPost = (preId) => postAssessments.find(p => p.linkedAssessmentId === preId) || null;
 
   return (
-    <div style={{ padding: 32, maxWidth: 1100, margin: '0 auto' }} className="animate-fade">
+    <div className="page-pad animate-fade" style={{ maxWidth: 1100, margin: '0 auto' }}>
       {/* Welcome */}
-      <div style={{
+      <div className="dashboard-welcome" style={{
         background: 'linear-gradient(135deg, rgba(99,102,241,0.12), rgba(168,85,247,0.08))',
-        border: '1px solid var(--border)', borderRadius: 16, padding: '24px 28px', marginBottom: 28,
+        border: '1px solid var(--border)', borderRadius: 16, padding: '20px 24px', marginBottom: 24,
         display: 'flex', justifyContent: 'space-between', alignItems: 'center',
       }}>
         <div>
@@ -47,7 +47,7 @@ export default function Dashboard() {
       </div>
 
       {/* Stats */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12, marginBottom: 28 }}>
+      <div className="grid-4" style={{ marginBottom: 24 }}>
         {[
           { label: 'Assessments', val: preAssessments.length, icon: ClipboardList, color: '#6366f1' },
           { label: 'Post-Evaluations', val: postAssessments.length, icon: TrendingUp, color: '#14b8a6' },
@@ -74,7 +74,7 @@ export default function Dashboard() {
         </div>
       )}
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
+      <div className="grid-2" style={{ gap: 20 }}>
         {/* Recent Assessments */}
         <div className="card">
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>

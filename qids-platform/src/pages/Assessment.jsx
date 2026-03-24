@@ -10,7 +10,7 @@ const STEPS = ['Intake & Consent', 'IQ Assessment', 'EQ Assessment', 'SQ Assessm
 
 function IntakeStep({ data, onChange }) {
   return (
-    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+    <div className="intake-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
       {[
         { key: 'name', label: 'Full Name', placeholder: 'Enter full name' },
         { key: 'age', label: 'Age', placeholder: 'Enter age', type: 'number' },
@@ -106,7 +106,7 @@ function PillarAssessmentStep({ pillarId, scores, onChange, useDemo }) {
 function ReviewStep({ intake, rawScores }) {
   return (
     <div>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 12, marginBottom: 20 }}>
+      <div className="grid-2" style={{ marginBottom: 20 }}>
         {Object.entries(intake).filter(([k]) => k !== 'consent').map(([k, v]) => (
           <div key={k} style={{ padding: '10px 14px', background: 'var(--navy-4)', border: '1px solid var(--border-light)', borderRadius: 8 }}>
             <div style={{ fontSize: 11, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 2 }}>{k}</div>
@@ -114,7 +114,7 @@ function ReviewStep({ intake, rawScores }) {
           </div>
         ))}
       </div>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12 }}>
+      <div className="review-pillars" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12 }}>
         {Object.entries(PILLARS).map(([id, pillar]) => {
           const score = computePillarScore(id, rawScores[id] || {});
           return (
@@ -182,7 +182,7 @@ export default function Assessment() {
   }
 
   return (
-    <div style={{ padding: 32, maxWidth: 900, margin: '0 auto' }} className="animate-fade">
+    <div className="page-pad animate-fade" style={{ maxWidth: 900, margin: '0 auto' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 28 }}>
         <div>
           <h1 style={{ fontSize: 24, fontWeight: 800, marginBottom: 4 }}>Assessment Engine</h1>
@@ -213,7 +213,7 @@ export default function Assessment() {
               }}>
                 {i < step ? '✓' : i + 1}
               </div>
-              <span style={{ fontSize: 12, color: i === step ? 'white' : 'var(--text-muted)', fontWeight: i === step ? 600 : 400 }}>{s}</span>
+              <span className="step-label" style={{ fontSize: 12, color: i === step ? 'white' : 'var(--text-muted)', fontWeight: i === step ? 600 : 400 }}>{s}</span>
             </div>
             {i < STEPS.length - 1 && <div style={{ flex: 1, height: 1, background: i < step ? '#10b981' : 'var(--border-light)', minWidth: 16 }} />}
           </div>

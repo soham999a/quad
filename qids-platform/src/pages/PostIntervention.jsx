@@ -55,7 +55,7 @@ function PostAssessmentForm({ assessmentData, onSubmit }) {
             <span style={{ fontSize: 14, fontWeight: 700, color: pillar.color }}>{pillar.label}</span>
             <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>— {pillar.framework}</span>
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
+          <div className="grid-2" style={{ gap: 14 }}>
             {pillar.subParams.map(sp => {
               const val = rawScores[pid]?.[sp.id] ?? 0;
               const preVal = assessmentData?.rawScores?.[pid]?.[sp.id] ?? 0;
@@ -127,7 +127,7 @@ export default function PostIntervention() {
   if (!postData && !submitted) {
     if (!assessmentData) {
       return (
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: 'calc(100vh - 56px)', flexDirection: 'column', gap: 16 }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: 'calc(100vh - 52px)', flexDirection: 'column', gap: 16 }}>
           <div style={{ fontSize: 40, opacity: 0.3 }}>📋</div>
           <h3 style={{ fontSize: 18, fontWeight: 700 }}>No Assessment Found</h3>
           <p style={{ fontSize: 14, color: 'var(--text-muted)' }}>Complete a pre-assessment first before doing post-intervention.</p>
@@ -136,7 +136,7 @@ export default function PostIntervention() {
       );
     }
     return (
-      <div style={{ overflowY: 'auto', height: 'calc(100vh - 56px)' }} className="animate-fade">
+      <div style={{ overflowY: 'auto', height: 'calc(100vh - 52px)' }} className="animate-fade">
         <PostAssessmentForm assessmentData={assessmentData} onSubmit={handlePostSubmit} />
       </div>
     );
@@ -170,9 +170,9 @@ export default function PostIntervention() {
   }));
 
   return (
-    <div style={{ display: 'flex', height: 'calc(100vh - 56px)' }} className="animate-fade">
+    <div className="three-panel animate-fade" style={{ display: 'flex', height: 'calc(100vh - 52px)' }}>
       {/* Left sidebar */}
-      <div style={{ width: 240, borderRight: '1px solid var(--border-light)', background: 'var(--navy-2)', padding: 20, overflowY: 'auto', flexShrink: 0 }}>
+      <div className="panel-left" style={{ width: 240, borderRight: '1px solid var(--border-light)', background: 'var(--navy-2)', padding: 20, overflowY: 'auto', flexShrink: 0 }}>
         <div style={{ padding: '4px 10px', background: 'rgba(20,184,166,0.15)', border: '1px solid rgba(20,184,166,0.3)', borderRadius: 20, fontSize: 11, color: '#2dd4bf', fontWeight: 600, display: 'inline-block', marginBottom: 12 }}>Phase 3</div>
         <h3 style={{ fontSize: 15, fontWeight: 700, marginBottom: 8 }}>Post-Intervention</h3>
         <p style={{ fontSize: 12, color: 'var(--text-muted)', lineHeight: 1.5, marginBottom: 16 }}>Progress evaluation, outcome synthesis, and final development roadmap.</p>
@@ -212,7 +212,7 @@ export default function PostIntervention() {
       </div>
 
       {/* Main */}
-      <div style={{ flex: 1, overflowY: 'auto', padding: 24 }}>
+      <div className="panel-main" style={{ flex: 1, overflowY: 'auto', padding: 24 }}>
         {/* Phase swimlane */}
         <div style={{ marginBottom: 24 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
@@ -229,7 +229,7 @@ export default function PostIntervention() {
         </div>
 
         {/* Unified score comparison */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12, marginBottom: 20 }}>
+        <div className="score-grid-4" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12, marginBottom: 20 }}>
           {[
             { label: 'Pre-Intervention Score', val: preUnified, color: '#6366f1', grade: getGrade(preUnified) },
             { label: 'Post-Intervention Score', val: postUnified, color: '#14b8a6', grade: getGrade(postUnified) },
@@ -279,7 +279,7 @@ export default function PostIntervention() {
               </ResponsiveContainer>
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 10 }}>
+            <div className="post-compare-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 10 }}>
               {Object.entries(PILLARS).map(([id, pillar]) => {
                 const d = postScores[id] - preScores[id];
                 const pct = preScores[id] > 0 ? Math.round((d / preScores[id]) * 100) : 0;
@@ -400,7 +400,7 @@ export default function PostIntervention() {
       </div>
 
       {/* Right panel */}
-      <div style={{ width: 260, borderLeft: '1px solid var(--border-light)', background: 'var(--navy-2)', padding: 20, overflowY: 'auto', flexShrink: 0 }}>
+      <div className="panel-right" style={{ width: 260, borderLeft: '1px solid var(--border-light)', background: 'var(--navy-2)', padding: 20, overflowY: 'auto', flexShrink: 0 }}>
         <div style={{ fontSize: 12, fontWeight: 600, color: '#2dd4bf', marginBottom: 12 }}>Outcome Summary</div>
         <div style={{ padding: 14, background: 'rgba(20,184,166,0.08)', border: '1px solid rgba(20,184,166,0.2)', borderRadius: 10, marginBottom: 16 }}>
           <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 4 }}>Unified Score Change</div>
