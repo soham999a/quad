@@ -24,7 +24,7 @@ export default function Overview() {
   return (
     <div className="page-pad animate-fade" style={{ maxWidth: 1200, margin: '0 auto' }}>
       {/* Hero */}
-      <div style={{
+      <div className="overview-hero" style={{
         background: 'linear-gradient(135deg, rgba(99,102,241,0.12), rgba(168,85,247,0.08), rgba(20,184,166,0.06))',
         border: '1px solid var(--border)',
         borderRadius: 20, padding: '48px 40px', marginBottom: 32,
@@ -36,7 +36,7 @@ export default function Overview() {
           borderRadius: '50%', pointerEvents: 'none',
         }} />
         <div style={{ position: 'relative', zIndex: 1 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16, flexWrap: 'wrap' }}>
             <div style={{
               padding: '4px 12px', borderRadius: 20,
               background: 'rgba(99,102,241,0.15)', border: '1px solid rgba(99,102,241,0.3)',
@@ -55,7 +55,7 @@ export default function Overview() {
           <p style={{ fontSize: 16, color: 'var(--text-secondary)', maxWidth: 560, lineHeight: 1.7, marginBottom: 28 }}>
             A paradigm shift in personality development and assessment — moving beyond traditional academic metrics to embrace a holistic approach encompassing intellectual, emotional, social, and adversity-handling capabilities.
           </p>
-          <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+          <div className="overview-hero-btns" style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
             <button className="btn btn-primary btn-lg" onClick={() => navigate('/assessment')}>
               <ClipboardList size={16} /> Start Assessment
             </button>
@@ -69,7 +69,7 @@ export default function Overview() {
         </div>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24, marginBottom: 32 }}>
+      <div className="overview-vision-grid" style={{ marginBottom: 32 }}>
         {/* Vision */}
         <div className="card" style={{ borderLeft: '3px solid var(--indigo)' }}>
           <h3 style={{ fontSize: 14, fontWeight: 600, marginBottom: 12, color: '#818cf8' }}>Vision</h3>
@@ -102,7 +102,7 @@ export default function Overview() {
       {/* Three Phase Process */}
       <div style={{ marginBottom: 32 }}>
         <h2 style={{ fontSize: 20, fontWeight: 700, marginBottom: 20 }}>Three-Phase Evaluation Process</h2>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16 }}>
+        <div className="overview-phase-grid">
           {PHASE_CARDS.map(({ num, label, desc, color, path, icon: Icon }) => (
             <div key={num} onClick={() => navigate(path)} style={{
               background: 'var(--navy-4)', border: `1px solid rgba(255,255,255,0.07)`,
@@ -133,7 +133,7 @@ export default function Overview() {
       {/* Four Pillars Summary */}
       <div style={{ marginBottom: 32 }}>
         <h2 style={{ fontSize: 20, fontWeight: 700, marginBottom: 20 }}>The Four Pillars of Holistic Development</h2>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16 }}>
+        <div className="overview-pillar-grid">
           {Object.values(PILLARS).map(p => (
             <div key={p.id} onClick={() => navigate(`/pillars/${p.id}`)} style={{
               background: 'var(--navy-4)', border: '1px solid var(--border-light)',
@@ -162,7 +162,7 @@ export default function Overview() {
         border: '1px solid var(--border)', borderRadius: 16, padding: 28,
       }}>
         <h2 style={{ fontSize: 18, fontWeight: 700, marginBottom: 20, textAlign: 'center' }}>Innovative Features</h2>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16 }}>
+        <div className="overview-feature-grid">
           {FEATURES.map(f => (
             <div key={f.label} style={{
               background: 'rgba(255,255,255,0.05)', borderRadius: 12,

@@ -66,7 +66,7 @@ function RoadmapCalendar({ gapPillars }) {
   return (
     <div>
       <h4 style={{ fontSize: 13, fontWeight: 600, marginBottom: 12 }}>6-Month Development Roadmap</h4>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10 }}>
+      <div className="roadmap-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10 }}>
         {MONTHS.map((month, i) => (
           <div key={month} style={{
             background: 'var(--navy-4)', border: '1px solid var(--border-light)',
@@ -100,9 +100,22 @@ export default function Intervention() {
   const priorityPillars = Object.entries(pillarScores).sort(([, a], [, b]) => a - b).map(([id]) => id);
 
   return (
-    <div style={{ display: 'flex', height: 'calc(100vh - 56px)' }} className="animate-fade">
+    <div className="three-panel animate-fade" style={{ display: 'flex', height: 'calc(100vh - 52px)' }}>
+      {/* Mobile summary strip */}
+      <div className="mobile-panel-summary" style={{ display: 'none' }}>
+        {Object.entries(pillarScores).map(([id, score]) => (
+          <div key={id} style={{
+            flexShrink: 0, padding: '6px 12px', borderRadius: 8,
+            background: `${PILLARS[id].color}15`, border: `1px solid ${PILLARS[id].color}30`,
+            display: 'flex', alignItems: 'center', gap: 6,
+          }}>
+            <span style={{ fontSize: 11, color: PILLARS[id].color, fontWeight: 700 }}>{id}</span>
+            <span style={{ fontSize: 13, fontWeight: 800, color: isCritical(score) ? '#ef4444' : '#10b981' }}>{score}</span>
+          </div>
+        ))}
+      </div>
       {/* Left sidebar */}
-      <div style={{ width: 240, borderRight: '1px solid var(--border-light)', background: 'var(--navy-2)', padding: 20, overflowY: 'auto', flexShrink: 0 }}>
+      <div className="panel-left" style={{ width: 240, borderRight: '1px solid var(--border-light)', background: 'var(--navy-2)', padding: 20, overflowY: 'auto', flexShrink: 0 }}>
         <div style={{ padding: '4px 10px', background: 'rgba(139,92,246,0.15)', border: '1px solid rgba(139,92,246,0.3)', borderRadius: 20, fontSize: 11, color: '#a78bfa', fontWeight: 600, display: 'inline-block', marginBottom: 12 }}>Phase 2</div>
         <h3 style={{ fontSize: 15, fontWeight: 700, marginBottom: 8 }}>Strategic Intervention</h3>
         <p style={{ fontSize: 12, color: 'var(--text-muted)', lineHeight: 1.5, marginBottom: 16 }}>Targeted development programs based on gap analysis and priority flags.</p>
@@ -173,7 +186,7 @@ export default function Intervention() {
               <h3 style={{ fontSize: 15, fontWeight: 700 }}>Recommended Intervention Modules</h3>
               <button className="btn btn-secondary btn-sm"><Plus size={12} /> Add Custom Module</button>
             </div>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+            <div className="modules-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
               {priorityPillars.map(pid => (
                 <div key={pid}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
@@ -201,7 +214,7 @@ export default function Intervention() {
         {activeTab === 'eq-practice' && (
           <div>
             <h3 style={{ fontSize: 15, fontWeight: 700, marginBottom: 16 }}>Dynamic EQ Integration — The Pause Button</h3>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12 }}>
+            <div className="eq-practice-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12 }}>
               {[
                 { step: 'STOP', desc: 'Pause the automatic emotional reaction. Create space between stimulus and response.', color: '#ef4444', icon: '⏸' },
                 { step: 'THINK', desc: 'Identify the emotion. Assess the situation objectively. Consider consequences.', color: '#f59e0b', icon: '🧠' },

@@ -400,38 +400,62 @@ input[type="checkbox"] {
 
 /* ── Responsive Layout ── */
 
-/* Mobile bottom nav */
-.mobile-nav {
-  display: none;
-}
-
-.mobile-topbar-logo {
-  display: none;
-}
+/* Mobile bottom nav — hidden by default */
+.mobile-nav { display: none; }
+.mobile-topbar-logo { display: none; }
 
 /* Responsive grid helpers */
 .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+.grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
 .grid-2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
 .grid-1 { display: grid; grid-template-columns: 1fr; gap: 12px; }
+
+/* Inline grid helpers used in Overview/Report */
+.overview-vision-grid  { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+.overview-phase-grid   { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+.overview-pillar-grid  { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+.overview-feature-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+.report-info-grid      { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+.report-score-grid     { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+.report-unified-grid   { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.report-radar-grid     { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+.report-career-grid    { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.report-type-selector  { display: flex; gap: 8px; flex-wrap: wrap; }
 
 /* Page padding helper */
 .page-pad { padding: 32px; }
 
+/* ── Tablet (769–1024px) ── */
+@media (min-width: 769px) and (max-width: 1024px) {
+  .grid-4            { grid-template-columns: repeat(2, 1fr) !important; }
+  .score-grid-4      { grid-template-columns: repeat(2, 1fr) !important; }
+  .overview-pillar-grid  { grid-template-columns: repeat(2, 1fr) !important; }
+  .report-info-grid  { grid-template-columns: repeat(2, 1fr) !important; }
+  .report-score-grid { grid-template-columns: repeat(2, 1fr) !important; }
+  .panel-left  { width: 200px !important; }
+  .panel-right { width: 220px !important; }
+  .page-pad    { padding: 20px !important; }
+}
+
+/* ── Mobile (≤768px) ── */
 @media (max-width: 768px) {
-  /* Hide desktop sidebar */
+
+  /* ── Sidebar / Nav ── */
   .desktop-sidebar { display: none !important; }
 
-  /* Show mobile nav */
   .mobile-nav {
     display: flex;
     position: fixed;
     bottom: 0; left: 0; right: 0;
-    height: 60px;
-    background: var(--navy-2);
+    height: 62px;
+    background: rgba(12,18,32,0.97);
     border-top: 1px solid var(--border-light);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
     z-index: 100;
     align-items: stretch;
     padding: 0 4px;
+    padding-bottom: env(safe-area-inset-bottom);
   }
 
   .mobile-nav-item {
@@ -441,7 +465,7 @@ input[type="checkbox"] {
     align-items: center;
     justify-content: center;
     gap: 3px;
-    padding: 6px 4px;
+    padding: 6px 2px;
     border-radius: 10px;
     text-decoration: none;
     color: var(--text-muted);
@@ -452,87 +476,90 @@ input[type="checkbox"] {
     background: transparent;
     border: none;
     font-family: 'Inter', sans-serif;
+    -webkit-tap-highlight-color: transparent;
   }
 
-  .mobile-nav-item.active {
-    color: var(--indigo);
-  }
+  .mobile-nav-item.active { color: var(--indigo); }
+  .mobile-nav-item.active svg { filter: drop-shadow(0 0 5px rgba(99,102,241,0.7)); }
+  .mobile-nav-item:active { transform: scale(0.92); }
 
-  .mobile-nav-item.active svg {
-    filter: drop-shadow(0 0 4px rgba(99,102,241,0.6));
-  }
-
-  /* Show logo in topbar on mobile */
-  .mobile-topbar-logo {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
-
-  /* Hide topbar phase buttons on mobile */
+  .mobile-topbar-logo { display: flex; align-items: center; gap: 8px; }
   .topbar-phases { display: none !important; }
 
-  /* Main layout: no sidebar */
-  .app-shell-layout {
-    flex-direction: column !important;
+  /* ── Layout ── */
+  .app-shell-layout { flex-direction: column !important; }
+  main { padding-bottom: 70px !important; }
+
+  /* ── Page padding ── */
+  .page-pad { padding: 14px !important; }
+
+  /* ── Grids ── */
+  .grid-4  { grid-template-columns: repeat(2, 1fr) !important; }
+  .grid-3  { grid-template-columns: 1fr !important; }
+  .grid-2  { grid-template-columns: 1fr !important; }
+
+  /* Overview grids */
+  .overview-vision-grid  { grid-template-columns: 1fr !important; gap: 14px !important; }
+  .overview-phase-grid   { grid-template-columns: 1fr !important; gap: 12px !important; }
+  .overview-pillar-grid  { grid-template-columns: repeat(2, 1fr) !important; gap: 10px !important; }
+  .overview-feature-grid { grid-template-columns: 1fr !important; gap: 12px !important; }
+
+  /* Report grids */
+  .report-info-grid      { grid-template-columns: repeat(2, 1fr) !important; gap: 8px !important; }
+  .report-score-grid     { grid-template-columns: repeat(2, 1fr) !important; gap: 8px !important; }
+  .report-unified-grid   { grid-template-columns: 1fr !important; gap: 12px !important; }
+  .report-radar-grid     { grid-template-columns: 1fr !important; gap: 12px !important; }
+  .report-career-grid    { grid-template-columns: 1fr !important; gap: 12px !important; }
+  .report-type-selector  { gap: 6px !important; }
+  .report-type-selector button { font-size: 11px !important; padding: 6px 10px !important; }
+
+  /* Assessment */
+  .score-grid-4  { grid-template-columns: repeat(2, 1fr) !important; }
+  .unified-grid  { grid-template-columns: 1fr !important; }
+  .intake-grid   { grid-template-columns: 1fr !important; }
+  .review-pillars { grid-template-columns: repeat(2, 1fr) !important; }
+  .step-label    { display: none !important; }
+
+  /* Three-panel pages */
+  .three-panel { flex-direction: column !important; height: auto !important; }
+  .panel-left  { display: none !important; }
+  .panel-right { display: none !important; }
+  .panel-main  { padding: 14px !important; overflow-y: visible !important; }
+
+  /* Mobile summary strip for three-panel pages */
+  .mobile-panel-summary {
+    display: flex !important;
+    gap: 8px;
+    overflow-x: auto;
+    padding: 10px 14px;
+    background: var(--navy-2);
+    border-bottom: 1px solid var(--border-light);
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
   }
+  .mobile-panel-summary::-webkit-scrollbar { display: none; }
 
-  /* Add bottom padding for mobile nav */
-  main {
-    padding-bottom: 68px !important;
-  }
+  /* Post comparison */
+  .post-compare-grid { grid-template-columns: repeat(2, 1fr) !important; }
+  .score-grid-3 { grid-template-columns: 1fr !important; gap: 10px !important; }
 
-  /* Page padding */
-  .page-pad { padding: 16px !important; }
+  /* Grade bands */
+  .grade-bands { overflow-x: auto !important; -webkit-overflow-scrolling: touch; }
+  .grade-bands > div { min-width: 520px; }
 
-  /* Responsive grids */
-  .grid-4 { grid-template-columns: repeat(2, 1fr) !important; }
-  .grid-2 { grid-template-columns: 1fr !important; }
-
-  /* Dashboard welcome */
+  /* Dashboard */
   .dashboard-welcome {
     flex-direction: column !important;
     align-items: flex-start !important;
     gap: 12px !important;
   }
 
-  /* Assessment step indicator — numbers only on mobile */
-  .step-label { display: none !important; }
-
-  /* Assessment intake grid */
-  .intake-grid { grid-template-columns: 1fr !important; }
-
-  /* Review step pillar grid */
-  .review-pillars { grid-template-columns: repeat(2, 1fr) !important; }
-
-  /* Three-panel pages (PreIntervention, PostIntervention) */
-  .three-panel { flex-direction: column !important; height: auto !important; }
-  .panel-left  { display: none !important; }
-  .panel-right { display: none !important; }
-  .panel-main  { padding: 16px !important; }
-
-  /* Score cards 2-col on mobile */
-  .score-grid-4 { grid-template-columns: repeat(2, 1fr) !important; }
-
-  /* Unified score + weight grid */
-  .unified-grid { grid-template-columns: 1fr !important; }
-
-  /* Grade bands — scroll */
-  .grade-bands { overflow-x: auto !important; }
-  .grade-bands > div { min-width: 480px; }
-
-  /* Post intervention comparison cards */
-  .post-compare-grid { grid-template-columns: repeat(2, 1fr) !important; }
-
-  /* Topbar compact */
+  /* Topbar */
   .topbar-right { gap: 6px !important; }
-  .topbar-right select { max-width: 110px; font-size: 11px; }
+  .topbar-right select { max-width: 100px; font-size: 11px; padding: 4px 8px !important; }
 
-  /* Card padding */
+  /* Cards */
   .card { padding: 14px !important; }
-
-  /* Hide right panel radar in pre/post */
-  .panel-right-radar { display: none; }
 
   /* Mobile menu drawer */
   .mobile-menu-drawer {
@@ -542,28 +569,67 @@ input[type="checkbox"] {
     z-index: 200;
     overflow-y: auto;
     padding: 20px;
-    animation: fadeIn 0.2s ease;
+    padding-bottom: calc(20px + env(safe-area-inset-bottom));
+    animation: slideUp 0.25s cubic-bezier(0.4,0,0.2,1);
   }
+
+  /* Overview hero */
+  .overview-hero { padding: 28px 20px !important; }
+  .overview-hero h1 { font-size: 28px !important; }
+  .overview-hero p  { font-size: 14px !important; }
+  .overview-hero-btns { flex-direction: column !important; }
+  .overview-hero-btns .btn { width: 100%; justify-content: center; }
+
+  /* Report header */
+  .report-header { padding: 20px !important; flex-direction: column !important; gap: 12px !important; }
+  .report-body   { padding: 16px !important; }
+
+  /* Login page */
+  .login-left { display: none !important; }
+  .login-right {
+    width: 100% !important;
+    border-left: none !important;
+    padding: 32px 24px !important;
+    background: var(--navy) !important;
+  }
+  .login-right-inner { max-width: 100% !important; }
+
+  /* Toast — above mobile nav */
+  .toast-container { bottom: 74px !important; }
+
+  /* Intervention roadmap grid */
+  .roadmap-grid { grid-template-columns: repeat(2, 1fr) !important; }
+
+  /* Intervention modules grid */
+  .modules-grid { grid-template-columns: 1fr !important; }
+
+  /* EQ practice grid */
+  .eq-practice-grid { grid-template-columns: 1fr !important; }
+
+  /* Radar chart — smaller on mobile */
+  .radar-mobile { transform: scale(0.85); transform-origin: top center; }
 }
 
+/* ── Small phones (≤480px) ── */
 @media (max-width: 480px) {
-  .grid-4 { grid-template-columns: repeat(2, 1fr) !important; }
-  .score-grid-4 { grid-template-columns: repeat(2, 1fr) !important; }
-  .post-compare-grid { grid-template-columns: 1fr 1fr !important; }
+  .grid-4            { grid-template-columns: repeat(2, 1fr) !important; }
+  .score-grid-4      { grid-template-columns: repeat(2, 1fr) !important; }
+  .post-compare-grid { grid-template-columns: repeat(2, 1fr) !important; }
+  .overview-pillar-grid { grid-template-columns: repeat(2, 1fr) !important; }
 
-  h1 { font-size: 18px !important; }
-  h2 { font-size: 16px !important; }
+  h1 { font-size: 20px !important; }
+  h2 { font-size: 17px !important; }
 
   .btn-lg { padding: 10px 16px !important; font-size: 13px !important; }
+  .topbar-export-label { display: none; }
+
+  .page-pad { padding: 12px !important; }
 }
 
-@media (min-width: 769px) and (max-width: 1024px) {
-  /* Tablet: collapsed sidebar by default, adjust grids */
-  .grid-4 { grid-template-columns: repeat(2, 1fr) !important; }
-  .score-grid-4 { grid-template-columns: repeat(2, 1fr) !important; }
-  .panel-left { width: 200px !important; }
-  .panel-right { width: 220px !important; }
-  .page-pad { padding: 20px !important; }
+/* ── Animations ── */
+@keyframes slideUp {
+  from { transform: translateY(100%); opacity: 0; }
+  to   { transform: translateY(0);    opacity: 1; }
 }
 
 /* ── Print Styles ── */
@@ -596,7 +662,7 @@ input[type="checkbox"] {
   @page { margin: 20mm; }
 }
 
-/* ── Post badge on assessment rows ── */
+/* ── Post badge ── */
 .post-badge {
   display: inline-flex;
   align-items: center;
@@ -608,9 +674,4 @@ input[type="checkbox"] {
   background: rgba(20,184,166,0.15);
   border: 1px solid rgba(20,184,166,0.3);
   color: #2dd4bf;
-}
-
-/* Hide export label text on small screens */
-@media (max-width: 480px) {
-  .topbar-export-label { display: none; }
 }

@@ -20,8 +20,8 @@ export function ToastProvider({ children }) {
   return (
     <ToastContext.Provider value={toast}>
       {children}
-      <div style={{
-        position: 'fixed', bottom: 80, right: 20, zIndex: 9999,
+      <div className="toast-container" style={{
+        position: 'fixed', bottom: 80, right: 16, zIndex: 9999,
         display: 'flex', flexDirection: 'column', gap: 8, pointerEvents: 'none',
       }}>
         {toasts.map(t => {

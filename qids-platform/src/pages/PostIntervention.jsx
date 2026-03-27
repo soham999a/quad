@@ -182,6 +182,23 @@ export default function PostIntervention() {
 
   return (
     <div className="three-panel animate-fade" style={{ display: 'flex', height: 'calc(100vh - 52px)' }}>
+      {/* Mobile summary strip */}
+      <div className="mobile-panel-summary" style={{ display: 'none' }}>
+        {Object.entries(PILLARS).map(([id, pillar]) => {
+          const d = postScores[id] - preScores[id];
+          return (
+            <div key={id} style={{
+              flexShrink: 0, padding: '6px 12px', borderRadius: 8,
+              background: `${pillar.color}15`, border: `1px solid ${pillar.color}30`,
+              display: 'flex', alignItems: 'center', gap: 6,
+            }}>
+              <span style={{ fontSize: 11, color: pillar.color, fontWeight: 700 }}>{id}</span>
+              <span style={{ fontSize: 13, fontWeight: 800, color: pillar.color }}>{postScores[id]}</span>
+              <span style={{ fontSize: 10, color: d >= 0 ? '#10b981' : '#ef4444', fontWeight: 600 }}>{d >= 0 ? `+${d}` : d}</span>
+            </div>
+          );
+        })}
+      </div>
       {/* Left sidebar */}
       <div className="panel-left" style={{ width: 240, borderRight: '1px solid var(--border-light)', background: 'var(--navy-2)', padding: 20, overflowY: 'auto', flexShrink: 0 }}>
         <div style={{ padding: '4px 10px', background: 'rgba(20,184,166,0.15)', border: '1px solid rgba(20,184,166,0.3)', borderRadius: 20, fontSize: 11, color: '#2dd4bf', fontWeight: 600, display: 'inline-block', marginBottom: 12 }}>Phase 3</div>

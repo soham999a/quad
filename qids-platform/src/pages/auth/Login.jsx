@@ -39,7 +39,7 @@ export default function Login() {
       </div>
 
       {/* Left panel — branding */}
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '60px 80px', position: 'relative', zIndex: 1 }}>
+      <div className="login-left" style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '60px 80px', position: 'relative', zIndex: 1 }}>
         <div style={{ maxWidth: 480 }}>
           {/* Logo */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 64 }}>
@@ -82,8 +82,8 @@ export default function Login() {
       </div>
 
       {/* Right panel — form */}
-      <div style={{ width: 480, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '40px 48px', position: 'relative', zIndex: 1, borderLeft: '1px solid var(--border-light)', background: 'rgba(8,13,26,0.8)', backdropFilter: 'blur(20px)' }}>
-        <div style={{ width: '100%', maxWidth: 380, animation: 'fadeInUp 0.5s cubic-bezier(0.4,0,0.2,1)' }}>
+      <div className="login-right" style={{ width: 480, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '40px 48px', position: 'relative', zIndex: 1, borderLeft: '1px solid var(--border-light)', background: 'rgba(8,13,26,0.8)', backdropFilter: 'blur(20px)' }}>
+        <div className="login-right-inner" style={{ width: '100%', maxWidth: 380, animation: 'fadeInUp 0.5s cubic-bezier(0.4,0,0.2,1)' }}>
           <div style={{ marginBottom: 32 }}>
             <h2 style={{ fontSize: 26, fontWeight: 800, marginBottom: 6 }}>Welcome back</h2>
             <p style={{ fontSize: 14, color: 'var(--text-secondary)' }}>Sign in to continue your journey</p>

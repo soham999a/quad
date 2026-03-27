@@ -67,6 +67,28 @@ export default function PreIntervention() {
 
   return (
     <div className="three-panel animate-fade" style={{ display: 'flex', height: 'calc(100vh - 52px)' }}>
+      {/* Mobile summary strip — shown only on mobile */}
+      <div className="mobile-panel-summary" style={{ display: 'none' }}>
+        {Object.entries(pillarScores).map(([id, score]) => (
+          <div key={id} style={{
+            flexShrink: 0, padding: '6px 12px', borderRadius: 8,
+            background: `${PILLARS[id].color}15`, border: `1px solid ${PILLARS[id].color}30`,
+            display: 'flex', alignItems: 'center', gap: 6,
+          }}>
+            <span style={{ fontSize: 11, color: PILLARS[id].color, fontWeight: 700 }}>{id}</span>
+            <span style={{ fontSize: 13, fontWeight: 800, color: isCritical(score) ? '#ef4444' : '#10b981' }}>{score}</span>
+          </div>
+        ))}
+        <div style={{
+          flexShrink: 0, padding: '6px 12px', borderRadius: 8,
+          background: `${overallGrade.bg}`, border: `1px solid ${overallGrade.color}40`,
+          display: 'flex', alignItems: 'center', gap: 6,
+        }}>
+          <span style={{ fontSize: 11, color: overallGrade.color, fontWeight: 700 }}>QIDS</span>
+          <span style={{ fontSize: 13, fontWeight: 800, color: overallGrade.color }}>{unifiedScore}</span>
+          <span style={{ fontSize: 10, color: overallGrade.color }}>Grade {overallGrade.grade}</span>
+        </div>
+      </div>
       {/* Left sidebar */}
       <div className="panel-left" style={{ width: 260, borderRight: '1px solid var(--border-light)', background: 'var(--navy-2)', padding: 20, overflowY: 'auto', flexShrink: 0 }}>
         <div style={{ marginBottom: 16 }}>

@@ -44,7 +44,7 @@ export default function ReportGenerator() {
       </div>
 
       {/* Report type selector */}
-      <div style={{ display: 'flex', gap: 8, marginBottom: 24 }}>
+      <div className="report-type-selector" style={{ marginBottom: 24 }}>
         {[
           { id: 'full', label: 'Full QIDS Report' },
           { id: 'profile', label: 'Individual Quotient Profile' },
@@ -66,11 +66,11 @@ export default function ReportGenerator() {
         borderRadius: 16, overflow: 'hidden',
       }}>
         {/* Report header */}
-        <div style={{
+        <div className="report-header" style={{
           background: 'linear-gradient(135deg, rgba(99,102,241,0.2), rgba(168,85,247,0.15), rgba(20,184,166,0.1))',
           borderBottom: '1px solid var(--border)', padding: '32px 40px',
         }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 12 }}>
             <div>
               <div style={{ fontSize: 11, color: '#818cf8', fontWeight: 600, letterSpacing: '1px', textTransform: 'uppercase', marginBottom: 8 }}>
                 Quadrant Intelligence Development System
@@ -88,9 +88,9 @@ export default function ReportGenerator() {
           </div>
         </div>
 
-        <div style={{ padding: '32px 40px' }}>
+        <div className="report-body" style={{ padding: '32px 40px' }}>
           {/* Subject info */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12, marginBottom: 28 }}>
+          <div className="report-info-grid" style={{ marginBottom: 28 }}>
             {[
               { label: 'Name', val: intake.name || '—' },
               { label: 'Age', val: intake.age || '—' },
@@ -106,7 +106,7 @@ export default function ReportGenerator() {
 
           {/* Score summary */}
           <h3 style={{ fontSize: 16, fontWeight: 700, marginBottom: 16 }}>Quotient Score Summary</h3>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12, marginBottom: 24 }}>
+          <div className="report-score-grid" style={{ marginBottom: 24 }}>
             {Object.entries(PILLARS).map(([id, pillar]) => {
               const pre = preScores[id];
               const post = postScores[id];
@@ -131,7 +131,7 @@ export default function ReportGenerator() {
           </div>
 
           {/* Unified score */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 28 }}>
+          <div className="report-unified-grid" style={{ marginBottom: 28 }}>
             <div style={{
               padding: 20, background: `${overallGrade.bg}`,
               border: `1px solid ${overallGrade.color}40`, borderRadius: 14,
@@ -159,7 +159,7 @@ export default function ReportGenerator() {
           </div>
 
           {/* Radar + Heatmap */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20, marginBottom: 28 }}>
+          <div className="report-radar-grid" style={{ marginBottom: 28 }}>
             <div className="card">
               <h4 style={{ fontSize: 13, fontWeight: 600, marginBottom: 12 }}>Quotient Radar Profile</h4>
               <QIDSRadar data={preScores} compare={postScores} size={240} />
@@ -190,7 +190,7 @@ export default function ReportGenerator() {
           </div>
 
           {/* Career & Skill Shape */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 28 }}>
+          <div className="report-career-grid" style={{ marginBottom: 28 }}>
             <div className="card">
               <h4 style={{ fontSize: 13, fontWeight: 600, marginBottom: 12 }}>Career Guidance</h4>
               <div style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
