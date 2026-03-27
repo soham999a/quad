@@ -194,7 +194,6 @@ export default function ReportGenerator() {
             <div className="card">
               <h4 style={{ fontSize: 13, fontWeight: 600, marginBottom: 12 }}>Career Guidance</h4>
               <div style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
-                <span style={{ fontSize: 28 }}>{careerProfile.icon}</span>
                 <div>
                   <div style={{ fontSize: 14, fontWeight: 700, marginBottom: 4 }}>{careerProfile.label}</div>
                   <p style={{ fontSize: 12, color: 'var(--text-secondary)', lineHeight: 1.5, marginBottom: 8 }}>{careerProfile.desc}</p>

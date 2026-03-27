@@ -35,7 +35,7 @@ export default function Dashboard() {
       }}>
         <div>
           <h1 style={{ fontSize: 22, fontWeight: 800, marginBottom: 4 }}>
-            Welcome back, {userProfile?.name || user?.displayName || 'there'} 👋
+            Welcome back, {userProfile?.name || user?.displayName || 'there'}
           </h1>
           <p style={{ fontSize: 14, color: 'var(--text-muted)' }}>
             {userProfile?.context ? `Context: ${userProfile.context}` : ''} · {userProfile?.role || 'Individual'}

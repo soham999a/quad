@@ -216,15 +216,14 @@ export default function Intervention() {
             <h3 style={{ fontSize: 15, fontWeight: 700, marginBottom: 16 }}>Dynamic EQ Integration — The Pause Button</h3>
             <div className="eq-practice-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12 }}>
               {[
-                { step: 'STOP', desc: 'Pause the automatic emotional reaction. Create space between stimulus and response.', color: '#ef4444', icon: '⏸' },
-                { step: 'THINK', desc: 'Identify the emotion. Assess the situation objectively. Consider consequences.', color: '#f59e0b', icon: '🧠' },
-                { step: 'ACT', desc: 'Choose a deliberate, constructive response aligned with values and goals.', color: '#10b981', icon: '✅' },
-              ].map(({ step, desc, color, icon }) => (
+                { step: 'STOP',  desc: 'Pause the automatic emotional reaction. Create space between stimulus and response.', color: '#ef4444' },
+                { step: 'THINK', desc: 'Identify the emotion. Assess the situation objectively. Consider consequences.',        color: '#f59e0b' },
+                { step: 'ACT',   desc: 'Choose a deliberate, constructive response aligned with values and goals.',             color: '#10b981' },
+              ].map(({ step, desc, color }) => (
                 <div key={step} style={{
                   padding: 20, background: `${color}10`, border: `1px solid ${color}30`,
                   borderRadius: 14, textAlign: 'center',
                 }}>
-                  <div style={{ fontSize: 32, marginBottom: 8 }}>{icon}</div>
                   <div style={{ fontSize: 18, fontWeight: 800, color, fontFamily: 'Space Grotesk', marginBottom: 8 }}>{step}</div>
                   <p style={{ fontSize: 12, color: 'var(--text-secondary)', lineHeight: 1.6 }}>{desc}</p>
                 </div>

@@ -139,7 +139,9 @@ export default function PostIntervention() {
     if (!assessmentData) {
       return (
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: 'calc(100vh - 52px)', flexDirection: 'column', gap: 16 }}>
-          <div style={{ fontSize: 40, opacity: 0.3 }}>📋</div>
+          <div style={{ opacity: 0.3 }}>
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+          </div>
           <h3 style={{ fontSize: 18, fontWeight: 700 }}>No Assessment Found</h3>
           <p style={{ fontSize: 14, color: 'var(--text-muted)' }}>Complete a pre-assessment first before doing post-intervention.</p>
           <button onClick={() => navigate('/assessment')} className="btn btn-primary">Start Assessment</button>
@@ -358,11 +360,10 @@ export default function PostIntervention() {
           <div>
             <h3 style={{ fontSize: 15, fontWeight: 700, marginBottom: 16 }}>Career Guidance & Recommendations</h3>
             <div style={{
-              padding: 24, background: `${careerProfile.icon ? 'rgba(99,102,241,0.08)' : 'var(--navy-4)'}`,
+              padding: 24, background: 'rgba(99,102,241,0.08)',
               border: '1px solid rgba(99,102,241,0.25)', borderRadius: 16, marginBottom: 16,
             }}>
               <div style={{ display: 'flex', alignItems: 'flex-start', gap: 16 }}>
-                <div style={{ fontSize: 40 }}>{careerProfile.icon}</div>
                 <div>
                   <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 4 }}>Recommended Track</div>
                   <h3 style={{ fontSize: 18, fontWeight: 800, marginBottom: 6 }}>{careerProfile.label}</h3>
@@ -386,7 +387,6 @@ export default function PostIntervention() {
                   borderRadius: 10,
                 }}>
                   <div style={{ display: 'flex', gap: 8, alignItems: 'flex-start' }}>
-                    <span style={{ fontSize: 20 }}>{cp.icon}</span>
                     <div>
                       <div style={{ fontSize: 12, fontWeight: 600, marginBottom: 2 }}>{cp.label}</div>
                       <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>{cp.condition}</div>

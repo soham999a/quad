@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate, Link, Navigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { Brain, Mail, Lock, AlertCircle, ArrowRight, Sparkles } from 'lucide-react';
+import { Brain, Mail, Lock, AlertCircle, ArrowRight, Sparkles, BarChart2, Target } from 'lucide-react';
 
 export default function Login() {
   const { login, loginWithGoogle, user } = useAuth();
@@ -68,12 +68,12 @@ export default function Login() {
           {/* Feature pills */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
             {[
-              { icon: '🧠', label: 'Four-pillar intelligence assessment' },
-              { icon: '📊', label: 'Dynamic weighted scoring algorithm' },
-              { icon: '🎯', label: 'Personalized intervention roadmap' },
+              { icon: Brain,    label: 'Four-pillar intelligence assessment' },
+              { icon: BarChart2, label: 'Dynamic weighted scoring algorithm' },
+              { icon: Target,   label: 'Personalized intervention roadmap' },
             ].map(f => (
               <div key={f.label} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 16px', background: 'rgba(255,255,255,0.03)', border: '1px solid var(--border-light)', borderRadius: 10 }}>
-                <span style={{ fontSize: 16 }}>{f.icon}</span>
+                <f.icon size={15} color="#818cf8" style={{ flexShrink: 0 }} />
                 <span style={{ fontSize: 13, color: 'var(--text-secondary)' }}>{f.label}</span>
               </div>
             ))}

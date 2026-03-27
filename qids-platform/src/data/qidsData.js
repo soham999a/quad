@@ -1,11 +1,11 @@
 // QIDS Core Data Configuration — modular, CMS-ready
 
 export const CONTEXTS = [
-  { id: 'school', label: 'School', icon: '🏫', desc: 'Foundational development with age-appropriate activities and developmental milestones.' },
-  { id: 'college', label: 'College', icon: '🎓', desc: 'Advanced development with specialization based on academic and career paths.' },
-  { id: 'corporate', label: 'Corporate', icon: '🏢', desc: 'Professional application with focus on leadership, teamwork, and organizational effectiveness.' },
-  { id: 'individual', label: 'Individual', icon: '👤', desc: 'Personalized holistic development pathway tailored to unique goals and strengths.' },
-  { id: 'custom', label: 'Custom', icon: '⚙️', desc: 'Configurable context for specialized institutions and unique developmental needs.' },
+  { id: 'school',     label: 'School',     icon: 'SCH', desc: 'Foundational development with age-appropriate activities and developmental milestones.' },
+  { id: 'college',    label: 'College',    icon: 'COL', desc: 'Advanced development with specialization based on academic and career paths.' },
+  { id: 'corporate',  label: 'Corporate',  icon: 'COR', desc: 'Professional application with focus on leadership, teamwork, and organizational effectiveness.' },
+  { id: 'individual', label: 'Individual', icon: 'IND', desc: 'Personalized holistic development pathway tailored to unique goals and strengths.' },
+  { id: 'custom',     label: 'Custom',     icon: 'CST', desc: 'Configurable context for specialized institutions and unique developmental needs.' },
 ];
 
 export const WEIGHTS = { IQ: 1.00, EQ: 2.00, SQ: 2.00, AQ: 1.28 };
@@ -155,11 +155,11 @@ export const INTERVENTION_MODULES = {
 };
 
 export const CAREER_PROFILES = [
-  { id: 'specialist', label: 'Specialist / Technical Track', condition: 'High IQ + Lower AQ', icon: '🔬', desc: 'Deep expertise in a focused domain. Thrives in structured, knowledge-intensive environments.', roles: ['Research Scientist', 'Software Engineer', 'Data Analyst', 'Financial Analyst'] },
-  { id: 'leader', label: 'Leadership / People-Facing Track', condition: 'High EQ + High SQ', icon: '👥', desc: 'Natural people leader. Excels in team management, counseling, and organizational development.', roles: ['HR Director', 'Counselor', 'Team Lead', 'Customer Success Manager'] },
-  { id: 'versatile', label: 'Versatile / Multidisciplinary Path', condition: 'Balanced High Scores', icon: '🌐', desc: 'Adaptable generalist with broad capability. Suited for cross-functional and entrepreneurial roles.', roles: ['Entrepreneur', 'Consultant', 'Product Manager', 'General Manager'] },
-  { id: 'resilient', label: 'Resilience-Heavy / Adaptive Track', condition: 'Strong AQ', icon: '⚡', desc: 'Built for high-pressure, dynamic environments requiring rapid adaptation and sustained performance.', roles: ['Crisis Manager', 'Emergency Services', 'Military Officer', 'Startup Founder'] },
-  { id: 'creative', label: 'Creative / Innovation Track', condition: 'High IQ + High EQ', icon: '💡', desc: 'Combines cognitive power with emotional intelligence for creative problem-solving and innovation.', roles: ['UX Designer', 'Creative Director', 'Innovation Lead', 'Architect'] },
+  { id: 'specialist',  label: 'Specialist / Technical Track',       condition: 'High IQ + Lower AQ',       icon: null, desc: 'Deep expertise in a focused domain. Thrives in structured, knowledge-intensive environments.',                                    roles: ['Research Scientist', 'Software Engineer', 'Data Analyst', 'Financial Analyst'] },
+  { id: 'leader',      label: 'Leadership / People-Facing Track',   condition: 'High EQ + High SQ',        icon: null, desc: 'Natural people leader. Excels in team management, counseling, and organizational development.',                                  roles: ['HR Director', 'Counselor', 'Team Lead', 'Customer Success Manager'] },
+  { id: 'versatile',   label: 'Versatile / Multidisciplinary Path', condition: 'Balanced High Scores',     icon: null, desc: 'Adaptable generalist with broad capability. Suited for cross-functional and entrepreneurial roles.',                            roles: ['Entrepreneur', 'Consultant', 'Product Manager', 'General Manager'] },
+  { id: 'resilient',   label: 'Resilience-Heavy / Adaptive Track',  condition: 'Strong AQ',                icon: null, desc: 'Built for high-pressure, dynamic environments requiring rapid adaptation and sustained performance.',                           roles: ['Crisis Manager', 'Emergency Services', 'Military Officer', 'Startup Founder'] },
+  { id: 'creative',    label: 'Creative / Innovation Track',        condition: 'High IQ + High EQ',        icon: null, desc: 'Combines cognitive power with emotional intelligence for creative problem-solving and innovation.',                             roles: ['UX Designer', 'Creative Director', 'Innovation Lead', 'Architect'] },
 ];
 
 export const SKILL_SHAPES = [
