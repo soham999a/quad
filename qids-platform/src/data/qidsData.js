@@ -73,18 +73,20 @@ export const PILLARS = {
     id: 'AQ', label: 'Adversity Quotient', short: 'AQ',
     color: '#f59e0b', gradient: 'linear-gradient(135deg, #f59e0b, #fbbf24)',
     weight: 1.28, maxScore: 100,
-    description: 'Evaluated through the Resilience Dynamics Framework — measuring the ability to anticipate, navigate, and grow through adversity as a dynamic, developable system.',
+    description: 'Evaluated through the Resilience Dynamics Framework (RDF) — measuring the ability to anticipate, navigate, and grow through adversity as a dynamic, developable system across four weighted components.',
     framework: 'Resilience Dynamics Framework (RDF)',
     subParams: [
-      { id: 'situational_agility',      label: 'Situational Agility',      max: 20, desc: 'Rapid adaptation to changing circumstances and environments.' },
-      { id: 'proactive_momentum',       label: 'Proactive Momentum',       max: 20, desc: 'Initiative-taking and forward-thinking under pressure.' },
-      { id: 'adversity_response',       label: 'Adversity Response',       max: 20, desc: 'Behavioral and cognitive response quality during setbacks.' },
-      { id: 'growth_integration',       label: 'Growth Integration',       max: 20, desc: 'Ability to extract learning and growth from difficult experiences.' },
-      { id: 'resilience_sustainability',label: 'Resilience Sustainability', max: 20, desc: 'Long-term maintenance of resilience capacity and persistence.' },
+      { id: 'SA', label: 'Situational Agility',   max: 19, desc: 'Adaptive Problem-Solving • Cognitive Flexibility • Emotional Anchoring', weight: 1.5 },
+      { id: 'PM', label: 'Proactive Momentum',    max: 19, desc: 'Anticipatory Readiness • Initiative Amplifier • Momentum Sustainment',   weight: 1.0 },
+      { id: 'RR', label: 'Relational Resilience', max: 19, desc: 'Collective Synergy • Boundary Navigation • Empathic Advocacy',           weight: 1.0 },
+      { id: 'RC', label: 'Regenerative Capacity', max: 19, desc: 'Energy Restoration • Growth Integration • Future-Proofing',              weight: 1.5 },
     ],
-    assessmentMethods: ['Resilience Dynamics questionnaire', 'Situational judgment tests', 'Stress simulation activities', 'Longitudinal behavioral tracking'],
-    developmentFocus: ['Resilience-building modules', 'Anticipation and adaptability training', 'Persistence coaching', 'High-pressure simulation exercises'],
+    assessmentMethods: ['CORE-style scenario questionnaire (Likert 1–5)', 'Simulation exercises', 'Performance tasks', 'Peer evaluation', 'Self-reflection tool', 'Structured interview'],
+    developmentFocus: ['Resilience-building modules', 'Anticipation and adaptability training', 'Relational boundary coaching', 'Regenerative capacity workshops'],
     careerAlignment: 'High AQ profiles are suited for high-pressure, adaptive, and resilience-heavy roles including entrepreneurship, crisis management, and military/emergency services.',
+    // RDF weighted scoring: (SA×1.5)+(PM×1.0)+(RR×1.0)+(RC×1.5) → max 144 → ÷144×100
+    rdWeights: { SA: 1.5, PM: 1.0, RR: 1.0, RC: 1.5 },
+    rdMax: 144,
   },
 };
 
@@ -490,7 +492,178 @@ export const SQ_QUESTIONS = {
   },
 };
 
-// ─── IQ QUESTIONS (structured MCQ + open-ended) ───────────────────────────────
+// ─── AQ QUESTIONS (from PDF — Resilience Dynamics Framework) ─────────────────
+// Scoring key: 1–2 → 0pts | 3 → 1pt | 4 → 2pts | 5 → 3pts
+// Part A: 4 Qs × 3pts max = 12 marks per component
+// Part B: Assessor rubric = 7 marks per component
+// Raw total: 4 × 19 = 76 (+ 2 bonus) = 78
+// Weighted: (SA×1.5)+(PM×1.0)+(RR×1.0)+(RC×1.5) → max 144 → ÷144×100
+export const AQ_QUESTIONS = {
+  scoringKey: { 1: 0, 2: 0, 3: 1, 4: 2, 5: 3 },
+  components: {
+    SA: {
+      id: 'SA', label: 'Situational Agility', weight: 1.5,
+      subParams: 'Adaptive Problem-Solving • Cognitive Flexibility • Emotional Anchoring',
+      desc: 'Ability to rapidly pivot strategies, reframe setbacks as opportunities, and maintain emotional stability during crises.',
+      questions: {
+        '11-18': [
+          { subParam: 'Adaptive Problem-Solving', q: 'Mid-way through an important group project, you discover the approach your team chose is fundamentally flawed and must be abandoned. Can you rapidly shift strategy, redesign the approach, and keep your team moving forward without losing momentum?' },
+          { subParam: 'Cognitive Flexibility', q: 'A plan you invested significant effort in is rejected at the last moment due to factors outside your control. Can you quickly reframe this setback as a learning milestone and redirect your energy toward a new approach?' },
+          { subParam: 'Emotional Anchoring', q: 'You are in the middle of a high-stakes situation (exam, presentation, match) when something goes wrong unexpectedly. Can you stay emotionally steady, think clearly, and adapt your approach in real time without freezing or panicking?' },
+          { subParam: 'Cognitive Flexibility', q: 'You receive sharply conflicting advice from two people you respect on how to handle a difficult situation. Can you hold both perspectives without getting confused or anxious, weigh them thoughtfully, and decide with confidence?' },
+        ],
+        '19-32': [
+          { subParam: 'Adaptive Problem-Solving', q: 'Mid-way through an important group project, you discover the approach your team chose is fundamentally flawed and must be abandoned. Can you pivot the project strategy, communicate the change clearly to stakeholders, and maintain team confidence in the new direction?' },
+          { subParam: 'Cognitive Flexibility', q: 'A plan you invested significant effort in is rejected at the last moment due to factors outside your control. Can you cognitively reframe this rejection as data, extract actionable insight, and re-engage with renewed focus?' },
+          { subParam: 'Emotional Anchoring', q: 'You are in the middle of a high-stakes situation (exam, presentation, match) when something goes wrong unexpectedly. Can you regulate your emotional state under acute pressure, access your problem-solving capacity, and adapt your response in real time?' },
+          { subParam: 'Cognitive Flexibility', q: 'You receive sharply conflicting advice from two people you respect on how to handle a difficult situation. Can you tolerate cognitive dissonance, synthesize competing inputs, and arrive at a well-reasoned independent decision?' },
+        ],
+      },
+      activity: {
+        id: 'INN-SA-01', label: 'The Shifting Maze',
+        method: 'Simulation Exercise + Observational Assessment', maxScore: 7,
+        desc11_18: 'Participants receive a step-by-step plan to solve a multi-part puzzle. Midway through, the assessor changes one or more of the rules or removes a key resource. Participants must adapt on the spot and still reach the goal. Verbal narration of their thinking is encouraged throughout.',
+        desc19_32: 'Participants receive a structured project brief with defined parameters. Partway through execution, two critical parameters are changed simultaneously. Participants must rapidly re-plan and present a revised approach within 4 minutes. Verbal reasoning is required.',
+        rubric: [
+          { criterion: 'Pivot Speed & Decisiveness', marks: 2, desc: '2 = Adapts within 60 seconds without significant stalling. 1 = Adapts after prompting or visible struggle. 0 = Unable to meaningfully pivot.' },
+          { criterion: 'Quality of New Approach', marks: 2, desc: '2 = Revised plan is logical, feasible, and complete. 1 = Partially workable with gaps. 0 = Ineffective or abandoned.' },
+          { criterion: 'Emotional Anchoring Under Shift', marks: 2, desc: '2 = Remains visibly calm and focused throughout. 1 = Shows distress but manages it. 0 = Disengages or shows significant disruption.' },
+          { criterion: 'Verbal Reasoning Clarity', marks: 1, desc: 'Clear narration of thinking while adapting — explains what changed and why the new approach is better.' },
+        ],
+      },
+    },
+    PM: {
+      id: 'PM', label: 'Proactive Momentum', weight: 1.0,
+      subParams: 'Anticipatory Readiness • Initiative Amplifier • Momentum Sustainment',
+      desc: 'Ability to prepare for adversity in advance, take preemptive action, and maintain progress despite disruptions.',
+      questions: {
+        '11-18': [
+          { subParam: 'Anticipatory Readiness', q: 'You sense that a situation you are involved in (a project, a friendship, a plan) is heading toward a problem — even though nothing has gone wrong yet. Do you take action to prepare and prevent the problem before it happens, rather than waiting to react?' },
+          { subParam: 'Initiative Amplifier', q: 'No one has asked you to solve a problem you notice in your team, class, or workplace — but you can clearly see it is slowing everyone down. Do you step up, take initiative, and start working on a solution without waiting to be assigned or instructed?' },
+          { subParam: 'Momentum Sustainment', q: 'You are working toward an important long-term goal and face a string of consecutive disruptions — setbacks, distractions, competing demands. Can you keep making consistent progress on your goal even when things keep getting in the way?' },
+          { subParam: 'Momentum Sustainment', q: 'Resources you were counting on (time, people, materials, information) are suddenly reduced or removed mid-way through something important. Can you find alternative ways to keep moving forward and still produce a good result with less than you had planned?' },
+        ],
+        '19-32': [
+          { subParam: 'Anticipatory Readiness', q: 'You sense that a situation you are involved in (a project, a friendship, a plan) is heading toward a problem — even though nothing has gone wrong yet. Do you proactively diagnose early warning signs, design contingency responses, and act before the risk materializes?' },
+          { subParam: 'Initiative Amplifier', q: 'No one has asked you to solve a problem you notice in your team, class, or workplace — but you can clearly see it is slowing everyone down. Do you volunteer a solution, mobilise relevant people, and take ownership of resolving it without requiring a directive?' },
+          { subParam: 'Momentum Sustainment', q: 'You are working toward an important long-term goal and face a string of consecutive disruptions — setbacks, distractions, competing demands. Do you sustain disciplined progress toward your strategic objectives despite repeated operational disruptions?' },
+          { subParam: 'Momentum Sustainment', q: 'Resources you were counting on (time, people, materials, information) are suddenly reduced or removed mid-way through something important. Can you redesign your resource strategy, leverage alternative inputs, and sustain output quality under constrained conditions?' },
+        ],
+      },
+      activity: {
+        id: 'INN-PM-01', label: 'The Contingency Architect',
+        method: 'Performance Task + Self-Reflection Tool', maxScore: 7,
+        desc11_18: 'Participants are given a realistic goal scenario (e.g., "You are organising a school event in 3 weeks"). They must complete a Contingency Planning Sheet: identify 3 risks, rate each by likelihood and impact, and design a specific pre-emptive action for each. They then write a "Momentum Pledge" — what they will do to keep going if two of the three risks hit at once.',
+        desc19_32: 'Participants receive a professional project brief with a 3-month timeline and a budget. They must produce a Risk-Anticipation Matrix (3 strategic risks, probability, impact, mitigation plan) and a Momentum Sustainment Protocol — specific decisions they would make if two simultaneous disruptions occurred at the halfway mark.',
+        rubric: [
+          { criterion: 'Risk Identification Realism', marks: 2, desc: '2 = All 3 risks are plausible, specific, and non-trivial. 1 = Partially realistic. 0 = Generic or trivial.' },
+          { criterion: 'Mitigation Plan Quality', marks: 2, desc: '2 = Each mitigation is a concrete, executable action — not a vague intention. 1 = Some specificity. 0 = Aspirational only.' },
+          { criterion: 'Momentum Sustainment Logic', marks: 2, desc: '2 = Multi-disruption response is coherent and demonstrates sustained initiative. 1 = Partially workable. 0 = No clear response.' },
+          { criterion: 'Initiative Voice', marks: 1, desc: 'Language throughout reflects ownership and proactive agency — "I will", not "someone should" or "it depends".' },
+        ],
+      },
+    },
+    RR: {
+      id: 'RR', label: 'Relational Resilience', weight: 1.0,
+      subParams: 'Collective Synergy • Boundary Navigation • Empathic Advocacy',
+      desc: 'Ability to leverage team networks during crises, balance personal and professional demands under stress, and advocate for others while managing own stress.',
+      questions: {
+        '11-18': [
+          { subParam: 'Collective Synergy', q: 'Your team is in crisis — multiple members are overwhelmed and stressed, and the project is at risk of failing. You are also under pressure. Can you rally your teammates, coordinate everyone\'s strengths, and get the team working together effectively — even when you are also struggling?' },
+          { subParam: 'Boundary Navigation', q: 'Someone you care about keeps making emotional demands on you at a time when you are already stretched thin and need to protect your focus. Can you say no or set a boundary with someone you care about — kindly but clearly — without feeling guilty or damaging the relationship?' },
+          { subParam: 'Empathic Advocacy', q: 'You notice that a member of your team or peer group is being treated unfairly or is struggling in ways others have not noticed. Do you speak up or take action to support that person — even if it is awkward or inconvenient for you?' },
+          { subParam: 'Boundary Navigation', q: 'You are managing a long period of sustained stress. Your relationships at home or with friends are beginning to show strain as a result. Do you actively protect your close relationships during stressful periods — making time and emotional space even when resources feel scarce?' },
+        ],
+        '19-32': [
+          { subParam: 'Collective Synergy', q: 'Your team is in crisis — multiple members are overwhelmed and stressed, and the project is at risk of failing. You are also under pressure. Can you activate collective synergy — identifying each person\'s strengths, redistributing load intelligently, and re-energising the team — while managing your own pressure?' },
+          { subParam: 'Boundary Navigation', q: 'Someone you care about keeps making emotional demands on you at a time when you are already stretched thin and need to protect your focus. Can you assert clear relational boundaries during high-demand periods while preserving relationship quality and the other person\'s dignity?' },
+          { subParam: 'Empathic Advocacy', q: 'You notice that a member of your team or peer group is being treated unfairly or is struggling in ways others have not noticed. Do you proactively advocate for that person\'s needs — addressing the issue with relevant parties and providing concrete support — even at personal cost?' },
+          { subParam: 'Boundary Navigation', q: 'You are managing a long period of sustained stress. Your relationships at home or with friends are beginning to show strain as a result. Do you implement deliberate strategies to maintain relational health during sustained adversity — communicating openly about your limits and co-creating solutions?' },
+        ],
+      },
+      activity: {
+        id: 'INN-RR-01', label: 'The Crisis Circle',
+        method: 'Group Simulation + Peer Evaluation', maxScore: 7,
+        desc11_18: 'A group of 4–5 participants receives a team crisis scenario card (e.g., "Your sports team has just lost its coach, 3 members are considering quitting, and the regional tournament is in 2 weeks"). Each person privately writes their "Relational Resilience Response": how they would support the team, which boundary they would draw, and one person they would advocate for. They then share and the group discusses alignment. Peers score each other on empathic advocacy and collective contribution.',
+        desc19_32: 'A group of 4–5 participants navigates a structured workplace crisis simulation: a team project is losing momentum due to interpersonal conflict, one member is clearly struggling, and the deadline is immovable. Each participant plays a defined role (Team Lead, Struggling Member, Neutral Party, etc.) for 10 minutes. Behaviours are assessed by a trained peer observer using the rubric below.',
+        rubric: [
+          { criterion: 'Collective Synergy Action', marks: 2, desc: '2 = Actively mobilises group strengths, redistributes effort. 1 = Contributes but does not coordinate. 0 = Withdraws or works solo only.' },
+          { criterion: 'Boundary Navigation Skill', marks: 2, desc: '2 = Asserts a boundary clearly and kindly within the simulation. 1 = Hints at limit without asserting. 0 = Either imposes or fully capitulates.' },
+          { criterion: 'Empathic Advocacy Behaviour', marks: 2, desc: '2 = Identifies and champions the struggling member\'s needs concretely. 1 = Acknowledges but does not act. 0 = Does not notice or ignores.' },
+          { criterion: 'Peer Evaluation Score', marks: 1, desc: 'Average score given by 2 peers on "Did this person strengthen or stabilise the team?" (1–5 mapped to 0–1).' },
+        ],
+      },
+    },
+    RC: {
+      id: 'RC', label: 'Regenerative Capacity', weight: 1.5,
+      subParams: 'Energy Restoration • Growth Integration • Future-Proofing',
+      desc: 'Ability to recover physically and mentally post-adversity, apply lessons from past challenges to future ones, and build systems that minimise recurrence.',
+      questions: {
+        '11-18': [
+          { subParam: 'Energy Restoration', q: 'After an intense, draining period of adversity or pressure, you finally have some space to recover. Do you actively do things that genuinely restore your energy (not just zone out) — and do you come back stronger and ready to go again?' },
+          { subParam: 'Growth Integration', q: 'You have just come through a significant failure or difficult experience. Do you actively sit with what happened — figure out what you learned — and change something in how you act going forward?' },
+          { subParam: 'Future-Proofing', q: 'You have experienced the same type of setback more than once (same mistake, same kind of conflict, same kind of failure). Do you take steps to build new habits, systems, or strategies specifically designed to stop this from happening again?' },
+          { subParam: 'Growth Integration', q: 'You watch a peer or colleague go through something difficult that you have also experienced in the past. Do you use what you learned from your own experience to genuinely help them — not just sympathise, but offer real, specific guidance?' },
+        ],
+        '19-32': [
+          { subParam: 'Energy Restoration', q: 'After an intense, draining period of adversity or pressure, you finally have some space to recover. Do you engage deliberate energy restoration practices — physical, cognitive, and emotional — and re-emerge with demonstrably renewed capacity?' },
+          { subParam: 'Growth Integration', q: 'You have just come through a significant failure or difficult experience. Do you conduct a structured post-adversity review, extract transferable insights, and formally integrate them into your approach for future situations?' },
+          { subParam: 'Future-Proofing', q: 'You have experienced the same type of setback more than once (same mistake, same kind of conflict, same kind of failure). Do you design and implement structural changes — processes, habits, or safeguards — that systemically reduce the probability of recurrence?' },
+          { subParam: 'Growth Integration', q: 'You watch a peer or colleague go through something difficult that you have also experienced in the past. Do you leverage your growth-integrated learnings to mentor or support the other person with evidence-based, specific, and actionable guidance?' },
+        ],
+      },
+      activity: {
+        id: 'INN-RC-01', label: 'The Resilience Retrospective',
+        method: 'Self-Reflection Tool + Observational Assessment (Interview Format)', maxScore: 7,
+        desc11_18: 'Participants are guided through a structured 3-part written reflection on a real past adversity: (1) "The Storm" — describe the adversity and your emotional experience; (2) "The Harvest" — what did you learn and how did you change? (3) "The Shield" — what have you built, changed, or decided to prevent a similar adversity? The assessor then conducts a 5-minute structured dialogue.',
+        desc19_32: 'Participants complete a Resilience Audit — a structured retrospective analysis of a significant professional or personal adversity. They produce: (1) An adversity impact map; (2) A Growth Integration Summary (3 specific lessons learned and where they have since applied them); (3) A Future-Proofing Blueprint (specific system, habit, or process designed since the adversity to reduce recurrence). A 6-minute structured assessor interview follows.',
+        rubric: [
+          { criterion: 'Depth of Self-Reflection', marks: 2, desc: '2 = Genuinely specific, emotionally honest, beyond surface description. 1 = Some depth but avoids discomfort. 0 = Superficial or performative.' },
+          { criterion: 'Growth Integration Specificity', marks: 2, desc: '2 = Lessons are specific, named, and demonstrably applied — not just stated. 1 = Lessons identified but not clearly applied. 0 = No concrete learning articulated.' },
+          { criterion: 'Future-Proofing Concreteness', marks: 2, desc: '2 = Blueprint/system is structural, specific, and already partially implemented. 1 = Planned but not begun. 0 = Vague intention only.' },
+          { criterion: 'Interview Authenticity', marks: 1, desc: 'Assessor-rated: responses feel genuine and grounded in real experience (not rehearsed or abstracted). Scored 0 or 1.' },
+        ],
+      },
+    },
+  },
+  // Resilience level interpretation (based on RD Score /144)
+  levels: [
+    { label: 'Resilience Architect', min: 130, max: 144, color: '#10b981', desc: 'Elite-level resilience across all four RDF components. Thrives under adversity.', action: 'Leverage as a peer mentor; build on Growth Integration to coach others.' },
+    { label: 'Dynamic Adaptor',      min: 100, max: 129, color: '#06b6d4', desc: 'Strong overall resilience with identifiable improvement areas in 1–2 components.', action: 'Focus on weaker sub-components (e.g., Energy Restoration or Future-Proofing).' },
+    { label: 'Emerging Resilient',   min: 72,  max: 99,  color: '#f59e0b', desc: 'Functional resilience but vulnerable under compound adversity or sustained pressure.', action: 'Prioritise high-weight components (SA/RC); structured coaching recommended.' },
+    { label: 'Reactive Responder',   min: 0,   max: 71,  color: '#ef4444', desc: 'Significant resilience deficits; adversity tends to cascade and persist.', action: 'Priority intervention: develop foundational skills (Cognitive Flexibility, Energy Restoration).' },
+  ],
+};
+
+// AQ scoring: Likert 1–5 → marks: 1–2=0, 3=1, 4=2, 5=3
+export function mapAQLikert(val) {
+  if (val <= 2) return 0;
+  if (val === 3) return 1;
+  if (val === 4) return 2;
+  return 3;
+}
+
+// Compute AQ RD Score and convert to 100-point scale
+export function computeAQScore(aqScores) {
+  // aqScores: { SA: { partA: {0:val,1:val,2:val,3:val}, partB: {criterion:val} }, PM: {...}, RR: {...}, RC: {...} }
+  const weights = { SA: 1.5, PM: 1.0, RR: 1.0, RC: 1.5 };
+  let rdScore = 0;
+  Object.entries(weights).forEach(([comp, w]) => {
+    const partAScores = aqScores[comp]?.partA || {};
+    const partAMarks = Object.values(partAScores).reduce((s, v) => s + mapAQLikert(v || 0), 0);
+    const partBScores = aqScores[comp]?.partB || {};
+    const partBMarks = Object.values(partBScores).reduce((s, v) => s + (v || 0), 0);
+    const raw = Math.min(partAMarks + partBMarks, 19);
+    rdScore += raw * w;
+  });
+  return Math.round((rdScore / 144) * 100);
+}
+
+export function getAQLevel(rdScore) {
+  return AQ_QUESTIONS.levels.find(l => rdScore >= l.min && rdScore <= l.max) || AQ_QUESTIONS.levels[3];
+}
+
+
 export const IQ_QUESTIONS = {
   verbal: {
     label: 'Verbal Intelligence', maxScore: 25,
@@ -812,14 +985,14 @@ export const DEMO_SCORES = {
   IQ: { verbal: 20, quantitative: 18, psychometric: 22, performance: 17 },
   EQ: { SA: 8, ER: 7, SM: 8, E: 7, IS: 8 },
   SQ: { ACE: 14, CSI: 7, PBA: 13 },
-  AQ: { situational_agility: 15, proactive_momentum: 13, adversity_response: 14, growth_integration: 16, resilience_sustainability: 12 },
+  AQ: { SA: 14, PM: 11, RR: 12, RC: 13 },
 };
 
 export const DEMO_POST_SCORES = {
   IQ: { verbal: 23, quantitative: 21, psychometric: 24, performance: 20 },
   EQ: { SA: 9, ER: 9, SM: 9, E: 9, IS: 9 },
   SQ: { ACE: 17, CSI: 9, PBA: 17 },
-  AQ: { situational_agility: 18, proactive_momentum: 17, adversity_response: 18, growth_integration: 19, resilience_sustainability: 16 },
+  AQ: { SA: 17, PM: 15, RR: 16, RC: 17 },
 };
 
 // ─── SCORING FUNCTIONS ────────────────────────────────────────────────────────

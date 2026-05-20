@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { ClipboardList, ChevronDown, ChevronUp, BookOpen, Brain, Heart, Users, Zap, Download, ExternalLink } from 'lucide-react';
-import { EQ_QUESTIONS, SQ_QUESTIONS, IQ_QUESTIONS } from '../data/qidsData';
+import { EQ_QUESTIONS, SQ_QUESTIONS, IQ_QUESTIONS, AQ_QUESTIONS, mapAQLikert } from '../data/qidsData';
 
 const PILLARS = {
   IQ: { label: 'Intelligence Quotient', color: '#6366f1', icon: Brain, emoji: '🧠' },
@@ -258,6 +258,101 @@ function OpenInput({ question, index }) {
   );
 }
 
+// ─── AQ Questionnaire View ────────────────────────────────────────────────────
+function AQQuestionnaire({ color }) {
+  const [ageGroup, setAgeGroup] = useState('11-18');
+  const [activeComp, setActiveComp] = useState('SA');
+  const components = ['SA', 'PM', 'RR', 'RC'];
+  const compData = AQ_QUESTIONS.components;
+
+  return (
+    <div>
+      {/* Age group + scoring key */}
+      <div style={{ display: 'flex', gap: 8, marginBottom: 16, flexWrap: 'wrap', alignItems: 'center' }}>
+        {[{ id: '11-18', label: '11–18 Years' }, { id: '19-32', label: '19–32 Years' }].map(ag => (
+          <button key={ag.id} onClick={() => setAgeGroup(ag.id)} style={{
+            padding: '7px 16px', borderRadius: 8, cursor: 'pointer',
+            background: ageGroup === ag.id ? color : 'var(--navy-4)',
+            color: ageGroup === ag.id ? 'white' : 'var(--text-secondary)',
+            border: `1px solid ${ageGroup === ag.id ? color : 'var(--border-light)'}`,
+            fontSize: 13, fontWeight: 500, transition: 'all 0.15s',
+          }}>{ag.label}</button>
+        ))}
+        <div style={{ marginLeft: 'auto', padding: '6px 12px', background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.2)', borderRadius: 8, fontSize: 11, color: '#f59e0b' }}>
+          Scoring: 1–2 = 0pt · 3 = 1pt · 4 = 2pts · 5 = 3pts
+        </div>
+      </div>
+
+      {/* Component tabs */}
+      <div style={{ display: 'flex', gap: 6, marginBottom: 20, flexWrap: 'wrap' }}>
+        {components.map(c => (
+          <button key={c} onClick={() => setActiveComp(c)} style={{
+            padding: '7px 14px', borderRadius: 8, cursor: 'pointer',
+            background: activeComp === c ? color : 'var(--navy-4)',
+            color: activeComp === c ? 'white' : 'var(--text-secondary)',
+            border: `1px solid ${activeComp === c ? color : 'var(--border-light)'}`,
+            fontSize: 12, fontWeight: 500, transition: 'all 0.15s',
+          }}>{c} — {compData[c].label} <span style={{ opacity: 0.7 }}>×{compData[c].weight}</span></button>
+        ))}
+      </div>
+
+      {/* Component info */}
+      <div style={{ padding: '12px 16px', background: `${color}08`, border: `1px solid ${color}20`, borderRadius: 10, marginBottom: 16 }}>
+        <div style={{ fontSize: 14, fontWeight: 700, color }}>{compData[activeComp].label}</div>
+        <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 2 }}>{compData[activeComp].subParams}</div>
+        <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginTop: 4 }}>{compData[activeComp].desc}</div>
+      </div>
+
+      {/* Part A questions */}
+      <div style={{ marginBottom: 20 }}>
+        <div style={{ fontSize: 13, fontWeight: 700, color, marginBottom: 10 }}>Part A — Scenario Questions (12 marks)</div>
+        {compData[activeComp].questions[ageGroup].map((q, i) => (
+          <div key={i} style={{ marginBottom: 12, padding: '12px 14px', background: 'rgba(255,255,255,0.02)', borderRadius: 10, border: '1px solid var(--border-light)' }}>
+            <div style={{ fontSize: 10, color, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 4 }}>{q.subParam}</div>
+            <div style={{ fontSize: 13, marginBottom: 10, lineHeight: 1.6 }}>
+              <span style={{ color: 'var(--text-muted)', marginRight: 6 }}>{i + 1}.</span>{q.q}
+            </div>
+            <ScaleInput />
+          </div>
+        ))}
+      </div>
+
+      {/* Part B activity */}
+      <div>
+        <div style={{ fontSize: 13, fontWeight: 700, color, marginBottom: 10 }}>Part B — {compData[activeComp].activity.label} (7 marks)</div>
+        <div style={{ padding: '12px 14px', background: 'var(--navy-4)', border: `1px solid ${color}20`, borderRadius: 12 }}>
+          <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 8 }}>{compData[activeComp].activity.method}</div>
+          <div style={{ fontSize: 12, color: 'var(--text-secondary)', lineHeight: 1.6, marginBottom: 14 }}>
+            {ageGroup === '11-18' ? compData[activeComp].activity.desc11_18 : compData[activeComp].activity.desc19_32}
+          </div>
+          <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 8 }}>Rubric</div>
+          {compData[activeComp].activity.rubric.map(r => (
+            <div key={r.criterion} style={{ padding: '8px 10px', marginBottom: 4, borderRadius: 6, background: 'rgba(255,255,255,0.03)', border: '1px solid var(--border-light)', fontSize: 12 }}>
+              <span style={{ fontWeight: 600, color }}>{r.criterion}</span> <span style={{ color: 'var(--text-muted)' }}>({r.marks} marks)</span> — {r.desc}
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Scoring summary */}
+      <div style={{ marginTop: 20, padding: '14px 16px', background: 'rgba(245,158,11,0.06)', border: '1px solid rgba(245,158,11,0.2)', borderRadius: 10 }}>
+        <div style={{ fontSize: 12, fontWeight: 600, color: '#f59e0b', marginBottom: 8 }}>RDF Weighted Scoring Formula</div>
+        <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 12, color: 'var(--text-secondary)', lineHeight: 1.8 }}>
+          RD Score = (SA×1.5) + (PM×1.0) + (RR×1.0) + (RC×1.5)<br />
+          Max = 144 | Converted = RD Score ÷ 144 × 100
+        </div>
+        <div style={{ marginTop: 10, display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+          {AQ_QUESTIONS.levels.map(l => (
+            <div key={l.label} style={{ padding: '4px 10px', borderRadius: 6, background: `${l.color}15`, border: `1px solid ${l.color}30`, fontSize: 11, color: l.color }}>
+              {l.label} ({l.min}–{l.max})
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function Questionnaires() {
   const [activePillar, setActivePillar] = useState('IQ');
   const pillar = PILLARS[activePillar];
@@ -332,15 +427,7 @@ export default function Questionnaires() {
         {activePillar === 'IQ' && <IQQuestionnaire color={pillar.color} />}
         {activePillar === 'EQ' && <EQQuestionnaire color={pillar.color} />}
         {activePillar === 'SQ' && <SQQuestionnaire color={pillar.color} />}
-        {activePillar === 'AQ' && (
-          <div style={{ textAlign: 'center', padding: 60 }}>
-            <div style={{ fontSize: 48, marginBottom: 16 }}>⚡</div>
-            <h3 style={{ fontSize: 18, fontWeight: 700, marginBottom: 8 }}>AQ Questionnaire Coming Soon</h3>
-            <p style={{ fontSize: 14, color: 'var(--text-muted)', lineHeight: 1.6 }}>
-              The AQ PDF questionnaire will be added once received. The assessment engine currently uses evaluator-scored rubric sliders for AQ.
-            </p>
-          </div>
-        )}
+        {activePillar === 'AQ' && <AQQuestionnaire color={pillar.color} />}
       </div>
     </div>
   );

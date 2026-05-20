@@ -1,5 +1,9 @@
 import React, { useState } from 'react';
-import { PILLARS, DEMO_SCORES, computePillarScore, computeWeightedScore, getGrade, EQ_QUESTIONS, SQ_QUESTIONS, IQ_QUESTIONS } from '../data/qidsData';
+import { PILLARS, DEMO_SCORES, computePillarScore, computeWeightedScore, getGrade, EQ_QUESTIONS, SQ_QUESTIONS, IQ_QUESTIONS, AQ_QUESTIONS, mapAQLikert } from '../data/qidsData';
+import { getRandomDiagramQuestions } from '../data/diagramQuestions';
+import { generateIQQuestions, generateEQQuestions, generateAQQuestions, generateSQQuestions } from '../services/groqService';
+import DiagramQuestion from '../components/DiagramQuestion';
+import AIQuestionGenerator from '../components/AIQuestionGenerator';
 import { useApp } from '../App';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
@@ -189,23 +193,33 @@ function IntakeStep({ data, onChange }) {
 }
 
 // ─── IQ ASSESSMENT STEP ───────────────────────────────────────────────────────
-function IQStep({ scores, onChange }) {
+function IQStep({ scores, onChange, ageGroup, context }) {
   const pillar = PILLARS.IQ;
   const [activeSection, setActiveSection] = useState('verbal');
+  // Stable diagram questions per session (initialized once)
+  const [diagramQs] = useState(() => getRandomDiagramQuestions(5));
+  const [diagramAnswers, setDiagramAnswers] = useState({});
+
   const sections = [
     { id: 'verbal',       label: 'Verbal',       color: '#6366f1' },
     { id: 'quantitative', label: 'Quantitative', color: '#8b5cf6' },
     { id: 'psychometric', label: 'Psychometric', color: '#a855f7' },
     { id: 'performance',  label: 'Performance',  color: '#c084fc' },
+    { id: 'diagrams',     label: '🖼 Visual',     color: '#06b6d4' },
+    { id: 'ai',           label: '✨ AI',          color: '#10b981' },
   ];
 
-  const sectionData = IQ_QUESTIONS[activeSection];
+  const sectionData = ['verbal', 'quantitative', 'psychometric', 'performance'].includes(activeSection)
+    ? IQ_QUESTIONS[activeSection]
+    : null;
 
   const handleAnswer = (sectionId, qIndex, value) => {
     onChange(sectionId, qIndex, value);
   };
 
   const getScore = (sectionId) => {
+    if (sectionId === 'diagrams') return Object.keys(diagramAnswers).length;
+    if (sectionId === 'ai') return 0;
     const s = scores[sectionId] || {};
     return Object.values(s).filter(v => v !== undefined && v !== '').length;
   };
@@ -234,27 +248,67 @@ function IQStep({ scores, onChange }) {
         })}
       </div>
 
-      {/* Questions */}
-      <div style={{ fontSize: 14, fontWeight: 700, marginBottom: 4, color: sections.find(s => s.id === activeSection)?.color }}>{sectionData.label}</div>
-      <div style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 16 }}>Max: {sectionData.maxScore} marks</div>
+      {/* Standard questions for verbal/quantitative/psychometric/performance */}
+      {['verbal', 'quantitative', 'psychometric', 'performance'].includes(activeSection) && (
+        <>
+          <div style={{ fontSize: 14, fontWeight: 700, marginBottom: 4, color: sections.find(s => s.id === activeSection)?.color }}>{sectionData.label}</div>
+          <div style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 16 }}>Max: {sectionData.maxScore} marks</div>
+          {sectionData.sections.map((sec, si) => (
+            <div key={si} style={{ marginBottom: 24 }}>
+              <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-secondary)', marginBottom: 4, padding: '6px 12px', background: 'rgba(99,102,241,0.08)', borderRadius: 6, display: 'inline-block' }}>{sec.title}</div>
+              {sec.instruction && <div style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 12, fontStyle: 'italic' }}>{sec.instruction}</div>}
+              <div style={{ marginTop: 10 }}>
+                {sec.questions.map((q, qi) => {
+                  const globalIdx = si * 5 + qi;
+                  const qType = sec.type === 'mixed' ? (q.type || 'open') : sec.type;
+                  const val = scores[activeSection]?.[globalIdx];
+                  if (qType === 'mcq') {
+                    return <MCQQuestion key={qi} q={q} index={qi} selected={val} onSelect={v => handleAnswer(activeSection, globalIdx, v)} color={sections.find(s => s.id === activeSection)?.color || '#6366f1'} />;
+                  }
+                  return <OpenQuestion key={qi} q={q} index={qi} value={val} onChange={v => handleAnswer(activeSection, globalIdx, v)} />;
+                })}
+              </div>
+            </div>
+          ))}
+        </>
+      )}
 
-      {sectionData.sections.map((sec, si) => (
-        <div key={si} style={{ marginBottom: 24 }}>
-          <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-secondary)', marginBottom: 4, padding: '6px 12px', background: 'rgba(99,102,241,0.08)', borderRadius: 6, display: 'inline-block' }}>{sec.title}</div>
-          {sec.instruction && <div style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 12, fontStyle: 'italic' }}>{sec.instruction}</div>}
-          <div style={{ marginTop: 10 }}>
-            {sec.questions.map((q, qi) => {
-              const globalIdx = si * 5 + qi;
-              const qType = sec.type === 'mixed' ? (q.type || 'open') : sec.type;
-              const val = scores[activeSection]?.[globalIdx];
-              if (qType === 'mcq') {
-                return <MCQQuestion key={qi} q={q} index={qi} selected={val} onSelect={v => handleAnswer(activeSection, globalIdx, v)} color={sections.find(s => s.id === activeSection)?.color || '#6366f1'} />;
-              }
-              return <OpenQuestion key={qi} q={q} index={qi} value={val} onChange={v => handleAnswer(activeSection, globalIdx, v)} />;
-            })}
+      {/* Diagram / Visual questions */}
+      {activeSection === 'diagrams' && (
+        <div>
+          <div style={{ padding: '10px 14px', background: 'rgba(6,182,212,0.08)', border: '1px solid rgba(6,182,212,0.2)', borderRadius: 8, marginBottom: 20, fontSize: 12, color: 'var(--text-secondary)', lineHeight: 1.5 }}>
+            <strong style={{ color: '#06b6d4' }}>Visual & Diagram Questions.</strong> 5 questions randomly selected from a pool of 10. Tests spatial reasoning, pattern recognition, and visual logic.
           </div>
+          {diagramQs.map((q, i) => (
+            <DiagramQuestion
+              key={q.id} question={q} index={i}
+              selected={diagramAnswers[q.id]}
+              onSelect={v => setDiagramAnswers(prev => ({ ...prev, [q.id]: v }))}
+              color="#06b6d4"
+            />
+          ))}
         </div>
-      ))}
+      )}
+
+      {/* AI-generated questions */}
+      {activeSection === 'ai' && (
+        <div>
+          <div style={{ padding: '10px 14px', background: 'rgba(16,185,129,0.08)', border: '1px solid rgba(16,185,129,0.2)', borderRadius: 8, marginBottom: 20, fontSize: 12, color: 'var(--text-secondary)', lineHeight: 1.5 }}>
+            <strong style={{ color: '#10b981' }}>AI-Generated Questions.</strong> Fresh questions generated by Groq (llama-3.3-70b) based on the QIDS knowledge base. Each assessment gets a unique set.
+          </div>
+          {['verbal', 'quantitative', 'psychometric', 'performance'].map(sec => (
+            <AIQuestionGenerator
+              key={sec}
+              pillar="IQ" component={sec} ageGroup={ageGroup} context={context}
+              questionType={sec === 'verbal' || sec === 'performance' ? 'open' : 'mcq'}
+              color="#10b981"
+              label={`${sec.charAt(0).toUpperCase() + sec.slice(1)} IQ`}
+              generateFn={(params) => generateIQQuestions({ ...params, section: sec })}
+              onAnswersChange={(ans, qs) => onChange('ai_' + sec, 0, { answers: ans, questions: qs })}
+            />
+          ))}
+        </div>
+      )}
     </div>
   );
 }
@@ -336,6 +390,14 @@ function EQStep({ scores, onChange, ageGroup }) {
               />
             ))}
           </div>
+          {/* AI-generated additional EQ questions */}
+          <AIQuestionGenerator
+            pillar="EQ" component={activeComponent} ageGroup={age}
+            questionType="likert" color={pillar.color}
+            label={`${compData[activeComponent].label} statements`}
+            generateFn={generateEQQuestions}
+            onAnswersChange={(ans) => onChange('partA_ai', activeComponent, 'ai', ans)}
+          />
         </div>
       )}
 
@@ -529,10 +591,16 @@ function SQStep({ scores, onChange }) {
               </div>
             );
           })}
+          {/* AI-generated additional SQ scenarios */}
+          <AIQuestionGenerator
+            pillar="SQ" component="CSI" ageGroup="19-32"
+            questionType="mcq" color={pillar.color}
+            label="Social Intelligence scenarios"
+            generateFn={generateSQQuestions}
+            onAnswersChange={(ans) => onChange('CSI', 'ai', 'ai', ans)}
+          />
         </div>
       )}
-
-      {/* PBA */}
       {activeComponent === 'PBA' && (
         <div>
           <div style={{ padding: '10px 14px', background: 'rgba(168,85,247,0.08)', border: '1px solid rgba(168,85,247,0.2)', borderRadius: 8, marginBottom: 20, fontSize: 12, color: 'var(--text-secondary)', lineHeight: 1.5 }}>
@@ -597,52 +665,202 @@ function SQStep({ scores, onChange }) {
 }
 
 // ─── AQ ASSESSMENT STEP ───────────────────────────────────────────────────────
-function AQStep({ scores, onChange }) {
+function AQStep({ scores, onChange, ageGroup }) {
   const pillar = PILLARS.AQ;
+  const age = ageGroup || '11-18';
+  const components = ['SA', 'PM', 'RR', 'RC'];
+  const [activeComp, setActiveComp] = useState('SA');
+  const [activeTab, setActiveTab] = useState('partA');
+
+  const compData = AQ_QUESTIONS.components;
+
+  const getPartAAnswered = (comp) => {
+    const s = scores[comp]?.partA || {};
+    return Object.values(s).filter(v => v > 0).length;
+  };
+
+  const getPartAMarks = (comp) => {
+    const s = scores[comp]?.partA || {};
+    return Object.values(s).reduce((sum, v) => sum + mapAQLikert(v || 0), 0);
+  };
+
+  const getPartBMarks = (comp) => {
+    const act = compData[comp].activity;
+    const s = scores[comp]?.partB || {};
+    return act.rubric.reduce((sum, r) => sum + (s[r.criterion] || 0), 0);
+  };
+
+  // Compute live RD score preview
+  const rdScore = components.reduce((sum, comp) => {
+    const w = compData[comp].weight;
+    const raw = Math.min(getPartAMarks(comp) + getPartBMarks(comp), 19);
+    return sum + raw * w;
+  }, 0);
+  const converted = Math.round((rdScore / 144) * 100);
+
   return (
     <div>
       <SectionHeader
         title="Adversity Quotient (AQ) — Resilience Dynamics Framework"
-        subtitle="5 Sub-parameters | 20 marks each | Assessor-scored using rubric sliders"
+        subtitle={`Age Group: ${age === '11-18' ? '11–18 Years' : '19–32 Years'} | 4 Components × 19 marks | Weighted formula → /100`}
         color={pillar.color}
       />
-      <div style={{ padding: '10px 14px', background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.2)', borderRadius: 8, marginBottom: 20, fontSize: 12, color: 'var(--text-secondary)', lineHeight: 1.5 }}>
-        <strong style={{ color: pillar.color }}>Note:</strong> AQ PDF questionnaire will be added soon. Currently using evaluator-scored rubric sliders. Enter scores based on observation and assessment.
+
+      {/* Live RD Score preview */}
+      <div style={{ display: 'flex', gap: 10, marginBottom: 20, padding: '12px 16px', background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.2)', borderRadius: 10, alignItems: 'center' }}>
+        <div style={{ flex: 1 }}>
+          <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 2 }}>Live RD Score Preview</div>
+          <div style={{ fontSize: 11, color: 'var(--text-secondary)' }}>Formula: (SA×1.5) + (PM×1.0) + (RR×1.0) + (RC×1.5) ÷ 144 × 100</div>
+        </div>
+        <div style={{ textAlign: 'right' }}>
+          <div style={{ fontSize: 28, fontWeight: 800, color: pillar.color, fontFamily: 'Space Grotesk', lineHeight: 1 }}>{converted}</div>
+          <div style={{ fontSize: 10, color: 'var(--text-muted)' }}>RD: {Math.round(rdScore)}/144</div>
+        </div>
       </div>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-        {pillar.subParams.map(sp => {
-          const val = scores[sp.id] ?? 0;
-          const pct = Math.round((val / sp.max) * 100);
+
+      {/* Component tabs */}
+      <div style={{ display: 'flex', gap: 6, marginBottom: 20, flexWrap: 'wrap' }}>
+        {components.map(comp => {
+          const cd = compData[comp];
+          const answered = getPartAAnswered(comp);
+          const partBTotal = getPartBMarks(comp);
           return (
-            <div key={sp.id} style={{ background: 'var(--navy-4)', border: '1px solid var(--border-light)', borderRadius: 12, padding: 16 }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 10 }}>
-                <div>
-                  <div style={{ fontSize: 14, fontWeight: 600 }}>{sp.label}</div>
-                  <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 2 }}>{sp.desc}</div>
-                </div>
-                <div style={{ textAlign: 'right', minWidth: 70 }}>
-                  <div style={{ fontSize: 20, fontWeight: 700, color: pillar.color }}>{val}</div>
-                  <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>/ {sp.max}</div>
-                </div>
-              </div>
-              <input
-                type="range" min={0} max={sp.max} value={val}
-                onChange={e => onChange(sp.id, parseInt(e.target.value))}
-                style={{
-                  width: '100%', height: 6, borderRadius: 3, outline: 'none',
-                  background: `linear-gradient(90deg, ${pillar.color} ${pct}%, rgba(255,255,255,0.1) ${pct}%)`,
-                  border: 'none', padding: 0, cursor: 'pointer', appearance: 'none',
-                }}
-              />
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 4 }}>
-                <span style={{ fontSize: 10, color: 'var(--text-muted)' }}>0</span>
-                <span style={{ fontSize: 10, color: pct >= 60 ? '#10b981' : '#ef4444', fontWeight: 600 }}>{pct}%</span>
-                <span style={{ fontSize: 10, color: 'var(--text-muted)' }}>{sp.max}</span>
-              </div>
-            </div>
+            <button key={comp} onClick={() => { setActiveComp(comp); setActiveTab('partA'); }} style={{
+              padding: '8px 14px', borderRadius: 8, cursor: 'pointer',
+              background: activeComp === comp ? pillar.color : 'var(--navy-4)',
+              color: activeComp === comp ? 'white' : 'var(--text-secondary)',
+              border: `1px solid ${activeComp === comp ? pillar.color : 'var(--border-light)'}`,
+              fontSize: 12, fontWeight: 500, transition: 'all 0.15s',
+              display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2,
+            }}>
+              <span style={{ fontWeight: 700 }}>{comp}</span>
+              <span style={{ fontSize: 10, opacity: 0.8 }}>{answered}/4 · B:{partBTotal}/7</span>
+            </button>
           );
         })}
       </div>
+
+      {/* Part tabs */}
+      <div style={{ display: 'flex', gap: 4, marginBottom: 20, background: 'var(--navy-4)', padding: 4, borderRadius: 10, width: 'fit-content' }}>
+        {[{ id: 'partA', label: 'Part A — Scenario Questions (12 marks)' }, { id: 'partB', label: 'Part B — Activity Assessment (7 marks)' }].map(t => (
+          <button key={t.id} onClick={() => setActiveTab(t.id)} style={{
+            padding: '7px 14px', borderRadius: 8, cursor: 'pointer',
+            background: activeTab === t.id ? pillar.color : 'transparent',
+            color: activeTab === t.id ? 'white' : 'var(--text-secondary)',
+            border: 'none', fontSize: 12, fontWeight: 500, transition: 'all 0.15s',
+          }}>{t.label}</button>
+        ))}
+      </div>
+
+      {/* Component header */}
+      <div style={{ marginBottom: 16, padding: '12px 16px', background: `${pillar.color}08`, border: `1px solid ${pillar.color}20`, borderRadius: 10 }}>
+        <div style={{ fontSize: 14, fontWeight: 700, color: pillar.color }}>{compData[activeComp].label} <span style={{ fontSize: 11, color: 'var(--text-muted)', fontWeight: 400 }}>× weight {compData[activeComp].weight}</span></div>
+        <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 2 }}>{compData[activeComp].subParams}</div>
+        <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginTop: 4, lineHeight: 1.5 }}>{compData[activeComp].desc}</div>
+      </div>
+
+      {/* Part A — Likert questions */}
+      {activeTab === 'partA' && (
+        <div>
+          <div style={{ padding: '8px 12px', background: 'rgba(245,158,11,0.06)', border: '1px solid rgba(245,158,11,0.15)', borderRadius: 8, marginBottom: 16, fontSize: 12, color: 'var(--text-secondary)', lineHeight: 1.5 }}>
+            Rate each scenario 1 (Not at all) to 5 (Completely). Scoring: 1–2 = 0 pts · 3 = 1 pt · 4 = 2 pts · 5 = 3 pts → Max 12 marks
+          </div>
+          {compData[activeComp].questions[age].map((q, i) => {
+            const val = scores[activeComp]?.partA?.[i] || 0;
+            const marks = mapAQLikert(val);
+            return (
+              <div key={i} style={{ marginBottom: 16, background: 'var(--navy-4)', border: '1px solid var(--border-light)', borderRadius: 12, padding: 16 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 10 }}>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontSize: 10, color: pillar.color, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 4 }}>{q.subParam}</div>
+                    <div style={{ fontSize: 13, fontWeight: 500, lineHeight: 1.6 }}>
+                      <span style={{ color: 'var(--text-muted)', marginRight: 6 }}>{i + 1}.</span>{q.q}
+                    </div>
+                  </div>
+                  {val > 0 && (
+                    <div style={{ marginLeft: 12, flexShrink: 0, padding: '3px 8px', borderRadius: 6, background: `${pillar.color}20`, color: pillar.color, fontSize: 11, fontWeight: 700 }}>
+                      {marks} pt{marks !== 1 ? 's' : ''}
+                    </div>
+                  )}
+                </div>
+                <div style={{ display: 'flex', gap: 6 }}>
+                  {[1, 2, 3, 4, 5].map(n => {
+                    const isSelected = val === n;
+                    const pts = mapAQLikert(n);
+                    return (
+                      <button key={n} onClick={() => onChange(activeComp, 'partA', i, n)} style={{
+                        flex: 1, padding: '8px 4px', borderRadius: 8, cursor: 'pointer',
+                        border: `2px solid ${isSelected ? pillar.color : 'var(--border-light)'}`,
+                        background: isSelected ? `${pillar.color}20` : 'transparent',
+                        color: isSelected ? pillar.color : 'var(--text-muted)',
+                        fontSize: 12, fontWeight: 700, transition: 'all 0.15s',
+                        display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2,
+                      }}>
+                        <span>{n}</span>
+                        <span style={{ fontSize: 8, fontWeight: 400 }}>{['Not at all', 'Rarely', 'Sometimes', 'Often', 'Completely'][n - 1]}</span>
+                        <span style={{ fontSize: 9, color: pts > 0 ? '#10b981' : 'var(--text-muted)' }}>{pts}pt</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            );
+          })}
+          <div style={{ padding: '10px 14px', background: 'var(--navy-4)', border: '1px solid var(--border-light)', borderRadius: 10, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <span style={{ fontSize: 13, color: 'var(--text-secondary)' }}>Part A Sub-total ({activeComp})</span>
+            <span style={{ fontSize: 16, fontWeight: 800, color: pillar.color, fontFamily: 'Space Grotesk' }}>{getPartAMarks(activeComp)} / 12</span>
+          </div>
+          {/* AI-generated additional AQ scenarios */}
+          <AIQuestionGenerator
+            pillar="AQ" component={activeComp} ageGroup={age}
+            questionType="likert" color={pillar.color}
+            label={`${compData[activeComp].label} scenarios`}
+            generateFn={generateAQQuestions}
+            onAnswersChange={(ans) => onChange(activeComp, 'partA_ai', 'ai', ans)}
+          />
+        </div>
+      )}
+
+      {/* Part B — Activity rubric */}
+      {activeTab === 'partB' && (
+        <div>
+          <div style={{ padding: '10px 14px', background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.2)', borderRadius: 8, marginBottom: 16, fontSize: 12, color: 'var(--text-secondary)', lineHeight: 1.5 }}>
+            <strong style={{ color: pillar.color }}>Assessor-Scored Activity.</strong> Observe the participant and enter rubric scores below.
+          </div>
+
+          {(() => {
+            const act = compData[activeComp].activity;
+            const actScores = scores[activeComp]?.partB || {};
+            const total = act.rubric.reduce((s, r) => s + (actScores[r.criterion] || 0), 0);
+            return (
+              <div style={{ background: 'var(--navy-4)', border: `1px solid ${pillar.color}20`, borderRadius: 14, overflow: 'hidden' }}>
+                <div style={{ padding: '14px 16px', background: `${pillar.color}08`, borderBottom: '1px solid var(--border-light)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <div>
+                    <div style={{ fontSize: 14, fontWeight: 700 }}>{act.label}</div>
+                    <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 2 }}>{act.method}</div>
+                  </div>
+                  <div style={{ fontSize: 22, fontWeight: 800, color: pillar.color, fontFamily: 'Space Grotesk' }}>{total}/{act.maxScore}</div>
+                </div>
+                <div style={{ padding: 16 }}>
+                  <div style={{ fontSize: 12, color: 'var(--text-secondary)', lineHeight: 1.6, marginBottom: 14 }}>
+                    {age === '11-18' ? act.desc11_18 : act.desc19_32}
+                  </div>
+                  <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 10 }}>Assessor Rubric</div>
+                  {act.rubric.map(r => (
+                    <RubricScorer
+                      key={r.criterion}
+                      criterion={r.criterion} marks={r.marks} desc={r.desc}
+                      value={actScores[r.criterion] ?? undefined}
+                      onChange={v => onChange(activeComp, 'partB', r.criterion, v)}
+                      color={pillar.color}
+                    />
+                  ))}
+                </div>
+              </div>
+            );
+          })()}
+        </div>
+      )}
     </div>
   );
 }
@@ -700,7 +918,7 @@ function ReviewStep({ intake, rawScores }) {
 
 // ─── MAIN ASSESSMENT PAGE ─────────────────────────────────────────────────────
 export default function Assessment() {
-  const { setAssessmentData, demoMode } = useApp();
+  const { setAssessmentData, demoMode, context } = useApp();
   const { user } = useAuth();
   const navigate = useNavigate();
   const toast = useToast();
@@ -750,8 +968,20 @@ export default function Assessment() {
     }
   };
 
-  // AQ score updater
-  const updateAQ = (subId, value) => setAqScores(prev => ({ ...prev, [subId]: value }));
+  // AQ score updater — same pattern as EQ: (comp, part, key, value)
+  const updateAQ = (comp, part, key, value) => {
+    if (part === 'partA') {
+      setAqScores(prev => ({
+        ...prev,
+        [comp]: { ...(prev[comp] || {}), partA: { ...(prev[comp]?.partA || {}), [key]: value } },
+      }));
+    } else {
+      setAqScores(prev => ({
+        ...prev,
+        [comp]: { ...(prev[comp] || {}), partB: { ...(prev[comp]?.partB || {}), [key]: value } },
+      }));
+    }
+  };
 
   // Compute raw scores for storage
   const buildRawScores = () => {
@@ -801,7 +1031,17 @@ export default function Assessment() {
     }, 0);
     const sqRaw = { ACE: aceTotal, CSI: csiTotal, PBA: pbaTotal };
 
-    return { IQ: iqRaw, EQ: eqRaw, SQ: sqRaw, AQ: aqScores };
+    // AQ: Part A Likert (mapped marks) + Part B rubric per component
+    const aqRaw = {};
+    ['SA', 'PM', 'RR', 'RC'].forEach(comp => {
+      const partAScores = aqScores[comp]?.partA || {};
+      const partAMarks = Object.values(partAScores).reduce((s, v) => s + mapAQLikert(v || 0), 0);
+      const partBScores = aqScores[comp]?.partB || {};
+      const partBMarks = Object.values(partBScores).reduce((s, v) => s + (v || 0), 0);
+      aqRaw[comp] = Math.min(partAMarks + partBMarks, 19);
+    });
+
+    return { IQ: iqRaw, EQ: eqRaw, SQ: sqRaw, AQ: aqRaw };
   };
 
   const handleNext = () => {
@@ -896,10 +1136,10 @@ export default function Assessment() {
       {/* Step content */}
       <div className="card" style={{ marginBottom: 20 }}>
         {step === 0 && <IntakeStep data={intake} onChange={updateIntake} />}
-        {step === 1 && <IQStep scores={iqScores} onChange={updateIQ} />}
+        {step === 1 && <IQStep scores={iqScores} onChange={updateIQ} ageGroup={intake.ageGroup} context={context} />}
         {step === 2 && <EQStep scores={eqScores} onChange={updateEQ} ageGroup={intake.ageGroup} />}
         {step === 3 && <SQStep scores={sqScores} onChange={updateSQ} />}
-        {step === 4 && <AQStep scores={aqScores} onChange={updateAQ} />}
+        {step === 4 && <AQStep scores={aqScores} onChange={updateAQ} ageGroup={intake.ageGroup} />}
         {step === 5 && <ReviewStep intake={intake} rawScores={buildRawScores()} />}
       </div>
 
