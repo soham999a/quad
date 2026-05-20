@@ -70,7 +70,10 @@ export default function Dashboard() {
 
       {!loading && preAssessments.length === 0 && (
         <div style={{ marginBottom: 28 }}>
-          <SeedExampleData onDone={() => window.location.reload()} />
+          <SeedExampleData onDone={() => {
+            Promise.all([getUserAssessments(user.uid), getUserReports(user.uid)])
+              .then(([a, r]) => { setAssessments(a); setReports(r); });
+          }} />
         </div>
       )}
 

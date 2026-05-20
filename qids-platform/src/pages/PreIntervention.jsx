@@ -42,7 +42,6 @@ export default function PreIntervention() {
   const { assessmentData: ctxAssessment, demoMode } = useApp();
   const navigate = useNavigate();
   const location = useLocation();
-  // Use the assessment passed via route state (clicked from dashboard), else fall back to context
   const assessmentData = location.state?.assessment || ctxAssessment;
   const [activeNode, setActiveNode] = useState(null);
   const [activeStep, setActiveStep] = useState('standardize');

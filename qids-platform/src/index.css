@@ -82,7 +82,7 @@ label {
   letter-spacing: 0.5px;
 }
 
-input, textarea, select {
+input:not([type="checkbox"]):not([type="radio"]):not([type="range"]), textarea, select {
   width: 100%;
   padding: 10px 14px;
   background: rgba(255,255,255,0.04);
@@ -96,9 +96,9 @@ input, textarea, select {
   appearance: none;
 }
 
-input::placeholder, textarea::placeholder { color: var(--text-muted); }
+input:not([type="checkbox"]):not([type="radio"]):not([type="range"])::placeholder, textarea::placeholder { color: var(--text-muted); }
 
-input:focus, textarea:focus, select:focus {
+input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):focus, textarea:focus, select:focus {
   border-color: var(--indigo);
   background: rgba(99,102,241,0.06);
   box-shadow: 0 0 0 3px rgba(99,102,241,0.12);
@@ -674,4 +674,31 @@ input[type="checkbox"] {
   background: rgba(20,184,166,0.15);
   border: 1px solid rgba(20,184,166,0.3);
   color: #2dd4bf;
+}
+@keyframes fadeIn    { from { opacity: 0 } to { opacity: 1 } }
+@keyframes fadeInUp  { from { opacity: 0; transform: translateY(12px) } to { opacity: 1; transform: translateY(0) } }
+@keyframes slideUp   { from { transform: translateY(100%) } to { transform: translateY(0) } }
+@keyframes spin      { to { transform: rotate(360deg) } }
+@keyframes pulse     { 0%,100% { opacity: 1 } 50% { opacity: 0.5 } }
+
+.animate-fade    { animation: fadeIn 0.35s ease; }
+.animate-fade-up { animation: fadeInUp 0.4s cubic-bezier(0.4,0,0.2,1); }
+.animate-spin    { animation: spin 0.8s linear infinite; }
+
+/* ── Print Styles ── */
+@media print {
+  .desktop-sidebar,
+  .mobile-nav,
+  .mobile-menu-drawer,
+  header,
+  .btn,
+  .report-type-selector,
+  .topbar-right { display: none !important; }
+
+  body { background: white !important; color: black !important; }
+  .card, .glass-card { background: white !important; border: 1px solid #e2e8f0 !important; box-shadow: none !important; }
+  #report-content { border: none !important; }
+  .report-header { background: #f8fafc !important; }
+  main { overflow: visible !important; padding-bottom: 0 !important; }
+  .page-pad { padding: 0 !important; }
 }

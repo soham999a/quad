@@ -44,7 +44,7 @@ function ModuleCard({ module, pillar, onToggle, expanded }) {
           <button style={{
             marginTop: 10, padding: '6px 12px', borderRadius: 6, fontSize: 11, fontWeight: 500,
             background: `${pillar.color}15`, border: `1px solid ${pillar.color}30`, color: pillar.color, cursor: 'pointer',
-          }}>
+          }} onClick={() => alert(`Module "${module.label}" marked for assignment. Track progress in Session Tracking.`)}>
             Assign Module
           </button>
         </div>

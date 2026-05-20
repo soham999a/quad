@@ -1,101 +1,86 @@
-// QIDS Core Data Configuration — modular, CMS-ready
+// QIDS Core Data Configuration — real assessment instruments from PDF specs
 
 export const CONTEXTS = [
-  { id: 'school',     label: 'School',     icon: 'SCH', desc: 'Foundational development with age-appropriate activities and developmental milestones.' },
-  { id: 'college',    label: 'College',    icon: 'COL', desc: 'Advanced development with specialization based on academic and career paths.' },
-  { id: 'corporate',  label: 'Corporate',  icon: 'COR', desc: 'Professional application with focus on leadership, teamwork, and organizational effectiveness.' },
-  { id: 'individual', label: 'Individual', icon: 'IND', desc: 'Personalized holistic development pathway tailored to unique goals and strengths.' },
-  { id: 'custom',     label: 'Custom',     icon: 'CST', desc: 'Configurable context for specialized institutions and unique developmental needs.' },
+  { id: 'school',     label: 'School',     icon: '🏫', desc: 'Foundational development with age-appropriate activities and developmental milestones.' },
+  { id: 'college',    label: 'College',    icon: '🎓', desc: 'Advanced development with specialization based on academic and career paths.' },
+  { id: 'corporate',  label: 'Corporate',  icon: '🏢', desc: 'Professional application with focus on leadership, teamwork, and organizational effectiveness.' },
+  { id: 'individual', label: 'Individual', icon: '🧠', desc: 'Personalized holistic development pathway tailored to unique goals and strengths.' },
+  { id: 'custom',     label: 'Custom',     icon: '⚙️', desc: 'Configurable context for specialized institutions and unique developmental needs.' },
 ];
 
 export const WEIGHTS = { IQ: 1.00, EQ: 2.00, SQ: 2.00, AQ: 1.28 };
 export const MAX_WEIGHT_SUM = Object.values(WEIGHTS).reduce((a, b) => a + b, 0); // 6.28
 
 export const GRADE_BANDS = [
-  { grade: 'A', label: 'Excellent', min: 90, max: 100, color: '#10b981', bg: 'rgba(16,185,129,0.15)' },
-  { grade: 'B', label: 'Very Good', min: 75, max: 89, color: '#06b6d4', bg: 'rgba(6,182,212,0.15)' },
-  { grade: 'C', label: 'Good', min: 60, max: 74, color: '#f59e0b', bg: 'rgba(245,158,11,0.15)' },
-  { grade: 'D', label: 'Satisfactory', min: 45, max: 59, color: '#f97316', bg: 'rgba(249,115,22,0.15)' },
-  { grade: 'E', label: 'Needs Improvement', min: 0, max: 44, color: '#ef4444', bg: 'rgba(239,68,68,0.15)' },
+  { grade: 'A', label: 'Excellent',          min: 90, max: 100, color: '#10b981', bg: 'rgba(16,185,129,0.15)' },
+  { grade: 'B', label: 'Very Good',          min: 75, max: 89,  color: '#06b6d4', bg: 'rgba(6,182,212,0.15)'  },
+  { grade: 'C', label: 'Good',               min: 60, max: 74,  color: '#f59e0b', bg: 'rgba(245,158,11,0.15)' },
+  { grade: 'D', label: 'Satisfactory',       min: 45, max: 59,  color: '#f97316', bg: 'rgba(249,115,22,0.15)' },
+  { grade: 'E', label: 'Needs Improvement',  min: 0,  max: 44,  color: '#ef4444', bg: 'rgba(239,68,68,0.15)'  },
 ];
 
+// ─── PILLAR DEFINITIONS ───────────────────────────────────────────────────────
 export const PILLARS = {
   IQ: {
-    id: 'IQ',
-    label: 'Intelligence Quotient',
-    short: 'IQ',
-    color: '#6366f1',
-    gradient: 'linear-gradient(135deg, #6366f1, #818cf8)',
-    weight: 1.00,
-    maxScore: 100,
+    id: 'IQ', label: 'Intelligence Quotient', short: 'IQ',
+    color: '#6366f1', gradient: 'linear-gradient(135deg, #6366f1, #818cf8)',
+    weight: 1.00, maxScore: 100,
     description: 'Extends beyond traditional IQ testing to encompass multiple dimensions of cognitive ability including verbal, quantitative, psychometric, and performance intelligence.',
     framework: 'Four-Parameter Cognitive Model',
     subParams: [
-      { id: 'verbal', label: 'Verbal Intelligence', max: 25, desc: 'Language comprehension, expression, and reasoning through words.' },
+      { id: 'verbal',       label: 'Verbal Intelligence',      max: 25, desc: 'Language comprehension, expression, and reasoning through words.' },
       { id: 'quantitative', label: 'Quantitative Intelligence', max: 25, desc: 'Numerical reasoning, mathematical problem-solving, and logical analysis.' },
-      { id: 'psychometric', label: 'Psychometric Abilities', max: 25, desc: 'Pattern recognition, spatial reasoning, and abstract thinking.' },
-      { id: 'performance', label: 'Performance Intelligence', max: 25, desc: 'Practical application of cognitive skills in real-world tasks.' },
+      { id: 'psychometric', label: 'Psychometric Abilities',    max: 25, desc: 'Pattern recognition, spatial reasoning, and abstract thinking.' },
+      { id: 'performance',  label: 'Performance Intelligence',  max: 25, desc: 'Practical application of cognitive skills in real-world tasks.' },
     ],
     assessmentMethods: ['Standardized psychometric tests', 'Verbal reasoning tasks', 'Quantitative problem sets', 'Performance-based activities'],
     developmentFocus: ['Cognitive strengthening exercises', 'Reasoning and logic training', 'Problem-solving modules', 'Critical thinking workshops'],
     careerAlignment: 'High IQ profiles align with analytical, technical, research, and specialist career tracks.',
   },
   EQ: {
-    id: 'EQ',
-    label: 'Emotional Quotient',
-    short: 'EQ',
-    color: '#10b981',
-    gradient: 'linear-gradient(135deg, #10b981, #34d399)',
-    weight: 2.00,
-    maxScore: 100,
+    id: 'EQ', label: 'Emotional Quotient', short: 'EQ',
+    color: '#10b981', gradient: 'linear-gradient(135deg, #10b981, #34d399)',
+    weight: 2.00, maxScore: 100,
     description: 'Assessed through the Dynamic Emotional Competency (DEC) Framework — measuring real-time emotional adaptability and contextual integration rather than static traits.',
     framework: 'Dynamic Emotional Competency (DEC)',
     subParams: [
-      { id: 'self_awareness', label: 'Self-Awareness', max: 20, desc: 'Self-concept clarity, emotional literacy, and impulse recognition.' },
-      { id: 'self_management', label: 'Self-Management', max: 20, desc: 'Impulse control, stress management, and emotional regulation.' },
-      { id: 'social_awareness', label: 'Social Awareness', max: 20, desc: 'Empathy, organizational awareness, and reading social cues.' },
-      { id: 'relationship_mgmt', label: 'Relationship Management', max: 20, desc: 'Influence, conflict management, and collaborative leadership.' },
-      { id: 'emotional_resilience', label: 'Emotional Resilience', max: 20, desc: 'Growth mindset, emotional recovery velocity, and optimism under pressure.' },
+      { id: 'SA', label: 'Self-Awareness',      max: 10, desc: 'Reflective insight, emotional literacy, self-appraisal, self-concept clarity.' },
+      { id: 'ER', label: 'Emotion Regulation',  max: 10, desc: 'Impulse control, emotional flexibility, resilience, self-soothing, mood management.' },
+      { id: 'SM', label: 'Self-Motivation',      max: 10, desc: 'Intrinsic drive, vision and goal orientation, commitment to growth, self-efficacy.' },
+      { id: 'E',  label: 'Empathy',              max: 10, desc: 'Perspective-taking, emotional resonance, compassion in action, non-verbal sensitivity.' },
+      { id: 'IS', label: 'Interpersonal Skills', max: 10, desc: 'Authentic communication, conflict navigation, social adaptability, relationship cultivation.' },
     ],
-    assessmentMethods: ['DEC Framework questionnaire', 'Scenario-based emotional response tasks', 'Peer and self-assessment', 'Behavioral observation'],
+    assessmentMethods: ['DEC Likert questionnaire (Part A)', 'Activity-based assessment (Part B)', 'Scenario analysis', 'Behavioral observation'],
     developmentFocus: ['Pause-and-reflect drills (Stop-Think-Act)', 'Self-regulation practice', 'Emotional awareness journaling', 'Empathy-building activities'],
     careerAlignment: 'High EQ profiles excel in HR, counseling, customer relations, and high-level leadership roles.',
   },
   SQ: {
-    id: 'SQ',
-    label: 'Social Quotient',
-    short: 'SQ',
-    color: '#a855f7',
-    gradient: 'linear-gradient(135deg, #a855f7, #c084fc)',
-    weight: 2.00,
-    maxScore: 100,
+    id: 'SQ', label: 'Social Quotient', short: 'SQ',
+    color: '#a855f7', gradient: 'linear-gradient(135deg, #a855f7, #c084fc)',
+    weight: 2.00, maxScore: 100,
     description: 'Measures the ability to navigate social environments effectively, build meaningful relationships, and demonstrate cognitive social intelligence.',
     framework: 'Social Intelligence Assessment Center',
     subParams: [
-      { id: 'social_perception', label: 'Social Perception', max: 34, desc: 'Reading social situations, non-verbal cues, and group dynamics.' },
-      { id: 'cognitive_social', label: 'Cognitive Social Intelligence', max: 33, desc: 'Understanding social norms, perspective-taking, and social reasoning.' },
-      { id: 'performance_social', label: 'Performance-Based Social Skills', max: 33, desc: 'Demonstrated collaboration, communication, and social adaptability.' },
+      { id: 'ACE', label: 'Assessment Centre Exercise',    max: 20, desc: 'Active listening, collaboration, communication, empathy, leadership — observed in group exercises.' },
+      { id: 'CSI', label: 'Cognitive SQ Test',             max: 10, desc: 'Understanding social cues, predicting outcomes, social problem-solving, empathy, decision-making.' },
+      { id: 'PBA', label: 'Performance-Based Activities',  max: 20, desc: 'Role-play, team projects, peer feedback, debates, empathy mapping — 2 activities chosen from 8.' },
     ],
-    assessmentMethods: ['Assessment center exercises', 'Group activity observation', 'Role-play scenarios', 'Peer interaction analysis'],
+    assessmentMethods: ['Assessment Centre group exercises', 'Cognitive MCQ scenarios', 'Performance-based activities', 'Peer evaluation'],
     developmentFocus: ['Collaboration workshops', 'Social awareness training', 'Communication skills modules', 'Team leadership exercises'],
     careerAlignment: 'High SQ profiles thrive in team leadership, community development, education, and social enterprise roles.',
   },
   AQ: {
-    id: 'AQ',
-    label: 'Adversity Quotient',
-    short: 'AQ',
-    color: '#f59e0b',
-    gradient: 'linear-gradient(135deg, #f59e0b, #fbbf24)',
-    weight: 1.28,
-    maxScore: 100,
+    id: 'AQ', label: 'Adversity Quotient', short: 'AQ',
+    color: '#f59e0b', gradient: 'linear-gradient(135deg, #f59e0b, #fbbf24)',
+    weight: 1.28, maxScore: 100,
     description: 'Evaluated through the Resilience Dynamics Framework — measuring the ability to anticipate, navigate, and grow through adversity as a dynamic, developable system.',
     framework: 'Resilience Dynamics Framework (RDF)',
     subParams: [
-      { id: 'situational_agility', label: 'Situational Agility', max: 20, desc: 'Rapid adaptation to changing circumstances and environments.' },
-      { id: 'proactive_momentum', label: 'Proactive Momentum', max: 20, desc: 'Initiative-taking and forward-thinking under pressure.' },
-      { id: 'adversity_response', label: 'Adversity Response', max: 20, desc: 'Behavioral and cognitive response quality during setbacks.' },
-      { id: 'growth_integration', label: 'Growth Integration', max: 20, desc: 'Ability to extract learning and growth from difficult experiences.' },
-      { id: 'resilience_sustainability', label: 'Resilience Sustainability', max: 20, desc: 'Long-term maintenance of resilience capacity and persistence.' },
+      { id: 'situational_agility',      label: 'Situational Agility',      max: 20, desc: 'Rapid adaptation to changing circumstances and environments.' },
+      { id: 'proactive_momentum',       label: 'Proactive Momentum',       max: 20, desc: 'Initiative-taking and forward-thinking under pressure.' },
+      { id: 'adversity_response',       label: 'Adversity Response',       max: 20, desc: 'Behavioral and cognitive response quality during setbacks.' },
+      { id: 'growth_integration',       label: 'Growth Integration',       max: 20, desc: 'Ability to extract learning and growth from difficult experiences.' },
+      { id: 'resilience_sustainability',label: 'Resilience Sustainability', max: 20, desc: 'Long-term maintenance of resilience capacity and persistence.' },
     ],
     assessmentMethods: ['Resilience Dynamics questionnaire', 'Situational judgment tests', 'Stress simulation activities', 'Longitudinal behavioral tracking'],
     developmentFocus: ['Resilience-building modules', 'Anticipation and adaptability training', 'Persistence coaching', 'High-pressure simulation exercises'],
@@ -103,87 +88,743 @@ export const PILLARS = {
   },
 };
 
+// ─── EQ QUESTIONS (from PDF — DEC Framework) ─────────────────────────────────
+// Part A: Likert 1–5, age-split (11–18 vs 19–32)
+// Part B: Activity-based, rubric-scored by assessor
+export const EQ_QUESTIONS = {
+  partA: {
+    SA: {
+      label: 'Self-Awareness',
+      subParams: 'Reflective Insight • Emotional Literacy • Self-Appraisal • Self-Concept Clarity • Internal Emotional Compass',
+      questions: {
+        '11-18': [
+          'I notice right away when my emotions start to shift (e.g., going from calm to irritated).',
+          'I can name exactly what I am feeling — not just "good" or "bad", but specific emotions like "anxious", "proud", or "disappointed".',
+          'I have a realistic picture of my strengths and the areas where I need to grow.',
+          'I know what I truly value in life — the things that matter most to me.',
+          'My gut feelings often give me useful signals about what is right or wrong in a situation.',
+        ],
+        '19-32': [
+          'I can identify and label my emotional states with precision, distinguishing, for example, between frustration and disappointment.',
+          'I understand the recurring patterns in my emotional responses across different life contexts.',
+          'I hold a realistic and balanced view of my capabilities without either overestimating or underrating myself.',
+          'My personal values are clearly defined and consistently guide my choices and priorities.',
+          'I trust and interpret my internal emotional compass (gut instinct) when navigating complex decisions.',
+        ],
+      },
+    },
+    ER: {
+      label: 'Emotion Regulation',
+      subParams: 'Impulse Control • Emotional Flexibility • Resilience • Self-Soothing • Mood Management',
+      questions: {
+        '11-18': [
+          'When I feel a strong urge to react angrily or impulsively, I can pause and choose how to respond.',
+          'I can shift my emotional state when a situation changes — I do not stay stuck in one mood.',
+          'After a setback (like failing a test or an argument), I bounce back and regain my balance fairly quickly.',
+          'I have healthy strategies I use to calm myself down when I feel overwhelmed (e.g., breathing, music, walking).',
+          'I can keep my mood from negatively affecting my work or relationships for extended periods.',
+        ],
+        '19-32': [
+          'I consistently employ evidence-based self-regulation strategies (e.g., cognitive reappraisal) to manage disruptive emotions.',
+          'I can adapt my emotional tone appropriately across professional, social, and personal contexts.',
+          'I demonstrate emotional resilience by recovering from adversity without prolonged emotional disruption.',
+          'I have a personal repertoire of effective self-soothing techniques and apply them proactively.',
+          'I maintain sustained emotional balance even under prolonged high-stress conditions.',
+        ],
+      },
+    },
+    SM: {
+      label: 'Self-Motivation',
+      subParams: 'Intrinsic Drive • Vision and Goal Orientation • Commitment to Growth • Self-Efficacy • Emotional Energy Management',
+      questions: {
+        '11-18': [
+          'I work hard on things I care about even when no one is checking on me or rewarding me.',
+          'I set clear goals for my future and take steps toward them regularly.',
+          'When I make a mistake, I see it as a learning opportunity rather than a reason to give up.',
+          'I genuinely believe I can improve through effort — my abilities are not fixed.',
+          'I can channel excitement or nervous energy into productive action rather than letting it drain me.',
+        ],
+        '19-32': [
+          'My motivation to pursue meaningful goals is sustained by internal values rather than external rewards.',
+          'I set specific, long-term goals and design systematic action plans to achieve them.',
+          'I actively seek feedback and development opportunities even in areas where I already perform well.',
+          'I maintain a strong belief in my capacity to succeed across diverse and challenging situations.',
+          'I manage my emotional energy strategically — knowing when to push, when to rest, and when to re-align.',
+        ],
+      },
+    },
+    E: {
+      label: 'Empathy',
+      subParams: 'Perspective-Taking • Emotional Resonance • Compassion in Action • Non-Verbal Sensitivity • Cultural & Contextual Empathy',
+      questions: {
+        '11-18': [
+          'I try to understand how a situation looks and feels from another person\'s point of view, even if it is very different from mine.',
+          'When someone close to me is sad or upset, I genuinely feel moved — not just aware of it.',
+          'If I see someone struggling, I do not just feel sorry for them — I take action to help.',
+          'I pick up on small signals like tone of voice, body language, or facial expressions to understand how someone feels.',
+          'I make an effort to understand and respect people from backgrounds, cultures, or experiences different from my own.',
+        ],
+        '19-32': [
+          'I intentionally engage in perspective-taking as a cognitive practice in professional and personal interactions.',
+          'I experience genuine emotional resonance with others\' emotional states while maintaining professional boundaries.',
+          'I consistently translate compassionate awareness into concrete, constructive support for others.',
+          'I am highly attuned to non-verbal and para-verbal cues and use this information to guide my responses.',
+          'I adapt my empathic approach across cultural, generational, and contextual differences with sensitivity.',
+        ],
+      },
+    },
+    IS: {
+      label: 'Interpersonal Skills',
+      subParams: 'Authentic Communication • Conflict Navigation • Social Adaptability • Relationship Cultivation • Collaborative Engagement',
+      questions: {
+        '11-18': [
+          'I can express my thoughts and feelings clearly and honestly without being rude or hurtful.',
+          'When there is a disagreement, I look for solutions that work for everyone, not just for me.',
+          'I can adjust the way I talk and behave depending on who I am with (e.g., teacher vs. friend).',
+          'I invest time and care in building and maintaining my friendships and relationships.',
+          'I contribute actively to group work — sharing ideas, listening to others, and helping the team succeed.',
+        ],
+        '19-32': [
+          'I communicate authentically and assertively, expressing my perspective clearly while remaining receptive to others.',
+          'I navigate interpersonal conflicts using structured, principled approaches that preserve relationships and advance shared goals.',
+          'I fluidly adapt my communication style and interpersonal approach across diverse social and professional contexts.',
+          'I deliberately invest in cultivating deep, reciprocal, and trustworthy professional and personal relationships.',
+          'I facilitate collaborative environments where diverse contributions are integrated toward shared outcomes.',
+        ],
+      },
+    },
+  },
+  partB: [
+    {
+      id: 'B1', code: 'SA', label: 'Emotion Mapping Canvas',
+      component: 'Self-Awareness (SA)', maxScore: 5,
+      desc: 'Participants are presented with 6 illustrated scenario cards. For each, they must: (a) name primary and secondary emotions, (b) identify the trigger, (c) explain how emotions influence next behavior, (d) reflect on a similar personal experience.',
+      ageNote: { '11-18': 'Illustrated cards with school/home/peer contexts. Emotion word bank provided.', '19-32': 'Written vignettes in professional/adult contexts. Open vocabulary, no word bank.' },
+      rubric: [
+        { criterion: 'Emotion Identification', marks: 2, desc: 'Accurately names 2+ nuanced emotions (not just "happy/sad"). 1 = basic labels only.' },
+        { criterion: 'Trigger Recognition', marks: 1, desc: 'Correctly identifies the emotional trigger from situational cues.' },
+        { criterion: 'Behavioral Insight', marks: 1, desc: 'Articulates a plausible, nuanced link between emotion and resulting behavior.' },
+        { criterion: 'Personal Reflection Depth', marks: 1, desc: 'Reflection is specific, honest, and shows genuine self-insight (not generic).' },
+      ],
+    },
+    {
+      id: 'B2', code: 'ER', label: 'The Pressure Cooker Simulation',
+      component: 'Emotion Regulation (ER)', maxScore: 5,
+      desc: 'A timed role-play scenario places the participant in a high-pressure situation. The assessor observes and scores live.',
+      ageNote: { '11-18': 'Scenario: Teammate publicly says your section is wrong in front of the class. Respond in 2 minutes.', '19-32': 'Scenario: Senior colleague publicly dismisses your analysis in a team meeting. Respond professionally in 2 minutes.' },
+      debriefQuestions: ['What emotions came up for you during that scenario?', 'What stopped you from reacting impulsively (if anything)?', 'What regulation strategy did you use, consciously or not?', 'How would you handle it differently next time?'],
+      rubric: [
+        { criterion: 'Impulse Control', marks: 2, desc: '2 = Remains composed, no reactivity. 1 = Mild reactivity but recovers. 0 = Loses composure.' },
+        { criterion: 'Emotional Flexibility', marks: 1, desc: 'Adapts emotional tone as situation unfolds; does not fixate on one state.' },
+        { criterion: 'Debrief Self-Awareness', marks: 1, desc: 'Identifies own emotion and regulation strategy clearly and accurately in debrief.' },
+        { criterion: 'Recovery Speed', marks: 1, desc: 'Demonstrates visibly quick emotional rebalancing within the scenario.' },
+      ],
+    },
+    {
+      id: 'B3', code: 'SM', label: 'The Goal Combustion Board',
+      component: 'Self-Motivation (SM)', maxScore: 5,
+      desc: 'Participants design a structured 90-day personal growth plan focused on one meaningful goal, including emotional drivers, anticipated obstacles, and self-accountability strategies.',
+      ageNote: { '11-18': 'Focus on school/personal/skill goals. Prompts use accessible language.', '19-32': 'Focus on professional/personal goals. Prompts use strategic language.' },
+      rubric: [
+        { criterion: 'Intrinsic Motivation Clarity', marks: 2, desc: '2 = Emotional fuel is deeply personal and specific. 1 = Somewhat generic. 0 = External only.' },
+        { criterion: 'Obstacle Anticipation', marks: 1, desc: 'Realistic obstacles named with concrete, personalised counter-strategies.' },
+        { criterion: 'Goal Specificity', marks: 1, desc: 'Goal is specific, measurable, and meaningful — not vague or imposed.' },
+        { criterion: 'Commitment Language', marks: 1, desc: 'Commitment pledge is behaviorally specific (first action named, not just aspirational).' },
+      ],
+    },
+    {
+      id: 'B4', code: 'E', label: 'Walk in Their Shoes',
+      component: 'Empathy (E)', maxScore: 5,
+      desc: 'Participants listen to a 2-minute audio narrative (or read a written account) of a person describing a difficult personal experience. They complete a structured written response from TWO perspectives.',
+      ageNote: { '11-18': 'Narrative: Student feeling excluded by friend group during school trip, pretending to be fine, crying alone.', '19-32': 'Narrative: Professional passed over for promotion, watching less qualified colleague get it, doubting self-worth.' },
+      rubric: [
+        { criterion: 'Emotional Resonance Depth', marks: 2, desc: '2 = Multi-layered emotional description (physical + cognitive + affective). 1 = Surface-level. 0 = Factual only.' },
+        { criterion: 'Compassion in Action Quality', marks: 1, desc: 'Proposed support is specific, actionable, and genuinely responsive to stated need.' },
+        { criterion: 'Non-Verbal / Contextual Reading', marks: 1, desc: 'Identifies unspoken cues ("pretending to be fine") and reads between the lines.' },
+        { criterion: 'Cultural/Contextual Sensitivity', marks: 1, desc: '19–32: Demonstrates awareness of cultural assumptions. 11–18: Recognizes others may feel differently.' },
+      ],
+    },
+    {
+      id: 'B5', code: 'IS', label: 'The Bridge Builder',
+      component: 'Interpersonal Skills (IS)', maxScore: 5,
+      desc: 'A structured social problem-solving task administered in pairs or triads. Participants are given a conflict scenario and must reach a resolution collaboratively within 8 minutes.',
+      ageNote: { '11-18': 'Scenario: Two friends collaborating on a creative school project with opposing approaches must present a unified plan.', '19-32': 'Scenario: Two colleagues co-leading a project with opposing strategies must align and deliver a joint recommendation.' },
+      rubric: [
+        { criterion: 'Authentic Communication', marks: 1, desc: 'Expresses own view clearly and honestly without dominating or dismissing the other.' },
+        { criterion: 'Conflict Navigation Style', marks: 2, desc: '2 = Seeks integrative win-win solution. 1 = Compromises but not creatively. 0 = Avoids or dominates.' },
+        { criterion: 'Social Adaptability', marks: 1, desc: 'Adjusts communication style in response to the other person\'s emotional state and needs.' },
+        { criterion: 'Collaborative Engagement', marks: 1, desc: 'Actively builds on the other\'s ideas; does not only advocate for their own position.' },
+      ],
+    },
+  ],
+};
+
+// ─── SQ QUESTIONS (from PDF — Social Intelligence Assessment Center) ──────────
+export const SQ_QUESTIONS = {
+  component1_ACE: {
+    label: 'Assessment Centre Exercise (ACE)',
+    totalMarks: 20,
+    instructions: 'Group Size: 4–8 participants. Duration: 90–120 minutes. 1 lead assessor + 1 observer. Assessors do NOT participate — only observe and score.',
+    exercises: [
+      {
+        id: 'ACE1', label: 'The Relay Narrative', subParam: 'Active Listening', marks: 4,
+        desc: 'The assessor reads aloud a complex 2-minute narrative (a social scenario involving multiple characters, a conflict, and a resolution). Participants listen without taking notes. Each participant must then — in sequence — add the next element of a retelling, building on exactly what the previous person said. After 2 full rounds, each participant answers 2 targeted comprehension and inference questions.',
+        followUpQuestions: [
+          'What was the exact moment the conflict changed? What triggered it?',
+          'What did [Character X] say that you think no one else noticed?',
+          'Why do you think [Character Y] made the choice they did at the end?',
+          'What emotion was [Character Z] feeling — and how could you tell from the description?',
+        ],
+        rubric: [
+          { criterion: 'Comprehension Accuracy', marks: 2, desc: '2 = Adds accurate, specific details without distortion. 1 = Minor inaccuracies. 0 = Significant errors or omissions.' },
+          { criterion: 'Inference & Insight', marks: 1, desc: 'Goes beyond surface facts — picks up on subtext, emotion, or implication.' },
+          { criterion: 'Attentiveness Signals', marks: 1, desc: 'Non-verbal cues (eye contact, nodding, posture) show sustained engagement throughout others\' turns.' },
+        ],
+      },
+      {
+        id: 'ACE2', label: 'The Consensus Tower', subParam: 'Collaboration & Teamwork', marks: 4,
+        desc: 'The group receives a scenario: "A community of 500 people has been given a grant of ₹10 lakhs / $12,000. The group must collectively decide how to allocate this across 8 competing needs (healthcare, education, infrastructure, food security, youth programs, elderly care, environment, arts & culture). Each area has an advocate. The group must reach a unanimous decision in 15 minutes." Each participant is assigned a role card (advocate, moderator, devil\'s advocate, or recorder) privately.',
+        rubric: [
+          { criterion: 'Group Participation Quality', marks: 2, desc: '2 = Actively contributes ideas AND builds on others\'. 1 = Contributes but does not engage with others\' ideas. 0 = Passive or disruptive.' },
+          { criterion: 'Conflict Mediation', marks: 1, desc: 'Steps in to de-escalate or reframe when tension arises — without being asked.' },
+          { criterion: 'Coordination & Role Execution', marks: 1, desc: 'Executes assigned role effectively in service of the group goal — not own agenda.' },
+        ],
+      },
+      {
+        id: 'ACE3', label: 'The Assertive Brief', subParam: 'Communication & Assertiveness', marks: 4,
+        desc: 'Each participant receives an inbox brief (3 messages) and must compose a response to each within 8 minutes, then present one of their responses verbally to the group in 90 seconds. Inbox 1: Peer missed contribution to shared project. Inbox 2: Supervisor gave factually incorrect feedback. Inbox 3: Friend pressuring you to agree with a wrong decision.',
+        rubric: [
+          { criterion: 'Clarity of Message', marks: 1, desc: 'Core point communicated unambiguously without over-explanation or passive hedging.' },
+          { criterion: 'Assertiveness Without Aggression', marks: 2, desc: '2 = Holds position confidently while remaining respectful and open. 1 = Either too passive or too aggressive. 0 = Neither assertive nor respectful.' },
+          { criterion: 'Handling Differing Views', marks: 1, desc: 'Verbal presentation acknowledges the other perspective before stating own — does not dismiss.' },
+        ],
+      },
+      {
+        id: 'ACE4', label: 'The Empathy Interview', subParam: 'Empathy & Understanding', marks: 4,
+        desc: 'Participants pair up. Each person interviews their partner for 4 minutes using structured questions, then switches. After both interviews, each participant presents a 60-second "empathic summary" of their partner to the full group. Partners then privately complete a 3-question peer rating form.',
+        interviewQuestions: [
+          'Tell me about a time you felt genuinely understood by someone. What made it feel that way?',
+          'What is something you find it hard to explain to people — but wish they just "got" about you?',
+          'When someone you care about is struggling, what do you instinctively want to do — and what stops you sometimes?',
+        ],
+        peerRatingItems: [
+          'Made me feel genuinely heard during the interview (not just waiting for their turn to speak)',
+          'Their summary of me felt accurate — they picked up on things I actually meant',
+          'I would feel comfortable opening up to this person in a real situation',
+        ],
+        rubric: [
+          { criterion: 'Empathic Listening (Assessor-Observed)', marks: 2, desc: '2 = Active presence, minimal self-referencing, follows partner\'s lead. 1 = Intermittently empathic. 0 = Mostly self-focused.' },
+          { criterion: 'Empathic Summary Quality', marks: 1, desc: 'Summary is specific, accurate, and identifies something non-obvious — not a generic repeat.' },
+          { criterion: 'Peer Rating (Other-Report)', marks: 1, desc: 'Average peer score ≥ 2.5 = 1 mark. Below 2.5 = 0 marks.' },
+        ],
+      },
+      {
+        id: 'ACE5', label: 'The Leaderless Group Challenge', subParam: 'Leadership & Problem-Solving', marks: 4,
+        desc: 'No leader is appointed. The group receives a complex social problem to solve collaboratively within 12 minutes, then presents their recommendation to the assessor (2 minutes). A 3-question structured debrief interview follows with each participant individually.',
+        scenarios: [
+          'Scenario A: A popular member of your school/community has been caught plagiarising. The group must decide: should there be a public consequence, a private resolution, or restorative action? Present a unified recommendation.',
+          'Scenario B: Your team has been given 15 minutes to design a "Welcome Protocol" for a new student/colleague who is from a very different cultural background and has anxiety about joining. Present a concrete, step-by-step plan.',
+          'Scenario C: A team member on a critical project has been consistently underperforming. The deadline is next week. The group must decide on a course of action that is fair, effective, and preserves team morale.',
+        ],
+        debriefQuestions: [
+          'What did you notice about how the group was making decisions — and did you try to influence that?',
+          'Was there a moment where you held back? Why?',
+          'If you were to do this again, what would you do differently as a leader?',
+        ],
+        rubric: [
+          { criterion: 'Initiative & Decision-Making', marks: 2, desc: '2 = Proactively drives direction without dominating. 1 = Contributes when prompted. 0 = Passive throughout.' },
+          { criterion: 'Adaptability Under Group Pressure', marks: 1, desc: 'Adjusts approach when initial direction fails — does not rigidly persist or shut down.' },
+          { criterion: 'Debrief Self-Insight', marks: 1, desc: 'Interview reveals genuine self-awareness about their leadership behaviour in the group — not just positive self-report.' },
+        ],
+      },
+    ],
+  },
+  component2_CSI: {
+    label: 'Cognitive Social Intelligence Test (CSI)',
+    totalMarks: 10,
+    instructions: 'Read each scenario carefully. Select the single best response. Each question is worth 2 marks. Partially correct responses receive 1 mark. Incorrect responses receive 0 marks.',
+    questions: [
+      {
+        id: 'CSI1', subParam: 'Understanding Social Cues',
+        scenario: 'You are in a team discussion presenting new ideas. You notice that one member, Priya, contributes enthusiastically at the start but gradually goes quiet, avoids eye contact, and begins giving very short, agreeable answers to everything.',
+        question: 'What does Priya\'s behaviour most likely indicate?',
+        options: [
+          { text: 'She has run out of ideas and is content to let others lead.', marks: 0 },
+          { text: 'She is feeling dismissed, uncomfortable, or disengaged — possibly because her earlier contributions were not being acknowledged.', marks: 2 },
+          { text: 'She is tired and would prefer the discussion to end soon.', marks: 1 },
+        ],
+        assessorNote: 'Non-verbal withdrawal after initial enthusiasm signals social discomfort, disengagement, or feeling unheard — not simply fatigue or lack of ideas.',
+      },
+      {
+        id: 'CSI2', subParam: 'Predicting Social Outcomes',
+        scenario: 'You are organising a group event. Two members — Arjun and Mia — have opposing preferences for the venue and have started debating it publicly in the group chat, drawing others to take sides. A decision needs to be made today.',
+        question: 'What is the most socially intelligent course of action?',
+        options: [
+          { text: 'Make the decision yourself and announce it to end the standoff.', marks: 1 },
+          { text: 'Remove the conversation from the public chat, facilitate a brief private conversation with Arjun and Mia to find common ground, then communicate the outcome to the group with a clear rationale.', marks: 2 },
+          { text: 'Put it to a group vote to ensure the most democratic outcome.', marks: 0 },
+        ],
+        assessorNote: 'Public sides-taking escalates tension. The optimal response de-escalates privately, preserves both relationships, and communicates transparently.',
+      },
+      {
+        id: 'CSI3', subParam: 'Social Problem-Solving',
+        scenario: 'You are on a project team. One member, Ravi, is clearly not contributing — missing deadlines and being vague when asked for updates. Two teammates are frustrated and want to escalate to the supervisor immediately. The deadline is in 4 days.',
+        question: 'What is the most effective and socially intelligent response?',
+        options: [
+          { text: 'Escalate to the supervisor immediately to protect the team\'s output.', marks: 1 },
+          { text: 'Speak privately with Ravi first to understand whether there is an underlying reason — then, depending on the response, decide together on next steps including whether to involve a supervisor.', marks: 2 },
+          { text: 'Redistribute Ravi\'s tasks among the team and continue without addressing the issue.', marks: 0 },
+        ],
+        assessorNote: 'Jumping to escalation before understanding the root cause risks damaging the relationship and missing solvable problems.',
+      },
+      {
+        id: 'CSI4', subParam: 'Empathy & Perspective-Taking',
+        scenario: 'Your close friend has just received news that they did not get a job offer they had worked extremely hard for. They call you immediately. Before you can speak, they say: "I know you\'re going to say I\'ll find something better — please don\'t."',
+        question: 'What is the most empathically intelligent response?',
+        options: [
+          { text: 'Honour their request and simply say: "I\'m here. Tell me how you\'re feeling right now." Then listen without offering any reassurance unless they ask for it.', marks: 2 },
+          { text: 'Respect their feelings but gently offer some reframing to help them feel better — you know them well enough.', marks: 1 },
+          { text: 'Ask them what they think went wrong so you can help them prepare better for next time.', marks: 0 },
+        ],
+        assessorNote: 'True empathy means following the other person\'s stated emotional need — not defaulting to comfort scripts or advice.',
+      },
+      {
+        id: 'CSI5', subParam: 'Decision-Making in Social Contexts',
+        scenario: 'At a social gathering, you overhear two people making a joke at the expense of someone who is present but does not seem to hear it. The person being joked about is a mutual acquaintance who has recently gone through a difficult time.',
+        question: 'What is the most socially and ethically intelligent course of action?',
+        options: [
+          { text: 'Ignore it — intervening would make things awkward and the person probably didn\'t hear it.', marks: 0 },
+          { text: 'Calmly and privately tell the two people that the joke was unkind given the circumstances, without making a scene.', marks: 2 },
+          { text: 'Immediately and publicly call out the behaviour to make clear it is unacceptable.', marks: 1 },
+        ],
+        assessorNote: 'Public call-outs risk escalation and humiliation. Private, calm redirection addresses the behaviour effectively while preserving relationships.',
+      },
+    ],
+  },
+  component3_PBA: {
+    label: 'Performance-Based Activities (PBA)',
+    totalMarks: 20,
+    instructions: 'Choose any TWO activities from the menu below (10 marks each). Select based on group size, time available, and context.',
+    activities: [
+      {
+        id: 'PBA1', label: 'Social Role-Play Gauntlet', bestFor: 'All settings; small & large groups', time: '30–40 min', marks: 10,
+        desc: 'Each participant rotates through 3 role-play stations over 20 minutes (6–7 minutes each). Stations: (1) The Difficult Conversation — give honest critical feedback to a close friend without damaging the relationship. (2) The Social Rescue — initiate and sustain a genuine conversation with a new person standing alone at a party. (3) The Mediator — step into a heated disagreement between two people in your study/work group.',
+        rubric: [
+          { criterion: 'Scenario Navigation Across All 3', marks: 4, desc: '4 = Navigates all 3 with appropriate strategy and social fluency. 3 = Strong in 2. 2 = Strong in 1. 1 = Struggles across most. 0 = Avoids or fails all 3.' },
+          { criterion: 'Empathy & Emotional Reading', marks: 3, desc: '3 = Consistently reads and responds to the emotional state of the other party. 2 = Intermittent. 1 = Mostly misses cues. 0 = No evidence.' },
+          { criterion: 'Communication Quality', marks: 2, desc: 'Clarity, tone, and word choice are appropriate to each station\'s relational context — shifts style across stations.' },
+          { criterion: 'Authenticity & Spontaneity', marks: 1, desc: 'Responses feel genuine and natural — not scripted or formulaic.' },
+        ],
+      },
+      {
+        id: 'PBA2', label: 'The Team Social Challenge', bestFor: 'School, corporate, community; 4–8 pax', time: '45–60 min', marks: 10,
+        desc: 'Groups of 4–5 are given a community-scale social challenge brief: design and present a "Social Inclusion Initiative" for a specific community gap. 30 minutes to plan, 5 minutes to present. Assessors observe the process. After presentation, each team member completes a brief peer evaluation of one other member.',
+        rubric: [
+          { criterion: 'Collaborative Process (Assessor-Observed)', marks: 4, desc: '4 = Actively integrates others\' ideas, manages conflict gracefully, distributes contribution fairly. 3 = Strong. 2 = Adequate. 1 = Minimal. 0 = Disruptive or passive.' },
+          { criterion: 'Communication & Presentation Clarity', marks: 2, desc: 'Presentation is well-structured, confident, and shows ownership of the team\'s work.' },
+          { criterion: 'Social Initiative & Leadership Moments', marks: 2, desc: 'Takes initiative at least once during planning — without being asked — in a way that moves the team forward.' },
+          { criterion: 'Peer Evaluation Score', marks: 2, desc: 'Average score from peer evaluation (1–5 scale, mapped to 0–2) on: "This person made our team stronger during this task."' },
+        ],
+      },
+      {
+        id: 'PBA3', label: 'Structured Peer Feedback Circuit', bestFor: 'Groups with existing relationships', time: '30–40 min', marks: 10,
+        desc: 'Each participant presents a 2-minute reflection on a real social challenge they navigated recently. After each presentation, 2 designated peers give structured feedback using the STAR+I model. The presenter then completes a written self-reflection response.',
+        rubric: [
+          { criterion: 'Quality of Feedback Given (STAR+I)', marks: 4, desc: '4 = All 5 elements present, specific, and genuinely insightful. 3 = 4 elements strong. 2 = Adequate but generic. 1 = Vague or unhelpful. 0 = Not completed.' },
+          { criterion: 'Receiving Feedback — Openness', marks: 3, desc: '3 = Non-defensive, genuinely curious, uses the feedback in their reflection. 2 = Mostly open. 1 = Defensive or dismissive. 0 = Rejects or ignores.' },
+          { criterion: 'Self-Reflection Quality', marks: 2, desc: 'Written reflection is specific, honest, and identifies a concrete next action — not generic.' },
+          { criterion: 'Emotional Composure', marks: 1, desc: 'Maintains composure when receiving critical or unexpected feedback — no shutdown or counter-attack.' },
+        ],
+      },
+      {
+        id: 'PBA4', label: 'Social Dilemma Debate', bestFor: 'Academic/professional contexts; 6+ pax', time: '40–50 min', marks: 10,
+        desc: 'Groups of 4–6 are assigned positions on a social dilemma (they may or may not personally agree). After 5 minutes of preparation, they engage in a structured 15-minute debate. Dilemmas: (A) Protecting team output vs protecting a struggling member\'s feelings. (B) Witnesses of bullying are equally responsible. (C) Brutal honesty vs kind lies.',
+        rubric: [
+          { criterion: 'Reasoning & Argument Quality', marks: 3, desc: '3 = Arguments are logical, evidence-supported, and address the dilemma\'s social complexity. 2 = Sound but shallow. 1 = Weak. 0 = No argument.' },
+          { criterion: 'Perspective-Taking & Acknowledgement', marks: 3, desc: '3 = Actively and specifically acknowledges strong points in the opposing argument before rebutting. 2 = Partial. 1 = Dismisses opposition. 0 = Ignores it.' },
+          { criterion: 'Negotiation Toward Resolution', marks: 2, desc: 'Moves the debate toward a nuanced position that integrates both sides — rather than simply "winning".' },
+          { criterion: 'Composure Under Challenge', marks: 2, desc: 'Remains calm, respectful, and socially skilled when their argument is challenged or rebutted directly.' },
+        ],
+      },
+      {
+        id: 'PBA5', label: 'The Empathy Mapping Workshop', bestFor: 'Any group; high empathy focus', time: '30–40 min', marks: 10,
+        desc: 'Participants are each given a Character Brief — a description of a person in a challenging social situation. They must complete a full Empathy Map (Thinks, Feels, Says, Does, Needs, Fears) in 15 minutes, then present it to the group.',
+        rubric: [
+          { criterion: 'Depth & Specificity of Map', marks: 4, desc: '4 = All 6 sections are specific, nuanced, and non-obvious. 3 = Most sections strong. 2 = Adequate but surface-level. 1 = Sparse. 0 = Incomplete.' },
+          { criterion: 'Emotional Granularity', marks: 3, desc: 'Goes beyond basic emotion labels — identifies layered, complex emotional states with clear reasoning.' },
+          { criterion: 'Perspective Non-Projection', marks: 2, desc: 'Map reflects the character\'s experience — not the participant\'s own. Minimal projection of self.' },
+          { criterion: 'Quality of Peer Feedback on Others\' Maps', marks: 1, desc: 'Written feedback is specific, affirming, and adds one insight the presenter hadn\'t included.' },
+        ],
+      },
+      {
+        id: 'PBA6', label: 'Community Engagement Presentation', bestFor: 'School/community contexts', time: '50–70 min', marks: 10,
+        desc: 'Groups of 3–4 design a concrete Community Social Action plan addressing a defined social need. They present the plan (5 minutes), including: the need identified, community stakeholders involved, communication strategy, and social success metrics.',
+        rubric: [
+          { criterion: 'Community Awareness & Stakeholder Thinking', marks: 3, desc: '3 = Identifies specific, realistic stakeholders and maps their different needs. 2 = General awareness. 1 = Single-perspective only. 0 = No stakeholder analysis.' },
+          { criterion: 'Social Communication Strategy', marks: 3, desc: 'Plan includes specific, differentiated communication strategies for different groups — not a one-size approach.' },
+          { criterion: 'Inclusive Design Evidence', marks: 2, desc: 'Plan actively designs for inclusion of marginalised or harder-to-reach groups.' },
+          { criterion: 'Social Outcome Measurement', marks: 2, desc: 'Defines success in relational/social terms (e.g., new relationships formed, conflict reduced) not just logistical completion.' },
+        ],
+      },
+      {
+        id: 'PBA7', label: 'Reflective Social Journal', bestFor: 'Individual; can run parallel to other tasks', time: '20–30 min (written)', marks: 10,
+        desc: 'Participants complete a structured 4-section written Social Reflection Journal in 25 minutes. Sections: (1) My Social Pattern — recurring behaviour, proud of one, wish to change one. (2) A Moment I Got It Wrong — specific situation where response made things worse. (3) What I\'ve Learned About People — most important insight with specific example. (4) My Social Commitment — one specific behaviour to develop with concrete first action.',
+        rubric: [
+          { criterion: 'Depth of Self-Reflection (Sections 1 & 2)', marks: 4, desc: '4 = Genuinely specific, emotionally honest, identifies non-obvious patterns. 3 = Mostly specific. 2 = Some depth. 1 = Surface. 0 = Descriptive only.' },
+          { criterion: 'Social Insight Quality (Section 3)', marks: 3, desc: '3 = Insight is non-obvious, grounded in real observation, and articulated clearly. 2 = Sound but common. 1 = Vague or abstract.' },
+          { criterion: 'Commitment Specificity (Section 4)', marks: 2, desc: 'Commitment is behaviourally specific — not "be a better listener" but exactly what, when, and with whom.' },
+          { criterion: 'Authenticity & Honesty', marks: 1, desc: 'Writing feels genuinely personal — not a performance of the "right answer". Assessor-judged.' },
+        ],
+      },
+      {
+        id: 'PBA8', label: 'Peer Mentoring Simulation', bestFor: 'Mixed groups; leadership development focus', time: '40–50 min', marks: 10,
+        desc: 'Participants are paired (mentor/mentee). The mentee receives a Social Challenge Card. The mentor conducts a 10-minute structured mentoring conversation using guided questioning, active listening, and collaborative problem-solving. Roles then switch with a new scenario.',
+        rubric: [
+          { criterion: 'Guided Questioning Quality', marks: 4, desc: '4 = Uses open, non-leading questions throughout. Avoids advice-giving until Phase 3. 3 = Mostly guiding. 2 = Slips into advice mode early. 1 = Mostly directive.' },
+          { criterion: 'Active Listening Evidence', marks: 3, desc: '3 = Reflects back accurately, builds on what mentee says, does not redirect to own experiences. 2 = Adequate. 1 = Mostly waiting for turn to speak.' },
+          { criterion: 'Mentee Experience (Peer Score)', marks: 2, desc: 'Mentee rates: "I felt genuinely helped — not judged or lectured" (1–5 mapped to 0–2).' },
+          { criterion: 'Commitment Facilitation', marks: 1, desc: 'Successfully helps mentee articulate a specific, realistic first action — without prescribing it.' },
+        ],
+      },
+    ],
+  },
+};
+
+// ─── IQ QUESTIONS (structured MCQ + open-ended) ───────────────────────────────
+export const IQ_QUESTIONS = {
+  verbal: {
+    label: 'Verbal Intelligence', maxScore: 25,
+    sections: [
+      {
+        title: 'Vocabulary (5 Marks)',
+        instruction: 'Choose the correct definition for each word:',
+        type: 'mcq',
+        questions: [
+          { q: 'Eloquent', options: ['Shy', 'Expressive and persuasive', 'Angry', 'Quiet'], answer: 1 },
+          { q: 'Perplexed', options: ['Confused', 'Happy', 'Angry', 'Excited'], answer: 0 },
+          { q: 'Meticulous', options: ['Careful and precise', 'Lazy', 'Unorganized', 'Quick'], answer: 0 },
+          { q: 'Arbitrary', options: ['Random', 'Planned', 'Important', 'Necessary'], answer: 0 },
+          { q: 'Resilient', options: ['Flexible and able to recover quickly', 'Fragile', 'Slow', 'Boring'], answer: 0 },
+        ],
+      },
+      {
+        title: 'Odd One Out (5 Marks)',
+        instruction: 'Identify the word that is different from the others and explain why:',
+        type: 'open',
+        questions: [
+          { q: 'Cow and Goat — which is the odd one out and why?' },
+          { q: 'Chair and Table — which is the odd one out and why?' },
+          { q: 'Pen and Pencil — which is the odd one out and why?' },
+          { q: 'Sun and Moon — which is the odd one out and why?' },
+          { q: 'Fruit and Vegetable — which is the odd one out and why?' },
+        ],
+      },
+      {
+        title: 'General Knowledge (5 Marks)',
+        type: 'open',
+        questions: [
+          { q: 'Who was the first Prime Minister of India?' },
+          { q: 'What is the name of the famous flower market in Kolkata?' },
+          { q: 'How many continents are there on Earth?' },
+          { q: 'What is the birth date of Kolkata as a city? Which three villages were combined to form it?' },
+          { q: 'What is the chemical symbol for water?' },
+        ],
+      },
+      {
+        title: 'Comprehension (5 Marks)',
+        instruction: 'Answer based on the given statements:',
+        type: 'open',
+        questions: [
+          { q: 'If all students in a class pass the exam, the class is successful. The class is successful. What can we conclude about the students?' },
+          { q: 'Sarah likes apples more than oranges. She prefers sweet fruit. What kind of fruit does Sarah likely prefer?' },
+          { q: 'If Radha finishes homework early, she will watch TV. Jane has time to watch TV. What can we infer about her homework?' },
+          { q: 'All dogs are animals. Some animals are pets. Are all dogs pets?' },
+          { q: 'The library is open from 9 AM to 5 PM. If it\'s 6 PM, is the library open?' },
+        ],
+      },
+      {
+        title: 'Verbal Reasoning (5 Marks)',
+        type: 'mcq',
+        questions: [
+          { q: 'Which word does not belong: Cat, Dog, Car, Rabbit?', options: ['Cat', 'Dog', 'Car', 'Rabbit'], answer: 2 },
+          { q: 'If all roses are flowers, and some flowers fade quickly, do all roses fade quickly?', options: ['Yes', 'No', 'Maybe', 'Not enough information'], answer: 3 },
+          { q: 'Which word is opposite in meaning to "Generous"?', options: ['Mean', 'Friendly', 'Brave', 'Honest'], answer: 0 },
+          { q: 'Which is true: "All birds can fly," "Some birds cannot fly," or "No birds can fly"?', options: ['All birds can fly', 'Some birds cannot fly', 'No birds can fly'], answer: 1 },
+          { q: 'Complete the analogy: Book is to Reading as Fork is to ___', options: ['Kitchen', 'Eating', 'Cooking', 'Spoon'], answer: 1 },
+        ],
+      },
+    ],
+  },
+  quantitative: {
+    label: 'Quantitative Intelligence', maxScore: 25,
+    sections: [
+      {
+        title: 'Arithmetic (5 Marks)',
+        instruction: 'Solve the following problems:',
+        type: 'open',
+        questions: [
+          { q: '15 + 28 = ?' },
+          { q: '64 − 37 = ?' },
+          { q: '8 × 7 = ?' },
+          { q: '81 ÷ 9 = ?' },
+          { q: '56 + 19 = ?' },
+        ],
+      },
+      {
+        title: 'Pattern Recognition (5 Marks)',
+        instruction: 'Identify the next item in the sequence:',
+        type: 'mcq',
+        questions: [
+          { q: 'Circle, Triangle, Circle, Triangle, ?', options: ['Square', 'Circle', 'Triangle', 'Star'], answer: 1 },
+          { q: 'Red, Blue, Green, Red, Blue, ?', options: ['Red', 'Green', 'Blue', 'Yellow'], answer: 1 },
+          { q: '1, 4, 9, 16, ?', options: ['20', '25', '24', '18'], answer: 1 },
+          { q: 'A, C, E, G, ?', options: ['H', 'I', 'J', 'K'], answer: 1 },
+          { q: '3, 6, 12, 24, ?', options: ['36', '48', '30', '42'], answer: 1 },
+        ],
+      },
+      {
+        title: 'Numeric Reasoning (5 Marks)',
+        type: 'open',
+        questions: [
+          { q: 'What is 25% of 80?' },
+          { q: 'If a train travels 60 miles in 1 hour, how far will it travel in 3 hours?' },
+          { q: 'Solve for x: 5x + 7 = 32' },
+          { q: 'What is the next number in the series: 2, 6, 12, 20, ?' },
+          { q: 'If you have 3 apples and give away 2, how many do you have left?' },
+        ],
+      },
+      {
+        title: 'Logical Reasoning (5 Marks)',
+        type: 'mixed',
+        questions: [
+          { q: 'All squares are rectangles. Some rectangles are circles. Are some squares circles?', type: 'open' },
+          { q: 'If two pencils cost 30 cents, how much do five pencils cost?', type: 'open' },
+          { q: 'If today is Wednesday, what day will it be in three days?', type: 'open' },
+          { q: 'Which is true?', options: ['All birds can fly', 'Some birds cannot fly', 'No birds can fly'], answer: 1, type: 'mcq' },
+          { q: 'A is taller than B. B is taller than C. Who is the shortest?', options: ['A', 'B', 'C', 'Cannot determine'], answer: 2, type: 'mcq' },
+        ],
+      },
+      {
+        title: 'Applied Mathematics (5 Marks)',
+        type: 'open',
+        questions: [
+          { q: 'A shopkeeper buys an item for ₹80 and sells it for ₹100. What is the profit percentage?' },
+          { q: 'If a rectangle has length 12 cm and width 5 cm, what is its area?' },
+          { q: 'A car travels 150 km in 3 hours. What is its average speed?' },
+          { q: 'What is the simple interest on ₹1000 at 5% per annum for 2 years?' },
+          { q: 'If 6 workers can complete a job in 10 days, how many days will 10 workers take?' },
+        ],
+      },
+    ],
+  },
+  psychometric: {
+    label: 'Psychometric Abilities', maxScore: 25,
+    sections: [
+      {
+        title: 'Spatial Reasoning (5 Marks)',
+        type: 'open',
+        questions: [
+          { q: 'If you fold a square piece of paper in half diagonally, what shape do you get?' },
+          { q: 'A cube has 6 faces. If you paint all faces red and then cut it into 27 equal smaller cubes, how many smaller cubes have exactly 2 red faces?' },
+          { q: 'How many edges does a triangular prism have?' },
+          { q: 'If you rotate the letter "d" 180 degrees, what letter does it look like?' },
+          { q: 'A clock shows 3:00. What is the angle between the hour and minute hands?' },
+        ],
+      },
+      {
+        title: 'Abstract Reasoning (5 Marks)',
+        instruction: 'Identify the pattern and select the correct answer:',
+        type: 'mcq',
+        questions: [
+          { q: 'If BOOK = 2-15-15-11, what does CAT equal?', options: ['3-1-20', '3-1-19', '3-2-20', '4-1-20'], answer: 0 },
+          { q: 'Which number is the odd one out: 2, 3, 5, 7, 9, 11?', options: ['2', '3', '9', '11'], answer: 2 },
+          { q: 'If all Bloops are Razzles and all Razzles are Lazzles, are all Bloops definitely Lazzles?', options: ['Yes', 'No', 'Maybe', 'Cannot determine'], answer: 0 },
+          { q: 'Complete: 2, 4, 8, 16, ___', options: ['24', '32', '28', '20'], answer: 1 },
+          { q: 'If RED = 27, what does BLUE equal?', options: ['40', '42', '44', '46'], answer: 1 },
+        ],
+      },
+      {
+        title: 'Memory & Attention (5 Marks)',
+        type: 'open',
+        questions: [
+          { q: 'Read this sequence once, then write it from memory: 7, 3, 9, 1, 5, 8, 2, 6, 4' },
+          { q: 'How many times does the letter "e" appear in: "The elephant entered the elegant estate"?' },
+          { q: 'What is the 7th letter of the alphabet?' },
+          { q: 'If you read a list of 10 words and can recall 7, what is your recall percentage?' },
+          { q: 'Count the number of triangles in a Star of David (six-pointed star).' },
+        ],
+      },
+      {
+        title: 'Processing Speed (5 Marks)',
+        type: 'open',
+        questions: [
+          { q: 'How many odd numbers are between 1 and 20?' },
+          { q: 'What is 15 × 15?' },
+          { q: 'If you have a dozen eggs and use 5, how many remain?' },
+          { q: 'What is the sum of all digits in 2024?' },
+          { q: 'How many months have exactly 30 days?' },
+        ],
+      },
+      {
+        title: 'Critical Analysis (5 Marks)',
+        type: 'open',
+        questions: [
+          { q: 'A study shows that people who eat breakfast perform better in school. Does this prove that eating breakfast causes better performance? Explain.' },
+          { q: 'If a company\'s sales increased by 20% in Year 1 and decreased by 20% in Year 2, are they back to the original sales figure? Explain.' },
+          { q: 'What is the flaw in this argument: "My grandfather smoked all his life and lived to 95, so smoking is not harmful."' },
+          { q: 'If all politicians are liars, and John is a liar, is John a politician? Explain.' },
+          { q: 'A coin is flipped 5 times and lands heads each time. What is the probability it lands heads on the 6th flip?' },
+        ],
+      },
+    ],
+  },
+  performance: {
+    label: 'Performance Intelligence', maxScore: 25,
+    sections: [
+      {
+        title: 'Problem-Solving Application (5 Marks)',
+        type: 'open',
+        questions: [
+          { q: 'You have 8 balls, one of which is slightly heavier. Using a balance scale only twice, how do you find the heavier ball?' },
+          { q: 'A farmer needs to cross a river with a fox, a chicken, and a bag of grain. His boat can only carry him and one other item. The fox will eat the chicken if left alone, and the chicken will eat the grain. How does he get everything across?' },
+          { q: 'You have a 3-litre jug and a 5-litre jug. How do you measure exactly 4 litres of water?' },
+          { q: 'If you have 100 lockers all closed, and 100 students each toggle every nth locker (student 1 toggles all, student 2 toggles every 2nd, etc.), which lockers are open at the end?' },
+          { q: 'A snail is at the bottom of a 10-metre well. Each day it climbs 3 metres, each night it slides back 2 metres. How many days to escape?' },
+        ],
+      },
+      {
+        title: 'Real-World Application (5 Marks)',
+        type: 'open',
+        questions: [
+          { q: 'You are planning a school event for 200 students with a budget of ₹10,000. List 3 key decisions you would need to make and how you would approach each.' },
+          { q: 'Your team has 5 days to complete a project that normally takes 10 days. What strategies would you use?' },
+          { q: 'You notice a pattern: every time it rains, your school\'s attendance drops. What are 3 possible explanations and how would you test them?' },
+          { q: 'Design a simple system to track which library books are borrowed and returned. What information would you need to record?' },
+          { q: 'A product costs ₹500 to make and you want a 40% profit margin. What should the selling price be?' },
+        ],
+      },
+      {
+        title: 'Creative Intelligence (5 Marks)',
+        type: 'open',
+        questions: [
+          { q: 'List 10 unusual uses for a paperclip.' },
+          { q: 'If you could redesign your school/workplace to improve productivity, what 3 changes would you make and why?' },
+          { q: 'Describe a problem in your community and propose an innovative solution using available resources.' },
+          { q: 'How would you explain the concept of "gravity" to a 5-year-old?' },
+          { q: 'If you had to teach someone to ride a bicycle using only written instructions, what would you write?' },
+        ],
+      },
+      {
+        title: 'Decision Making (5 Marks)',
+        type: 'open',
+        questions: [
+          { q: 'You have two job offers: Job A pays more but requires long hours; Job B pays less but offers better work-life balance. What factors would you consider and how would you decide?' },
+          { q: 'Your friend asks you to lie to cover for them. What would you do and why?' },
+          { q: 'You find a wallet with ₹5,000 cash and an ID card. What do you do?' },
+          { q: 'Your team disagrees on the best approach to a project. How do you reach a decision?' },
+          { q: 'You have 1 hour left before an important deadline and realize you\'ve made a significant error. What steps do you take?' },
+        ],
+      },
+      {
+        title: 'Adaptive Thinking (5 Marks)',
+        type: 'open',
+        questions: [
+          { q: 'Your original plan fails completely 30 minutes before a presentation. What do you do?' },
+          { q: 'You are given a task you have never done before with no instructions. How do you approach it?' },
+          { q: 'Describe a time you had to change your approach mid-way through a task. What did you learn?' },
+          { q: 'If the internet suddenly stopped working for a week, how would you adapt your daily routine?' },
+          { q: 'You are in a foreign country and get lost with no phone. What steps do you take?' },
+        ],
+      },
+    ],
+  },
+};
+
+// ─── PROCESS NODES ────────────────────────────────────────────────────────────
 export const PRE_INTERVENTION_NODES = [
-  { id: 'intake', label: 'Intake & Consent', desc: 'Collect identity, demographics, context (school/college/corporate), language, history, and informed consent.', owner: 'Administrator', artifacts: ['Consent form', 'Demographic profile'] },
-  { id: 'prepare', label: 'Prepare Assessment Suite', desc: 'Assemble instruments: IQ psychometrics, EQ DEC instruments, SQ assessment-center tasks, AQ resilience tools.', owner: 'Assessment Lead', artifacts: ['Assessment battery', 'Instrument checklist'] },
-  { id: 'baseline', label: 'Baseline Data Collection', desc: 'Administer full assessment suite using questionnaires, observation, and engagement activities.', owner: 'Evaluator', artifacts: ['Raw score sheets', 'Observation logs'] },
-  { id: 'standardize', label: 'Standardize & Score', desc: 'Normalize raw results to standardized scales. Compute sub-component scores and four quotient vectors.', owner: 'Data Analyst', artifacts: ['Standardized scoring tables'], kpi: 'Scoring accuracy 100%' },
-  { id: 'profile', label: 'Integrated Profile Construction', desc: 'Aggregate sub-scores into pillar profiles. Generate radar chart and heatmap visualization.', owner: 'Analyst', artifacts: ['Quotient profile', 'Radar chart'] },
-  { id: 'weighting', label: 'Dynamic Weightage Algorithm', desc: 'Apply context-sensitive weights (IQ×1.0, EQ×2.0, SQ×2.0, AQ×1.28) to compute unified score.', owner: 'Algorithm Engine', artifacts: ['Weighted score matrix'] },
-  { id: 'banding', label: 'Banding & Intervention Mapping', desc: 'Assign grade bands (A–E). Flag critical parameters (<60%). Map to intervention modules.', owner: 'Counselor', artifacts: ['Grade report', 'Intervention map'] },
+  { id: 'intake',      label: 'Intake & Consent',              desc: 'Collect identity, demographics, context, language, history, and informed consent.', owner: 'Administrator', artifacts: ['Consent form', 'Demographic profile'] },
+  { id: 'prepare',     label: 'Prepare Assessment Suite',      desc: 'Assemble instruments: IQ psychometrics, EQ DEC instruments, SQ assessment-center tasks, AQ resilience tools.', owner: 'Assessment Lead', artifacts: ['Assessment battery', 'Instrument checklist'] },
+  { id: 'baseline',    label: 'Baseline Data Collection',      desc: 'Administer full assessment suite using questionnaires, observation, and engagement activities.', owner: 'Evaluator', artifacts: ['Raw score sheets', 'Observation logs'] },
+  { id: 'standardize', label: 'Standardize & Score',           desc: 'Normalize raw results to standardized scales. Compute sub-component scores and four quotient vectors.', owner: 'Data Analyst', artifacts: ['Standardized scoring tables'], kpi: 'Scoring accuracy 100%' },
+  { id: 'profile',     label: 'Integrated Profile Construction', desc: 'Aggregate sub-scores into pillar profiles. Generate radar chart and heatmap visualization.', owner: 'Analyst', artifacts: ['Quotient profile', 'Radar chart'] },
+  { id: 'weighting',   label: 'Dynamic Weightage Algorithm',   desc: 'Apply context-sensitive weights (IQ×1.0, EQ×2.0, SQ×2.0, AQ×1.28) to compute unified score.', owner: 'Algorithm Engine', artifacts: ['Weighted score matrix'] },
+  { id: 'banding',     label: 'Banding & Intervention Mapping', desc: 'Assign grade bands (A–E). Flag critical parameters (<60%). Map to intervention modules.', owner: 'Counselor', artifacts: ['Grade report', 'Intervention map'] },
 ];
 
 export const INTERVENTION_NODES = [
-  { id: 'scheduling', label: 'Scheduling & Resource Allocation', desc: 'Plan intervention timeline, assign facilitators, allocate resources and session slots.', owner: 'Program Manager', artifacts: ['6-month roadmap', 'Resource plan'] },
-  { id: 'deployment', label: 'Module Deployment', desc: 'Deploy targeted intervention modules based on gap analysis and priority flags.', owner: 'Facilitator', artifacts: ['Module library', 'Session plans'] },
-  { id: 'capture', label: 'Session Data Capture', desc: 'Record attendance, engagement metrics, facilitator notes, and real-time progress indicators.', owner: 'Data Coordinator', artifacts: ['Session logs', 'Engagement data'] },
-  { id: 'progress_eval', label: 'Progress Evaluation Engine', desc: 'Run mid-point assessments. Compare against baseline. Adjust module intensity dynamically.', owner: 'Evaluation Engine', artifacts: ['Progress reports', 'Adjustment flags'] },
-  { id: 'eq_practice', label: 'Dynamic EQ Integration', desc: 'Embed real-time emotional regulation practice (Stop-Think-Act) across all intervention sessions.', owner: 'EQ Specialist', artifacts: ['EQ practice logs', 'Regulation metrics'] },
-  { id: 'effectiveness', label: 'Module Effectiveness Measurement', desc: 'Evaluate module impact using pre/post micro-assessments and facilitator ratings.', owner: 'Quality Analyst', artifacts: ['Effectiveness scores', 'Module ratings'] },
+  { id: 'scheduling',   label: 'Scheduling & Resource Allocation', desc: 'Plan intervention timeline, assign facilitators, allocate resources and session slots.', owner: 'Program Manager', artifacts: ['6-month roadmap', 'Resource plan'] },
+  { id: 'deployment',   label: 'Module Deployment',               desc: 'Deploy targeted intervention modules based on gap analysis and priority flags.', owner: 'Facilitator', artifacts: ['Module library', 'Session plans'] },
+  { id: 'capture',      label: 'Session Data Capture',            desc: 'Record attendance, engagement metrics, facilitator notes, and real-time progress indicators.', owner: 'Data Coordinator', artifacts: ['Session logs', 'Engagement data'] },
+  { id: 'progress_eval',label: 'Progress Evaluation Engine',      desc: 'Run mid-point assessments. Compare against baseline. Adjust module intensity dynamically.', owner: 'Evaluation Engine', artifacts: ['Progress reports', 'Adjustment flags'] },
+  { id: 'eq_practice',  label: 'Dynamic EQ Integration',          desc: 'Embed real-time emotional regulation practice (Stop-Think-Act) across all intervention sessions.', owner: 'EQ Specialist', artifacts: ['EQ practice logs', 'Regulation metrics'] },
+  { id: 'effectiveness',label: 'Module Effectiveness Measurement', desc: 'Evaluate module impact using pre/post micro-assessments and facilitator ratings.', owner: 'Quality Analyst', artifacts: ['Effectiveness scores', 'Module ratings'] },
 ];
 
 export const POST_INTERVENTION_NODES = [
-  { id: 'reassessment', label: 'Full Reassessment', desc: 'Administer complete assessment battery using same instruments as baseline for valid comparison.', owner: 'Evaluator', artifacts: ['Post-assessment scores'] },
-  { id: 'outcomes', label: 'Compute Outcomes', desc: 'Calculate post-intervention scores. Compute delta values and improvement percentages per pillar.', owner: 'Data Analyst', artifacts: ['Outcome matrix', 'Delta report'] },
-  { id: 'synthesis', label: 'Intervention Effectiveness Synthesis', desc: 'Synthesize module effectiveness data with outcome scores. Identify what worked and what needs revision.', owner: 'Program Lead', artifacts: ['Effectiveness synthesis', 'Module review'] },
-  { id: 'idp', label: 'Final IDP & Maintenance Roadmap', desc: 'Construct Individual Development Plan with maintenance schedule, next-phase goals, and milestones.', owner: 'Counselor', artifacts: ['IDP document', 'Maintenance plan'] },
-  { id: 'career', label: 'Career Guidance & Recommendations', desc: 'Generate career path recommendations based on final quotient profile and skill-shape topology.', owner: 'Career Advisor', artifacts: ['Career guidance report'] },
-  { id: 'knowledge', label: 'Knowledge Base & Closed-Loop Update', desc: 'Feed outcomes back into the system knowledge base. Update norms, benchmarks, and module library.', owner: 'System Admin', artifacts: ['Updated benchmarks', 'Knowledge base entry'] },
+  { id: 'reassessment', label: 'Full Reassessment',                  desc: 'Administer complete assessment battery using same instruments as baseline for valid comparison.', owner: 'Evaluator', artifacts: ['Post-assessment scores'] },
+  { id: 'outcomes',     label: 'Compute Outcomes',                   desc: 'Calculate post-intervention scores. Compute delta values and improvement percentages per pillar.', owner: 'Data Analyst', artifacts: ['Outcome matrix', 'Delta report'] },
+  { id: 'synthesis',    label: 'Intervention Effectiveness Synthesis', desc: 'Synthesize module effectiveness data with outcome scores. Identify what worked and what needs revision.', owner: 'Program Lead', artifacts: ['Effectiveness synthesis', 'Module review'] },
+  { id: 'idp',          label: 'Final IDP & Maintenance Roadmap',    desc: 'Construct Individual Development Plan with maintenance schedule, next-phase goals, and milestones.', owner: 'Counselor', artifacts: ['IDP document', 'Maintenance plan'] },
+  { id: 'career',       label: 'Career Guidance & Recommendations',  desc: 'Generate career path recommendations based on final quotient profile and skill-shape topology.', owner: 'Career Advisor', artifacts: ['Career guidance report'] },
+  { id: 'knowledge',    label: 'Knowledge Base & Closed-Loop Update', desc: 'Feed outcomes back into the system knowledge base. Update norms, benchmarks, and module library.', owner: 'System Admin', artifacts: ['Updated benchmarks', 'Knowledge base entry'] },
 ];
 
 export const INTERVENTION_MODULES = {
   IQ: [
-    { id: 'iq_cog', label: 'Cognitive Strengthening', duration: '4 weeks', sessions: 8, priority: 'medium', desc: 'Structured exercises targeting reasoning, pattern recognition, and analytical thinking.' },
-    { id: 'iq_prob', label: 'Problem-Solving Intensive', duration: '3 weeks', sessions: 6, priority: 'high', desc: 'Real-world problem sets with guided reflection and solution frameworks.' },
-    { id: 'iq_crit', label: 'Critical Thinking Workshop', duration: '2 weeks', sessions: 4, priority: 'medium', desc: 'Socratic method, argument analysis, and logical fallacy identification.' },
+    { id: 'iq_cog',  label: 'Cognitive Strengthening',    duration: '4 weeks', sessions: 8,  priority: 'medium', desc: 'Structured exercises targeting reasoning, pattern recognition, and analytical thinking.' },
+    { id: 'iq_prob', label: 'Problem-Solving Intensive',  duration: '3 weeks', sessions: 6,  priority: 'high',   desc: 'Real-world problem sets with guided reflection and solution frameworks.' },
+    { id: 'iq_crit', label: 'Critical Thinking Workshop', duration: '2 weeks', sessions: 4,  priority: 'medium', desc: 'Socratic method, argument analysis, and logical fallacy identification.' },
   ],
   EQ: [
-    { id: 'eq_pause', label: 'The Pause Button (Stop-Think-Act)', duration: '6 weeks', sessions: 12, priority: 'high', desc: 'Core EQ intervention using impulse control drills and emotional regulation practice.' },
-    { id: 'eq_aware', label: 'Emotional Awareness Journey', duration: '4 weeks', sessions: 8, priority: 'high', desc: 'Journaling, reflection, and emotional literacy building activities.' },
-    { id: 'eq_empathy', label: 'Empathy & Social Attunement', duration: '3 weeks', sessions: 6, priority: 'medium', desc: 'Perspective-taking exercises and empathy-building role-plays.' },
+    { id: 'eq_pause',  label: 'The Pause Button (Stop-Think-Act)', duration: '6 weeks', sessions: 12, priority: 'high',   desc: 'Core EQ intervention using impulse control drills and emotional regulation practice.' },
+    { id: 'eq_aware',  label: 'Emotional Awareness Journey',       duration: '4 weeks', sessions: 8,  priority: 'high',   desc: 'Journaling, reflection, and emotional literacy building activities.' },
+    { id: 'eq_empathy',label: 'Empathy & Social Attunement',       duration: '3 weeks', sessions: 6,  priority: 'medium', desc: 'Perspective-taking exercises and empathy-building role-plays.' },
   ],
   SQ: [
-    { id: 'sq_collab', label: 'Collaboration Dynamics', duration: '4 weeks', sessions: 8, priority: 'high', desc: 'Team-based challenges designed to build cooperative intelligence.' },
-    { id: 'sq_comm', label: 'Communication Mastery', duration: '3 weeks', sessions: 6, priority: 'medium', desc: 'Verbal, non-verbal, and written communication skill development.' },
+    { id: 'sq_collab', label: 'Collaboration Dynamics',    duration: '4 weeks', sessions: 8, priority: 'high',   desc: 'Team-based challenges designed to build cooperative intelligence.' },
+    { id: 'sq_comm',   label: 'Communication Mastery',     duration: '3 weeks', sessions: 6, priority: 'medium', desc: 'Verbal, non-verbal, and written communication skill development.' },
     { id: 'sq_social', label: 'Social Awareness Training', duration: '2 weeks', sessions: 4, priority: 'medium', desc: 'Reading social environments, group dynamics, and cultural intelligence.' },
   ],
   AQ: [
-    { id: 'aq_resilience', label: 'Resilience Foundations', duration: '6 weeks', sessions: 12, priority: 'high', desc: 'Core resilience-building using the Resilience Dynamics Framework.' },
-    { id: 'aq_adapt', label: 'Adaptability & Anticipation', duration: '4 weeks', sessions: 8, priority: 'high', desc: 'Scenario-based training for rapid adaptation and proactive thinking.' },
-    { id: 'aq_persist', label: 'Persistence & Grit Coaching', duration: '3 weeks', sessions: 6, priority: 'medium', desc: 'Goal-setting, setback reframing, and sustained effort coaching.' },
+    { id: 'aq_resilience', label: 'Resilience Foundations',        duration: '6 weeks', sessions: 12, priority: 'high',   desc: 'Core resilience-building using the Resilience Dynamics Framework.' },
+    { id: 'aq_adapt',      label: 'Adaptability & Anticipation',   duration: '4 weeks', sessions: 8,  priority: 'high',   desc: 'Scenario-based training for rapid adaptation and proactive thinking.' },
+    { id: 'aq_persist',    label: 'Persistence & Grit Coaching',   duration: '3 weeks', sessions: 6,  priority: 'medium', desc: 'Goal-setting, setback reframing, and sustained effort coaching.' },
   ],
 };
 
 export const CAREER_PROFILES = [
-  { id: 'specialist',  label: 'Specialist / Technical Track',       condition: 'High IQ + Lower AQ',       icon: null, desc: 'Deep expertise in a focused domain. Thrives in structured, knowledge-intensive environments.',                                    roles: ['Research Scientist', 'Software Engineer', 'Data Analyst', 'Financial Analyst'] },
-  { id: 'leader',      label: 'Leadership / People-Facing Track',   condition: 'High EQ + High SQ',        icon: null, desc: 'Natural people leader. Excels in team management, counseling, and organizational development.',                                  roles: ['HR Director', 'Counselor', 'Team Lead', 'Customer Success Manager'] },
-  { id: 'versatile',   label: 'Versatile / Multidisciplinary Path', condition: 'Balanced High Scores',     icon: null, desc: 'Adaptable generalist with broad capability. Suited for cross-functional and entrepreneurial roles.',                            roles: ['Entrepreneur', 'Consultant', 'Product Manager', 'General Manager'] },
-  { id: 'resilient',   label: 'Resilience-Heavy / Adaptive Track',  condition: 'Strong AQ',                icon: null, desc: 'Built for high-pressure, dynamic environments requiring rapid adaptation and sustained performance.',                           roles: ['Crisis Manager', 'Emergency Services', 'Military Officer', 'Startup Founder'] },
-  { id: 'creative',    label: 'Creative / Innovation Track',        condition: 'High IQ + High EQ',        icon: null, desc: 'Combines cognitive power with emotional intelligence for creative problem-solving and innovation.',                             roles: ['UX Designer', 'Creative Director', 'Innovation Lead', 'Architect'] },
+  { id: 'specialist', label: 'Specialist / Technical Track',       condition: 'High IQ + Lower AQ',   desc: 'Deep expertise in a focused domain. Thrives in structured, knowledge-intensive environments.',                                 roles: ['Research Scientist', 'Software Engineer', 'Data Analyst', 'Financial Analyst'] },
+  { id: 'leader',     label: 'Leadership / People-Facing Track',   condition: 'High EQ + High SQ',    desc: 'Natural people leader. Excels in team management, counseling, and organizational development.',                               roles: ['HR Director', 'Counselor', 'Team Lead', 'Customer Success Manager'] },
+  { id: 'versatile',  label: 'Versatile / Multidisciplinary Path', condition: 'Balanced High Scores', desc: 'Adaptable generalist with broad capability. Suited for cross-functional and entrepreneurial roles.',                          roles: ['Entrepreneur', 'Consultant', 'Product Manager', 'General Manager'] },
+  { id: 'resilient',  label: 'Resilience-Heavy / Adaptive Track',  condition: 'Strong AQ',            desc: 'Built for high-pressure, dynamic environments requiring rapid adaptation and sustained performance.',                          roles: ['Crisis Manager', 'Emergency Services', 'Military Officer', 'Startup Founder'] },
+  { id: 'creative',   label: 'Creative / Innovation Track',        condition: 'High IQ + High EQ',    desc: 'Combines cognitive power with emotional intelligence for creative problem-solving and innovation.',                            roles: ['UX Designer', 'Creative Director', 'Innovation Lead', 'Architect'] },
 ];
 
 export const SKILL_SHAPES = [
-  { id: 'T', label: 'T-Shaped', desc: 'Deep expertise in one area with broad general knowledge across others.', icon: 'T' },
-  { id: 'I', label: 'I-Shaped', desc: 'Deep specialist with narrow but highly developed expertise.', icon: 'I' },
-  { id: 'X', label: 'X-Shaped', desc: 'Cross-functional leader with depth in multiple areas and strong connective skills.', icon: 'X' },
-  { id: 'M', label: 'M-Shaped', desc: 'Multi-specialist with mastery in several distinct domains.', icon: 'M' },
+  { id: 'T', label: 'T-Shaped',    desc: 'Deep expertise in one area with broad general knowledge across others.', icon: 'T' },
+  { id: 'I', label: 'I-Shaped',    desc: 'Deep specialist with narrow but highly developed expertise.', icon: 'I' },
+  { id: 'X', label: 'X-Shaped',    desc: 'Cross-functional leader with depth in multiple areas and strong connective skills.', icon: 'X' },
+  { id: 'M', label: 'M-Shaped',    desc: 'Multi-specialist with mastery in several distinct domains.', icon: 'M' },
 ];
 
+// Demo scores aligned with new sub-param IDs
 export const DEMO_SCORES = {
   IQ: { verbal: 20, quantitative: 18, psychometric: 22, performance: 17 },
-  EQ: { self_awareness: 14, self_management: 12, social_awareness: 16, relationship_mgmt: 13, emotional_resilience: 11 },
-  SQ: { social_perception: 28, cognitive_social: 22, performance_social: 20 },
+  EQ: { SA: 8, ER: 7, SM: 8, E: 7, IS: 8 },
+  SQ: { ACE: 14, CSI: 7, PBA: 13 },
   AQ: { situational_agility: 15, proactive_momentum: 13, adversity_response: 14, growth_integration: 16, resilience_sustainability: 12 },
 };
 
 export const DEMO_POST_SCORES = {
   IQ: { verbal: 23, quantitative: 21, psychometric: 24, performance: 20 },
-  EQ: { self_awareness: 17, self_management: 16, social_awareness: 18, relationship_mgmt: 17, emotional_resilience: 15 },
-  SQ: { social_perception: 31, cognitive_social: 27, performance_social: 26 },
+  EQ: { SA: 9, ER: 9, SM: 9, E: 9, IS: 9 },
+  SQ: { ACE: 17, CSI: 9, PBA: 17 },
   AQ: { situational_agility: 18, proactive_momentum: 17, adversity_response: 18, growth_integration: 19, resilience_sustainability: 16 },
 };
 
+// ─── SCORING FUNCTIONS ────────────────────────────────────────────────────────
 export function computeStandardized(raw, max) {
+  if (!max) return 0;
   return Math.round((raw / max) * 100);
 }
 
@@ -226,4 +867,24 @@ export function getCareerProfile(pillarScores) {
   const avg = (IQ + EQ + SQ + AQ) / 4;
   if (avg >= 70) return CAREER_PROFILES[2];
   return CAREER_PROFILES[0];
+}
+
+// EQ scoring helpers
+// Part A: 5 components × 5 questions × max 5 = 25 raw
+// Part B: 5 activities × max 5 = 25 raw
+// Total raw: 50 → ×2 = 100
+export function computeEQScore(eqScores) {
+  // eqScores: { SA: {partA: n, partB: n}, ER: {...}, SM: {...}, E: {...}, IS: {...} }
+  let total = 0;
+  ['SA', 'ER', 'SM', 'E', 'IS'].forEach(k => {
+    total += (eqScores[k]?.partA || 0) + (eqScores[k]?.partB || 0);
+  });
+  return Math.round((total / 50) * 100);
+}
+
+// SQ scoring helpers
+// ACE: /20, CSI: /10, PBA: /20 → total /50 → ×2 = 100
+export function computeSQScore(sqScores) {
+  const raw = (sqScores.ACE || 0) + (sqScores.CSI || 0) + (sqScores.PBA || 0);
+  return Math.round((raw / 50) * 100);
 }

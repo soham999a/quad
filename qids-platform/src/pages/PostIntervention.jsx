@@ -12,12 +12,13 @@ import { useToast } from '../components/Toast';
 
 function PostAssessmentForm({ assessmentData, onSubmit }) {
   const [rawScores, setRawScores] = useState(() => {
-    // Pre-fill with slightly higher scores than pre as a starting point
     const pre = assessmentData?.rawScores || {};
     const init = {};
     Object.keys(PILLARS).forEach(pid => {
       init[pid] = {};
       PILLARS[pid].subParams.forEach(sp => {
+        // For EQ Part A scores stored as SA/ER/SM/E/IS, pre-fill from context
+        // For SQ stored as ACE/CSI/PBA, pre-fill from context
         init[pid][sp.id] = pre[pid]?.[sp.id] ?? 0;
       });
     });

@@ -157,18 +157,29 @@ export default function AdminConfig() {
           </div>
 
           {/* Upload zone */}
-          <div style={{
+          <label htmlFor="file-upload" style={{
             border: '2px dashed rgba(99,102,241,0.3)', borderRadius: 12, padding: 24,
             textAlign: 'center', marginBottom: 16, cursor: 'pointer', transition: 'all 0.2s',
-            background: 'rgba(99,102,241,0.03)',
+            background: 'rgba(99,102,241,0.03)', display: 'block',
           }}
             onMouseEnter={e => e.currentTarget.style.borderColor = 'rgba(99,102,241,0.6)'}
             onMouseLeave={e => e.currentTarget.style.borderColor = 'rgba(99,102,241,0.3)'}
+            onDragOver={e => { e.preventDefault(); e.currentTarget.style.borderColor = 'rgba(99,102,241,0.8)'; e.currentTarget.style.background = 'rgba(99,102,241,0.08)'; }}
+            onDragLeave={e => { e.currentTarget.style.borderColor = 'rgba(99,102,241,0.3)'; e.currentTarget.style.background = 'rgba(99,102,241,0.03)'; }}
+            onDrop={e => {
+              e.preventDefault();
+              e.currentTarget.style.borderColor = 'rgba(99,102,241,0.3)';
+              e.currentTarget.style.background = 'rgba(99,102,241,0.03)';
+              const file = e.dataTransfer.files[0];
+              if (file) alert(`File "${file.name}" received. Backend integration required to process uploads.`);
+            }}
           >
+            <input id="file-upload" type="file" accept=".pdf,.docx,.xlsx,.json" style={{ display: 'none' }}
+              onChange={e => { const f = e.target.files[0]; if (f) alert(`File "${f.name}" received. Backend integration required to process uploads.`); }} />
             <Upload size={24} color="#6366f1" style={{ marginBottom: 8, opacity: 0.6 }} />
             <div style={{ fontSize: 13, color: 'var(--text-secondary)', marginBottom: 4 }}>Drop files here or click to upload</div>
             <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>Supports PDF, DOCX, XLSX, JSON</div>
-          </div>
+          </label>
 
           {/* Items list */}
           {currentItems.length > 0 ? (
