@@ -89,9 +89,9 @@ export const PILLARS = {
     assessmentMethods: ['CORE-style scenario questionnaire (Likert 1–5)', 'Simulation exercises', 'Performance tasks', 'Peer evaluation', 'Self-reflection tool', 'Structured interview'],
     developmentFocus: ['Resilience-building modules', 'Anticipation and adaptability training', 'Relational boundary coaching', 'Regenerative capacity workshops'],
     careerAlignment: 'High AQ profiles are suited for high-pressure, adaptive, and resilience-heavy roles including entrepreneurship, crisis management, and military/emergency services.',
-    // RDF weighted scoring: (SA×1.5)+(PM×1.0)+(RR×1.0)+(RC×1.5) → max 144 → ÷144×100
+    // RDF weighted scoring: (SA×1.5)+(PM×1.0)+(RR×1.0)+(RC×1.5) → max 95 → ÷95×100
     rdWeights: { SA: 1.5, PM: 1.0, RR: 1.0, RC: 1.5 },
-    rdMax: 144,
+    rdMax: 95,
   },
 };
 
@@ -502,7 +502,7 @@ export const SQ_QUESTIONS = {
 // Part A: 4 Qs × 3pts max = 12 marks per component
 // Part B: Assessor rubric = 7 marks per component
 // Raw total: 4 × 19 = 76 (+ 2 bonus) = 78
-// Weighted: (SA×1.5)+(PM×1.0)+(RR×1.0)+(RC×1.5) → max 144 → ÷144×100
+// Weighted: (SA×1.5)+(PM×1.0)+(RR×1.0)+(RC×1.5) → max 95 → ÷95×100
 export const AQ_QUESTIONS = {
   scoringKey: { 1: 0, 2: 0, 3: 1, 4: 2, 5: 3 },
   components: {
@@ -631,12 +631,12 @@ export const AQ_QUESTIONS = {
       },
     },
   },
-  // Resilience level interpretation (based on RD Score /144)
+  // Resilience level interpretation (based on RD Score /95, converted to /100)
   levels: [
-    { label: 'Resilience Architect', min: 130, max: 144, color: '#10b981', desc: 'Elite-level resilience across all four RDF components. Thrives under adversity.', action: 'Leverage as a peer mentor; build on Growth Integration to coach others.' },
-    { label: 'Dynamic Adaptor',      min: 100, max: 129, color: '#06b6d4', desc: 'Strong overall resilience with identifiable improvement areas in 1–2 components.', action: 'Focus on weaker sub-components (e.g., Energy Restoration or Future-Proofing).' },
-    { label: 'Emerging Resilient',   min: 72,  max: 99,  color: '#f59e0b', desc: 'Functional resilience but vulnerable under compound adversity or sustained pressure.', action: 'Prioritise high-weight components (SA/RC); structured coaching recommended.' },
-    { label: 'Reactive Responder',   min: 0,   max: 71,  color: '#ef4444', desc: 'Significant resilience deficits; adversity tends to cascade and persist.', action: 'Priority intervention: develop foundational skills (Cognitive Flexibility, Energy Restoration).' },
+    { label: 'Resilience Architect', min: 90, max: 100, color: '#10b981', desc: 'Elite-level resilience across all four RDF components. Thrives under adversity.', action: 'Leverage as a peer mentor; build on Growth Integration to coach others.' },
+    { label: 'Dynamic Adaptor',      min: 70, max: 89,  color: '#06b6d4', desc: 'Strong overall resilience with identifiable improvement areas in 1–2 components.', action: 'Focus on weaker sub-components (e.g., Energy Restoration or Future-Proofing).' },
+    { label: 'Emerging Resilient',   min: 50, max: 69,  color: '#f59e0b', desc: 'Functional resilience but vulnerable under compound adversity or sustained pressure.', action: 'Prioritise high-weight components (SA/RC); structured coaching recommended.' },
+    { label: 'Reactive Responder',   min: 0,  max: 49,  color: '#ef4444', desc: 'Significant resilience deficits; adversity tends to cascade and persist.', action: 'Priority intervention: develop foundational skills (Cognitive Flexibility, Energy Restoration).' },
   ],
 };
 
@@ -649,8 +649,9 @@ export function mapAQLikert(val) {
 }
 
 // Compute AQ RD Score and convert to 100-point scale
+// Max RD Score = (19×1.5) + (19×1.0) + (19×1.0) + (19×1.5) = 28.5 + 19 + 19 + 28.5 = 95
+export const AQ_RD_MAX = 95;
 export function computeAQScore(aqScores) {
-  // aqScores: { SA: { partA: {0:val,1:val,2:val,3:val}, partB: {criterion:val} }, PM: {...}, RR: {...}, RC: {...} }
   const weights = { SA: 1.5, PM: 1.0, RR: 1.0, RC: 1.5 };
   let rdScore = 0;
   Object.entries(weights).forEach(([comp, w]) => {
@@ -661,7 +662,7 @@ export function computeAQScore(aqScores) {
     const raw = Math.min(partAMarks + partBMarks, 19);
     rdScore += raw * w;
   });
-  return Math.round((rdScore / 144) * 100);
+  return Math.round((rdScore / AQ_RD_MAX) * 100);
 }
 
 export function getAQLevel(rdScore) {
@@ -1018,15 +1019,43 @@ export function computeStandardized(raw, max) {
 
 export function computePillarScore(pillarId, scores) {
   const pillar = PILLARS[pillarId];
+
+  if (pillarId === 'IQ') {
+    // IQ: sum raw section scores (each 0-25) + bonus
+    const totalRaw = pillar.subParams.reduce((s, p) => s + (scores[p.id] || 0), 0); // max 100
+    const aiBonus = scores._aiBonus || 0;       // max 16
+    const visualBonus = scores._visualBonus || 0; // max 9
+    return Math.min(totalRaw + aiBonus + visualBonus, IQ_MAX_SCORE); // returns 0-125
+  }
+
+  if (pillarId === 'EQ') {
+    // EQ: each subParam max is 10 (partA max 5 + partB max 5)
+    // scores[comp] is already normalized to 0-10 by buildRawScores
+    const totalRaw = pillar.subParams.reduce((s, p) => s + (scores[p.id] || 0), 0); // max 50
+    const totalMax = pillar.subParams.reduce((s, p) => s + p.max, 0); // 50
+    return computeStandardized(totalRaw, totalMax); // 0-100
+  }
+
+  if (pillarId === 'SQ') {
+    // SQ: ACE(0-20) + CSI(0-10) + PBA(0-20) = 0-50 → normalize to 0-100
+    const totalRaw = (scores.ACE || 0) + (scores.CSI || 0) + (scores.PBA || 0);
+    return computeStandardized(totalRaw, 50); // 0-100
+  }
+
+  if (pillarId === 'AQ') {
+    // AQ: RDF weighted formula
+    // (SA×1.5) + (PM×1.0) + (RR×1.0) + (RC×1.5) → max = 19×1.5 + 19×1.0 + 19×1.0 + 19×1.5 = 95
+    const rdWeights = { SA: 1.5, PM: 1.0, RR: 1.0, RC: 1.5 };
+    const AQ_RD_MAX = 95; // 19×1.5 + 19×1.0 + 19×1.0 + 19×1.5
+    const rdScore = Object.entries(rdWeights).reduce((sum, [comp, w]) => {
+      return sum + (scores[comp] || 0) * w;
+    }, 0);
+    return Math.round((rdScore / AQ_RD_MAX) * 100); // 0-100
+  }
+
+  // Fallback generic
   const totalMax = pillar.subParams.reduce((s, p) => s + p.max, 0);
   const totalRaw = pillar.subParams.reduce((s, p) => s + (scores[p.id] || 0), 0);
-  // For IQ: add AI and visual bonus marks on top of the base 100
-  if (pillarId === 'IQ') {
-    const aiBonus = scores._aiBonus || 0;
-    const visualBonus = scores._visualBonus || 0;
-    const rawTotal = Math.min(totalRaw + aiBonus + visualBonus, IQ_MAX_SCORE);
-    return rawTotal; // Returns up to 125 — NOT normalized here
-  }
   return computeStandardized(totalRaw, totalMax);
 }
 

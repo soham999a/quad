@@ -712,7 +712,7 @@ function AQStep({ scores, onChange, ageGroup }) {
     const raw = Math.min(getPartAMarks(comp) + getPartBMarks(comp), 19);
     return sum + raw * w;
   }, 0);
-  const converted = Math.round((rdScore / 144) * 100);
+  const converted = Math.round((rdScore / 95) * 100);
 
   return (
     <div>
@@ -1039,15 +1039,18 @@ export default function Assessment() {
     const diagramAnswers = iqScores._diagramAnswers || {};
     iqRaw._visualBonus = Math.min(Object.keys(diagramAnswers).length, 9);
 
-    // EQ: Part A Likert sum per component (max 5 each), Part B rubric sum per activity (max 5 each)
+    // EQ: Part A Likert sum per component (5 questions × max 5 = 25 raw → normalize to 0-5)
+    //     Part B rubric sum per activity (max 5) → stays as-is
+    //     Combined per component: max 10 (5 + 5)
     const eqRaw = {};
     ['SA', 'ER', 'SM', 'E', 'IS'].forEach(comp => {
       const partAScores = eqScores.partA?.[comp] || {};
-      const partATotal = Object.values(partAScores).reduce((s, v) => s + (v || 0), 0);
+      const partARaw = Object.values(partAScores).reduce((s, v) => s + (v || 0), 0); // 0-25
+      const partANorm = Math.round((partARaw / 25) * 5); // normalize to 0-5
       const actId = `B${['SA', 'ER', 'SM', 'E', 'IS'].indexOf(comp) + 1}`;
       const partBScores = eqScores.partB?.[actId] || {};
-      const partBTotal = Object.values(partBScores).reduce((s, v) => s + (v || 0), 0);
-      eqRaw[comp] = Math.min(partATotal + partBTotal, 10);
+      const partBTotal = Object.values(partBScores).reduce((s, v) => s + (v || 0), 0); // 0-5
+      eqRaw[comp] = Math.min(partANorm + partBTotal, 10);
     });
 
     // SQ: ACE rubric totals, CSI marks, PBA rubric totals
