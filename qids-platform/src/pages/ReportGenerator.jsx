@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { PILLARS, computePillarScore, computeWeightedScore, getGrade, getCareerProfile, getSkillShape, SKILL_SHAPES, WEIGHTS, GRADE_BANDS, CONTEXTS } from '../data/qidsData';
+import { PILLARS, computePillarScore, computeWeightedScore, getGrade, getCareerProfile, getSkillShape, SKILL_SHAPES, WEIGHTS, GRADE_BANDS, CONTEXTS, IQ_MAX_SCORE } from '../data/qidsData';
 import { useApp } from '../App';
 import QIDSRadar from '../components/RadarChart';
 import { Download, Printer, FileText, CheckCircle, AlertTriangle } from 'lucide-react';
@@ -110,7 +110,11 @@ export default function ReportGenerator() {
             {Object.entries(PILLARS).map(([id, pillar]) => {
               const pre = preScores[id];
               const post = postScores[id];
-              const grade = getGrade(post);
+              const isIQ = id === 'IQ';
+              const displayMax = isIQ ? IQ_MAX_SCORE : 100;
+              const normalizedPost = isIQ ? Math.round((post / IQ_MAX_SCORE) * 100) : post;
+              const grade = getGrade(normalizedPost);
+              const pct = Math.min(Math.round((post / displayMax) * 100), 100);
               return (
                 <div key={id} style={{
                   background: 'var(--navy-4)', border: `1px solid ${pillar.color}30`,
@@ -119,10 +123,11 @@ export default function ReportGenerator() {
                   <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 3, background: pillar.gradient }} />
                   <div style={{ fontSize: 11, color: pillar.color, fontWeight: 600, marginBottom: 4 }}>{pillar.short}</div>
                   <div style={{ fontSize: 28, fontWeight: 800, color: grade.color, fontFamily: 'Space Grotesk' }}>{post}</div>
-                  <div style={{ fontSize: 10, color: 'var(--text-muted)', marginBottom: 6 }}>Grade {grade.grade} — {grade.label}</div>
+                  <div style={{ fontSize: 10, color: 'var(--text-muted)', marginBottom: 4 }}>/ {displayMax} · Grade {grade.grade} — {grade.label}</div>
+                  {isIQ && <div style={{ fontSize: 9, color: '#06b6d4', marginBottom: 4 }}>Normalized: {normalizedPost}/100 for unified score</div>}
                   <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>Pre: {pre} | Δ {post - pre > 0 ? '+' : ''}{post - pre}</div>
                   <div className="progress-bar" style={{ marginTop: 8 }}>
-                    <div className="progress-fill" style={{ width: `${post}%`, background: pillar.gradient }} />
+                    <div className="progress-fill" style={{ width: `${pct}%`, background: pillar.gradient }} />
                   </div>
                   <div style={{ fontSize: 10, color: 'var(--text-muted)', marginTop: 4 }}>Weight: ×{pillar.weight.toFixed(2)}</div>
                 </div>

@@ -196,9 +196,14 @@ function IntakeStep({ data, onChange }) {
 function IQStep({ scores, onChange, ageGroup, context }) {
   const pillar = PILLARS.IQ;
   const [activeSection, setActiveSection] = useState('verbal');
-  // Stable diagram questions per session (initialized once)
-  const [diagramQs] = useState(() => getRandomDiagramQuestions(5));
-  const [diagramAnswers, setDiagramAnswers] = useState({});
+  const [diagramQs] = useState(() => getRandomDiagramQuestions(9));
+  const [diagramAnswers, setDiagramAnswers] = useState(scores._diagramAnswers || {});
+
+  const handleDiagramAnswer = (qId, val) => {
+    const next = { ...diagramAnswers, [qId]: val };
+    setDiagramAnswers(next);
+    onChange('_diagramAnswers', 0, next); // store in iqScores._diagramAnswers
+  };
 
   const sections = [
     { id: 'verbal',       label: 'Verbal',       color: '#6366f1' },
@@ -219,7 +224,14 @@ function IQStep({ scores, onChange, ageGroup, context }) {
 
   const getScore = (sectionId) => {
     if (sectionId === 'diagrams') return Object.keys(diagramAnswers).length;
-    if (sectionId === 'ai') return 0;
+    if (sectionId === 'ai') {
+      let count = 0;
+      ['verbal', 'quantitative', 'psychometric', 'performance'].forEach(sec => {
+        const aiData = scores['ai_' + sec];
+        if (aiData?.answers) count += Object.values(aiData.answers).filter(v => v !== undefined && v !== '').length;
+      });
+      return count;
+    }
     const s = scores[sectionId] || {};
     return Object.values(s).filter(v => v !== undefined && v !== '').length;
   };
@@ -277,16 +289,20 @@ function IQStep({ scores, onChange, ageGroup, context }) {
       {activeSection === 'diagrams' && (
         <div>
           <div style={{ padding: '10px 14px', background: 'rgba(6,182,212,0.08)', border: '1px solid rgba(6,182,212,0.2)', borderRadius: 8, marginBottom: 20, fontSize: 12, color: 'var(--text-secondary)', lineHeight: 1.5 }}>
-            <strong style={{ color: '#06b6d4' }}>Visual & Diagram Questions.</strong> 5 questions randomly selected from a pool of 10. Tests spatial reasoning, pattern recognition, and visual logic.
+            <strong style={{ color: '#06b6d4' }}>Visual & Diagram Questions.</strong> 9 questions randomly selected from a pool of 20. Each correct answer = 1 mark. Max: 9 bonus marks.
           </div>
           {diagramQs.map((q, i) => (
             <DiagramQuestion
               key={q.id} question={q} index={i}
               selected={diagramAnswers[q.id]}
-              onSelect={v => setDiagramAnswers(prev => ({ ...prev, [q.id]: v }))}
+              onSelect={v => handleDiagramAnswer(q.id, v)}
               color="#06b6d4"
             />
           ))}
+          <div style={{ padding: '10px 14px', background: 'var(--navy-4)', border: '1px solid var(--border-light)', borderRadius: 10, display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 8 }}>
+            <span style={{ fontSize: 13, color: 'var(--text-secondary)' }}>Visual Bonus Score</span>
+            <span style={{ fontSize: 16, fontWeight: 800, color: '#06b6d4', fontFamily: 'Space Grotesk' }}>{Object.keys(diagramAnswers).length} / 9</span>
+          </div>
         </div>
       )}
 
@@ -888,15 +904,19 @@ function ReviewStep({ intake, rawScores }) {
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12, marginBottom: 20 }}>
         {Object.entries(PILLARS).map(([id, pillar]) => {
           const score = pillarScores[id];
-          const g = getGrade(score);
+          const isIQ = id === 'IQ';
+          const displayMax = isIQ ? 125 : 100;
+          const pct = Math.min(Math.round((score / displayMax) * 100), 100);
+          const g = getGrade(isIQ ? Math.round((score / 125) * 100) : score);
           return (
             <div key={id} style={{ padding: 16, background: 'var(--navy-4)', border: `1px solid ${pillar.color}30`, borderRadius: 12, textAlign: 'center', position: 'relative', overflow: 'hidden' }}>
               <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 3, background: pillar.gradient }} />
               <div style={{ fontSize: 11, color: pillar.color, fontWeight: 600, marginBottom: 4 }}>{pillar.short}</div>
               <div style={{ fontSize: 32, fontWeight: 800, color: g.color, fontFamily: 'Space Grotesk' }}>{score}</div>
-              <div style={{ fontSize: 10, color: 'var(--text-muted)', marginBottom: 6 }}>Grade {g.grade}</div>
+              <div style={{ fontSize: 10, color: 'var(--text-muted)', marginBottom: 6 }}>/ {displayMax} · Grade {g.grade}</div>
+              {isIQ && <div style={{ fontSize: 9, color: '#06b6d4', marginBottom: 4 }}>incl. AI + Visual bonus</div>}
               <div style={{ height: 4, background: 'rgba(255,255,255,0.08)', borderRadius: 2 }}>
-                <div style={{ height: '100%', width: `${score}%`, background: pillar.gradient, borderRadius: 2, transition: 'width 0.5s' }} />
+                <div style={{ height: '100%', width: `${pct}%`, background: pillar.gradient, borderRadius: 2, transition: 'width 0.5s' }} />
               </div>
             </div>
           );
@@ -909,7 +929,7 @@ function ReviewStep({ intake, rawScores }) {
         <div style={{ fontSize: 56, fontWeight: 900, color: grade.color, fontFamily: 'Space Grotesk', lineHeight: 1 }}>{unified}</div>
         <div style={{ fontSize: 14, color: grade.color, marginTop: 4 }}>Grade {grade.grade}: {grade.label}</div>
         <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 8 }}>
-          Weighted: IQ×1.0 + EQ×2.0 + SQ×2.0 + AQ×1.28 ÷ 6.28
+          IQ(÷125×100)×1.0 + EQ×2.0 + SQ×2.0 + AQ×1.28 ÷ 6.28
         </div>
       </div>
     </div>
@@ -1002,6 +1022,22 @@ export default function Assessment() {
       });
       iqRaw[sec] = Math.min(total, 25);
     });
+
+    // IQ AI bonus: 4 sections × 2 questions × 2 marks = max 16
+    // AI answers stored as iqScores['ai_verbal'], etc. — count answered × 2
+    let aiBonus = 0;
+    ['verbal', 'quantitative', 'psychometric', 'performance'].forEach(sec => {
+      const aiData = iqScores['ai_' + sec];
+      if (aiData?.answers) {
+        const answered = Object.values(aiData.answers).filter(v => v !== undefined && v !== '').length;
+        aiBonus += Math.min(answered * 2, 4); // max 2 questions × 2 marks = 4 per section
+      }
+    });
+    iqRaw._aiBonus = Math.min(aiBonus, 16);
+
+    // IQ Visual bonus: diagram questions × 1 mark each, max 9
+    const diagramAnswers = iqScores._diagramAnswers || {};
+    iqRaw._visualBonus = Math.min(Object.keys(diagramAnswers).length, 9);
 
     // EQ: Part A Likert sum per component (max 5 each), Part B rubric sum per activity (max 5 each)
     const eqRaw = {};
