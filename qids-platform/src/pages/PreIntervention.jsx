@@ -61,7 +61,7 @@ export default function PreIntervention() {
         </div>
         <h3 style={{ fontSize: 18, fontWeight: 700 }}>No Assessment Found</h3>
         <p style={{ fontSize: 14, color: 'var(--text-muted)' }}>Complete an assessment first to view pre-intervention analysis.</p>
-        <button onClick={() => navigate('/assessment')} className="btn btn-primary">Start Assessment</button>
+        <button onClick={() => navigate('/app/assessment')} className="btn btn-primary">Start Assessment</button>
       </div>
     );
   }
@@ -291,7 +291,7 @@ export default function PreIntervention() {
             <button
               className="btn btn-primary btn-sm"
               style={{ width: '100%', justifyContent: 'center' }}
-              onClick={() => navigate('/post-intervention', { state: { assessment: assessmentData, postAssessment: location.state.postAssessment } })}
+              onClick={() => navigate('/app/post-intervention', { state: { assessment: assessmentData, postAssessment: location.state.postAssessment } })}
             >
               View Post-Intervention →
             </button>

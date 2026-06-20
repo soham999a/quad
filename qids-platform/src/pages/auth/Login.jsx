@@ -1,30 +1,76 @@
 import React, { useState } from 'react';
 import { useNavigate, Link, Navigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { Brain, Mail, Lock, AlertCircle, ArrowRight, Sparkles, BarChart2, Target } from 'lucide-react';
+import { Brain, Mail, Lock, AlertCircle, ArrowRight, Sparkles, BarChart2, Target, Check } from 'lucide-react';
+
+const ROLES = [
+  { id: 'individual', label: 'Individual', desc: 'Personal development journey' },
+  { id: 'evaluator', label: 'Evaluator / Counselor', desc: 'Assess and guide others' },
+  { id: 'admin', label: 'Institution Admin', desc: 'Manage an organization' },
+];
 
 export default function Login() {
-  const { login, loginWithGoogle, user } = useAuth();
+  const { login, loginWithGoogle, resetPassword, updateUserRole, refreshProfile, user } = useAuth();
   const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [showRolePicker, setShowRolePicker] = useState(false);
+  const [pendingGoogleUser, setPendingGoogleUser] = useState(null);
+  const [selectedRole, setSelectedRole] = useState('individual');
+  const [resetSent, setResetSent] = useState(false);
+  const [pendingGoogleFlow, setPendingGoogleFlow] = useState(false);
 
-  if (user) return <Navigate to="/dashboard" replace />;
+  if (user && !pendingGoogleFlow) return <Navigate to="/app/dashboard" replace />;
 
   const handleLogin = async (e) => {
     e.preventDefault();
     setError(''); setLoading(true);
-    try { await login(email, password); navigate('/dashboard'); }
+    try { await login(email, password); navigate('/app/dashboard'); }
     catch (err) { setError(err.message || 'Login failed.'); }
     finally { setLoading(false); }
   };
 
   const handleGoogle = async () => {
+    setError(''); setLoading(true); setPendingGoogleFlow(true);
+    try {
+      const result = await loginWithGoogle();
+      if (result.isNew) {
+        setPendingGoogleUser(result.user);
+        setShowRolePicker(true);
+      } else {
+        setPendingGoogleFlow(false);
+        navigate('/app/dashboard');
+      }
+    }
+    catch (err) { setError(err.message || 'Google sign-in failed.'); setPendingGoogleFlow(false); }
+    finally { setLoading(false); }
+  };
+
+  const handleGoogleRoleConfirm = async () => {
+    setLoading(true);
+    try {
+      await updateUserRole(pendingGoogleUser.uid, selectedRole);
+      await refreshProfile();
+      setPendingGoogleFlow(false);
+      navigate('/app/dashboard');
+    } catch (err) {
+      setError(err.message || 'Failed to set role.');
+    }
+    finally { setShowRolePicker(false); setLoading(false); setPendingGoogleUser(null); }
+  };
+
+  const handleForgotPassword = async () => {
+    if (!email) { setError('Enter your email address first.'); return; }
     setError(''); setLoading(true);
-    try { await loginWithGoogle(); }
-    catch (err) { setError(err.message || 'Google sign-in failed.'); setLoading(false); }
+    try {
+      await resetPassword(email);
+      setResetSent(true);
+    } catch (err) {
+      setError(err.message || 'Could not send reset email.');
+    }
+    finally { setLoading(false); }
   };
 
   return (
@@ -107,7 +153,7 @@ export default function Login() {
             <div style={{ marginBottom: 24 }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
                 <label style={{ margin: 0 }}>Password</label>
-                <span style={{ fontSize: 12, color: 'var(--indigo)', cursor: 'pointer' }}>Forgot password?</span>
+                <span onClick={handleForgotPassword} style={{ fontSize: 12, color: 'var(--indigo)', cursor: 'pointer' }}>Forgot password?</span>
               </div>
               <div style={{ position: 'relative' }}>
                 <Lock size={14} color="var(--text-muted)" style={{ position: 'absolute', left: 13, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} />
@@ -136,6 +182,45 @@ export default function Login() {
           </p>
         </div>
       </div>
+
+      {/* Reset sent toast */}
+      {resetSent && (
+        <div style={{ position: 'fixed', top: 24, left: '50%', transform: 'translateX(-50%)', zIndex: 1000, padding: '14px 24px', background: 'rgba(16,185,129,0.15)', border: '1px solid rgba(16,185,129,0.3)', borderRadius: 12, backdropFilter: 'blur(20px)', display: 'flex', alignItems: 'center', gap: 10, animation: 'fadeInUp 0.3s ease' }}>
+          <Check size={16} color="#34d399" />
+          <span style={{ fontSize: 13, color: '#d1fae5' }}>Reset link sent! Check your email.</span>
+        </div>
+      )}
+
+      {/* Role picker modal for Google sign-up */}
+      {showRolePicker && (
+        <div style={{ position: 'fixed', inset: 0, zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)' }}>
+          <div style={{ background: 'var(--navy-3)', border: '1px solid var(--border)', borderRadius: 20, padding: 32, width: '90%', maxWidth: 400, animation: 'fadeInUp 0.3s ease' }}>
+            <h3 style={{ fontSize: 18, fontWeight: 700, marginBottom: 6 }}>Choose your role</h3>
+            <p style={{ fontSize: 13, color: 'var(--text-muted)', marginBottom: 20 }}>This will be your primary account type.</p>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 24 }}>
+              {ROLES.map(r => (
+                <button key={r.id} type="button" onClick={() => setSelectedRole(r.id)} style={{
+                  display: 'flex', alignItems: 'center', gap: 10, padding: '12px 14px', borderRadius: 10,
+                  background: selectedRole === r.id ? 'rgba(99,102,241,0.2)' : 'rgba(255,255,255,0.03)',
+                  border: `1px solid ${selectedRole === r.id ? 'var(--indigo)' : 'var(--border-light)'}`,
+                  color: selectedRole === r.id ? 'white' : 'var(--text-secondary)',
+                  cursor: 'pointer', textAlign: 'left', width: '100%', fontFamily: 'Inter', fontSize: 13,
+                  transition: 'all 0.15s',
+                }}>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontWeight: 600, marginBottom: 2 }}>{r.label}</div>
+                    <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>{r.desc}</div>
+                  </div>
+                  {selectedRole === r.id && <Check size={16} color="#818cf8" />}
+                </button>
+              ))}
+            </div>
+            <button onClick={handleGoogleRoleConfirm} disabled={loading} className="btn btn-primary" style={{ width: '100%', justifyContent: 'center', padding: '12px', fontSize: 14, borderRadius: 12 }}>
+              {loading ? 'Setting up...' : 'Continue'}
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

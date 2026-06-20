@@ -145,7 +145,7 @@ export default function PostIntervention() {
           </div>
           <h3 style={{ fontSize: 18, fontWeight: 700 }}>No Assessment Found</h3>
           <p style={{ fontSize: 14, color: 'var(--text-muted)' }}>Complete a pre-assessment first before doing post-intervention.</p>
-          <button onClick={() => navigate('/assessment')} className="btn btn-primary">Start Assessment</button>
+          <button onClick={() => navigate('/app/assessment')} className="btn btn-primary">Start Assessment</button>
         </div>
       );
     }
@@ -451,7 +451,7 @@ export default function PostIntervention() {
 
         <div className="divider" />
 
-        <button className="btn btn-primary btn-sm" style={{ width: '100%', justifyContent: 'center' }} onClick={() => navigate('/report')}>
+        <button className="btn btn-primary btn-sm" style={{ width: '100%', justifyContent: 'center' }} onClick={() => navigate('/app/report')}>
           <Download size={12} /> Generate Full Report
         </button>
       </div>

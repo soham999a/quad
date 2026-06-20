@@ -24,7 +24,7 @@ export const PILLARS = {
   IQ: {
     id: 'IQ', label: 'Intelligence Quotient', short: 'IQ',
     color: '#6366f1', gradient: 'linear-gradient(135deg, #6366f1, #818cf8)',
-    weight: 1.00, maxScore: 125,
+    weight: 1.00, maxScore: 125, emoji: '🧠',
     description: 'Extends beyond traditional IQ testing to encompass multiple dimensions of cognitive ability including verbal, quantitative, psychometric, and performance intelligence — plus AI-generated and visual/diagram questions for a comprehensive 125-point assessment.',
     framework: 'Four-Parameter Cognitive Model + AI & Visual Extension',
     subParams: [
@@ -45,7 +45,7 @@ export const PILLARS = {
   EQ: {
     id: 'EQ', label: 'Emotional Quotient', short: 'EQ',
     color: '#10b981', gradient: 'linear-gradient(135deg, #10b981, #34d399)',
-    weight: 2.00, maxScore: 100,
+    weight: 2.00, maxScore: 100, emoji: '❤️',
     description: 'Assessed through the Dynamic Emotional Competency (DEC) Framework — measuring real-time emotional adaptability and contextual integration rather than static traits.',
     framework: 'Dynamic Emotional Competency (DEC)',
     subParams: [
@@ -62,7 +62,7 @@ export const PILLARS = {
   SQ: {
     id: 'SQ', label: 'Social Quotient', short: 'SQ',
     color: '#a855f7', gradient: 'linear-gradient(135deg, #a855f7, #c084fc)',
-    weight: 2.00, maxScore: 100,
+    weight: 2.00, maxScore: 100, emoji: '🤝',
     description: 'Measures the ability to navigate social environments effectively, build meaningful relationships, and demonstrate cognitive social intelligence.',
     framework: 'Social Intelligence Assessment Center',
     subParams: [
@@ -77,7 +77,7 @@ export const PILLARS = {
   AQ: {
     id: 'AQ', label: 'Adversity Quotient', short: 'AQ',
     color: '#f59e0b', gradient: 'linear-gradient(135deg, #f59e0b, #fbbf24)',
-    weight: 1.28, maxScore: 100,
+    weight: 1.28, maxScore: 100, emoji: '⚡',
     description: 'Evaluated through the Resilience Dynamics Framework (RDF) — measuring the ability to anticipate, navigate, and grow through adversity as a dynamic, developable system across four weighted components.',
     framework: 'Resilience Dynamics Framework (RDF)',
     subParams: [
@@ -702,11 +702,11 @@ export const IQ_QUESTIONS = {
         title: 'General Knowledge (5 Marks)',
         type: 'open',
         questions: [
-          { q: 'Who was the first Prime Minister of India?' },
-          { q: 'What is the name of the famous flower market in Kolkata?' },
-          { q: 'How many continents are there on Earth?' },
+          { q: 'Who was the first Prime Minister of India?', answer: 'jawaharlal nehru' },
+          { q: 'What is the name of the famous flower market in Kolkata?', answer: 'mallik ghat' },
+          { q: 'How many continents are there on Earth?', answer: '7' },
           { q: 'What is the birth date of Kolkata as a city? Which three villages were combined to form it?' },
-          { q: 'What is the chemical symbol for water?' },
+          { q: 'What is the chemical symbol for water?', answer: 'h2o' },
         ],
       },
       {
@@ -717,8 +717,8 @@ export const IQ_QUESTIONS = {
           { q: 'If all students in a class pass the exam, the class is successful. The class is successful. What can we conclude about the students?' },
           { q: 'Sarah likes apples more than oranges. She prefers sweet fruit. What kind of fruit does Sarah likely prefer?' },
           { q: 'If Radha finishes homework early, she will watch TV. Jane has time to watch TV. What can we infer about her homework?' },
-          { q: 'All dogs are animals. Some animals are pets. Are all dogs pets?' },
-          { q: 'The library is open from 9 AM to 5 PM. If it\'s 6 PM, is the library open?' },
+          { q: 'All dogs are animals. Some animals are pets. Are all dogs pets?', answer: 'no' },
+          { q: 'The library is open from 9 AM to 5 PM. If it\'s 6 PM, is the library open?', answer: 'no' },
         ],
       },
       {
@@ -742,11 +742,11 @@ export const IQ_QUESTIONS = {
         instruction: 'Solve the following problems:',
         type: 'open',
         questions: [
-          { q: '15 + 28 = ?' },
-          { q: '64 − 37 = ?' },
-          { q: '8 × 7 = ?' },
-          { q: '81 ÷ 9 = ?' },
-          { q: '56 + 19 = ?' },
+          { q: '15 + 28 = ?', answer: '43' },
+          { q: '64 − 37 = ?', answer: '27' },
+          { q: '8 × 7 = ?', answer: '56' },
+          { q: '81 ÷ 9 = ?', answer: '9' },
+          { q: '56 + 19 = ?', answer: '75' },
         ],
       },
       {
@@ -765,20 +765,20 @@ export const IQ_QUESTIONS = {
         title: 'Numeric Reasoning (5 Marks)',
         type: 'open',
         questions: [
-          { q: 'What is 25% of 80?' },
-          { q: 'If a train travels 60 miles in 1 hour, how far will it travel in 3 hours?' },
-          { q: 'Solve for x: 5x + 7 = 32' },
-          { q: 'What is the next number in the series: 2, 6, 12, 20, ?' },
-          { q: 'If you have 3 apples and give away 2, how many do you have left?' },
+          { q: 'What is 25% of 80?', answer: '20' },
+          { q: 'If a train travels 60 miles in 1 hour, how far will it travel in 3 hours?', answer: '180' },
+          { q: 'Solve for x: 5x + 7 = 32', answer: '5' },
+          { q: 'What is the next number in the series: 2, 6, 12, 20, ?', answer: '30' },
+          { q: 'If you have 3 apples and give away 2, how many do you have left?', answer: '1' },
         ],
       },
       {
         title: 'Logical Reasoning (5 Marks)',
         type: 'mixed',
         questions: [
-          { q: 'All squares are rectangles. Some rectangles are circles. Are some squares circles?', type: 'open' },
-          { q: 'If two pencils cost 30 cents, how much do five pencils cost?', type: 'open' },
-          { q: 'If today is Wednesday, what day will it be in three days?', type: 'open' },
+          { q: 'All squares are rectangles. Some rectangles are circles. Are some squares circles?', answer: 'no', type: 'open' },
+          { q: 'If two pencils cost 30 cents, how much do five pencils cost?', answer: '75', type: 'open' },
+          { q: 'If today is Wednesday, what day will it be in three days?', answer: 'saturday', type: 'open' },
           { q: 'Which is true?', options: ['All birds can fly', 'Some birds cannot fly', 'No birds can fly'], answer: 1, type: 'mcq' },
           { q: 'A is taller than B. B is taller than C. Who is the shortest?', options: ['A', 'B', 'C', 'Cannot determine'], answer: 2, type: 'mcq' },
         ],
@@ -787,11 +787,11 @@ export const IQ_QUESTIONS = {
         title: 'Applied Mathematics (5 Marks)',
         type: 'open',
         questions: [
-          { q: 'A shopkeeper buys an item for ₹80 and sells it for ₹100. What is the profit percentage?' },
-          { q: 'If a rectangle has length 12 cm and width 5 cm, what is its area?' },
-          { q: 'A car travels 150 km in 3 hours. What is its average speed?' },
-          { q: 'What is the simple interest on ₹1000 at 5% per annum for 2 years?' },
-          { q: 'If 6 workers can complete a job in 10 days, how many days will 10 workers take?' },
+          { q: 'A shopkeeper buys an item for ₹80 and sells it for ₹100. What is the profit percentage?', answer: '25' },
+          { q: 'If a rectangle has length 12 cm and width 5 cm, what is its area?', answer: '60' },
+          { q: 'A car travels 150 km in 3 hours. What is its average speed?', answer: '50' },
+          { q: 'What is the simple interest on ₹1000 at 5% per annum for 2 years?', answer: '100' },
+          { q: 'If 6 workers can complete a job in 10 days, how many days will 10 workers take?', answer: '6' },
         ],
       },
     ],
@@ -803,11 +803,11 @@ export const IQ_QUESTIONS = {
         title: 'Spatial Reasoning (5 Marks)',
         type: 'open',
         questions: [
-          { q: 'If you fold a square piece of paper in half diagonally, what shape do you get?' },
-          { q: 'A cube has 6 faces. If you paint all faces red and then cut it into 27 equal smaller cubes, how many smaller cubes have exactly 2 red faces?' },
-          { q: 'How many edges does a triangular prism have?' },
-          { q: 'If you rotate the letter "d" 180 degrees, what letter does it look like?' },
-          { q: 'A clock shows 3:00. What is the angle between the hour and minute hands?' },
+          { q: 'If you fold a square piece of paper in half diagonally, what shape do you get?', answer: 'triangle' },
+          { q: 'A cube has 6 faces. If you paint all faces red and then cut it into 27 equal smaller cubes, how many smaller cubes have exactly 2 red faces?', answer: '12' },
+          { q: 'How many edges does a triangular prism have?', answer: '9' },
+          { q: 'If you rotate the letter "d" 180 degrees, what letter does it look like?', answer: 'p' },
+          { q: 'A clock shows 3:00. What is the angle between the hour and minute hands?', answer: '90' },
         ],
       },
       {
@@ -827,21 +827,21 @@ export const IQ_QUESTIONS = {
         type: 'open',
         questions: [
           { q: 'Read this sequence once, then write it from memory: 7, 3, 9, 1, 5, 8, 2, 6, 4' },
-          { q: 'How many times does the letter "e" appear in: "The elephant entered the elegant estate"?' },
-          { q: 'What is the 7th letter of the alphabet?' },
-          { q: 'If you read a list of 10 words and can recall 7, what is your recall percentage?' },
-          { q: 'Count the number of triangles in a Star of David (six-pointed star).' },
+          { q: 'How many times does the letter "e" appear in: "The elephant entered the elegant estate"?', answer: '10' },
+          { q: 'What is the 7th letter of the alphabet?', answer: 'g' },
+          { q: 'If you read a list of 10 words and can recall 7, what is your recall percentage?', answer: '70' },
+          { q: 'Count the number of triangles in a Star of David (six-pointed star).', answer: '8' },
         ],
       },
       {
         title: 'Processing Speed (5 Marks)',
         type: 'open',
         questions: [
-          { q: 'How many odd numbers are between 1 and 20?' },
-          { q: 'What is 15 × 15?' },
-          { q: 'If you have a dozen eggs and use 5, how many remain?' },
-          { q: 'What is the sum of all digits in 2024?' },
-          { q: 'How many months have exactly 30 days?' },
+          { q: 'How many odd numbers are between 1 and 20?', answer: '10' },
+          { q: 'What is 15 × 15?', answer: '225' },
+          { q: 'If you have a dozen eggs and use 5, how many remain?', answer: '7' },
+          { q: 'What is the sum of all digits in 2024?', answer: '8' },
+          { q: 'How many months have exactly 30 days?', answer: '4' },
         ],
       },
       {
@@ -868,7 +868,7 @@ export const IQ_QUESTIONS = {
           { q: 'A farmer needs to cross a river with a fox, a chicken, and a bag of grain. His boat can only carry him and one other item. The fox will eat the chicken if left alone, and the chicken will eat the grain. How does he get everything across?' },
           { q: 'You have a 3-litre jug and a 5-litre jug. How do you measure exactly 4 litres of water?' },
           { q: 'If you have 100 lockers all closed, and 100 students each toggle every nth locker (student 1 toggles all, student 2 toggles every 2nd, etc.), which lockers are open at the end?' },
-          { q: 'A snail is at the bottom of a 10-metre well. Each day it climbs 3 metres, each night it slides back 2 metres. How many days to escape?' },
+          { q: 'A snail is at the bottom of a 10-metre well. Each day it climbs 3 metres, each night it slides back 2 metres. How many days to escape?', answer: '8' },
         ],
       },
       {
@@ -1075,6 +1075,89 @@ export function getGrade(score) {
 }
 
 export function isCritical(score) { return score < 60; }
+
+// ─── EVALUATOR SCORE MERGE ────────────────────────────────────────────────────
+// Merges evaluator rubric scores (from evaluations collection) into assessment
+// rawScores so that reports and dashboards reflect the evaluator's Part B scores.
+//
+// Evaluator scores replace Part B portions of EQ, SQ, AQ.
+// For new assessments, _eqPartA / _aqPartA contain the raw Likert data needed to
+// recompute properly. For legacy docs without those fields, evaluator scores
+// computed as standalone pillar scores are stored as a new key.
+export function mergeEvaluationScores(rawScores, evaluations, assessmentDoc) {
+  if (!evaluations || evaluations.length === 0) return { rawScores, merged: false };
+
+  const merged = JSON.parse(JSON.stringify(rawScores));
+
+  for (const ev of evaluations) {
+    if (!ev.scores) continue;
+
+    if (ev.pillar === 'EQ') {
+      const eqScores = ev.scores.EQ || {};
+      const compMap = { B1: 'SA', B2: 'ER', B3: 'SM', B4: 'E', B5: 'IS' };
+      const eqPartA = assessmentDoc?._eqPartA || {};
+
+      Object.entries(compMap).forEach(([actId, comp]) => {
+        const actScores = eqScores[actId] || {};
+        const evPartB = Object.values(actScores).reduce((s, v) => s + (v || 0), 0); // 0-5
+
+        // Try to use stored partA breakdown for proper merge
+        const partAVals = eqPartA[comp];
+        if (partAVals && Array.isArray(partAVals) && partAVals.length > 0) {
+          const partARaw = partAVals.reduce((s, v) => s + (v || 0), 0);
+          const partANorm = Math.round((partARaw / 25) * 5);
+          merged.EQ[comp] = Math.min(partANorm + evPartB, 10);
+        } else {
+          // Fallback: use evaluator-only score (no partA data available)
+          // This will undercount, so we note it
+          merged.EQ[comp] = evPartB;
+        }
+      });
+    }
+
+    if (ev.pillar === 'SQ') {
+      const sqScores = ev.scores.SQ || {};
+      // Recompute ACE total from evaluator scores
+      let aceTotal = 0;
+      let pbaTotal = 0;
+      Object.entries(sqScores).forEach(([id, critScores]) => {
+        const total = Object.values(critScores || {}).reduce((s, v) => s + (v || 0), 0);
+        if (id.startsWith('ACE')) aceTotal += total;
+        else if (id.startsWith('PBA')) pbaTotal += total;
+      });
+      merged.SQ.ACE = aceTotal;
+      merged.SQ.PBA = pbaTotal;
+      // CSI stays from original (MCQ, not rubrics)
+    }
+
+    if (ev.pillar === 'AQ') {
+      const aqScores = ev.scores.AQ || {};
+      const aqPartA = assessmentDoc?._aqPartA || {};
+
+      Object.entries(aqScores).forEach(([comp, critScores]) => {
+        const evPartB = Object.values(critScores || {}).reduce((s, v) => s + (v || 0), 0); // 0-7
+
+        const partAVals = aqPartA[comp];
+        if (partAVals && Array.isArray(partAVals) && partAVals.length > 0) {
+          const partAMarks = partAVals.reduce((s, v) => s + (v || 0), 0);
+          merged.AQ[comp] = Math.min(partAMarks + evPartB, 19);
+        } else {
+          // Fallback: use evaluator partB only, try to extract original partA from rawScore
+          const origTotal = rawScores.AQ?.[comp] || 0;
+          // We don't know the original partB, so estimate partA as orig - oldPartB
+          // crudely: assume original was evenly split or just use evaluator partB
+          // Better: use the raw value but cap at evPartB as the new total
+          if (evPartB > origTotal) {
+            merged.AQ[comp] = evPartB;
+          }
+          // else keep original (evaluator scored lower, so we keep original partA)
+        }
+      });
+    }
+  }
+
+  return { rawScores: merged, merged: true };
+}
 
 export function getSkillShape(pillarScores) {
   const vals = Object.values(pillarScores);

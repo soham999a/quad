@@ -105,3 +105,81 @@ export async function getInterventionPlan(uid, assessmentId) {
     return snap.exists() ? snap.data() : null;
   } catch (e) { console.warn('getInterventionPlan failed:', e.message); return null; }
 }
+
+// ── Evaluator System ──────────────────────────────────────────────────────────
+
+export async function getAllUsers() {
+  try {
+    const snap = await getDocs(collection(db, 'users'));
+    return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+  } catch (e) { console.warn('getAllUsers failed:', e.message); return []; }
+}
+
+export async function assignEvaluator(evaluatorUid, studentUid) {
+  try {
+    const id = `${evaluatorUid}_${studentUid}`;
+    await setDoc(doc(db, 'evaluatorAssignments', id), {
+      evaluatorUid, studentUid, active: true, createdAt: serverTimestamp(),
+    });
+    return true;
+  } catch (e) { console.warn('assignEvaluator failed:', e.message); return false; }
+}
+
+export async function removeAssignment(evaluatorUid, studentUid) {
+  try {
+    const id = `${evaluatorUid}_${studentUid}`;
+    await updateDoc(doc(db, 'evaluatorAssignments', id), { removedAt: serverTimestamp(), active: false });
+    return true;
+  } catch (e) { console.warn('removeAssignment failed:', e.message); return false; }
+}
+
+export async function getEvaluatorAssignments(evaluatorUid) {
+  try {
+    const q = query(collection(db, 'evaluatorAssignments'), where('evaluatorUid', '==', evaluatorUid));
+    const snap = await getDocs(q);
+    return snap.docs.map(d => ({ id: d.id, ...d.data() })).filter(a => a.active !== false);
+  } catch (e) { console.warn('getEvaluatorAssignments failed:', e.message); return []; }
+}
+
+export async function getStudentEvaluator(studentUid) {
+  try {
+    const q = query(collection(db, 'evaluatorAssignments'), where('studentUid', '==', studentUid));
+    const snap = await getDocs(q);
+    const active = snap.docs.map(d => ({ id: d.id, ...d.data() })).filter(a => a.active !== false);
+    return active.length > 0 ? active[0] : null;
+  } catch (e) { console.warn('getStudentEvaluator failed:', e.message); return null; }
+}
+
+export async function saveEvaluation(assessmentId, evaluatorUid, studentUid, pillar, scores) {
+  try {
+    const docId = `${assessmentId}_${pillar}`;
+    await setDoc(doc(db, 'evaluations', docId), {
+      assessmentId, evaluatorUid, studentUid, pillar, scores,
+      status: 'completed',
+      createdAt: serverTimestamp(), updatedAt: serverTimestamp(),
+    });
+    return true;
+  } catch (e) { console.warn('saveEvaluation failed:', e.message); return false; }
+}
+
+export async function getEvaluation(assessmentId, pillar) {
+  try {
+    const snap = await getDoc(doc(db, 'evaluations', `${assessmentId}_${pillar}`));
+    return snap.exists() ? snap.data() : null;
+  } catch (e) { console.warn('getEvaluation failed:', e.message); return null; }
+}
+
+export async function getAllEvaluations(assessmentId) {
+  try {
+    const q = query(collection(db, 'evaluations'), where('assessmentId', '==', assessmentId));
+    const snap = await getDocs(q);
+    return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+  } catch (e) { console.warn('getAllEvaluations failed:', e.message); return []; }
+}
+
+export async function updateUserRole(uid, role) {
+  try {
+    await updateDoc(doc(db, 'users', uid), { role, updatedAt: serverTimestamp() });
+    return true;
+  } catch (e) { console.warn('updateUserRole failed:', e.message); return false; }
+}

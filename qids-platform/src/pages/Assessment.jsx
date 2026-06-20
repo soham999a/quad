@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { PILLARS, DEMO_SCORES, computePillarScore, computeWeightedScore, getGrade, EQ_QUESTIONS, SQ_QUESTIONS, IQ_QUESTIONS, AQ_QUESTIONS, mapAQLikert } from '../data/qidsData';
+import React, { useState, useEffect } from 'react';
+import { PILLARS, computePillarScore, computeWeightedScore, getGrade, EQ_QUESTIONS, SQ_QUESTIONS, IQ_QUESTIONS, AQ_QUESTIONS, mapAQLikert } from '../data/qidsData';
 import { getRandomDiagramQuestions } from '../data/diagramQuestions';
 import { generateIQQuestions, generateEQQuestions, generateAQQuestions, generateSQQuestions } from '../services/groqService';
 import DiagramQuestion from '../components/DiagramQuestion';
@@ -7,8 +7,8 @@ import AIQuestionGenerator from '../components/AIQuestionGenerator';
 import { useApp } from '../App';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
-import { saveAssessment } from '../services/firestoreService';
-import { Save, RotateCcw, ChevronRight, ChevronLeft, CheckCircle, Info, AlertCircle, ClipboardList, Brain, Heart, Users, Shield } from 'lucide-react';
+import { saveAssessment, getStudentEvaluator, getAllUsers, assignEvaluator, removeAssignment } from '../services/firestoreService';
+import { Save, ChevronRight, ChevronLeft, CheckCircle, AlertCircle, ClipboardList, Brain, Heart, Users, Shield } from 'lucide-react';
 import { useToast } from '../components/Toast';
 
 const STEPS = ['Intake & Consent', 'IQ Assessment', 'EQ Assessment', 'SQ Assessment', 'AQ Assessment', 'Review & Submit'];
@@ -136,7 +136,7 @@ function RubricScorer({ criterion, marks, desc, value, onChange, color }) {
 }
 
 // ─── INTAKE STEP ──────────────────────────────────────────────────────────────
-function IntakeStep({ data, onChange }) {
+function IntakeStep({ data, onChange, evaluators, currentEv, onAssign, onRemove, loadingEv }) {
   return (
     <div>
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 16 }}>
@@ -144,13 +144,28 @@ function IntakeStep({ data, onChange }) {
           { key: 'name',        label: 'Full Name',                  placeholder: 'Enter full name' },
           { key: 'age',         label: 'Age',                        placeholder: 'Enter age', type: 'number' },
           { key: 'institution', label: 'Institution / Organization', placeholder: 'Enter institution name' },
-          { key: 'evaluator',   label: 'Evaluator Name',             placeholder: 'Enter evaluator name' },
         ].map(({ key, label, placeholder, type }) => (
           <div key={key}>
             <label>{label}</label>
             <input type={type || 'text'} placeholder={placeholder} value={data[key] || ''} onChange={e => onChange(key, e.target.value)} />
           </div>
         ))}
+        <div>
+          <label>Evaluator</label>
+          {currentEv ? (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 10px', borderRadius: 8, border: '1px solid var(--border-light)', background: 'rgba(255,255,255,0.03)' }}>
+              <span style={{ flex: 1, fontSize: 13, color: '#34d399' }}>{currentEv.name || currentEv.email || 'Assigned Evaluator'}</span>
+              <button onClick={onRemove} disabled={loadingEv} style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: 6, padding: '3px 8px', cursor: 'pointer', color: '#f87171', fontSize: 11, fontFamily: 'Inter' }}>Remove</button>
+            </div>
+          ) : (
+            <select value="" onChange={e => onAssign(e.target.value)} disabled={loadingEv} style={{ width: '100%', color: loadingEv ? 'var(--text-muted)' : 'white' }}>
+              <option value="">{loadingEv ? 'Loading...' : (evaluators.length === 0 ? 'No evaluators available' : 'Select an evaluator...')}</option>
+              {evaluators.map(ev => (
+                <option key={ev.uid} value={ev.uid}>{ev.name || ev.email}</option>
+              ))}
+            </select>
+          )}
+        </div>
       </div>
 
       <div style={{ marginBottom: 16 }}>
@@ -199,6 +214,11 @@ function IQStep({ scores, onChange, ageGroup, context }) {
   const [diagramQs] = useState(() => getRandomDiagramQuestions(9));
   const [diagramAnswers, setDiagramAnswers] = useState(scores._diagramAnswers || {});
 
+  // Persist diagram questions so buildRawScores can check correctness
+  useEffect(() => {
+    onChange('_diagramQuestions', 0, diagramQs);
+  }, []);
+
   const handleDiagramAnswer = (qId, val) => {
     const next = { ...diagramAnswers, [qId]: val };
     setDiagramAnswers(next);
@@ -223,14 +243,31 @@ function IQStep({ scores, onChange, ageGroup, context }) {
   };
 
   const getScore = (sectionId) => {
-    if (sectionId === 'diagrams') return Object.keys(diagramAnswers).length;
+    if (sectionId === 'diagrams') return diagramQs.filter(q => diagramAnswers[q.id] === q.answer).length;
     if (sectionId === 'ai') {
-      let count = 0;
-      ['verbal', 'quantitative', 'psychometric', 'performance'].forEach(sec => {
+      let correct = 0;
+      let total = 0;
+      const mcqSections = ['quantitative', 'psychometric'];
+      const openSections = ['verbal', 'performance'];
+      mcqSections.forEach(sec => {
         const aiData = scores['ai_' + sec];
-        if (aiData?.answers) count += Object.values(aiData.answers).filter(v => v !== undefined && v !== '').length;
+        if (aiData?.answers && aiData?.questions) {
+          Object.entries(aiData.answers).forEach(([idx, val]) => {
+            total++;
+            const q = aiData.questions[Number(idx)];
+            if (q?.answer !== undefined && val === q.answer) correct++;
+          });
+        }
       });
-      return count;
+      openSections.forEach(sec => {
+        const aiData = scores['ai_' + sec];
+        if (aiData?.answers) {
+          const answered = Object.values(aiData.answers).filter(v => v !== undefined && v !== '').length;
+          total += answered;
+          correct += answered;
+        }
+      });
+      return total > 0 ? correct : 0;
     }
     const s = scores[sectionId] || {};
     return Object.values(s).filter(v => v !== undefined && v !== '').length;
@@ -301,7 +338,7 @@ function IQStep({ scores, onChange, ageGroup, context }) {
           ))}
           <div style={{ padding: '10px 14px', background: 'var(--navy-4)', border: '1px solid var(--border-light)', borderRadius: 10, display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 8 }}>
             <span style={{ fontSize: 13, color: 'var(--text-secondary)' }}>Visual Bonus Score</span>
-            <span style={{ fontSize: 16, fontWeight: 800, color: '#06b6d4', fontFamily: 'Space Grotesk' }}>{Object.keys(diagramAnswers).length} / 9</span>
+            <span style={{ fontSize: 16, fontWeight: 800, color: '#06b6d4', fontFamily: 'Space Grotesk' }}>{diagramQs.filter(q => diagramAnswers[q.id] === q.answer).length} / 9</span>
           </div>
         </div>
       )}
@@ -726,11 +763,11 @@ function AQStep({ scores, onChange, ageGroup }) {
       <div style={{ display: 'flex', gap: 10, marginBottom: 20, padding: '12px 16px', background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.2)', borderRadius: 10, alignItems: 'center' }}>
         <div style={{ flex: 1 }}>
           <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 2 }}>Live RD Score Preview</div>
-          <div style={{ fontSize: 11, color: 'var(--text-secondary)' }}>Formula: (SA×1.5) + (PM×1.0) + (RR×1.0) + (RC×1.5) ÷ 144 × 100</div>
+          <div style={{ fontSize: 11, color: 'var(--text-secondary)' }}>Formula: (SA×1.5) + (PM×1.0) + (RR×1.0) + (RC×1.5) → max 95 → RD÷95×100</div>
         </div>
         <div style={{ textAlign: 'right' }}>
           <div style={{ fontSize: 28, fontWeight: 800, color: pillar.color, fontFamily: 'Space Grotesk', lineHeight: 1 }}>{converted}</div>
-          <div style={{ fontSize: 10, color: 'var(--text-muted)' }}>RD: {Math.round(rdScore)}/144</div>
+          <div style={{ fontSize: 10, color: 'var(--text-muted)' }}>RD: {Math.round(rdScore)}/95</div>
         </div>
       </div>
 
@@ -951,20 +988,79 @@ export default function Assessment() {
   const [aqScores, setAqScores] = useState({});       // { situational_agility: val, ... }
   const [submitted, setSubmitted] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [evaluators, setEvaluators] = useState([]);
+  const [currentEv, setCurrentEv] = useState(null);
+  const [loadingEv, setLoadingEv] = useState(false);
 
   const updateIntake = (k, v) => setIntake(prev => ({ ...prev, [k]: v }));
+
+  // Load evaluators and current assignment
+  useEffect(() => {
+    if (!user) return;
+    (async () => {
+      setLoadingEv(true);
+      try {
+        const allUsers = await getAllUsers();
+        setEvaluators(allUsers.filter(u => u.role === 'evaluator'));
+
+        const assignment = await getStudentEvaluator(user.uid);
+        if (assignment) {
+          const evProfile = allUsers.find(u => u.uid === assignment.evaluatorUid);
+          if (evProfile) {
+            setCurrentEv(evProfile);
+            setIntake(prev => ({ ...prev, evaluator: evProfile.name || 'Assigned Evaluator', _evUid: assignment.evaluatorUid }));
+          }
+        }
+      } catch (e) {
+        // Silently fail
+      }
+      setLoadingEv(false);
+    })();
+  }, [user]);
+
+  const handleAssignEvaluator = async (evUid) => {
+    setLoadingEv(true);
+    try {
+      await assignEvaluator(evUid, user.uid);
+      const ev = evaluators.find(e => e.uid === evUid);
+      setCurrentEv(ev || null);
+      setIntake(prev => ({ ...prev, evaluator: ev?.name || 'Assigned Evaluator', _evUid: evUid }));
+      toast('Evaluator assigned', 'success');
+    } catch (e) {
+      toast('Failed to assign evaluator', 'error');
+    }
+    setLoadingEv(false);
+  };
+
+  const handleRemoveEvaluator = async () => {
+    if (!currentEv) return;
+    setLoadingEv(true);
+    try {
+      await removeAssignment(currentEv.uid, user.uid);
+      setCurrentEv(null);
+      setIntake(prev => ({ ...prev, evaluator: '', _evUid: '' }));
+    } catch (e) {
+      toast('Failed to remove evaluator', 'error');
+    }
+    setLoadingEv(false);
+  };
 
   // IQ score updater
   const updateIQ = (section, qIndex, value) => {
     setIqScores(prev => ({ ...prev, [section]: { ...(prev[section] || {}), [qIndex]: value } }));
   };
 
-  // EQ score updater — partA: (partA, component, qIndex, value) | partB: (partB, actId, criterion, value)
+  // EQ score updater — partA: (partA, component, qIndex, value) | partB: (partB, actId, criterion, value) | partA_ai: AI-generated
   const updateEQ = (part, keyA, keyB, value) => {
     if (part === 'partA') {
       setEqScores(prev => ({
         ...prev,
         partA: { ...(prev.partA || {}), [keyA]: { ...(prev.partA?.[keyA] || {}), [keyB]: value } },
+      }));
+    } else if (part === 'partA_ai') {
+      setEqScores(prev => ({
+        ...prev,
+        partA_ai: { ...(prev.partA_ai || {}), [keyA]: { ...(prev.partA_ai?.[keyA] || {}), ai: value } },
       }));
     } else {
       setEqScores(prev => ({
@@ -988,12 +1084,17 @@ export default function Assessment() {
     }
   };
 
-  // AQ score updater — same pattern as EQ: (comp, part, key, value)
+  // AQ score updater — (comp, part, key, value)
   const updateAQ = (comp, part, key, value) => {
     if (part === 'partA') {
       setAqScores(prev => ({
         ...prev,
         [comp]: { ...(prev[comp] || {}), partA: { ...(prev[comp]?.partA || {}), [key]: value } },
+      }));
+    } else if (part === 'partA_ai') {
+      setAqScores(prev => ({
+        ...prev,
+        [comp]: { ...(prev[comp] || {}), partA_ai: { ...(prev[comp]?.partA_ai || {}), [key]: value } },
       }));
     } else {
       setAqScores(prev => ({
@@ -1017,27 +1118,52 @@ export default function Assessment() {
           const val = secScores[globalIdx];
           const qType = section.type === 'mixed' ? (q.type || 'open') : section.type;
           if (qType === 'mcq' && val === q.answer) total += 1;
-          else if (qType === 'open' && val && val.trim()) total += 1;
+          else if (qType === 'open' && val && val.trim()) {
+            if (q.answer !== undefined) {
+              if (String(val).trim().toLowerCase() === String(q.answer).toLowerCase()) total += 1;
+            } else {
+              total += 1; // subjective/explanation — needs assessor review
+            }
+          }
         });
       });
       iqRaw[sec] = Math.min(total, 25);
     });
 
     // IQ AI bonus: 4 sections × 2 questions × 2 marks = max 16
-    // AI answers stored as iqScores['ai_verbal'], etc. — count answered × 2
+    // MCQ answers validated against generated answer keys; open answers get auto-award
     let aiBonus = 0;
-    ['verbal', 'quantitative', 'psychometric', 'performance'].forEach(sec => {
+    const aiMcqSections = ['quantitative', 'psychometric'];
+    const aiOpenSections = ['verbal', 'performance'];
+    aiMcqSections.forEach(sec => {
+      const aiData = iqScores['ai_' + sec];
+      if (aiData?.answers && aiData?.questions) {
+        const correct = Object.entries(aiData.answers).filter(([idx, val]) => {
+          const q = aiData.questions[Number(idx)];
+          return q?.answer !== undefined && val === q.answer;
+        }).length;
+        aiBonus += Math.min(correct * 2, 4);
+      }
+    });
+    aiOpenSections.forEach(sec => {
       const aiData = iqScores['ai_' + sec];
       if (aiData?.answers) {
         const answered = Object.values(aiData.answers).filter(v => v !== undefined && v !== '').length;
-        aiBonus += Math.min(answered * 2, 4); // max 2 questions × 2 marks = 4 per section
+        aiBonus += Math.min(answered * 2, 4);
       }
     });
     iqRaw._aiBonus = Math.min(aiBonus, 16);
 
     // IQ Visual bonus: diagram questions × 1 mark each, max 9
-    const diagramAnswers = iqScores._diagramAnswers || {};
-    iqRaw._visualBonus = Math.min(Object.keys(diagramAnswers).length, 9);
+    // Check correctness against answer keys in the stored diagram questions
+    const diagramAnswers = iqScores._diagramAnswers?.[0] || {};
+    const storedQs = iqScores._diagramQuestions?.[0] || [];
+    const diagramQuestions = Array.isArray(storedQs) ? storedQs : Object.values(storedQs).flat().filter(Boolean);
+    const correctDiagrams = Object.entries(diagramAnswers).filter(([qId, ans]) => {
+      const q = diagramQuestions.find(dq => dq.id === qId);
+      return q && q.answer === ans;
+    }).length;
+    iqRaw._visualBonus = Math.min(correctDiagrams, 9);
 
     // EQ: Part A Likert sum per component (5 questions × max 5 = 25 raw → normalize to 0-5)
     //     Part B rubric sum per activity (max 5) → stays as-is
@@ -1096,12 +1222,31 @@ export default function Assessment() {
     const rawScores = buildRawScores();
     const pillarScores = {};
     Object.keys(PILLARS).forEach(id => { pillarScores[id] = computePillarScore(id, rawScores[id] || {}); });
-    const data = { intake, rawScores, pillarScores, ageGroup: intake.ageGroup, timestamp: new Date().toISOString() };
+
+    // Store raw Part A data so evaluator scores can be properly merged later
+    const eqPartA = {};
+    if (eqScores.partA) {
+      ['SA', 'ER', 'SM', 'E', 'IS'].forEach(comp => {
+        const vals = eqScores.partA[comp] || {};
+        eqPartA[comp] = [0, 1, 2, 3, 4].map(i => vals[i] || 0);
+      });
+    }
+    const aqPartA = {};
+    ['SA', 'PM', 'RR', 'RC'].forEach(comp => {
+      const vals = aqScores[comp]?.partA || {};
+      aqPartA[comp] = [0, 1, 2, 3].map(i => vals[i] || 0);
+    });
+
+    const data = { intake, rawScores, pillarScores, ageGroup: intake.ageGroup, timestamp: new Date().toISOString(), _eqPartA: eqPartA, _aqPartA: aqPartA };
     setAssessmentData(data);
     setSaving(true);
     try {
-      if (user) await saveAssessment(user.uid, data);
-      toast('Assessment saved successfully!', 'success');
+      if (user) {
+        await saveAssessment(user.uid, data);
+        toast('Assessment saved successfully!', 'success');
+      } else {
+        toast('Not logged in — data not saved.', 'error');
+      }
     } catch (e) {
       console.error('Save failed:', e);
       toast('Saved locally — sync failed. Check connection.', 'error');
@@ -1121,8 +1266,8 @@ export default function Assessment() {
           Baseline data for <strong style={{ color: 'var(--text-primary)' }}>{intake.name || 'the individual'}</strong> has been recorded. Proceed to Pre-Intervention analysis to view scores, grades, and intervention mapping.
         </p>
         <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
-          <button onClick={() => navigate('/pre-intervention')} className="btn btn-primary btn-lg">View Pre-Intervention Analysis</button>
-          <button onClick={() => { setSubmitted(false); setStep(0); setIntake({ name: '', age: '', ageGroup: '11-18', institution: '', evaluator: '', purpose: '', consent: false }); setIqScores({}); setEqScores({}); setSqScores({}); setAqScores({}); }} className="btn btn-secondary">New Assessment</button>
+          <button onClick={() => navigate('/app/pre-intervention')} className="btn btn-primary btn-lg">View Pre-Intervention Analysis</button>
+          <button onClick={() => { setSubmitted(false); setStep(0); setIntake({ name: '', age: '', ageGroup: '11-18', institution: '', evaluator: '', purpose: '', consent: false, _evUid: '' }); setCurrentEv(null); setIqScores({}); setEqScores({}); setSqScores({}); setAqScores({}); }} className="btn btn-secondary">New Assessment</button>
         </div>
       </div>
     );
@@ -1174,7 +1319,7 @@ export default function Assessment() {
 
       {/* Step content */}
       <div className="card" style={{ marginBottom: 20 }}>
-        {step === 0 && <IntakeStep data={intake} onChange={updateIntake} />}
+        {step === 0 && <IntakeStep data={intake} onChange={updateIntake} evaluators={evaluators} currentEv={currentEv} onAssign={handleAssignEvaluator} onRemove={handleRemoveEvaluator} loadingEv={loadingEv} />}
         {step === 1 && <IQStep scores={iqScores} onChange={updateIQ} ageGroup={intake.ageGroup} context={context} />}
         {step === 2 && <EQStep scores={eqScores} onChange={updateEQ} ageGroup={intake.ageGroup} />}
         {step === 3 && <SQStep scores={sqScores} onChange={updateSQ} />}

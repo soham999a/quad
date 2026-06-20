@@ -209,7 +209,7 @@ export default function FourPillars() {
       {/* Pillar selector */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12, marginBottom: 28 }}>
         {Object.values(PILLARS).map(p => (
-          <PillarCard key={p.id} pillar={p} active={active === p.id} onClick={() => { setActive(p.id); navigate(`/pillars/${p.id}`); }} />
+          <PillarCard key={p.id} pillar={p} active={active === p.id} onClick={() => { setActive(p.id); navigate(`/app/pillars/${p.id}`); }} />
         ))}
       </div>
 

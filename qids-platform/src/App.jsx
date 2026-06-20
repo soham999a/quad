@@ -1,76 +1,85 @@
 import React, { useState, createContext, useContext, useEffect } from 'react';
 import { BrowserRouter, Routes, Route, NavLink, useNavigate, Navigate, useLocation } from 'react-router-dom';
-import { Brain, LayoutDashboard, Map, ClipboardList, Zap, TrendingUp, FileText, Settings,
-  ChevronRight, Menu, Activity, LogOut, Home, BookOpen, ListChecks, X } from 'lucide-react';
-import { CONTEXTS } from './data/qidsData';
+import { Brain, Map, ClipboardList, TrendingUp, FileText, UserCheck,
+  ChevronRight, Menu, LogOut, Home, BookOpen, ListChecks, X, Shield, Users } from 'lucide-react';
+import { PILLARS, CONTEXTS, computePillarScore, mergeEvaluationScores } from './data/qidsData';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
 import { ToastProvider } from './components/Toast';
-import { getLatestAssessment, getLatestPostAssessment } from './services/firestoreService';
+import { getLatestAssessment, getLatestPostAssessment, getAllEvaluations } from './services/firestoreService';
 
+import Landing from './pages/Landing';
 import Login from './pages/auth/Login';
 import Signup from './pages/auth/Signup';
 import Dashboard from './pages/Dashboard';
-import Overview from './pages/Overview';
 import FrameworkMap from './pages/FrameworkMap';
 import FourPillars from './pages/FourPillars';
 import Assessment from './pages/Assessment';
-import PreIntervention from './pages/PreIntervention';
-import Intervention from './pages/Intervention';
-import PostIntervention from './pages/PostIntervention';
+import Progress from './pages/Progress';
 import ReportGenerator from './pages/ReportGenerator';
-import AdminConfig from './pages/AdminConfig';
+import AdminPanel from './pages/admin/AdminPanel';
+import EvaluatorDashboard from './pages/evaluator/EvaluatorDashboard';
+import EvaluatorScoring from './pages/evaluator/EvaluatorScoring';
+import MyEvaluator from './pages/student/MyEvaluator';
 import Questionnaires from './pages/Questionnaires';
 import InterventionPlan from './pages/InterventionPlan';
 
 export const AppContext = createContext(null);
 export const useApp = () => useContext(AppContext);
 
+const CONTEXT_THEMES = {
+  school:     { accent: '#6366f1', gradient: 'linear-gradient(135deg, #6366f1, #818cf8)', badge: '🏫 School' },
+  college:    { accent: '#8b5cf6', gradient: 'linear-gradient(135deg, #8b5cf6, #a855f7)', badge: '🎓 College' },
+  corporate:  { accent: '#06b6d4', gradient: 'linear-gradient(135deg, #06b6d4, #22d3ee)', badge: '🏢 Corporate' },
+  individual: { accent: '#10b981', gradient: 'linear-gradient(135deg, #10b981, #34d399)', badge: '🧠 Individual' },
+  custom:     { accent: '#f59e0b', gradient: 'linear-gradient(135deg, #f59e0b, #fbbf24)', badge: '⚙️ Custom' },
+};
+
 const NAV_GROUPS = [
   {
     label: 'Main',
     items: [
-      { path: '/dashboard', label: 'Dashboard', icon: Home },
-      { path: '/', label: 'Overview', icon: LayoutDashboard },
-      { path: '/framework', label: 'Framework Map', icon: Map },
-      { path: '/pillars', label: 'Four Pillars', icon: Brain },
+      { path: '/app/dashboard', label: 'Dashboard', icon: Home },
+      { path: '/app/assessment', label: 'Assessment', icon: ClipboardList },
+      { path: '/app/progress', label: 'My Progress', icon: TrendingUp },
+      { path: '/app/report', label: 'Reports', icon: FileText },
     ]
   },
   {
-    label: 'Assessment Flow',
+    label: 'Resources',
     items: [
-      { path: '/assessment', label: 'Assessment', icon: ClipboardList },
-      { path: '/pre-intervention', label: 'Pre-Intervention', icon: Activity },
-      { path: '/intervention', label: 'Intervention', icon: Zap },
-      { path: '/post-intervention', label: 'Post-Intervention', icon: TrendingUp },
-    ]
-  },
-  {
-    label: 'Reports & Config',
-    items: [
-      { path: '/questionnaires', label: 'Questionnaires', icon: ListChecks },
-      { path: '/intervention-plan', label: 'Intervention Plan', icon: BookOpen },
-      { path: '/report', label: 'Report Generator', icon: FileText },
-      { path: '/admin', label: 'Admin / Config', icon: Settings },
+      { path: '/app/pillars', label: 'Four Pillars', icon: Brain },
+      { path: '/app/framework', label: 'Framework Guide', icon: Map },
+      { path: '/app/questionnaires', label: 'Questionnaires', icon: ListChecks },
+      { path: '/app/intervention-plan', label: 'Intervention Plan', icon: BookOpen },
     ]
   },
 ];
 
-// Bottom nav items (most used, max 5)
 const MOBILE_NAV = [
-  { path: '/dashboard', label: 'Home', icon: Home },
-  { path: '/assessment', label: 'Assess', icon: ClipboardList },
-  { path: '/pre-intervention', label: 'Pre', icon: Activity },
-  { path: '/post-intervention', label: 'Post', icon: TrendingUp },
-  { path: '/report', label: 'Report', icon: FileText },
+  { path: '/app/dashboard', label: 'Home', icon: Home },
+  { path: '/app/assessment', label: 'Assess', icon: ClipboardList },
+  { path: '/app/progress', label: 'Progress', icon: TrendingUp },
+  { path: '/app/report', label: 'Report', icon: FileText },
+  { path: '/app/pillars', label: 'Pillars', icon: Brain },
 ];
-
-const PHASE_COLORS = { '/pre-intervention': '#6366f1', '/intervention': '#a855f7', '/post-intervention': '#14b8a6' };
 
 function Sidebar({ collapsed, setCollapsed }) {
   const { user, userProfile, logout } = useAuth();
   const navigate = useNavigate();
   const handleLogout = async () => { await logout(); navigate('/login'); };
+  const role = userProfile?.role || 'student';
+
+  const roleNavItems = [];
+  if (role === 'individual' || role === 'student') {
+    roleNavItems.push({ path: '/app/my-evaluator', label: 'My Evaluator', icon: UserCheck });
+  }
+  if (role === 'evaluator' || role === 'admin') {
+    roleNavItems.push({ path: '/app/evaluator', label: 'Evaluator Dashboard', icon: Users });
+  }
+  if (role === 'admin') {
+    roleNavItems.push({ path: '/app/admin', label: 'Admin Panel', icon: Shield });
+  }
 
   return (
     <aside className="desktop-sidebar" style={{
@@ -108,31 +117,53 @@ function Sidebar({ collapsed, setCollapsed }) {
                 {group.label}
               </div>
             )}
-            {group.items.map(({ path, label, icon: Icon }) => {
-              const phaseColor = PHASE_COLORS[path];
-              return (
-                <NavLink key={path} to={path} end={path === '/' || path === '/dashboard'} style={({ isActive }) => ({
-                  display: 'flex', alignItems: 'center', gap: 9,
-                  padding: collapsed ? '9px' : '8px 10px',
-                  borderRadius: 9, marginBottom: 1,
-                  textDecoration: 'none', fontSize: 13, fontWeight: isActive ? 600 : 400,
-                  color: isActive ? 'white' : 'var(--text-secondary)',
-                  background: isActive
-                    ? phaseColor ? `linear-gradient(135deg, ${phaseColor}25, ${phaseColor}10)` : 'linear-gradient(135deg, rgba(99,102,241,0.2), rgba(139,92,246,0.1))'
-                    : 'transparent',
-                  borderLeft: isActive ? `2px solid ${phaseColor || 'var(--indigo)'}` : '2px solid transparent',
-                  transition: 'all 0.15s cubic-bezier(0.4,0,0.2,1)',
-                  whiteSpace: 'nowrap', overflow: 'hidden',
-                  justifyContent: collapsed ? 'center' : 'flex-start',
-                })}>
-                  <Icon size={14} style={{ flexShrink: 0, opacity: 0.9 }} />
-                  {!collapsed && <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>{label}</span>}
-                </NavLink>
-              );
-            })}
+            {group.items.map(({ path, label, icon: Icon }) => (
+              <NavLink key={path} to={path} end={path === '/app/dashboard'} style={({ isActive }) => ({
+                display: 'flex', alignItems: 'center', gap: 9,
+                padding: collapsed ? '9px' : '8px 10px',
+                borderRadius: 9, marginBottom: 1,
+                textDecoration: 'none', fontSize: 13, fontWeight: isActive ? 600 : 400,
+                color: isActive ? 'white' : 'var(--text-secondary)',
+                background: isActive ? 'linear-gradient(135deg, rgba(99,102,241,0.2), rgba(139,92,246,0.1))' : 'transparent',
+                borderLeft: isActive ? '2px solid var(--indigo)' : '2px solid transparent',
+                transition: 'all 0.15s cubic-bezier(0.4,0,0.2,1)',
+                whiteSpace: 'nowrap', overflow: 'hidden',
+                justifyContent: collapsed ? 'center' : 'flex-start',
+              })}>
+                <Icon size={14} style={{ flexShrink: 0, opacity: 0.9 }} />
+                {!collapsed && <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>{label}</span>}
+              </NavLink>
+            ))}
             {!collapsed && <div style={{ height: 1, background: 'var(--border-light)', margin: '6px 4px' }} />}
           </div>
         ))}
+        {roleNavItems.length > 0 && (
+          <div style={{ marginBottom: 4 }}>
+            {!collapsed && (
+              <div style={{ fontSize: 9.5, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.8px', padding: '8px 10px 4px' }}>
+                {role === 'admin' ? 'Administration' : 'Evaluation'}
+              </div>
+            )}
+            {roleNavItems.map(({ path, label, icon: Icon }) => (
+              <NavLink key={path} to={path} end style={({ isActive }) => ({
+                display: 'flex', alignItems: 'center', gap: 9,
+                padding: collapsed ? '9px' : '8px 10px',
+                borderRadius: 9, marginBottom: 1,
+                textDecoration: 'none', fontSize: 13, fontWeight: isActive ? 600 : 400,
+                color: isActive ? 'white' : 'var(--text-secondary)',
+                background: isActive ? 'linear-gradient(135deg, rgba(99,102,241,0.2), rgba(139,92,246,0.1))' : 'transparent',
+                borderLeft: isActive ? '2px solid var(--indigo)' : '2px solid transparent',
+                transition: 'all 0.15s cubic-bezier(0.4,0,0.2,1)',
+                whiteSpace: 'nowrap', overflow: 'hidden',
+                justifyContent: collapsed ? 'center' : 'flex-start',
+              })}>
+                <Icon size={14} style={{ flexShrink: 0, opacity: 0.9 }} />
+                {!collapsed && <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>{label}</span>}
+              </NavLink>
+            ))}
+            {!collapsed && <div style={{ height: 1, background: 'var(--border-light)', margin: '6px 4px' }} />}
+          </div>
+        )}
       </nav>
 
       {user && (
@@ -245,7 +276,7 @@ function MobileMenuDrawer({ onClose }) {
             {group.label}
           </div>
           {group.items.map(({ path, label, icon: Icon }) => (
-            <NavLink key={path} to={path} end={path === '/' || path === '/dashboard'}
+            <NavLink key={path} to={path} end={path === '/app' || path === '/app/dashboard'}
               onClick={onClose}
               style={({ isActive }) => ({
                 display: 'flex', alignItems: 'center', gap: 10,
@@ -261,6 +292,58 @@ function MobileMenuDrawer({ onClose }) {
           ))}
         </div>
       ))}
+      {(userProfile?.role === 'individual' || userProfile?.role === 'student') && (
+        <div style={{ marginBottom: 16 }}>
+          <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.8px', marginBottom: 6, paddingLeft: 4 }}>
+            Assessment
+          </div>
+          <NavLink to="/app/my-evaluator" onClick={onClose}
+            style={({ isActive }) => ({
+              display: 'flex', alignItems: 'center', gap: 10,
+              padding: '10px 12px', borderRadius: 10, marginBottom: 2,
+              textDecoration: 'none', fontSize: 14, fontWeight: isActive ? 600 : 400,
+              color: isActive ? 'white' : 'var(--text-secondary)',
+              background: isActive ? 'linear-gradient(135deg, rgba(99,102,241,0.2), rgba(139,92,246,0.1))' : 'transparent',
+              borderLeft: isActive ? '2px solid var(--indigo)' : '2px solid transparent',
+            })}>
+            <UserCheck size={15} style={{ flexShrink: 0 }} />
+            My Evaluator
+          </NavLink>
+        </div>
+      )}
+      {(userProfile?.role === 'evaluator' || userProfile?.role === 'admin') && (
+        <div style={{ marginBottom: 16 }}>
+          <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.8px', marginBottom: 6, paddingLeft: 4 }}>
+            {userProfile?.role === 'admin' ? 'Administration' : 'Evaluation'}
+          </div>
+          <NavLink to="/app/evaluator" onClick={onClose}
+            style={({ isActive }) => ({
+              display: 'flex', alignItems: 'center', gap: 10,
+              padding: '10px 12px', borderRadius: 10, marginBottom: 2,
+              textDecoration: 'none', fontSize: 14, fontWeight: isActive ? 600 : 400,
+              color: isActive ? 'white' : 'var(--text-secondary)',
+              background: isActive ? 'linear-gradient(135deg, rgba(99,102,241,0.2), rgba(139,92,246,0.1))' : 'transparent',
+              borderLeft: isActive ? '2px solid var(--indigo)' : '2px solid transparent',
+            })}>
+            <Users size={15} style={{ flexShrink: 0 }} />
+            Evaluator Dashboard
+          </NavLink>
+          {userProfile?.role === 'admin' && (
+            <NavLink to="/app/admin" onClick={onClose}
+              style={({ isActive }) => ({
+                display: 'flex', alignItems: 'center', gap: 10,
+                padding: '10px 12px', borderRadius: 10, marginBottom: 2,
+                textDecoration: 'none', fontSize: 14, fontWeight: isActive ? 600 : 400,
+                color: isActive ? 'white' : 'var(--text-secondary)',
+                background: isActive ? 'linear-gradient(135deg, rgba(99,102,241,0.2), rgba(139,92,246,0.1))' : 'transparent',
+                borderLeft: isActive ? '2px solid var(--indigo)' : '2px solid transparent',
+              })}>
+              <Shield size={15} style={{ flexShrink: 0 }} />
+              Admin Panel
+            </NavLink>
+          )}
+        </div>
+      )}
 
       <div style={{ marginTop: 8, paddingTop: 16, borderTop: '1px solid var(--border-light)' }}>
         <button onClick={handleLogout} style={{
@@ -278,6 +361,7 @@ function MobileMenuDrawer({ onClose }) {
 }
 
 function TopBar({ context, setContext }) {
+  const theme = CONTEXT_THEMES[context] || CONTEXT_THEMES.individual;
   return (
     <header style={{
       height: 52, background: 'rgba(8,13,26,0.9)', borderBottom: '1px solid var(--border-light)',
@@ -285,28 +369,28 @@ function TopBar({ context, setContext }) {
       padding: '0 16px', position: 'sticky', top: 0, zIndex: 10,
       backdropFilter: 'blur(12px)',
     }}>
-      {/* Mobile: show logo */}
       <div className="mobile-topbar-logo">
-        <div style={{ width: 28, height: 28, borderRadius: 8, background: 'linear-gradient(135deg, #6366f1, #a855f7)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div style={{ width: 28, height: 28, borderRadius: 8, background: theme.gradient, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <Brain size={13} color="white" />
         </div>
         <span style={{ fontSize: 13, fontWeight: 800, fontFamily: 'Space Grotesk' }}>QIDS</span>
       </div>
 
-      {/* Desktop: phase buttons */}
-      <div className="topbar-phases" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-        {['All Phases', 'Pre-Intervention', 'Intervention', 'Post-Intervention'].map(p => (
-          <button key={p} className="btn btn-ghost btn-sm" style={{ fontSize: 11 }}>{p}</button>
-        ))}
+      <div className="topbar-phases" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+        <span style={{
+          padding: '3px 12px', borderRadius: 20, fontSize: 11, fontWeight: 600,
+          background: `${theme.accent}18`, border: `1px solid ${theme.accent}30`, color: theme.accent,
+        }}>{theme.badge}</span>
       </div>
 
       <div className="topbar-right" style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-        <select value={context} onChange={e => setContext(e.target.value)} style={{ width: 'auto', padding: '5px 10px', fontSize: 12 }}>
+        <select value={context} onChange={e => setContext(e.target.value)}
+          style={{ width: 'auto', padding: '5px 10px', fontSize: 12, borderColor: context !== 'individual' ? theme.accent + '40' : 'var(--border-light)' }}>
           {CONTEXTS.map(c => <option key={c.id} value={c.id}>{c.icon} {c.label}</option>)}
         </select>
-        <NavLink to="/report" style={{ textDecoration: 'none' }}>
-          <button className="btn btn-primary btn-sm">
-            <FileText size={12} /> <span className="topbar-export-label">Export</span>
+        <NavLink to="/app/report" style={{ textDecoration: 'none' }}>
+          <button className="btn btn-primary btn-sm" style={{ background: theme.gradient }}>
+            <FileText size={12} /> <span className="topbar-export-label">Report</span>
           </button>
         </NavLink>
       </div>
@@ -319,37 +403,64 @@ function AppShell() {
   const [context, setContext] = useState('individual');
   const [assessmentData, setAssessmentData] = useState(null);
   const [postData, setPostData] = useState(null);
+  const [evaluations, setEvaluations] = useState([]);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { user } = useAuth();
 
   useEffect(() => {
     if (!user) return;
-    getLatestAssessment(user.uid).then(a => { if (a) setAssessmentData(a); });
-    getLatestPostAssessment(user.uid).then(p => { if (p) setPostData(p); });
+    getLatestAssessment(user.uid).then(a => { if (a) setAssessmentData(a); }).catch(() => console.warn('Failed to load latest assessment'));
+    getLatestPostAssessment(user.uid).then(p => { if (p) setPostData(p); }).catch(() => console.warn('Failed to load post assessment'));
   }, [user]);
 
+  // Load evaluations and compute merged pillar scores when assessment changes
+  const [mergedPillarScores, setMergedPillarScores] = useState(null);
+  const [evalStatus, setEvalStatus] = useState({});
+
+  useEffect(() => {
+    if (!assessmentData?.id) { setEvaluations([]); setMergedPillarScores(null); setEvalStatus({}); return; }
+    getAllEvaluations(assessmentData.id).then(evals => {
+      setEvaluations(evals);
+      const status = {};
+      evals.forEach(e => { status[e.pillar] = true; });
+      setEvalStatus(status);
+
+      const merged = mergeEvaluationScores(assessmentData.rawScores || {}, evals, assessmentData);
+      if (merged.merged) {
+        const newPillarScores = {};
+        Object.keys(PILLARS).forEach(id => {
+          newPillarScores[id] = computePillarScore(id, merged.rawScores[id] || {});
+        });
+        setMergedPillarScores(newPillarScores);
+      } else {
+        setMergedPillarScores(null);
+      }
+    }).catch(() => console.warn('Failed to load evaluations'));
+  }, [assessmentData?.id]);
+
   return (
-    <AppContext.Provider value={{ context, setContext, assessmentData, setAssessmentData, postData, setPostData, demoMode: false }}>
+    <AppContext.Provider value={{ context, setContext, assessmentData, setAssessmentData, postData, setPostData, evaluations, mergedPillarScores, evalStatus, demoMode: false }}>
       <div className="app-shell-layout" style={{ display: 'flex', minHeight: '100vh' }}>
         <Sidebar collapsed={collapsed} setCollapsed={setCollapsed} />
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0 }}>
           <TopBar context={context} setContext={setContext} />
           <main style={{ flex: 1, overflow: 'auto', background: 'var(--navy)' }}>
             <Routes>
-              <Route path="/dashboard" element={<Dashboard />} />
-              <Route path="/" element={<Overview />} />
-              <Route path="/framework" element={<FrameworkMap />} />
-              <Route path="/pillars" element={<FourPillars />} />
-              <Route path="/pillars/:pillarId" element={<FourPillars />} />
-              <Route path="/assessment" element={<Assessment />} />
-              <Route path="/pre-intervention" element={<PreIntervention />} />
-              <Route path="/intervention" element={<Intervention />} />
-              <Route path="/post-intervention" element={<PostIntervention />} />
-              <Route path="/report" element={<ReportGenerator />} />
-              <Route path="/admin" element={<AdminConfig />} />
-              <Route path="/questionnaires" element={<Questionnaires />} />
-              <Route path="/intervention-plan" element={<InterventionPlan />} />
-              <Route path="*" element={<Navigate to="/" replace />} />
+              <Route index element={<Navigate to="/app/dashboard" replace />} />
+              <Route path="dashboard" element={<Dashboard />} />
+              <Route path="framework" element={<FrameworkMap />} />
+              <Route path="pillars" element={<FourPillars />} />
+              <Route path="pillars/:pillarId" element={<FourPillars />} />
+              <Route path="assessment" element={<Assessment />} />
+              <Route path="progress" element={<Progress />} />
+              <Route path="report" element={<ReportGenerator />} />
+              <Route path="admin" element={<AdminPanel />} />
+              <Route path="evaluator" element={<EvaluatorDashboard />} />
+              <Route path="evaluator/assess/:assessmentId" element={<EvaluatorScoring />} />
+              <Route path="my-evaluator" element={<MyEvaluator />} />
+              <Route path="questionnaires" element={<Questionnaires />} />
+              <Route path="intervention-plan" element={<InterventionPlan />} />
+              <Route path="*" element={<Navigate to="/app/dashboard" replace />} />
             </Routes>
           </main>
         </div>
@@ -366,9 +477,10 @@ export default function App() {
       <BrowserRouter>
         <ToastProvider>
           <Routes>
+            <Route path="/" element={<Landing />} />
             <Route path="/login" element={<Login />} />
             <Route path="/signup" element={<Signup />} />
-            <Route path="/*" element={
+            <Route path="/app/*" element={
               <ProtectedRoute>
                 <AppShell />
               </ProtectedRoute>

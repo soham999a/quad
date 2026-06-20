@@ -1,13 +1,6 @@
 import React, { useState } from 'react';
-import { ClipboardList, ChevronDown, ChevronUp, BookOpen, Brain, Heart, Users, Zap, Download, ExternalLink } from 'lucide-react';
-import { EQ_QUESTIONS, SQ_QUESTIONS, IQ_QUESTIONS, AQ_QUESTIONS, mapAQLikert } from '../data/qidsData';
-
-const PILLARS = {
-  IQ: { label: 'Intelligence Quotient', color: '#6366f1', icon: Brain, emoji: '🧠' },
-  EQ: { label: 'Emotional Quotient', color: '#10b981', icon: Heart, emoji: '❤️' },
-  SQ: { label: 'Social Quotient', color: '#a855f7', icon: Users, emoji: '🤝' },
-  AQ: { label: 'Adversity Quotient', color: '#f59e0b', icon: Zap, emoji: '⚡' },
-};
+import { ClipboardList, ChevronDown, ChevronUp, BookOpen, Download, ExternalLink } from 'lucide-react';
+import { PILLARS, EQ_QUESTIONS, SQ_QUESTIONS, IQ_QUESTIONS, AQ_QUESTIONS, mapAQLikert } from '../data/qidsData';
 
 
 // ─── EQ Questionnaire View ────────────────────────────────────────────────────
@@ -339,7 +332,7 @@ function AQQuestionnaire({ color }) {
         <div style={{ fontSize: 12, fontWeight: 600, color: '#f59e0b', marginBottom: 8 }}>RDF Weighted Scoring Formula</div>
         <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 12, color: 'var(--text-secondary)', lineHeight: 1.8 }}>
           RD Score = (SA×1.5) + (PM×1.0) + (RR×1.0) + (RC×1.5)<br />
-          Max = 144 | Converted = RD Score ÷ 144 × 100
+          Max = 95 | Converted = RD Score ÷ 95 × 100
         </div>
         <div style={{ marginTop: 10, display: 'flex', gap: 8, flexWrap: 'wrap' }}>
           {AQ_QUESTIONS.levels.map(l => (

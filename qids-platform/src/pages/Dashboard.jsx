@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { getUserAssessments, getUserReports } from '../services/firestoreService';
 import { PILLARS, getGrade, computeWeightedScore } from '../data/qidsData';
-import { ClipboardList, FileText, TrendingUp, Plus, Clock, ChevronRight, Activity } from 'lucide-react';
+import { ClipboardList, FileText, TrendingUp, Plus, Clock, ChevronRight, Activity, UserCheck } from 'lucide-react';
 import SeedExampleData from '../components/SeedExampleData';
 
 export default function Dashboard() {
@@ -17,6 +17,7 @@ export default function Dashboard() {
     if (!user) return;
     Promise.all([getUserAssessments(user.uid), getUserReports(user.uid)])
       .then(([a, r]) => { setAssessments(a); setReports(r); })
+      .catch(() => console.warn('Failed to load assessments/reports'))
       .finally(() => setLoading(false));
   }, [user]);
 
@@ -41,7 +42,7 @@ export default function Dashboard() {
             {userProfile?.context ? `Context: ${userProfile.context}` : ''} · {userProfile?.role || 'Individual'}
           </p>
         </div>
-        <button className="btn btn-primary" onClick={() => navigate('/assessment')}>
+        <button className="btn btn-primary" onClick={() => navigate('/app/assessment')}>
           <Plus size={14} /> New Assessment
         </button>
       </div>
@@ -72,7 +73,7 @@ export default function Dashboard() {
         <div style={{ marginBottom: 28 }}>
           <SeedExampleData onDone={() => {
             Promise.all([getUserAssessments(user.uid), getUserReports(user.uid)])
-              .then(([a, r]) => { setAssessments(a); setReports(r); });
+              .then(([a, r]) => { setAssessments(a); setReports(r); }).catch(() => console.warn('Failed to reload after seed'));
           }} />
         </div>
       )}
@@ -82,7 +83,7 @@ export default function Dashboard() {
         <div className="card">
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
             <h3 style={{ fontSize: 14, fontWeight: 700 }}>Recent Assessments</h3>
-            <button className="btn btn-ghost btn-sm" onClick={() => navigate('/assessment')}>View all</button>
+            <button className="btn btn-ghost btn-sm" onClick={() => navigate('/app/assessment')}>View all</button>
           </div>
 
           {loading ? (
@@ -91,7 +92,7 @@ export default function Dashboard() {
             <div style={{ textAlign: 'center', padding: 24 }}>
               <ClipboardList size={28} color="var(--text-muted)" style={{ marginBottom: 8, opacity: 0.4 }} />
               <div style={{ fontSize: 13, color: 'var(--text-muted)' }}>No assessments yet</div>
-              <button className="btn btn-primary btn-sm" style={{ marginTop: 12 }} onClick={() => navigate('/assessment')}>
+              <button className="btn btn-primary btn-sm" style={{ marginTop: 12 }} onClick={() => navigate('/app/assessment')}>
                 Start First Assessment
               </button>
             </div>
@@ -101,7 +102,7 @@ export default function Dashboard() {
               const unified = computeWeightedScore(scores);
               const grade = getGrade(unified);
               return (
-                <div key={a.id} onClick={() => navigate('/pre-intervention', { state: { assessment: a, postAssessment: getLinkedPost(a.id) } })} style={{
+                <div key={a.id} onClick={() => navigate('/app/pre-intervention', { state: { assessment: a, postAssessment: getLinkedPost(a.id) } })} style={{
                   display: 'flex', alignItems: 'center', justifyContent: 'space-between',
                   padding: '10px 12px', borderRadius: 8, cursor: 'pointer', marginBottom: 4,
                   background: 'rgba(255,255,255,0.03)', border: '1px solid var(--border-light)',
@@ -137,10 +138,10 @@ export default function Dashboard() {
           <h3 style={{ fontSize: 14, fontWeight: 700, marginBottom: 16 }}>Quick Actions</h3>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
             {[
-              { label: 'Start New Assessment', desc: 'Begin baseline evaluation', path: '/assessment', color: '#6366f1', icon: ClipboardList },
-              { label: 'View Framework Map', desc: 'Explore QIDS architecture', path: '/framework', color: '#a855f7', icon: Activity },
-              { label: 'Pre-Intervention Analysis', desc: 'Review scores and gaps', path: '/pre-intervention', color: '#06b6d4', icon: TrendingUp },
-              { label: 'Generate Report', desc: 'Export development report', path: '/report', color: '#10b981', icon: FileText },
+              { label: 'Start New Assessment', desc: 'Begin baseline evaluation', path: '/app/assessment', color: '#6366f1', icon: ClipboardList },
+              { label: 'My Evaluator', desc: 'View evaluator & Part B scores', path: '/app/my-evaluator', color: '#14b8a6', icon: UserCheck },
+              { label: 'Pre-Intervention Analysis', desc: 'Review scores and gaps', path: '/app/pre-intervention', color: '#06b6d4', icon: TrendingUp },
+              { label: 'Generate Report', desc: 'Export development report', path: '/app/report', color: '#10b981', icon: FileText },
             ].map(({ label, desc, path, color, icon: Icon }) => (
               <button key={path} onClick={() => navigate(path)} style={{
                 display: 'flex', alignItems: 'center', gap: 12, padding: '12px 14px',

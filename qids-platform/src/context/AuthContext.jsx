@@ -2,13 +2,14 @@ import React, { createContext, useContext, useEffect, useState } from 'react';
 import {
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
+  sendPasswordResetEmail,
   signOut,
   onAuthStateChanged,
   updateProfile,
   GoogleAuthProvider,
   signInWithPopup,
 } from 'firebase/auth';
-import { doc, setDoc, getDoc, serverTimestamp } from 'firebase/firestore';
+import { doc, setDoc, getDoc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { auth, db } from '../firebase';
 
 const AuthContext = createContext(null);
@@ -61,16 +62,18 @@ export function AuthProvider({ children }) {
     return cred.user;
   };
 
-  const loginWithGoogle = async () => {
+  const loginWithGoogle = async (role = 'individual', context = 'individual') => {
     const provider = new GoogleAuthProvider();
     const result = await signInWithPopup(auth, provider);
     const u = result.user;
+    let isNew = false;
     try {
       const snap = await getDoc(doc(db, 'users', u.uid));
       if (!snap.exists()) {
+        isNew = true;
         const profile = {
           uid: u.uid, name: u.displayName || '', email: u.email,
-          role: 'individual', context: 'individual', createdAt: serverTimestamp(),
+          role, context, createdAt: serverTimestamp(),
         };
         await setDoc(doc(db, 'users', u.uid), profile);
         setUserProfile(profile);
@@ -80,13 +83,40 @@ export function AuthProvider({ children }) {
     } catch (e) {
       console.warn('Firestore after Google sign-in:', e.message);
     }
-    return u;
+    return { user: u, isNew };
+  };
+
+  const resetPassword = async (email) => {
+    await sendPasswordResetEmail(auth, email);
+  };
+
+  const updateUserRole = async (uid, role) => {
+    try {
+      await updateDoc(doc(db, 'users', uid), { role, updatedAt: serverTimestamp() });
+      if (user?.uid === uid) {
+        setUserProfile(prev => prev ? { ...prev, role } : prev);
+      }
+    } catch (e) {
+      console.warn('Could not update role:', e.message);
+      throw e;
+    }
+  };
+
+  const refreshProfile = async () => {
+    if (user) {
+      try {
+        const snap = await getDoc(doc(db, 'users', user.uid));
+        if (snap.exists()) setUserProfile(snap.data());
+      } catch (e) {
+        console.warn('Could not refresh profile:', e.message);
+      }
+    }
   };
 
   const logout = () => signOut(auth);
 
   return (
-    <AuthContext.Provider value={{ user, userProfile, loading, signup, login, loginWithGoogle, logout }}>
+    <AuthContext.Provider value={{ user, userProfile, loading, signup, login, loginWithGoogle, logout, resetPassword, updateUserRole, refreshProfile }}>
       {!loading && children}
     </AuthContext.Provider>
   );

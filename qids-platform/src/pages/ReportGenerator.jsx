@@ -1,21 +1,26 @@
 import React, { useState } from 'react';
-import { PILLARS, computePillarScore, computeWeightedScore, getGrade, getCareerProfile, getSkillShape, SKILL_SHAPES, WEIGHTS, GRADE_BANDS, CONTEXTS, IQ_MAX_SCORE } from '../data/qidsData';
+import { PILLARS, computePillarScore, computeWeightedScore, getGrade, getCareerProfile, getSkillShape, SKILL_SHAPES, WEIGHTS, GRADE_BANDS, CONTEXTS, IQ_MAX_SCORE, mergeEvaluationScores } from '../data/qidsData';
 import { useApp } from '../App';
 import QIDSRadar from '../components/RadarChart';
-import { Download, Printer, FileText, CheckCircle, AlertTriangle } from 'lucide-react';
+import { Download, Printer, AlertTriangle, UserCheck } from 'lucide-react';
 
 export default function ReportGenerator() {
-  const { assessmentData, postData, context, demoMode } = useApp();
+  const { assessmentData, postData, context, demoMode, evaluations, mergedPillarScores } = useApp();
   const [reportType, setReportType] = useState('full');
 
   const preRaw = assessmentData?.rawScores || {};
   const postRaw = postData?.rawScores || {};
   const intake = assessmentData?.intake || { name: 'Alex Johnson', age: '28', institution: 'Demo Organization', evaluator: 'Dr. Smith' };
 
+  // Use evaluator-merged scores when available, otherwise fall back to original
+  const hasEvalScores = mergedPillarScores !== null && evaluations?.length > 0;
+
   const preScores = {};
   const postScores = {};
   Object.keys(PILLARS).forEach(id => {
-    preScores[id] = computePillarScore(id, preRaw[id] || {});
+    preScores[id] = hasEvalScores
+      ? (mergedPillarScores[id] ?? computePillarScore(id, preRaw[id] || {}))
+      : computePillarScore(id, preRaw[id] || {});
     postScores[id] = computePillarScore(id, postRaw[id] || {});
   });
 
@@ -96,6 +101,7 @@ export default function ReportGenerator() {
               { label: 'Age', val: intake.age || '—' },
               { label: 'Institution', val: intake.institution || '—' },
               { label: 'Evaluator', val: intake.evaluator || '—' },
+              ...(hasEvalScores ? [{ label: 'Eval Scoring', val: <span style={{ color: '#34d399', display: 'flex', alignItems: 'center', gap: 4 }}><UserCheck size={12} /> {evaluations.length} pillar{(evaluations.length > 1 ? 's' : '')} scored</span> }] : []),
             ].map(({ label, val }) => (
               <div key={label} style={{ padding: '10px 14px', background: 'rgba(255,255,255,0.03)', border: '1px solid var(--border-light)', borderRadius: 8 }}>
                 <div style={{ fontSize: 10, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 2 }}>{label}</div>

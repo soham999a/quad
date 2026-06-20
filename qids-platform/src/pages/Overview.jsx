@@ -56,13 +56,13 @@ export default function Overview() {
             A paradigm shift in personality development and assessment — moving beyond traditional academic metrics to embrace a holistic approach encompassing intellectual, emotional, social, and adversity-handling capabilities.
           </p>
           <div className="overview-hero-btns" style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
-            <button className="btn btn-primary btn-lg" onClick={() => navigate('/assessment')}>
+            <button className="btn btn-primary btn-lg" onClick={() => navigate('/app/assessment')}>
               <ClipboardList size={16} /> Start Assessment
             </button>
-            <button className="btn btn-secondary btn-lg" onClick={() => navigate('/framework')}>
+            <button className="btn btn-secondary btn-lg" onClick={() => navigate('/app/framework')}>
               <Brain size={16} /> View Framework
             </button>
-            <button className="btn btn-secondary btn-lg" onClick={() => navigate('/report')}>
+            <button className="btn btn-secondary btn-lg" onClick={() => navigate('/app/report')}>
               Generate Report <ArrowRight size={16} />
             </button>
           </div>
@@ -135,7 +135,7 @@ export default function Overview() {
         <h2 style={{ fontSize: 20, fontWeight: 700, marginBottom: 20 }}>The Four Pillars of Holistic Development</h2>
         <div className="overview-pillar-grid">
           {Object.values(PILLARS).map(p => (
-            <div key={p.id} onClick={() => navigate(`/pillars/${p.id}`)} style={{
+            <div key={p.id} onClick={() => navigate(`/app/pillars/${p.id}`)} style={{
               background: 'var(--navy-4)', border: '1px solid var(--border-light)',
               borderRadius: 14, padding: 20, cursor: 'pointer', transition: 'all 0.2s',
             }}

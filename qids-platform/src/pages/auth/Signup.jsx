@@ -18,7 +18,7 @@ export default function Signup() {
   const [loading, setLoading] = useState(false);
 
   // Already logged in — go straight to dashboard
-  if (user) return <Navigate to="/dashboard" replace />;
+  if (user) return <Navigate to="/app/dashboard" replace />;
 
   const set = (k, v) => setForm(prev => ({ ...prev, [k]: v }));
 
@@ -30,9 +30,8 @@ export default function Signup() {
     setLoading(true);
     try {
       await signup(form.email, form.password, form.name, form.role, form.context);
-      navigate('/dashboard');
+      navigate('/app/dashboard');
     } catch (err) {
-      console.error('Signup error:', err.code, err.message);
       setError(err.message || 'Signup failed. Please try again.');
     } finally {
       setLoading(false);
@@ -43,11 +42,13 @@ export default function Signup() {
     setError('');
     setLoading(true);
     try {
-      await loginWithGoogle();
-      // redirect-based — page reloads automatically
+      const result = await loginWithGoogle();
+      if (result?.isNew) {
+        setError('Account created. You can now sign in with Google.');
+      }
     } catch (err) {
-      console.error('Google signup error:', err.code, err.message);
       setError(err.message || 'Google sign-in failed.');
+    } finally {
       setLoading(false);
     }
   };

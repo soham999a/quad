@@ -1,12 +1,6 @@
 import React, { useState } from 'react';
-import { BookOpen, ChevronDown, ChevronUp, Clock, Calendar, Target, Brain, Heart, Users, Zap } from 'lucide-react';
-
-const PILLARS = {
-  IQ: { label: 'Intelligence Quotient', color: '#6366f1', emoji: '🧠' },
-  EQ: { label: 'Emotional Quotient', color: '#f59e0b', emoji: '❤️' },
-  SQ: { label: 'Social Quotient', color: '#10b981', emoji: '🤝' },
-  AQ: { label: 'Adversity Quotient', color: '#a855f7', emoji: '⚡' },
-};
+import { BookOpen, ChevronDown, ChevronUp, Clock, Calendar, Target } from 'lucide-react';
+import { PILLARS } from '../data/qidsData';
 
 const BANDS = {
   RED: { label: 'Red Band', color: '#ef4444', desc: 'Foundational support — critical intervention needed' },
