@@ -60,8 +60,8 @@ export default function EvaluatorDashboard() {
 
   if (loading) {
     return (
-      <div className="page-pad animate-fade" style={{ maxWidth: 1000, margin: '0 auto', textAlign: 'center', paddingTop: 80 }}>
-        <div style={{ fontSize: 14, color: 'var(--text-muted)' }}>Loading your dashboard...</div>
+      <div className="px-6 py-6 animate-fade max-w-[1000px] mx-auto text-center pt-20">
+        <div className="text-sm text-surface-variant">Loading your dashboard...</div>
       </div>
     );
   }
@@ -69,40 +69,40 @@ export default function EvaluatorDashboard() {
   const role = userProfile?.role || 'individual';
   if (role !== 'evaluator' && role !== 'admin') {
     return (
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '60vh', flexDirection: 'column', gap: 12 }}>
-        <ClipboardList size={40} color="var(--text-muted)" opacity={0.4} />
-        <div style={{ fontSize: 16, fontWeight: 600, color: 'var(--text-secondary)' }}>Evaluator access required</div>
-        <div style={{ fontSize: 13, color: 'var(--text-muted)' }}>You don't have permission to view this page.</div>
+      <div className="flex items-center justify-center min-h-[60vh] flex-col gap-3">
+        <ClipboardList size={40} className="text-surface-variant/40" />
+        <div className="text-base font-semibold text-on-surface-variant">Evaluator access required</div>
+        <div className="text-sm text-surface-variant">You don't have permission to view this page.</div>
       </div>
     );
   }
 
   return (
-    <div className="page-pad animate-fade" style={{ maxWidth: 1000, margin: '0 auto' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 24 }}>
+    <div className="px-6 py-6 animate-fade max-w-[1000px] mx-auto">
+      <div className="flex justify-between items-start mb-6">
         <div>
-          <h1 style={{ fontSize: 24, fontWeight: 800, marginBottom: 4 }}>Evaluator Dashboard</h1>
-          <p style={{ fontSize: 14, color: 'var(--text-muted)' }}>
+          <h1 className="text-2xl font-extrabold mb-1">Evaluator Dashboard</h1>
+          <p className="text-sm text-surface-variant">
             {assignments.length > 0
               ? `You have ${assignments.length} assigned student${assignments.length > 1 ? 's' : ''} to evaluate`
               : 'No students assigned to you yet'}
           </p>
         </div>
-        <button onClick={loadData} className="btn btn-secondary btn-sm" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+        <button onClick={loadData} className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs rounded-lg border border-outline-variant bg-surface-container-low text-on-surface hover:bg-surface cursor-pointer transition-all">
           <RefreshCw size={13} /> Refresh
         </button>
       </div>
 
       {assignments.length === 0 ? (
-        <div className="card" style={{ padding: 40, textAlign: 'center' }}>
-          <Users size={32} color="var(--text-muted)" style={{ marginBottom: 12 }} />
-          <div style={{ fontSize: 14, color: 'var(--text-muted)', marginBottom: 4 }}>No students assigned</div>
-          <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>
+        <div className="bg-surface-container-low border border-outline-variant rounded-xl p-10 text-center">
+          <Users size={32} className="text-surface-variant mb-3 mx-auto" />
+          <div className="text-sm text-surface-variant mb-1">No students assigned</div>
+          <div className="text-xs text-surface-variant">
             Contact an admin to get assigned students to evaluate.
           </div>
         </div>
       ) : (
-        <div style={{ display: 'grid', gap: 16 }}>
+        <div className="grid gap-4">
           {assignments.map(assignment => {
             const student = students[assignment.studentUid];
             const studentAssessments = assessments[assignment.studentUid] || [];
@@ -110,43 +110,35 @@ export default function EvaluatorDashboard() {
             const postAssessments = studentAssessments.filter(a => a.phase === 'post');
 
             return (
-              <div key={assignment.id} className="card" style={{ overflow: 'hidden' }}>
+              <div key={assignment.id} className="bg-surface-container-low border border-outline-variant rounded-xl overflow-hidden">
                 {/* Student Header */}
-                <div style={{
-                  padding: '14px 16px', display: 'flex', alignItems: 'center', gap: 12,
-                  borderBottom: '1px solid var(--border-light)',
-                  background: 'rgba(99,102,241,0.04)',
-                }}>
-                  <div style={{
-                    width: 36, height: 36, borderRadius: '50%',
-                    background: 'linear-gradient(135deg, #6366f1, #818cf8)',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
-                  }}>
-                    <span style={{ fontSize: 14, fontWeight: 800, color: 'white' }}>
+                <div className="px-4 py-3.5 flex items-center gap-3 border-b border-outline-variant" style={{ background: 'rgba(99,102,241,0.04)' }}>
+                  <div className="w-9 h-9 rounded-full bg-[#6366f1] flex items-center justify-center shrink-0">
+                    <span className="text-sm font-extrabold text-white">
                       {(student?.name || student?.email || '?')[0].toUpperCase()}
                     </span>
                   </div>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontSize: 14, fontWeight: 700 }}>{student?.name || 'Unnamed Student'}</div>
-                    <div style={{ fontSize: 11, color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: 6 }}>
-                      <Mail size={10} /> {student?.email || '—'}
+                  <div className="flex-1 min-w-0">
+                    <div className="text-sm font-bold">{student?.name || 'Unnamed Student'}</div>
+                    <div className="text-xs text-surface-variant flex items-center gap-1.5">
+                      <Mail size={10} className="text-surface-variant" /> {student?.email || '—'}
                       {student?.context && <span>· {student.context}</span>}
                     </div>
                   </div>
-                  <div style={{ fontSize: 12, color: 'var(--text-muted)', textAlign: 'right' }}>
-                    <div style={{ fontWeight: 600, color: preAssessments.length > 0 ? '#34d399' : 'var(--text-muted)' }}>
+                  <div className="text-xs text-surface-variant text-right">
+                    <div className="font-semibold" style={{ color: preAssessments.length > 0 ? '#34d399' : '' }}>
                       {preAssessments.length} Pre
                     </div>
-                    <div style={{ fontWeight: 600, color: postAssessments.length > 0 ? '#34d399' : 'var(--text-muted)' }}>
+                    <div className="font-semibold" style={{ color: postAssessments.length > 0 ? '#34d399' : '' }}>
                       {postAssessments.length} Post
                     </div>
                   </div>
                 </div>
 
                 {/* Assessment List */}
-                <div style={{ padding: 12 }}>
+                <div className="p-3">
                   {studentAssessments.length === 0 ? (
-                    <div style={{ padding: 16, textAlign: 'center', color: 'var(--text-muted)', fontSize: 12 }}>
+                    <div className="p-4 text-center text-surface-variant text-xs">
                       No assessments yet
                     </div>
                   ) : (
@@ -154,53 +146,46 @@ export default function EvaluatorDashboard() {
                       <div
                         key={asm.id}
                         onClick={() => navigate(`/app/evaluator/assess/${asm.id}`, { state: { student, assessment: asm } })}
-                        style={{
-                          padding: '10px 12px', marginBottom: 6, borderRadius: 10, cursor: 'pointer',
-                          background: 'rgba(255,255,255,0.02)', border: '1px solid var(--border-light)',
-                          display: 'flex', alignItems: 'center', gap: 10,
-                          transition: 'all 0.15s',
-                        }}
+                        className="px-3 py-2.5 mb-1.5 rounded-lg cursor-pointer flex items-center gap-2.5 transition-all"
+                        style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid var(--border-light)' }}
                         onMouseEnter={e => { e.currentTarget.style.borderColor = 'rgba(99,102,241,0.3)'; e.currentTarget.style.background = 'rgba(99,102,241,0.04)'; }}
                         onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border-light)'; e.currentTarget.style.background = 'rgba(255,255,255,0.02)'; }}
                       >
-                        <div style={{
-                          width: 32, height: 32, borderRadius: 8,
+                        <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" style={{
                           background: asm.phase === 'pre' ? 'rgba(99,102,241,0.15)' : 'rgba(20,184,166,0.15)',
                           border: `1px solid ${asm.phase === 'pre' ? 'rgba(99,102,241,0.3)' : 'rgba(20,184,166,0.3)'}`,
-                          display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
                         }}>
                           <ClipboardList size={14} color={asm.phase === 'pre' ? '#818cf8' : '#14b8a6'} />
                         </div>
-                        <div style={{ flex: 1, minWidth: 0 }}>
-                          <div style={{ fontSize: 12, fontWeight: 600, textTransform: 'capitalize' }}>
+                        <div className="flex-1 min-w-0">
+                          <div className="text-xs font-semibold capitalize">
                             {asm.phase === 'pre' ? 'Pre-Intervention' : 'Post-Intervention'} Assessment
                           </div>
-                          <div style={{ fontSize: 10, color: 'var(--text-muted)' }}>
+                          <div className="text-[10px] text-surface-variant">
                             {asm.createdAt?.toDate?.()?.toLocaleDateString() || asm.timestamp ? new Date(asm.timestamp).toLocaleDateString() : 'No date'}
                           </div>
                         </div>
 
                         {/* Pillar evaluation status */}
-                        <div style={{ display: 'flex', gap: 4 }}>
+                        <div className="flex gap-1">
                           {['EQ', 'SQ', 'AQ'].map(pillar => {
                             const ev = getPillarEvalStatus(asm.id, pillar);
                             const pillarColor = PILLARS[pillar]?.color || '#6366f1';
                             return (
-                              <div key={pillar} style={{
-                                width: 22, height: 22, borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                              <div key={pillar} className="w-[22px] h-[22px] rounded-md flex items-center justify-center" style={{
                                 background: ev ? `${pillarColor}18` : 'rgba(255,255,255,0.04)',
                                 border: `1px solid ${ev ? pillarColor : 'var(--border-light)'}`,
                               }} title={`${pillar}: ${ev ? 'Scored' : 'Pending'}`}>
                                 {ev
                                   ? <CheckCircle size={10} color={pillarColor} />
-                                  : <Clock size={10} color="var(--text-muted)" />
+                                  : <Clock size={10} className="text-surface-variant" />
                                 }
                               </div>
                             );
                           })}
                         </div>
 
-                        <ChevronRight size={14} color="var(--text-muted)" />
+                        <ChevronRight size={14} className="text-surface-variant" />
                       </div>
                     ))
                   )}

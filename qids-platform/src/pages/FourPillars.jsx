@@ -5,22 +5,19 @@ import { ChevronRight, BookOpen, Target, Briefcase, BarChart2 } from 'lucide-rea
 
 function PillarCard({ pillar, onClick, active }) {
   return (
-    <div onClick={onClick} style={{
-      background: active ? `${pillar.color}15` : 'var(--navy-4)',
-      border: `1px solid ${active ? pillar.color : 'var(--border-light)'}`,
-      borderRadius: 14, padding: 20, cursor: 'pointer', transition: 'all 0.2s',
-      position: 'relative', overflow: 'hidden',
+    <div onClick={onClick} className={`relative overflow-hidden rounded-[14px] p-5 cursor-pointer transition-all duration-200 ${active ? '' : 'bg-surface-container-low border border-outline-variant'}`} style={{
+      background: active ? `${pillar.color}15` : undefined,
+      border: active ? `1px solid ${pillar.color}` : undefined,
     }}>
-      <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 3, background: pillar.gradient }} />
-      <div style={{
-        display: 'inline-flex', padding: '4px 12px', borderRadius: 20,
-        background: `${pillar.color}20`, border: `1px solid ${pillar.color}40`,
-        fontSize: 14, fontWeight: 800, color: pillar.color, marginBottom: 10,
-        fontFamily: 'Space Grotesk',
+      <div className="absolute top-0 left-0 right-0 h-[3px]" style={{ background: pillar.color }} />
+      <div className="inline-flex px-3 py-1 rounded-full mb-2.5 text-label-md font-label-md font-extrabold" style={{
+        background: `${pillar.color}20`,
+        border: `1px solid ${pillar.color}40`,
+        color: pillar.color,
       }}>{pillar.short}</div>
-      <h3 style={{ fontSize: 14, fontWeight: 700, marginBottom: 6 }}>{pillar.label}</h3>
-      <p style={{ fontSize: 12, color: 'var(--text-muted)', lineHeight: 1.5 }}>{pillar.framework}</p>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginTop: 12, color: pillar.color, fontSize: 12 }}>
+      <h3 className="text-label-md font-bold mb-1.5">{pillar.label}</h3>
+      <p className="text-technical-sm text-surface-variant leading-relaxed">{pillar.framework}</p>
+      <div className="flex items-center gap-1 mt-3 text-technical-sm" style={{ color: pillar.color }}>
         Explore <ChevronRight size={12} />
       </div>
     </div>
@@ -39,44 +36,39 @@ function PillarDetail({ pillar }) {
   return (
     <div className="animate-fade">
       {/* Header */}
-      <div style={{
-        background: `linear-gradient(135deg, ${pillar.color}15, ${pillar.color}05)`,
-        border: `1px solid ${pillar.color}30`, borderRadius: 16, padding: 28, marginBottom: 20,
-        position: 'relative', overflow: 'hidden',
+      <div className="relative overflow-hidden rounded-[16px] p-7 mb-5" style={{
+        background: `${pillar.color}08`,
+        border: `1px solid ${pillar.color}30`,
       }}>
-        <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 3, background: pillar.gradient }} />
-        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
+        <div className="absolute top-0 left-0 right-0 h-[3px]" style={{ background: pillar.color }} />
+        <div className="flex items-start justify-between">
           <div>
-            <div style={{
-              display: 'inline-flex', padding: '6px 16px', borderRadius: 20,
-              background: `${pillar.color}20`, border: `1px solid ${pillar.color}40`,
-              fontSize: 18, fontWeight: 800, color: pillar.color, marginBottom: 12,
-              fontFamily: 'Space Grotesk',
+            <div className="inline-flex px-4 py-1.5 rounded-full mb-3 text-[18px] font-label-md font-extrabold" style={{
+              background: `${pillar.color}20`,
+              border: `1px solid ${pillar.color}40`,
+              color: pillar.color,
             }}>{pillar.short}</div>
-            <h2 style={{ fontSize: 24, fontWeight: 800, marginBottom: 8 }}>{pillar.label}</h2>
-            <p style={{ fontSize: 14, color: 'var(--text-secondary)', maxWidth: 600, lineHeight: 1.7 }}>{pillar.description}</p>
+            <h2 className="text-headline-md font-extrabold mb-2">{pillar.label}</h2>
+            <p className="text-label-md text-on-surface-variant max-w-[600px] leading-[1.7]">{pillar.description}</p>
           </div>
-          <div style={{ textAlign: 'right' }}>
-            <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 4 }}>Dynamic Weight</div>
-            <div style={{ fontSize: 28, fontWeight: 800, color: pillar.color, fontFamily: 'Space Grotesk' }}>×{pillar.weight.toFixed(2)}</div>
-            <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>in unified score</div>
+          <div className="text-right">
+            <div className="text-technical-sm text-surface-variant mb-1">Dynamic Weight</div>
+            <div className="text-[28px] font-headline-md font-extrabold" style={{ color: pillar.color }}>×{pillar.weight.toFixed(2)}</div>
+            <div className="text-technical-sm text-surface-variant">in unified score</div>
           </div>
         </div>
-        <div style={{ marginTop: 12, padding: '8px 14px', background: 'rgba(255,255,255,0.04)', borderRadius: 8, display: 'inline-block' }}>
-          <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>Framework: </span>
-          <span style={{ fontSize: 12, color: pillar.color, fontWeight: 600 }}>{pillar.framework}</span>
+        <div className="mt-3 py-2 px-3.5 bg-white/5 rounded-lg inline-block">
+          <span className="text-technical-sm text-surface-variant">Framework: </span>
+          <span className="text-technical-sm font-semibold" style={{ color: pillar.color }}>{pillar.framework}</span>
         </div>
       </div>
 
       {/* Tabs */}
-      <div style={{ display: 'flex', gap: 4, marginBottom: 20, background: 'var(--navy-4)', padding: 4, borderRadius: 10, width: 'fit-content' }}>
+      <div className="flex gap-1 mb-5 bg-surface-container-low p-1 rounded-[10px] w-fit">
         {tabs.map(({ id, label, icon: Icon }) => (
-          <button key={id} onClick={() => setTab(id)} style={{
-            display: 'flex', alignItems: 'center', gap: 6,
-            padding: '7px 14px', borderRadius: 8, cursor: 'pointer',
+          <button key={id} onClick={() => setTab(id)} className={`flex items-center gap-1.5 px-3.5 py-[7px] rounded-lg cursor-pointer border-none text-label-md font-medium transition-all duration-150 ${tab === id ? '' : 'text-on-surface-variant'}`} style={{
             background: tab === id ? pillar.color : 'transparent',
-            color: tab === id ? 'white' : 'var(--text-secondary)',
-            border: 'none', fontSize: 13, fontWeight: 500, transition: 'all 0.15s',
+            color: tab === id ? 'white' : undefined,
           }}>
             <Icon size={13} /> {label}
           </button>
@@ -85,27 +77,27 @@ function PillarDetail({ pillar }) {
 
       {/* Tab Content */}
       {tab === 'overview' && (
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+        <div className="grid grid-cols-2 gap-4">
           <div className="card">
-            <h4 style={{ fontSize: 13, fontWeight: 600, color: pillar.color, marginBottom: 12 }}>Core Components</h4>
+            <h4 className="text-label-md font-semibold mb-3" style={{ color: pillar.color }}>Core Components</h4>
             {pillar.subParams.map(sp => (
-              <div key={sp.id} style={{ display: 'flex', alignItems: 'flex-start', gap: 10, marginBottom: 10 }}>
-                <div style={{ width: 6, height: 6, borderRadius: '50%', background: pillar.color, marginTop: 5, flexShrink: 0 }} />
+              <div key={sp.id} className="flex items-start gap-2.5 mb-2.5">
+                <div className="size-[6px] rounded-full mt-1 shrink-0" style={{ background: pillar.color }} />
                 <div>
-                  <div style={{ fontSize: 13, fontWeight: 500 }}>{sp.label}</div>
-                  <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 2 }}>{sp.desc}</div>
+                  <div className="text-label-md font-medium">{sp.label}</div>
+                  <div className="text-technical-sm text-surface-variant mt-0.5">{sp.desc}</div>
                 </div>
               </div>
             ))}
           </div>
           <div className="card">
-            <h4 style={{ fontSize: 13, fontWeight: 600, color: pillar.color, marginBottom: 12 }}>Development Focus</h4>
+            <h4 className="text-label-md font-semibold mb-3" style={{ color: pillar.color }}>Development Focus</h4>
             {pillar.developmentFocus.map(d => (
-              <div key={d} style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
-                <div style={{ width: 20, height: 20, borderRadius: 6, background: `${pillar.color}20`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                  <div style={{ width: 6, height: 6, borderRadius: '50%', background: pillar.color }} />
+              <div key={d} className="flex items-center gap-2 mb-2">
+                <div className="size-5 rounded-md flex items-center justify-center shrink-0" style={{ background: `${pillar.color}20` }}>
+                  <div className="size-[6px] rounded-full" style={{ background: pillar.color }} />
                 </div>
-                <span style={{ fontSize: 13, color: 'var(--text-secondary)' }}>{d}</span>
+                <span className="text-label-md text-on-surface-variant">{d}</span>
               </div>
             ))}
           </div>
@@ -113,24 +105,21 @@ function PillarDetail({ pillar }) {
       )}
 
       {tab === 'subparams' && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+        <div className="flex flex-col gap-3">
           {pillar.subParams.map((sp, i) => (
-            <div key={sp.id} style={{
-              background: 'var(--navy-4)', border: '1px solid var(--border-light)',
-              borderRadius: 12, padding: 16,
-            }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+            <div key={sp.id} className="bg-surface-container-low border border-outline-variant rounded-xl p-4">
+              <div className="flex justify-between items-center mb-2">
                 <div>
-                  <span style={{ fontSize: 11, color: 'var(--text-muted)', marginRight: 8 }}>#{i + 1}</span>
-                  <span style={{ fontSize: 14, fontWeight: 600 }}>{sp.label}</span>
+                  <span className="text-technical-sm text-surface-variant mr-2">#{i + 1}</span>
+                  <span className="text-label-md font-semibold">{sp.label}</span>
                 </div>
-                <div style={{ fontSize: 12, color: pillar.color, fontWeight: 600 }}>Max: {sp.max} pts</div>
+                <div className="text-technical-sm font-semibold" style={{ color: pillar.color }}>Max: {sp.max} pts</div>
               </div>
-              <p style={{ fontSize: 13, color: 'var(--text-secondary)', marginBottom: 10 }}>{sp.desc}</p>
+              <p className="text-label-md text-on-surface-variant mb-2.5">{sp.desc}</p>
               <div className="progress-bar">
-                <div className="progress-fill" style={{ width: `${(sp.max / pillar.subParams.reduce((s, p) => s + p.max, 0)) * 100}%`, background: pillar.gradient }} />
+                <div className="progress-fill" style={{ width: `${(sp.max / pillar.subParams.reduce((s, p) => s + p.max, 0)) * 100}%`, background: pillar.color }} />
               </div>
-              <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 4 }}>
+              <div className="text-technical-sm text-surface-variant mt-1">
                 {Math.round((sp.max / pillar.subParams.reduce((s, p) => s + p.max, 0)) * 100)}% of total pillar score
               </div>
             </div>
@@ -139,19 +128,18 @@ function PillarDetail({ pillar }) {
       )}
 
       {tab === 'methods' && (
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+        <div className="grid grid-cols-2 gap-4">
           <div className="card">
-            <h4 style={{ fontSize: 13, fontWeight: 600, color: pillar.color, marginBottom: 12 }}>Assessment Methods</h4>
+            <h4 className="text-label-md font-semibold mb-3" style={{ color: pillar.color }}>Assessment Methods</h4>
             {pillar.assessmentMethods.map(m => (
-              <div key={m} style={{
-                padding: '8px 12px', marginBottom: 6, borderRadius: 8,
-                background: `${pillar.color}10`, border: `1px solid ${pillar.color}20`,
-                fontSize: 13, color: 'var(--text-secondary)',
+              <div key={m} className="py-2 px-3 mb-1.5 rounded-lg text-label-md text-on-surface-variant" style={{
+                background: `${pillar.color}10`,
+                border: `1px solid ${pillar.color}20`,
               }}>{m}</div>
             ))}
           </div>
           <div className="card">
-            <h4 style={{ fontSize: 13, fontWeight: 600, marginBottom: 12 }}>Interpretation Guide</h4>
+            <h4 className="text-label-md font-semibold mb-3">Interpretation Guide</h4>
             {[
               { range: '90–100', label: 'Exceptional strength — leverage as core asset', color: '#10b981' },
               { range: '75–89', label: 'Strong capability — maintain and refine', color: '#06b6d4' },
@@ -159,9 +147,9 @@ function PillarDetail({ pillar }) {
               { range: '45–59', label: 'Below average — structured intervention needed', color: '#f97316' },
               { range: '<45', label: 'Critical gap — priority intervention required', color: '#ef4444' },
             ].map(({ range, label, color }) => (
-              <div key={range} style={{ display: 'flex', gap: 10, marginBottom: 8, alignItems: 'flex-start' }}>
-                <span style={{ fontSize: 11, fontWeight: 700, color, minWidth: 50 }}>{range}</span>
-                <span style={{ fontSize: 12, color: 'var(--text-secondary)' }}>{label}</span>
+              <div key={range} className="flex gap-2.5 mb-2 items-start">
+                <span className="text-[11px] font-bold min-w-[50px]" style={{ color }}>{range}</span>
+                <span className="text-technical-sm text-on-surface-variant">{label}</span>
               </div>
             ))}
           </div>
@@ -170,22 +158,41 @@ function PillarDetail({ pillar }) {
 
       {tab === 'career' && (
         <div className="card">
-          <h4 style={{ fontSize: 13, fontWeight: 600, color: pillar.color, marginBottom: 12 }}>Career Alignment</h4>
-          <p style={{ fontSize: 14, color: 'var(--text-secondary)', lineHeight: 1.7, marginBottom: 16 }}>{pillar.careerAlignment}</p>
-          <div style={{ padding: 16, background: `${pillar.color}08`, border: `1px solid ${pillar.color}20`, borderRadius: 10 }}>
-            <div style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 8 }}>High {pillar.short} Profile Roles</div>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+          <h4 className="text-label-md font-semibold mb-3" style={{ color: pillar.color }}>Career Alignment</h4>
+          <p className="text-label-md text-on-surface-variant leading-[1.7] mb-4">{pillar.careerAlignment}</p>
+          <div className="p-4 rounded-[10px]" style={{
+            background: `${pillar.color}08`,
+            border: `1px solid ${pillar.color}20`,
+          }}>
+            <div className="text-technical-sm text-surface-variant mb-2">High {pillar.short} Profile Roles</div>
+            <div className="flex flex-wrap gap-2">
               {pillar.id === 'IQ' && ['Research Scientist', 'Software Engineer', 'Data Analyst', 'Financial Analyst', 'Academic Researcher'].map(r => (
-                <span key={r} style={{ padding: '4px 10px', borderRadius: 20, background: `${pillar.color}15`, border: `1px solid ${pillar.color}30`, fontSize: 12, color: pillar.color }}>{r}</span>
+                <span key={r} className="px-2.5 py-1 rounded-full text-technical-sm" style={{
+                  background: `${pillar.color}15`,
+                  border: `1px solid ${pillar.color}30`,
+                  color: pillar.color,
+                }}>{r}</span>
               ))}
               {pillar.id === 'EQ' && ['HR Director', 'Counselor', 'Team Lead', 'Customer Success', 'Therapist', 'Coach'].map(r => (
-                <span key={r} style={{ padding: '4px 10px', borderRadius: 20, background: `${pillar.color}15`, border: `1px solid ${pillar.color}30`, fontSize: 12, color: pillar.color }}>{r}</span>
+                <span key={r} className="px-2.5 py-1 rounded-full text-technical-sm" style={{
+                  background: `${pillar.color}15`,
+                  border: `1px solid ${pillar.color}30`,
+                  color: pillar.color,
+                }}>{r}</span>
               ))}
               {pillar.id === 'SQ' && ['Community Leader', 'Educator', 'Social Worker', 'PR Manager', 'Diplomat'].map(r => (
-                <span key={r} style={{ padding: '4px 10px', borderRadius: 20, background: `${pillar.color}15`, border: `1px solid ${pillar.color}30`, fontSize: 12, color: pillar.color }}>{r}</span>
+                <span key={r} className="px-2.5 py-1 rounded-full text-technical-sm" style={{
+                  background: `${pillar.color}15`,
+                  border: `1px solid ${pillar.color}30`,
+                  color: pillar.color,
+                }}>{r}</span>
               ))}
               {pillar.id === 'AQ' && ['Entrepreneur', 'Crisis Manager', 'Military Officer', 'Emergency Responder', 'Startup Founder'].map(r => (
-                <span key={r} style={{ padding: '4px 10px', borderRadius: 20, background: `${pillar.color}15`, border: `1px solid ${pillar.color}30`, fontSize: 12, color: pillar.color }}>{r}</span>
+                <span key={r} className="px-2.5 py-1 rounded-full text-technical-sm" style={{
+                  background: `${pillar.color}15`,
+                  border: `1px solid ${pillar.color}30`,
+                  color: pillar.color,
+                }}>{r}</span>
               ))}
             </div>
           </div>
@@ -202,12 +209,12 @@ export default function FourPillars() {
   const pillar = PILLARS[active];
 
   return (
-    <div style={{ padding: 32, maxWidth: 1100, margin: '0 auto' }} className="animate-fade">
-      <h1 style={{ fontSize: 24, fontWeight: 800, marginBottom: 4 }}>The Four Pillars of Holistic Development</h1>
-      <p style={{ fontSize: 14, color: 'var(--text-muted)', marginBottom: 28 }}>Each pillar represents a core dimension of human intelligence and capability within the QIDS framework.</p>
+    <div className="page-pad max-w-[1100px] mx-auto animate-fade">
+      <h1 className="text-headline-md font-extrabold mb-1">The Four Pillars of Holistic Development</h1>
+      <p className="text-label-md text-surface-variant mb-7">Each pillar represents a core dimension of human intelligence and capability within the QIDS framework.</p>
 
       {/* Pillar selector */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12, marginBottom: 28 }}>
+      <div className="grid grid-cols-4 gap-3 mb-7">
         {Object.values(PILLARS).map(p => (
           <PillarCard key={p.id} pillar={p} active={active === p.id} onClick={() => { setActive(p.id); navigate(`/app/pillars/${p.id}`); }} />
         ))}
@@ -217,22 +224,18 @@ export default function FourPillars() {
       {pillar && <PillarDetail pillar={pillar} />}
 
       {/* Innovative Features */}
-      <div style={{
-        marginTop: 32, padding: 24,
-        background: 'linear-gradient(135deg, rgba(99,102,241,0.12), rgba(168,85,247,0.08))',
-        border: '1px solid var(--border)', borderRadius: 16,
-      }}>
-        <h3 style={{ fontSize: 16, fontWeight: 700, marginBottom: 16, textAlign: 'center' }}>Innovative Features</h3>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12 }}>
+      <div className="mt-8 p-6 bg-surface-container-low border border-outline-variant rounded-[16px]">
+        <h3 className="text-[16px] font-bold mb-4 text-center">Innovative Features</h3>
+        <div className="grid grid-cols-3 gap-3">
           {[
             { label: 'Dynamic Emotional Integration', desc: 'Real-time emotional adaptability using hybrid digital-physical simulations and dynamic weightage algorithms.', color: '#10b981' },
             { label: 'Resilience Dynamics Framework', desc: 'A revolutionary approach to understanding and developing adversity quotient as a dynamic, interconnected system.', color: '#f59e0b' },
             { label: 'Integrated Assessment', desc: 'Multi-method assessment capturing interactions between domains for a holistic view of individual capabilities.', color: '#6366f1' },
           ].map(f => (
-            <div key={f.label} style={{ padding: 16, background: 'rgba(255,255,255,0.04)', borderRadius: 10, border: `1px solid ${f.color}20` }}>
-              <div style={{ width: 8, height: 8, borderRadius: '50%', background: f.color, marginBottom: 8 }} />
-              <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 6 }}>{f.label}</div>
-              <div style={{ fontSize: 12, color: 'var(--text-secondary)', lineHeight: 1.5 }}>{f.desc}</div>
+            <div key={f.label} className="p-4 bg-white/5 rounded-[10px]" style={{ border: `1px solid ${f.color}20` }}>
+              <div className="size-2 rounded-full mb-2" style={{ background: f.color }} />
+              <div className="text-label-md font-bold mb-1.5">{f.label}</div>
+              <div className="text-technical-sm text-on-surface-variant leading-relaxed">{f.desc}</div>
             </div>
           ))}
         </div>

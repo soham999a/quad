@@ -16,10 +16,10 @@ export default function AdminPanel() {
 
   if (role !== 'admin') {
     return (
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '60vh', flexDirection: 'column', gap: 12 }}>
-        <Shield size={40} color="var(--text-muted)" opacity={0.4} />
-        <div style={{ fontSize: 16, fontWeight: 600, color: 'var(--text-secondary)' }}>Admin access required</div>
-        <div style={{ fontSize: 13, color: 'var(--text-muted)' }}>You don't have permission to view this page.</div>
+      <div className="flex items-center justify-center min-h-[60vh] flex-col gap-3">
+        <Shield size={40} className="text-surface-variant/40" />
+        <div className="text-base font-semibold text-on-surface-variant">Admin access required</div>
+        <div className="text-sm text-surface-variant">You don't have permission to view this page.</div>
       </div>
     );
   }
@@ -93,122 +93,112 @@ export default function AdminPanel() {
   };
 
   return (
-    <div className="page-pad animate-fade" style={{ maxWidth: 1100, margin: '0 auto' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 24 }}>
+    <div className="px-6 py-6 animate-fade max-w-[1100px] mx-auto">
+      <div className="flex justify-between items-start mb-6">
         <div>
-          <h1 style={{ fontSize: 24, fontWeight: 800, marginBottom: 4 }}>Admin Panel</h1>
-          <p style={{ fontSize: 14, color: 'var(--text-muted)' }}>Manage users, assign evaluators, and configure roles</p>
+          <h1 className="text-2xl font-extrabold mb-1">Admin Panel</h1>
+          <p className="text-sm text-surface-variant">Manage users, assign evaluators, and configure roles</p>
         </div>
-        <button onClick={loadData} disabled={loading} className="btn btn-secondary btn-sm" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+        <button onClick={loadData} disabled={loading} className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs rounded-lg border border-outline-variant bg-surface-container-low text-on-surface hover:bg-surface cursor-pointer transition-all disabled:opacity-50">
           <RefreshCw size={13} className={loading ? 'animate-spin' : ''} /> Refresh
         </button>
       </div>
 
       {/* Stats */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 14, marginBottom: 24 }}>
+      <div className="grid grid-cols-3 gap-3.5 mb-6">
         {[
           { label: 'Students', count: students.length, icon: Users, color: '#6366f1' },
           { label: 'Evaluators', count: evaluators.length, icon: UserCheck, color: '#10b981' },
           { label: 'Admins', count: admins.length, icon: Shield, color: '#f59e0b' },
         ].map(stat => (
-          <div key={stat.label} style={{ padding: '16px 20px', background: 'var(--navy-4)', border: '1px solid var(--border-light)', borderRadius: 12, display: 'flex', alignItems: 'center', gap: 14 }}>
-            <div style={{ width: 40, height: 40, borderRadius: 10, background: `${stat.color}15`, border: `1px solid ${stat.color}30`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div key={stat.label} className="p-4 bg-surface-container-low border border-outline-variant rounded-xl flex items-center gap-3.5">
+            <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ background: `${stat.color}15`, border: `1px solid ${stat.color}30` }}>
               <stat.icon size={18} color={stat.color} />
             </div>
             <div>
-              <div style={{ fontSize: 24, fontWeight: 800, fontFamily: 'Space Grotesk', color: stat.color }}>{stat.count}</div>
-              <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>{stat.label}</div>
+              <div className="text-2xl font-extrabold" style={{ color: stat.color }}>{stat.count}</div>
+              <div className="text-xs text-surface-variant">{stat.label}</div>
             </div>
           </div>
         ))}
       </div>
 
       {/* Search */}
-      <div style={{ position: 'relative', marginBottom: 20 }}>
-        <Search size={14} color="var(--text-muted)" style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} />
+      <div className="relative mb-5">
+        <Search size={14} className="text-surface-variant absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
         <input
           type="text" placeholder="Search students by name or email..."
           value={search} onChange={e => setSearch(e.target.value)}
-          style={{ width: '100%', padding: '10px 14px 10px 36px', borderRadius: 10, fontSize: 13 }}
+          className="w-full py-2.5 pl-9 pr-3.5 rounded-lg text-sm"
         />
       </div>
 
       {/* Students Table */}
-      <div className="card" style={{ overflow: 'hidden' }}>
-        <div style={{ padding: '14px 16px', borderBottom: '1px solid var(--border-light)', fontSize: 13, fontWeight: 700, color: 'var(--text-secondary)' }}>
+      <div className="bg-surface-container-low border border-outline-variant rounded-xl overflow-hidden">
+        <div className="px-4 py-3.5 border-b border-outline-variant text-sm font-bold text-on-surface-variant">
           Students ({filtered.length})
         </div>
         {loading ? (
-          <div style={{ padding: 40, textAlign: 'center', color: 'var(--text-muted)', fontSize: 13 }}>Loading users...</div>
+          <div className="p-10 text-center text-surface-variant text-sm">Loading users...</div>
         ) : filtered.length === 0 ? (
-          <div style={{ padding: 40, textAlign: 'center', color: 'var(--text-muted)', fontSize: 13 }}>No students found.</div>
+          <div className="p-10 text-center text-surface-variant text-sm">No students found.</div>
         ) : (
           filtered.map((student, i) => {
             const isExpanded = expandedStudent === student.uid;
             const evaluator = getCurrentEvaluator(student.uid);
             return (
-              <div key={student.uid} style={{ borderBottom: i < filtered.length - 1 ? '1px solid var(--border-light)' : 'none' }}>
+              <div key={student.uid} className={i < filtered.length - 1 ? 'border-b border-outline-variant' : ''}>
                 <div
                   onClick={() => setExpandedStudent(isExpanded ? null : student.uid)}
-                  style={{ padding: '12px 16px', display: 'flex', alignItems: 'center', gap: 12, cursor: 'pointer', transition: 'background 0.1s' }}
-                  onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.02)'}
-                  onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                  className="px-4 py-3 flex items-center gap-3 cursor-pointer transition-all hover:bg-white/[0.02]"
                 >
-                  <div style={{ width: 32, height: 32, borderRadius: '50%', background: 'linear-gradient(135deg, #6366f1, #818cf8)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                    <span style={{ fontSize: 12, fontWeight: 800, color: 'white' }}>{(student.name || student.email || '?')[0].toUpperCase()}</span>
+                  <div className="w-8 h-8 rounded-full bg-[#6366f1] flex items-center justify-center shrink-0">
+                    <span className="text-xs font-extrabold text-white">{(student.name || student.email || '?')[0].toUpperCase()}</span>
                   </div>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontSize: 13, fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{student.name || 'Unnamed'}</div>
-                    <div style={{ fontSize: 11, color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: 6 }}>
-                      <Mail size={10} /> {student.email || '—'}
+                  <div className="flex-1 min-w-0">
+                    <div className="text-sm font-semibold truncate">{student.name || 'Unnamed'}</div>
+                    <div className="text-xs text-surface-variant flex items-center gap-1.5">
+                      <Mail size={10} className="text-surface-variant" /> {student.email || '—'}
                     </div>
                   </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <div className="flex items-center gap-2">
                     {evaluator ? (
-                      <span style={{ fontSize: 11, padding: '3px 8px', borderRadius: 6, background: 'rgba(16,185,129,0.12)', color: '#34d399', border: '1px solid rgba(16,185,129,0.25)', display: 'flex', alignItems: 'center', gap: 4 }}>
+                      <span className="text-xs px-2 py-0.5 rounded-md flex items-center gap-1" style={{ background: 'rgba(16,185,129,0.12)', color: '#34d399', border: '1px solid rgba(16,185,129,0.25)' }}>
                         <UserCheck size={11} /> {evaluator.name || 'Assigned'}
                       </span>
                     ) : (
-                      <span style={{ fontSize: 11, padding: '3px 8px', borderRadius: 6, background: 'rgba(245,158,11,0.12)', color: '#fbbf24', border: '1px solid rgba(245,158,11,0.25)', display: 'flex', alignItems: 'center', gap: 4 }}>
+                      <span className="text-xs px-2 py-0.5 rounded-md flex items-center gap-1" style={{ background: 'rgba(245,158,11,0.12)', color: '#fbbf24', border: '1px solid rgba(245,158,11,0.25)' }}>
                         <AlertCircle size={11} /> Unassigned
                       </span>
                     )}
-                    {isExpanded ? <ChevronUp size={14} color="var(--text-muted)" /> : <ChevronDown size={14} color="var(--text-muted)" />}
+                    {isExpanded ? <ChevronUp size={14} className="text-surface-variant" /> : <ChevronDown size={14} className="text-surface-variant" />}
                   </div>
                 </div>
 
                 {isExpanded && (
-                  <div style={{ padding: '4px 16px 16px', borderTop: '1px solid var(--border-light)' }}>
+                  <div className="px-4 pb-4 pt-1 border-t border-outline-variant">
                     {/* Assign evaluator */}
-                    <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-muted)', marginBottom: 8 }}>
+                    <div className="text-xs font-semibold text-surface-variant mb-2">
                       {evaluator ? 'Change Evaluator' : 'Assign Evaluator'}
                     </div>
-                    <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                    <div className="flex gap-1.5 flex-wrap">
                       {evaluators.filter(e => e.uid !== assignments[student.uid]).map(ev => (
-                        <button key={ev.uid} onClick={() => handleAssign(student.uid, ev.uid)} style={{
-                          padding: '6px 12px', borderRadius: 8, cursor: 'pointer', fontSize: 12,
-                          background: 'rgba(16,185,129,0.1)', border: '1px solid rgba(16,185,129,0.3)',
-                          color: '#34d399', display: 'flex', alignItems: 'center', gap: 6,
-                        }}>
+                        <button key={ev.uid} onClick={() => handleAssign(student.uid, ev.uid)} className="px-3 py-1.5 rounded-lg cursor-pointer text-xs flex items-center gap-1.5" style={{ background: 'rgba(16,185,129,0.1)', border: '1px solid rgba(16,185,129,0.3)', color: '#34d399' }}>
                           <UserCheck size={12} /> {ev.name || ev.email}
                         </button>
                       ))}
                       {evaluators.filter(e => e.uid !== assignments[student.uid]).length === 0 && evaluators.length > 0 && (
-                        <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>All evaluators already assigned</span>
+                        <span className="text-xs text-surface-variant">All evaluators already assigned</span>
                       )}
                       {evaluators.length === 0 && (
-                        <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>No evaluators available. Change a user's role to evaluator first.</span>
+                        <span className="text-xs text-surface-variant">No evaluators available. Change a user's role to evaluator first.</span>
                       )}
                     </div>
 
                     {/* Remove current evaluator */}
                     {evaluator && (
-                      <div style={{ marginTop: 10 }}>
-                        <button onClick={() => handleRemove(student.uid, evaluator.uid)} style={{
-                          padding: '5px 12px', borderRadius: 8, cursor: 'pointer', fontSize: 11,
-                          background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)',
-                          color: '#f87171', display: 'inline-flex', alignItems: 'center', gap: 5,
-                        }}>
+                      <div className="mt-2.5">
+                        <button onClick={() => handleRemove(student.uid, evaluator.uid)} className="px-3 py-1.5 rounded-lg cursor-pointer text-xs inline-flex items-center gap-1" style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)', color: '#f87171' }}>
                           <UserX size={11} /> Remove {evaluator.name}
                         </button>
                       </div>
@@ -222,25 +212,25 @@ export default function AdminPanel() {
       </div>
 
       {/* All Users list with role management */}
-      <div className="card" style={{ marginTop: 20, overflow: 'hidden' }}>
-        <div style={{ padding: '14px 16px', borderBottom: '1px solid var(--border-light)', fontSize: 13, fontWeight: 700, color: 'var(--text-secondary)' }}>
+      <div className="bg-surface-container-low border border-outline-variant rounded-xl mt-5 overflow-hidden">
+        <div className="px-4 py-3.5 border-b border-outline-variant text-sm font-bold text-on-surface-variant">
           All Users — Role Management
         </div>
-        <div style={{ padding: 16 }}>
-          <div style={{ display: 'grid', gap: 8 }}>
+        <div className="p-4">
+          <div className="grid gap-2">
             {allUsers.filter(u => u.uid !== user?.uid).map(u => (
-              <div key={u.uid} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '8px 12px', background: 'var(--navy-4)', borderRadius: 10, border: '1px solid var(--border-light)' }}>
-                <div style={{ width: 28, height: 28, borderRadius: '50%', background: 'linear-gradient(135deg, #6366f1, #818cf8)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                  <span style={{ fontSize: 10, fontWeight: 800, color: 'white' }}>{(u.name || u.email || '?')[0].toUpperCase()}</span>
+              <div key={u.uid} className="flex items-center gap-3 px-3 py-2 bg-surface-container-low rounded-lg border border-outline-variant">
+                <div className="w-7 h-7 rounded-full bg-[#6366f1] flex items-center justify-center shrink-0">
+                  <span className="text-[10px] font-extrabold text-white">{(u.name || u.email || '?')[0].toUpperCase()}</span>
                 </div>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontSize: 12, fontWeight: 600 }}>{u.name || 'Unnamed'}</div>
-                  <div style={{ fontSize: 10, color: 'var(--text-muted)' }}>{u.email}</div>
+                <div className="flex-1 min-w-0">
+                  <div className="text-xs font-semibold">{u.name || 'Unnamed'}</div>
+                  <div className="text-[10px] text-surface-variant">{u.email}</div>
                 </div>
                 <select
                   value={u.role || 'student'}
                   onChange={e => handleRoleChange(u.uid, e.target.value)}
-                  style={{ width: 'auto', padding: '4px 8px', fontSize: 11, borderRadius: 6 }}
+                  className="py-1 px-2 text-xs rounded-md"
                 >
                   <option value="student">Student</option>
                   <option value="evaluator">Evaluator</option>

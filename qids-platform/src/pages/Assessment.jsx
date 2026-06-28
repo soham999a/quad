@@ -18,11 +18,10 @@ const PILLAR_ICONS = { IQ: Brain, EQ: Heart, SQ: Users, AQ: Shield };
 // ─── SHARED UI ATOMS ──────────────────────────────────────────────────────────
 function SectionHeader({ title, subtitle, color }) {
   return (
-    <div style={{ padding: '12px 16px', marginBottom: 20, background: `${color}10`, border: `1px solid ${color}30`, borderRadius: 10, display: 'flex', alignItems: 'center', gap: 10 }}>
-      <div style={{ width: 10, height: 10, borderRadius: '50%', background: color, boxShadow: `0 0 8px ${color}`, flexShrink: 0 }} />
+    <div className="flex items-center gap-3 p-4 mb-5 border-l-2 border-primary bg-surface-container-low hairline-b hairline-t hairline-r">
       <div>
-        <div style={{ fontSize: 14, fontWeight: 700, color }}>{title}</div>
-        {subtitle && <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 2 }}>{subtitle}</div>}
+        <div className="text-label-md font-label-md" style={{ color: color || '#ebc073' }}>{title}</div>
+        {subtitle && <div className="text-technical-sm font-technical-sm text-surface-variant mt-1">{subtitle}</div>}
       </div>
     </div>
   );
@@ -30,30 +29,21 @@ function SectionHeader({ title, subtitle, color }) {
 
 function MCQQuestion({ q, index, selected, onSelect, color }) {
   return (
-    <div style={{ marginBottom: 16, background: 'var(--navy-4)', border: '1px solid var(--border-light)', borderRadius: 12, padding: 16 }}>
-      <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 10, lineHeight: 1.5 }}>
-        <span style={{ color: 'var(--text-muted)', marginRight: 6 }}>Q{index + 1}.</span>{q.q}
+    <div className="mb-4 p-3 md:p-4 bg-surface-container-low border-[0.5px] border-outline-variant">
+      <div className="text-technical-sm font-technical-sm text-on-surface mb-3 leading-relaxed">
+        <span className="text-surface-variant mr-2">Q{index + 1}.</span>{q.q}
       </div>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+      <div className="flex flex-col gap-2">
         {q.options.map((opt, i) => {
           const isSelected = selected === i;
           return (
-            <button key={i} onClick={() => onSelect(i)} style={{
-              padding: '9px 14px', borderRadius: 8, textAlign: 'left', cursor: 'pointer',
-              fontSize: 13, border: `1px solid ${isSelected ? color : 'var(--border-light)'}`,
-              background: isSelected ? `${color}18` : 'rgba(255,255,255,0.02)',
-              color: isSelected ? 'white' : 'var(--text-secondary)',
-              transition: 'all 0.15s', display: 'flex', alignItems: 'center', gap: 10,
-            }}>
-              <div style={{
-                width: 20, height: 20, borderRadius: '50%', flexShrink: 0,
-                border: `2px solid ${isSelected ? color : 'var(--border-light)'}`,
-                background: isSelected ? color : 'transparent',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-              }}>
-                {isSelected && <div style={{ width: 8, height: 8, borderRadius: '50%', background: 'white' }} />}
+            <button key={i} onClick={() => onSelect(i)}
+              className={`flex items-center gap-3 px-3 md:px-4 py-3 md:py-3 text-left text-technical-sm font-technical-sm transition-all cursor-pointer border-[0.5px] touch-target ${isSelected ? 'border-primary bg-primary/10 text-on-surface' : 'border-outline-variant bg-transparent text-on-surface-variant hover:border-primary hover:text-primary'
+                }`}>
+              <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${isSelected ? 'border-primary bg-primary' : 'border-outline-variant'}`}>
+                {isSelected && <div className="w-2 h-2 rounded-full bg-on-primary"></div>}
               </div>
-              <span style={{ fontWeight: 500 }}>{String.fromCharCode(65 + i)}.</span> {opt}
+              <span className="font-medium">{String.fromCharCode(65 + i)}.</span> {opt}
             </button>
           );
         })}
@@ -64,21 +54,16 @@ function MCQQuestion({ q, index, selected, onSelect, color }) {
 
 function OpenQuestion({ q, index, value, onChange }) {
   return (
-    <div style={{ marginBottom: 14, background: 'var(--navy-4)', border: '1px solid var(--border-light)', borderRadius: 12, padding: 16 }}>
-      <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 8, lineHeight: 1.5 }}>
-        <span style={{ color: 'var(--text-muted)', marginRight: 6 }}>Q{index + 1}.</span>{q.q}
+    <div className="mb-4 p-4 bg-surface-container-low border-[0.5px] border-outline-variant">
+      <div className="text-technical-sm font-technical-sm text-on-surface mb-3 leading-relaxed">
+        <span className="text-surface-variant mr-2">Q{index + 1}.</span>{q.q}
       </div>
       <textarea
         value={value || ''}
         onChange={e => onChange(e.target.value)}
         placeholder="Write your answer here..."
         rows={3}
-        style={{
-          width: '100%', padding: '10px 12px', borderRadius: 8, resize: 'vertical',
-          background: 'rgba(255,255,255,0.03)', border: '1px solid var(--border-light)',
-          color: 'var(--text-primary)', fontSize: 13, fontFamily: 'Inter', lineHeight: 1.5,
-          boxSizing: 'border-box',
-        }}
+        className="w-full p-3 bg-background border-[0.5px] border-outline-variant text-on-surface text-technical-sm font-technical-sm outline-none focus:border-primary resize-y"
       />
     </div>
   );
@@ -87,22 +72,17 @@ function OpenQuestion({ q, index, value, onChange }) {
 function LikertQuestion({ q, index, value, onChange, color }) {
   const labels = ['Never', 'Rarely', 'Sometimes', 'Often', 'Always'];
   return (
-    <div style={{ marginBottom: 14, background: 'var(--navy-4)', border: '1px solid var(--border-light)', borderRadius: 12, padding: 16 }}>
-      <div style={{ fontSize: 13, fontWeight: 500, marginBottom: 12, lineHeight: 1.5 }}>
-        <span style={{ color: 'var(--text-muted)', marginRight: 6 }}>{index + 1}.</span>{q}
+    <div className="mb-4 p-3 md:p-4 bg-surface-container-low border-[0.5px] border-outline-variant">
+      <div className="text-technical-sm font-technical-sm text-on-surface mb-4 leading-relaxed">
+        <span className="text-surface-variant mr-2">{index + 1}.</span>{q}
       </div>
-      <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+      <div className="flex gap-1.5 md:gap-2 items-stretch">
         {[1, 2, 3, 4, 5].map(n => (
-          <button key={n} onClick={() => onChange(n)} style={{
-            flex: 1, padding: '8px 4px', borderRadius: 8, cursor: 'pointer',
-            border: `2px solid ${value === n ? color : 'var(--border-light)'}`,
-            background: value === n ? `${color}20` : 'transparent',
-            color: value === n ? color : 'var(--text-muted)',
-            fontSize: 13, fontWeight: 700, transition: 'all 0.15s',
-            display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3,
-          }}>
-            <span>{n}</span>
-            <span style={{ fontSize: 9, fontWeight: 400, textAlign: 'center', lineHeight: 1.2 }}>{labels[n - 1]}</span>
+          <button key={n} onClick={() => onChange(n)}
+            className={`flex-1 px-1 md:px-2 py-3 md:py-4 cursor-pointer transition-all border-[0.5px] flex flex-col items-center gap-1 touch-target ${value === n ? 'border-primary bg-primary/15 text-primary' : 'border-outline-variant bg-transparent text-surface-variant hover:border-primary hover:text-primary'
+              }`}>
+            <span className="text-sm md:text-base font-bold">{n}</span>
+            <span className="text-[8px] md:text-[9px] font-normal text-center leading-tight">{labels[n - 1]}</span>
           </button>
         ))}
       </div>
@@ -112,23 +92,19 @@ function LikertQuestion({ q, index, value, onChange, color }) {
 
 function RubricScorer({ criterion, marks, desc, value, onChange, color }) {
   return (
-    <div style={{ marginBottom: 12, background: 'var(--navy-4)', border: '1px solid var(--border-light)', borderRadius: 10, padding: 14 }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 }}>
-        <div style={{ flex: 1 }}>
-          <div style={{ fontSize: 13, fontWeight: 600 }}>{criterion}</div>
-          <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 3, lineHeight: 1.4 }}>{desc}</div>
+    <div className="mb-3 p-4 bg-surface-container-low border-[0.5px] border-outline-variant">
+      <div className="flex justify-between items-start mb-3">
+        <div className="flex-1">
+          <div className="text-technical-sm font-technical-sm text-on-surface">{criterion}</div>
+          <div className="text-[11px] text-surface-variant leading-relaxed mt-1">{desc}</div>
         </div>
-        <div style={{ fontSize: 11, color: 'var(--text-muted)', marginLeft: 12, flexShrink: 0 }}>Max: {marks}</div>
+        <div className="text-[11px] text-surface-variant flex-shrink-0 ml-3">Max: {marks}</div>
       </div>
-      <div style={{ display: 'flex', gap: 6 }}>
+      <div className="flex gap-1.5">
         {Array.from({ length: marks + 1 }, (_, i) => (
-          <button key={i} onClick={() => onChange(i)} style={{
-            width: 36, height: 36, borderRadius: 8, cursor: 'pointer',
-            border: `2px solid ${value === i ? color : 'var(--border-light)'}`,
-            background: value === i ? `${color}25` : 'transparent',
-            color: value === i ? color : 'var(--text-muted)',
-            fontSize: 13, fontWeight: 700, transition: 'all 0.15s',
-          }}>{i}</button>
+          <button key={i} onClick={() => onChange(i)}
+            className={`w-9 h-9 cursor-pointer transition-all border-[0.5px] text-sm font-bold ${value === i ? 'border-primary bg-primary/20 text-primary' : 'border-outline-variant bg-transparent text-surface-variant hover:border-primary hover:text-primary'
+              }`}>{i}</button>
         ))}
       </div>
     </div>
@@ -137,28 +113,31 @@ function RubricScorer({ criterion, marks, desc, value, onChange, color }) {
 
 // ─── INTAKE STEP ──────────────────────────────────────────────────────────────
 function IntakeStep({ data, onChange, evaluators, currentEv, onAssign, onRemove, loadingEv }) {
+  const inputClass = "w-full h-12 px-4 bg-background border-[0.5px] border-outline-variant text-on-surface placeholder:text-surface-variant font-technical-sm outline-none focus:border-primary";
+  const labelClass = "text-technical-sm font-technical-sm text-surface-variant uppercase tracking-widest";
   return (
     <div>
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 16 }}>
+      <div className="text-technical-sm font-technical-sm text-primary mb-6">§ I · INTAKE & CONSENT</div>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
         {[
-          { key: 'name',        label: 'Full Name',                  placeholder: 'Enter full name' },
-          { key: 'age',         label: 'Age',                        placeholder: 'Enter age', type: 'number' },
+          { key: 'name', label: 'Full Name', placeholder: 'Enter full name' },
+          { key: 'age', label: 'Age', placeholder: 'Enter age', type: 'number' },
           { key: 'institution', label: 'Institution / Organization', placeholder: 'Enter institution name' },
         ].map(({ key, label, placeholder, type }) => (
-          <div key={key}>
-            <label>{label}</label>
-            <input type={type || 'text'} placeholder={placeholder} value={data[key] || ''} onChange={e => onChange(key, e.target.value)} />
+          <div key={key} className="flex flex-col gap-2">
+            <span className={labelClass}>{label}</span>
+            <input className={inputClass} type={type || 'text'} placeholder={placeholder} value={data[key] || ''} onChange={e => onChange(key, e.target.value)} />
           </div>
         ))}
-        <div>
-          <label>Evaluator</label>
+        <div className="flex flex-col gap-2">
+          <span className={labelClass}>Evaluator</span>
           {currentEv ? (
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 10px', borderRadius: 8, border: '1px solid var(--border-light)', background: 'rgba(255,255,255,0.03)' }}>
-              <span style={{ flex: 1, fontSize: 13, color: '#34d399' }}>{currentEv.name || currentEv.email || 'Assigned Evaluator'}</span>
-              <button onClick={onRemove} disabled={loadingEv} style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: 6, padding: '3px 8px', cursor: 'pointer', color: '#f87171', fontSize: 11, fontFamily: 'Inter' }}>Remove</button>
+            <div className="flex items-center gap-2 px-4 py-3 border-[0.5px] border-primary/50 bg-primary/5 h-12 text-technical-sm font-technical-sm text-primary">
+              <span className="flex-1">{currentEv.name || currentEv.email || 'Assigned Evaluator'}</span>
+              <button onClick={onRemove} disabled={loadingEv} className="px-3 py-1 border-[0.5px] border-error/50 text-error text-technical-sm font-technical-sm hover:bg-error/10 cursor-pointer bg-transparent">Remove</button>
             </div>
           ) : (
-            <select value="" onChange={e => onAssign(e.target.value)} disabled={loadingEv} style={{ width: '100%', color: loadingEv ? 'var(--text-muted)' : 'white' }}>
+            <select className={inputClass} value="" onChange={e => onAssign(e.target.value)} disabled={loadingEv}>
               <option value="">{loadingEv ? 'Loading...' : (evaluators.length === 0 ? 'No evaluators available' : 'Select an evaluator...')}</option>
               {evaluators.map(ev => (
                 <option key={ev.uid} value={ev.uid}>{ev.name || ev.email}</option>
@@ -168,38 +147,30 @@ function IntakeStep({ data, onChange, evaluators, currentEv, onAssign, onRemove,
         </div>
       </div>
 
-      <div style={{ marginBottom: 16 }}>
-        <label>Age Group</label>
-        <div style={{ display: 'flex', gap: 10 }}>
+      <div className="mb-6">
+        <span className={`${labelClass} block mb-2`}>Age Group</span>
+        <div className="flex gap-3">
           {[{ id: '11-18', label: '11–18 Years', desc: 'School / Youth' }, { id: '19-32', label: '19–32 Years', desc: 'College / Professional' }].map(ag => (
-            <button key={ag.id} type="button" onClick={() => onChange('ageGroup', ag.id)} style={{
-              flex: 1, padding: '12px 16px', borderRadius: 10, cursor: 'pointer', textAlign: 'left',
-              background: data.ageGroup === ag.id ? 'rgba(99,102,241,0.15)' : 'rgba(255,255,255,0.03)',
-              border: `1px solid ${data.ageGroup === ag.id ? 'var(--indigo)' : 'var(--border-light)'}`,
-              color: data.ageGroup === ag.id ? 'white' : 'var(--text-secondary)',
-              transition: 'all 0.15s',
-            }}>
-              <div style={{ fontSize: 14, fontWeight: 700 }}>{ag.label}</div>
-              <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 2 }}>{ag.desc}</div>
+            <button key={ag.id} type="button" onClick={() => onChange('ageGroup', ag.id)}
+              className={`flex-1 py-4 px-4 border-[0.5px] text-left cursor-pointer transition-all bg-transparent ${data.ageGroup === ag.id ? 'border-primary bg-primary/10 text-on-surface' : 'border-outline-variant text-on-surface-variant hover:border-primary'
+                }`}>
+              <div className="text-label-md font-label-md">{ag.label}</div>
+              <div className="text-technical-sm font-technical-sm text-surface-variant mt-1">{ag.desc}</div>
             </button>
           ))}
         </div>
       </div>
 
-      <div style={{ marginBottom: 16 }}>
-        <label>Assessment Purpose</label>
-        <textarea rows={3} placeholder="Describe the purpose of this assessment..." value={data.purpose || ''} onChange={e => onChange('purpose', e.target.value)} />
+      <div className="mb-6">
+        <span className={`${labelClass} block mb-2`}>Assessment Purpose</span>
+        <textarea rows={3} placeholder="Describe the purpose of this assessment..." value={data.purpose || ''} onChange={e => onChange('purpose', e.target.value)}
+          className="w-full p-4 bg-background border-[0.5px] border-outline-variant text-on-surface placeholder:text-surface-variant font-technical-sm outline-none focus:border-primary resize-y" />
       </div>
 
-      <div style={{ padding: 16, background: 'rgba(99,102,241,0.08)', border: '1px solid rgba(99,102,241,0.2)', borderRadius: 10, display: 'flex', alignItems: 'flex-start', gap: 12 }}>
-        <input
-          type="checkbox"
-          id="consent"
-          checked={data.consent || false}
-          onChange={e => onChange('consent', e.target.checked)}
-          style={{ width: 18, height: 18, marginTop: 2, flexShrink: 0, cursor: 'pointer', accentColor: 'var(--indigo)' }}
-        />
-        <label htmlFor="consent" style={{ display: 'inline', textTransform: 'none', letterSpacing: 0, fontSize: 13, color: 'var(--text-secondary)', cursor: 'pointer', lineHeight: 1.6, marginBottom: 0, fontWeight: 400 }}>
+      <div className="p-4 border-[0.5px] border-primary/30 bg-primary/5 flex items-start gap-4">
+        <input type="checkbox" id="consent" checked={data.consent || false} onChange={e => onChange('consent', e.target.checked)}
+          className="w-5 h-5 mt-0.5 flex-shrink-0 cursor-pointer accent-primary" />
+        <label htmlFor="consent" className="text-technical-sm font-technical-sm text-on-surface-variant leading-relaxed cursor-pointer">
           I confirm that the individual has provided informed consent for this assessment and understands the purpose, process, and use of results within the QIDS framework.
         </label>
       </div>
@@ -214,7 +185,6 @@ function IQStep({ scores, onChange, ageGroup, context }) {
   const [diagramQs] = useState(() => getRandomDiagramQuestions(9));
   const [diagramAnswers, setDiagramAnswers] = useState(scores._diagramAnswers || {});
 
-  // Persist diagram questions so buildRawScores can check correctness
   useEffect(() => {
     onChange('_diagramQuestions', 0, diagramQs);
   }, []);
@@ -222,7 +192,7 @@ function IQStep({ scores, onChange, ageGroup, context }) {
   const handleDiagramAnswer = (qId, val) => {
     const next = { ...diagramAnswers, [qId]: val };
     setDiagramAnswers(next);
-    onChange('_diagramAnswers', 0, next); // store in iqScores._diagramAnswers
+    onChange('_diagramAnswers', 0, next);
   };
 
   const sections = [
@@ -230,8 +200,8 @@ function IQStep({ scores, onChange, ageGroup, context }) {
     { id: 'quantitative', label: 'Quantitative', color: '#8b5cf6' },
     { id: 'psychometric', label: 'Psychometric', color: '#a855f7' },
     { id: 'performance',  label: 'Performance',  color: '#c084fc' },
-    { id: 'diagrams',     label: '🖼 Visual',     color: '#06b6d4' },
-    { id: 'ai',           label: '✨ AI',          color: '#10b981' },
+    { id: 'diagrams',     label: 'Visual',       color: '#06b6d4' },
+    { id: 'ai',           label: 'AI',           color: '#10b981' },
   ];
 
   const sectionData = ['verbal', 'quantitative', 'psychometric', 'performance'].includes(activeSection)
@@ -278,35 +248,32 @@ function IQStep({ scores, onChange, ageGroup, context }) {
       <SectionHeader title="Intelligence Quotient (IQ)" subtitle="Four-Parameter Cognitive Model — 100 marks total (25 per section)" color={pillar.color} />
 
       {/* Section tabs */}
-      <div style={{ display: 'flex', gap: 6, marginBottom: 20, flexWrap: 'wrap' }}>
+      <div className="flex flex-wrap gap-1.5 mb-5 p-1 bg-surface-container-low border-[0.5px] border-outline-variant">
         {sections.map(s => {
           const answered = getScore(s.id);
+          const isActive = activeSection === s.id;
           return (
-            <button key={s.id} onClick={() => setActiveSection(s.id)} style={{
-              padding: '8px 16px', borderRadius: 8, cursor: 'pointer',
-              background: activeSection === s.id ? s.color : 'var(--navy-4)',
-              color: activeSection === s.id ? 'white' : 'var(--text-secondary)',
-              border: `1px solid ${activeSection === s.id ? s.color : 'var(--border-light)'}`,
-              fontSize: 13, fontWeight: 500, transition: 'all 0.15s',
-              display: 'flex', alignItems: 'center', gap: 6,
-            }}>
+            <button key={s.id} onClick={() => setActiveSection(s.id)}
+              className={`px-4 py-2 text-technical-sm font-technical-sm cursor-pointer transition-all border-none flex items-center gap-1.5 ${isActive ? 'text-on-surface' : 'text-surface-variant hover:text-on-surface-variant'
+                }`}
+              style={{ backgroundColor: isActive ? s.color + '20' : 'transparent', color: isActive ? s.color : undefined }}>
               {s.label}
-              <span style={{ fontSize: 10, padding: '1px 6px', borderRadius: 10, background: 'rgba(255,255,255,0.15)' }}>{answered} ans</span>
+              <span className="text-[10px] px-1.5 py-0.5 opacity-60">{answered} ans</span>
             </button>
           );
         })}
       </div>
 
-      {/* Standard questions for verbal/quantitative/psychometric/performance */}
+      {/* Standard questions */}
       {['verbal', 'quantitative', 'psychometric', 'performance'].includes(activeSection) && (
         <>
-          <div style={{ fontSize: 14, fontWeight: 700, marginBottom: 4, color: sections.find(s => s.id === activeSection)?.color }}>{sectionData.label}</div>
-          <div style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 16 }}>Max: {sectionData.maxScore} marks</div>
+          <div className="text-label-md font-label-md mb-1" style={{ color: sections.find(s => s.id === activeSection)?.color }}>{sectionData.label}</div>
+          <div className="text-technical-sm font-technical-sm text-surface-variant mb-4">Max: {sectionData.maxScore} marks</div>
           {sectionData.sections.map((sec, si) => (
-            <div key={si} style={{ marginBottom: 24 }}>
-              <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-secondary)', marginBottom: 4, padding: '6px 12px', background: 'rgba(99,102,241,0.08)', borderRadius: 6, display: 'inline-block' }}>{sec.title}</div>
-              {sec.instruction && <div style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 12, fontStyle: 'italic' }}>{sec.instruction}</div>}
-              <div style={{ marginTop: 10 }}>
+            <div key={si} className="mb-6">
+              <div className="text-technical-sm font-technical-sm text-on-surface-variant mb-1 px-3 py-1.5 bg-primary/5 border-[0.5px] border-primary/20 inline-block">{sec.title}</div>
+              {sec.instruction && <div className="text-technical-sm font-technical-sm text-surface-variant mb-3 italic">{sec.instruction}</div>}
+              <div className="mt-2">
                 {sec.questions.map((q, qi) => {
                   const globalIdx = si * 5 + qi;
                   const qType = sec.type === 'mixed' ? (q.type || 'open') : sec.type;
@@ -322,11 +289,11 @@ function IQStep({ scores, onChange, ageGroup, context }) {
         </>
       )}
 
-      {/* Diagram / Visual questions */}
+      {/* Diagrams */}
       {activeSection === 'diagrams' && (
         <div>
-          <div style={{ padding: '10px 14px', background: 'rgba(6,182,212,0.08)', border: '1px solid rgba(6,182,212,0.2)', borderRadius: 8, marginBottom: 20, fontSize: 12, color: 'var(--text-secondary)', lineHeight: 1.5 }}>
-            <strong style={{ color: '#06b6d4' }}>Visual & Diagram Questions.</strong> 9 questions randomly selected from a pool of 20. Each correct answer = 1 mark. Max: 9 bonus marks.
+          <div className="p-3 border-[0.5px] border-[#06b6d4]/30 bg-[#06b6d4]/5 text-technical-sm font-technical-sm text-on-surface-variant leading-relaxed mb-5">
+            <strong className="text-[#06b6d4]">Visual & Diagram Questions.</strong> 9 questions randomly selected from a pool of 20. Each correct answer = 1 mark. Max: 9 bonus marks.
           </div>
           {diagramQs.map((q, i) => (
             <DiagramQuestion
@@ -336,9 +303,9 @@ function IQStep({ scores, onChange, ageGroup, context }) {
               color="#06b6d4"
             />
           ))}
-          <div style={{ padding: '10px 14px', background: 'var(--navy-4)', border: '1px solid var(--border-light)', borderRadius: 10, display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 8 }}>
-            <span style={{ fontSize: 13, color: 'var(--text-secondary)' }}>Visual Bonus Score</span>
-            <span style={{ fontSize: 16, fontWeight: 800, color: '#06b6d4', fontFamily: 'Space Grotesk' }}>{diagramQs.filter(q => diagramAnswers[q.id] === q.answer).length} / 9</span>
+          <div className="p-3 bg-surface-container-low border-[0.5px] border-outline-variant flex justify-between items-center mt-2">
+            <span className="text-technical-sm font-technical-sm text-on-surface-variant">Visual Bonus Score</span>
+            <span className="text-label-md font-label-md text-[#06b6d4]">{diagramQs.filter(q => diagramAnswers[q.id] === q.answer).length} / 9</span>
           </div>
         </div>
       )}
@@ -346,8 +313,8 @@ function IQStep({ scores, onChange, ageGroup, context }) {
       {/* AI-generated questions */}
       {activeSection === 'ai' && (
         <div>
-          <div style={{ padding: '10px 14px', background: 'rgba(16,185,129,0.08)', border: '1px solid rgba(16,185,129,0.2)', borderRadius: 8, marginBottom: 20, fontSize: 12, color: 'var(--text-secondary)', lineHeight: 1.5 }}>
-            <strong style={{ color: '#10b981' }}>AI-Generated Questions.</strong> Fresh questions generated by Groq (llama-3.3-70b) based on the QIDS knowledge base. Each assessment gets a unique set.
+          <div className="p-3 border-[0.5px] border-[#10b981]/30 bg-[#10b981]/5 text-technical-sm font-technical-sm text-on-surface-variant leading-relaxed mb-5">
+            <strong className="text-[#10b981]">AI-Generated Questions.</strong> Fresh questions generated by Groq (llama-3.3-70b) based on the QIDS knowledge base. Each assessment gets a unique set.
           </div>
           {['verbal', 'quantitative', 'psychometric', 'performance'].map(sec => (
             <AIQuestionGenerator
@@ -392,48 +359,45 @@ function EQStep({ scores, onChange, ageGroup }) {
       />
 
       {/* Part tabs */}
-      <div style={{ display: 'flex', gap: 4, marginBottom: 20, background: 'var(--navy-4)', padding: 4, borderRadius: 10, width: 'fit-content' }}>
+      <div className="flex gap-1 p-1 bg-surface-container-low border-[0.5px] border-outline-variant mb-5">
         {[{ id: 'partA', label: 'Part A — Self-Report Questionnaire' }, { id: 'partB', label: 'Part B — Activity Assessment' }].map(t => (
-          <button key={t.id} onClick={() => setActiveTab(t.id)} style={{
-            padding: '8px 16px', borderRadius: 8, cursor: 'pointer',
-            background: activeTab === t.id ? pillar.color : 'transparent',
-            color: activeTab === t.id ? 'white' : 'var(--text-secondary)',
-            border: 'none', fontSize: 13, fontWeight: 500, transition: 'all 0.15s',
-          }}>{t.label}</button>
+          <button key={t.id} onClick={() => setActiveTab(t.id)}
+            className={`px-4 py-2 text-technical-sm font-technical-sm cursor-pointer transition-all border-none ${activeTab === t.id ? 'text-on-primary' : 'text-surface-variant hover:text-on-surface-variant'
+              }`}
+            style={{ backgroundColor: activeTab === t.id ? pillar.color : 'transparent' }}>
+            {t.label}
+          </button>
         ))}
       </div>
 
       {activeTab === 'partA' && (
         <div>
-          <div style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 16, padding: '8px 12px', background: 'rgba(16,185,129,0.06)', border: '1px solid rgba(16,185,129,0.15)', borderRadius: 8 }}>
+          <div className="p-3 border-[0.5px] border-[#10b981]/30 bg-[#10b981]/5 text-technical-sm font-technical-sm text-on-surface-variant leading-relaxed mb-4">
             Rate each statement from 1 (Never) to 5 (Always). There are no right or wrong answers — be honest.
           </div>
 
           {/* Component tabs */}
-          <div style={{ display: 'flex', gap: 6, marginBottom: 20, flexWrap: 'wrap' }}>
+          <div className="flex flex-wrap gap-1.5 mb-5 p-1 bg-surface-container-low border-[0.5px] border-outline-variant">
             {components.map(c => {
               const answered = getPartAScore(c);
+              const isActive = activeComponent === c;
               return (
-                <button key={c} onClick={() => setActiveComponent(c)} style={{
-                  padding: '7px 14px', borderRadius: 8, cursor: 'pointer',
-                  background: activeComponent === c ? pillar.color : 'var(--navy-4)',
-                  color: activeComponent === c ? 'white' : 'var(--text-secondary)',
-                  border: `1px solid ${activeComponent === c ? pillar.color : 'var(--border-light)'}`,
-                  fontSize: 13, fontWeight: 500, transition: 'all 0.15s',
-                  display: 'flex', alignItems: 'center', gap: 6,
-                }}>
+                <button key={c} onClick={() => setActiveComponent(c)}
+                  className={`px-3 py-1.5 text-technical-sm font-technical-sm cursor-pointer transition-all border-none flex items-center gap-1.5 ${isActive ? 'text-on-surface' : 'text-surface-variant hover:text-on-surface-variant'
+                    }`}
+                  style={{ backgroundColor: isActive ? pillar.color + '20' : 'transparent', color: isActive ? pillar.color : undefined }}>
                   {c}
-                  <span style={{ fontSize: 10, padding: '1px 5px', borderRadius: 8, background: 'rgba(255,255,255,0.15)' }}>{answered}/5</span>
+                  <span className="text-[10px] px-1 py-0.5 opacity-60">{answered}/5</span>
                 </button>
               );
             })}
           </div>
 
-          <div style={{ marginBottom: 8 }}>
-            <div style={{ fontSize: 14, fontWeight: 700, color: pillar.color }}>{compData[activeComponent].label}</div>
-            <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 2 }}>{compData[activeComponent].subParams}</div>
+          <div className="mb-2">
+            <div className="text-label-md font-label-md" style={{ color: pillar.color }}>{compData[activeComponent].label}</div>
+            <div className="text-technical-sm font-technical-sm text-surface-variant mt-0.5">{compData[activeComponent].subParams}</div>
           </div>
-          <div style={{ marginTop: 14 }}>
+          <div className="mt-4">
             {compData[activeComponent].questions[age].map((q, i) => (
               <LikertQuestion
                 key={i} q={q} index={i}
@@ -443,7 +407,6 @@ function EQStep({ scores, onChange, ageGroup }) {
               />
             ))}
           </div>
-          {/* AI-generated additional EQ questions */}
           <AIQuestionGenerator
             pillar="EQ" component={activeComponent} ageGroup={age}
             questionType="likert" color={pillar.color}
@@ -456,10 +419,10 @@ function EQStep({ scores, onChange, ageGroup }) {
 
       {activeTab === 'partB' && (
         <div>
-          <div style={{ padding: '10px 14px', background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.2)', borderRadius: 8, marginBottom: 20, display: 'flex', gap: 8 }}>
-            <AlertCircle size={14} color="#f59e0b" style={{ flexShrink: 0, marginTop: 1 }} />
-            <div style={{ fontSize: 12, color: 'var(--text-secondary)', lineHeight: 1.5 }}>
-              <strong style={{ color: '#f59e0b' }}>Assessor-Scored Section.</strong> The evaluator observes each activity and enters rubric scores below. Each activity is worth 5 marks.
+          <div className="flex gap-2 p-3 border-[0.5px] border-amber-500/30 bg-amber-500/5 text-technical-sm font-technical-sm text-on-surface-variant leading-relaxed mb-5">
+            <AlertCircle size={14} className="text-amber-500 flex-shrink-0 mt-0.5" />
+            <div>
+              <strong className="text-amber-500">Assessor-Scored Section.</strong> The evaluator observes each activity and enters rubric scores below. Each activity is worth 5 marks.
             </div>
           </div>
 
@@ -467,21 +430,21 @@ function EQStep({ scores, onChange, ageGroup }) {
             const actScores = scores.partB?.[activity.id] || {};
             const total = activity.rubric.reduce((s, r) => s + (actScores[r.criterion] || 0), 0);
             return (
-              <div key={activity.id} style={{ marginBottom: 20, background: 'var(--navy-4)', border: `1px solid ${pillar.color}20`, borderRadius: 14, overflow: 'hidden' }}>
-                <div style={{ padding: '14px 16px', background: `${pillar.color}08`, borderBottom: '1px solid var(--border-light)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div key={activity.id} className="mb-5 border-[0.5px] overflow-hidden" style={{ borderColor: pillar.color + '30' }}>
+                <div className="p-4 flex justify-between items-center border-b-[0.5px] border-outline-variant" style={{ backgroundColor: pillar.color + '08' }}>
                   <div>
-                    <div style={{ fontSize: 14, fontWeight: 700 }}>{activity.id}: {activity.label}</div>
-                    <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 2 }}>{activity.component} | Max: {activity.maxScore} marks</div>
+                    <div className="text-label-md font-label-md text-on-surface">{activity.id}: {activity.label}</div>
+                    <div className="text-technical-sm font-technical-sm text-surface-variant mt-0.5">{activity.component} | Max: {activity.maxScore} marks</div>
                   </div>
-                  <div style={{ fontSize: 20, fontWeight: 800, color: pillar.color, fontFamily: 'Space Grotesk' }}>{total}/{activity.maxScore}</div>
+                  <div className="text-[20px] font-label-md" style={{ color: pillar.color }}>{total}/{activity.maxScore}</div>
                 </div>
-                <div style={{ padding: 16 }}>
-                  <div style={{ fontSize: 12, color: 'var(--text-secondary)', lineHeight: 1.6, marginBottom: 12 }}>{activity.desc}</div>
-                  <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 4, fontStyle: 'italic' }}>
+                <div className="p-4">
+                  <div className="text-technical-sm font-technical-sm text-on-surface-variant leading-relaxed mb-3">{activity.desc}</div>
+                  <div className="text-technical-sm font-technical-sm text-surface-variant mb-1 italic">
                     {activity.ageNote?.[age]}
                   </div>
-                  <div style={{ marginTop: 14 }}>
-                    <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 10 }}>Assessor Rubric</div>
+                  <div className="mt-4">
+                    <div className="text-technical-sm font-technical-sm text-surface-variant uppercase tracking-widest mb-3">Assessor Rubric</div>
                     {activity.rubric.map(r => (
                       <RubricScorer
                         key={r.criterion}
@@ -548,17 +511,15 @@ function SQStep({ scores, onChange }) {
         color={pillar.color}
       />
 
-      <div style={{ display: 'flex', gap: 4, marginBottom: 20, background: 'var(--navy-4)', padding: 4, borderRadius: 10 }}>
+      {/* Component tabs */}
+      <div className="flex gap-1 p-1 bg-surface-container-low border-[0.5px] border-outline-variant mb-5">
         {tabs.map(t => (
-          <button key={t.id} onClick={() => setActiveComponent(t.id)} style={{
-            flex: 1, padding: '8px 12px', borderRadius: 8, cursor: 'pointer',
-            background: activeComponent === t.id ? pillar.color : 'transparent',
-            color: activeComponent === t.id ? 'white' : 'var(--text-secondary)',
-            border: 'none', fontSize: 12, fontWeight: 500, transition: 'all 0.15s',
-            display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2,
-          }}>
+          <button key={t.id} onClick={() => setActiveComponent(t.id)}
+            className={`flex-1 px-3 py-2 text-technical-sm font-technical-sm cursor-pointer transition-all border-none flex flex-col items-center gap-0.5 ${activeComponent === t.id ? 'text-on-primary' : 'text-surface-variant hover:text-on-surface-variant'
+              }`}
+            style={{ backgroundColor: activeComponent === t.id ? pillar.color : 'transparent' }}>
             <span>{t.label}</span>
-            <span style={{ fontSize: 11, opacity: 0.8 }}>{t.score}</span>
+            <span className="text-[11px] opacity-80">{t.score}</span>
           </button>
         ))}
       </div>
@@ -566,24 +527,24 @@ function SQStep({ scores, onChange }) {
       {/* ACE */}
       {activeComponent === 'ACE' && (
         <div>
-          <div style={{ padding: '10px 14px', background: 'rgba(168,85,247,0.08)', border: '1px solid rgba(168,85,247,0.2)', borderRadius: 8, marginBottom: 20, fontSize: 12, color: 'var(--text-secondary)', lineHeight: 1.5 }}>
+          <div className="p-3 border-[0.5px] border-[#a855f7]/30 bg-[#a855f7]/5 text-technical-sm font-technical-sm text-on-surface-variant leading-relaxed mb-5">
             <strong style={{ color: pillar.color }}>Assessment Centre Exercise.</strong> {SQ_QUESTIONS.component1_ACE.instructions}
           </div>
           {SQ_QUESTIONS.component1_ACE.exercises.map(ex => {
             const exScores = scores.ACE?.[ex.id] || {};
             const total = ex.rubric.reduce((s, r) => s + (exScores[r.criterion] || 0), 0);
             return (
-              <div key={ex.id} style={{ marginBottom: 20, background: 'var(--navy-4)', border: `1px solid ${pillar.color}20`, borderRadius: 14, overflow: 'hidden' }}>
-                <div style={{ padding: '14px 16px', background: `${pillar.color}08`, borderBottom: '1px solid var(--border-light)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div key={ex.id} className="mb-5 border-[0.5px] overflow-hidden" style={{ borderColor: pillar.color + '30' }}>
+                <div className="p-4 flex justify-between items-center border-b-[0.5px] border-outline-variant" style={{ backgroundColor: pillar.color + '08' }}>
                   <div>
-                    <div style={{ fontSize: 14, fontWeight: 700 }}>{ex.label}</div>
-                    <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 2 }}>Sub-parameter: {ex.subParam} | Max: {ex.marks} marks</div>
+                    <div className="text-label-md font-label-md text-on-surface">{ex.label}</div>
+                    <div className="text-technical-sm font-technical-sm text-surface-variant mt-0.5">Sub-parameter: {ex.subParam} | Max: {ex.marks} marks</div>
                   </div>
-                  <div style={{ fontSize: 20, fontWeight: 800, color: pillar.color, fontFamily: 'Space Grotesk' }}>{total}/{ex.marks}</div>
+                  <div className="text-[20px] font-label-md" style={{ color: pillar.color }}>{total}/{ex.marks}</div>
                 </div>
-                <div style={{ padding: 16 }}>
-                  <div style={{ fontSize: 12, color: 'var(--text-secondary)', lineHeight: 1.6, marginBottom: 14 }}>{ex.desc}</div>
-                  <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 10 }}>Assessor Rubric</div>
+                <div className="p-4">
+                  <div className="text-technical-sm font-technical-sm text-on-surface-variant leading-relaxed mb-4">{ex.desc}</div>
+                  <div className="text-technical-sm font-technical-sm text-surface-variant uppercase tracking-widest mb-3">Assessor Rubric</div>
                   {ex.rubric.map(r => (
                     <RubricScorer
                       key={r.criterion}
@@ -603,48 +564,49 @@ function SQStep({ scores, onChange }) {
       {/* CSI */}
       {activeComponent === 'CSI' && (
         <div>
-          <div style={{ padding: '10px 14px', background: 'rgba(168,85,247,0.08)', border: '1px solid rgba(168,85,247,0.2)', borderRadius: 8, marginBottom: 20, fontSize: 12, color: 'var(--text-secondary)', lineHeight: 1.5 }}>
+          <div className="p-3 border-[0.5px] border-[#a855f7]/30 bg-[#a855f7]/5 text-technical-sm font-technical-sm text-on-surface-variant leading-relaxed mb-5">
             <strong style={{ color: pillar.color }}>Cognitive Social Intelligence Test.</strong> {SQ_QUESTIONS.component2_CSI.instructions}
           </div>
           {SQ_QUESTIONS.component2_CSI.questions.map((q, qi) => {
             const selected = scores.CSI?.[q.id];
             return (
-              <div key={q.id} style={{ marginBottom: 20, background: 'var(--navy-4)', border: '1px solid var(--border-light)', borderRadius: 12, padding: 16 }}>
-                <div style={{ fontSize: 11, color: pillar.color, fontWeight: 600, marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Q{qi + 1} — {q.subParam}</div>
-                <div style={{ fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.6, marginBottom: 10, padding: '10px 12px', background: 'rgba(255,255,255,0.03)', borderRadius: 8, borderLeft: `3px solid ${pillar.color}40` }}>
+              <div key={q.id} className="mb-5 p-4 bg-surface-container-low border-[0.5px] border-outline-variant">
+                <div className="text-technical-sm font-technical-sm mb-2 uppercase tracking-widest" style={{ color: pillar.color }}>Q{qi + 1} — {q.subParam}</div>
+                <div className="text-technical-sm font-technical-sm text-on-surface-variant leading-relaxed mb-3 p-3 bg-surface-container-low border-l-2 border-[#a855f7]/40">
                   <strong>Scenario:</strong> {q.scenario}
                 </div>
-                <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 10 }}>{q.question}</div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                <div className="text-technical-sm font-technical-sm text-on-surface mb-3">{q.question}</div>
+                <div className="flex flex-col gap-2">
                   {q.options.map((opt, oi) => {
                     const isSelected = selected === oi;
                     const markColor = opt.marks === 2 ? '#10b981' : opt.marks === 1 ? '#f59e0b' : '#ef4444';
                     return (
-                      <button key={oi} onClick={() => onChange('CSI', q.id, oi)} style={{
-                        padding: '10px 14px', borderRadius: 8, textAlign: 'left', cursor: 'pointer',
-                        fontSize: 13, border: `1px solid ${isSelected ? pillar.color : 'var(--border-light)'}`,
-                        background: isSelected ? `${pillar.color}18` : 'rgba(255,255,255,0.02)',
-                        color: isSelected ? 'white' : 'var(--text-secondary)',
-                        transition: 'all 0.15s', display: 'flex', alignItems: 'center', gap: 10,
-                      }}>
-                        <div style={{ width: 20, height: 20, borderRadius: '50%', flexShrink: 0, border: `2px solid ${isSelected ? pillar.color : 'var(--border-light)'}`, background: isSelected ? pillar.color : 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                          {isSelected && <div style={{ width: 8, height: 8, borderRadius: '50%', background: 'white' }} />}
+                      <button key={oi} onClick={() => onChange('CSI', q.id, oi)}
+                        className={`flex items-center gap-3 px-3 py-2.5 text-left text-technical-sm font-technical-sm transition-all cursor-pointer border-[0.5px] ${isSelected ? 'border-[#a855f7] bg-[#a855f7]/10' : 'border-outline-variant bg-transparent text-on-surface-variant hover:border-[#a855f7]'
+                          }`}>
+                        <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${isSelected ? 'border-[#a855f7] bg-[#a855f7]' : 'border-outline-variant'
+                          }`}>
+                          {isSelected && <div className="w-2 h-2 rounded-full bg-white" />}
                         </div>
-                        <span style={{ flex: 1 }}><strong>{String.fromCharCode(65 + oi)}.</strong> {opt.text}</span>
-                        {isSelected && <span style={{ fontSize: 11, padding: '2px 8px', borderRadius: 10, background: `${markColor}20`, color: markColor, fontWeight: 700, flexShrink: 0 }}>{opt.marks} mark{opt.marks !== 1 ? 's' : ''}</span>}
+                        <span className="flex-1"><strong>{String.fromCharCode(65 + oi)}.</strong> {opt.text}</span>
+                        {isSelected && (
+                          <span className="text-[11px] px-2 py-0.5 font-bold flex-shrink-0"
+                            style={{ backgroundColor: markColor + '20', color: markColor }}>
+                            {opt.marks} mark{opt.marks !== 1 ? 's' : ''}
+                          </span>
+                        )}
                       </button>
                     );
                   })}
                 </div>
                 {selected !== undefined && (
-                  <div style={{ marginTop: 10, padding: '8px 12px', background: 'rgba(99,102,241,0.06)', border: '1px solid rgba(99,102,241,0.15)', borderRadius: 8, fontSize: 11, color: 'var(--text-muted)', fontStyle: 'italic' }}>
-                    <strong style={{ color: '#818cf8' }}>Assessor Note:</strong> {q.assessorNote}
+                  <div className="mt-3 p-3 border-[0.5px] border-[#a855f7]/20 bg-[#a855f7]/5 text-technical-sm font-technical-sm text-surface-variant italic">
+                    <strong className="text-[#a855f7]">Assessor Note:</strong> {q.assessorNote}
                   </div>
                 )}
               </div>
             );
           })}
-          {/* AI-generated additional SQ scenarios */}
           <AIQuestionGenerator
             pillar="SQ" component="CSI" ageGroup="19-32"
             questionType="mcq" color={pillar.color}
@@ -654,27 +616,26 @@ function SQStep({ scores, onChange }) {
           />
         </div>
       )}
+
+      {/* PBA */}
       {activeComponent === 'PBA' && (
         <div>
-          <div style={{ padding: '10px 14px', background: 'rgba(168,85,247,0.08)', border: '1px solid rgba(168,85,247,0.2)', borderRadius: 8, marginBottom: 20, fontSize: 12, color: 'var(--text-secondary)', lineHeight: 1.5 }}>
+          <div className="p-3 border-[0.5px] border-[#a855f7]/30 bg-[#a855f7]/5 text-technical-sm font-technical-sm text-on-surface-variant leading-relaxed mb-5">
             <strong style={{ color: pillar.color }}>Performance-Based Activities.</strong> {SQ_QUESTIONS.component3_PBA.instructions}
           </div>
 
-          <div style={{ marginBottom: 20 }}>
-            <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 10 }}>Select 2 Activities ({selectedPBAs.length}/2 selected):</div>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+          <div className="mb-5">
+            <div className="text-technical-sm font-technical-sm text-on-surface mb-3">Select 2 Activities ({selectedPBAs.length}/2 selected):</div>
+            <div className="grid grid-cols-2 gap-2">
               {SQ_QUESTIONS.component3_PBA.activities.map(act => {
                 const isSelected = selectedPBAs.includes(act.id);
                 const isDisabled = !isSelected && selectedPBAs.length >= 2;
                 return (
-                  <button key={act.id} onClick={() => !isDisabled && togglePBA(act.id)} style={{
-                    padding: '10px 14px', borderRadius: 10, textAlign: 'left', cursor: isDisabled ? 'not-allowed' : 'pointer',
-                    background: isSelected ? `${pillar.color}18` : 'var(--navy-4)',
-                    border: `1px solid ${isSelected ? pillar.color : 'var(--border-light)'}`,
-                    opacity: isDisabled ? 0.4 : 1, transition: 'all 0.15s',
-                  }}>
-                    <div style={{ fontSize: 12, fontWeight: 700, color: isSelected ? pillar.color : 'var(--text-primary)' }}>{act.id}: {act.label}</div>
-                    <div style={{ fontSize: 10, color: 'var(--text-muted)', marginTop: 2 }}>{act.time} · {act.bestFor}</div>
+                  <button key={act.id} onClick={() => !isDisabled && togglePBA(act.id)}
+                    className={`px-3 py-2.5 text-left border-[0.5px] transition-all cursor-pointer ${isDisabled ? 'opacity-40 cursor-not-allowed' : ''} ${isSelected ? 'border-[#a855f7] bg-[#a855f7]/10' : 'border-outline-variant bg-surface-container-low hover:border-[#a855f7]'
+                      }`}>
+                    <div className="text-technical-sm font-technical-sm" style={{ color: isSelected ? pillar.color : undefined }}>{act.id}: {act.label}</div>
+                    <div className="text-[10px] text-surface-variant mt-0.5">{act.time} · {act.bestFor}</div>
                   </button>
                 );
               })}
@@ -687,17 +648,17 @@ function SQStep({ scores, onChange }) {
             const pbaScores = scores.PBA?.[pbaId] || {};
             const total = act.rubric.reduce((s, r) => s + (pbaScores[r.criterion] || 0), 0);
             return (
-              <div key={pbaId} style={{ marginBottom: 20, background: 'var(--navy-4)', border: `1px solid ${pillar.color}20`, borderRadius: 14, overflow: 'hidden' }}>
-                <div style={{ padding: '14px 16px', background: `${pillar.color}08`, borderBottom: '1px solid var(--border-light)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div key={pbaId} className="mb-5 border-[0.5px] overflow-hidden" style={{ borderColor: pillar.color + '30' }}>
+                <div className="p-4 flex justify-between items-center border-b-[0.5px] border-outline-variant" style={{ backgroundColor: pillar.color + '08' }}>
                   <div>
-                    <div style={{ fontSize: 14, fontWeight: 700 }}>{act.label}</div>
-                    <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 2 }}>{act.bestFor} | {act.time}</div>
+                    <div className="text-label-md font-label-md text-on-surface">{act.label}</div>
+                    <div className="text-technical-sm font-technical-sm text-surface-variant mt-0.5">{act.bestFor} | {act.time}</div>
                   </div>
-                  <div style={{ fontSize: 20, fontWeight: 800, color: pillar.color, fontFamily: 'Space Grotesk' }}>{total}/{act.marks}</div>
+                  <div className="text-[20px] font-label-md" style={{ color: pillar.color }}>{total}/{act.marks}</div>
                 </div>
-                <div style={{ padding: 16 }}>
-                  <div style={{ fontSize: 12, color: 'var(--text-secondary)', lineHeight: 1.6, marginBottom: 14 }}>{act.desc}</div>
-                  <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 10 }}>Assessor Rubric</div>
+                <div className="p-4">
+                  <div className="text-technical-sm font-technical-sm text-on-surface-variant leading-relaxed mb-4">{act.desc}</div>
+                  <div className="text-technical-sm font-technical-sm text-surface-variant uppercase tracking-widest mb-3">Assessor Rubric</div>
                   {act.rubric.map(r => (
                     <RubricScorer
                       key={r.criterion}
@@ -743,7 +704,6 @@ function AQStep({ scores, onChange, ageGroup }) {
     return act.rubric.reduce((sum, r) => sum + (s[r.criterion] || 0), 0);
   };
 
-  // Compute live RD score preview
   const rdScore = components.reduce((sum, comp) => {
     const w = compData[comp].weight;
     const raw = Math.min(getPartAMarks(comp) + getPartBMarks(comp), 19);
@@ -760,98 +720,91 @@ function AQStep({ scores, onChange, ageGroup }) {
       />
 
       {/* Live RD Score preview */}
-      <div style={{ display: 'flex', gap: 10, marginBottom: 20, padding: '12px 16px', background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.2)', borderRadius: 10, alignItems: 'center' }}>
-        <div style={{ flex: 1 }}>
-          <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 2 }}>Live RD Score Preview</div>
-          <div style={{ fontSize: 11, color: 'var(--text-secondary)' }}>Formula: (SA×1.5) + (PM×1.0) + (RR×1.0) + (RC×1.5) → max 95 → RD÷95×100</div>
+      <div className="flex items-center gap-3 p-4 border-[0.5px] border-amber-500/30 bg-amber-500/5 mb-5">
+        <div className="flex-1">
+          <div className="text-technical-sm font-technical-sm text-surface-variant mb-1">Live RD Score Preview</div>
+          <div className="text-technical-sm font-technical-sm text-on-surface-variant">Formula: (SA×1.5) + (PM×1.0) + (RR×1.0) + (RC×1.5) → max 95 → RD÷95×100</div>
         </div>
-        <div style={{ textAlign: 'right' }}>
-          <div style={{ fontSize: 28, fontWeight: 800, color: pillar.color, fontFamily: 'Space Grotesk', lineHeight: 1 }}>{converted}</div>
-          <div style={{ fontSize: 10, color: 'var(--text-muted)' }}>RD: {Math.round(rdScore)}/95</div>
+        <div className="text-right">
+          <div className="text-[28px] font-label-md leading-none" style={{ color: pillar.color }}>{converted}</div>
+          <div className="text-[10px] text-surface-variant">RD: {Math.round(rdScore)}/95</div>
         </div>
       </div>
 
       {/* Component tabs */}
-      <div style={{ display: 'flex', gap: 6, marginBottom: 20, flexWrap: 'wrap' }}>
+      <div className="flex flex-wrap gap-1.5 mb-5 p-1 bg-surface-container-low border-[0.5px] border-outline-variant">
         {components.map(comp => {
           const cd = compData[comp];
           const answered = getPartAAnswered(comp);
           const partBTotal = getPartBMarks(comp);
+          const isActive = activeComp === comp;
           return (
-            <button key={comp} onClick={() => { setActiveComp(comp); setActiveTab('partA'); }} style={{
-              padding: '8px 14px', borderRadius: 8, cursor: 'pointer',
-              background: activeComp === comp ? pillar.color : 'var(--navy-4)',
-              color: activeComp === comp ? 'white' : 'var(--text-secondary)',
-              border: `1px solid ${activeComp === comp ? pillar.color : 'var(--border-light)'}`,
-              fontSize: 12, fontWeight: 500, transition: 'all 0.15s',
-              display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2,
-            }}>
-              <span style={{ fontWeight: 700 }}>{comp}</span>
-              <span style={{ fontSize: 10, opacity: 0.8 }}>{answered}/4 · B:{partBTotal}/7</span>
+            <button key={comp} onClick={() => { setActiveComp(comp); setActiveTab('partA'); }}
+              className={`px-3 py-1.5 text-technical-sm font-technical-sm cursor-pointer transition-all border-none flex flex-col items-center gap-0.5 ${isActive ? 'text-on-surface' : 'text-surface-variant hover:text-on-surface-variant'
+                }`}
+              style={{ backgroundColor: isActive ? pillar.color + '20' : 'transparent', color: isActive ? pillar.color : undefined }}>
+              <span className="font-bold">{comp}</span>
+              <span className="text-[10px] opacity-80">{answered}/4 · B:{partBTotal}/7</span>
             </button>
           );
         })}
       </div>
 
       {/* Part tabs */}
-      <div style={{ display: 'flex', gap: 4, marginBottom: 20, background: 'var(--navy-4)', padding: 4, borderRadius: 10, width: 'fit-content' }}>
+      <div className="flex gap-1 p-1 bg-surface-container-low border-[0.5px] border-outline-variant mb-5">
         {[{ id: 'partA', label: 'Part A — Scenario Questions (12 marks)' }, { id: 'partB', label: 'Part B — Activity Assessment (7 marks)' }].map(t => (
-          <button key={t.id} onClick={() => setActiveTab(t.id)} style={{
-            padding: '7px 14px', borderRadius: 8, cursor: 'pointer',
-            background: activeTab === t.id ? pillar.color : 'transparent',
-            color: activeTab === t.id ? 'white' : 'var(--text-secondary)',
-            border: 'none', fontSize: 12, fontWeight: 500, transition: 'all 0.15s',
-          }}>{t.label}</button>
+          <button key={t.id} onClick={() => setActiveTab(t.id)}
+            className={`px-4 py-2 text-technical-sm font-technical-sm cursor-pointer transition-all border-none ${activeTab === t.id ? 'text-on-primary' : 'text-surface-variant hover:text-on-surface-variant'
+              }`}
+            style={{ backgroundColor: activeTab === t.id ? pillar.color : 'transparent' }}>
+            {t.label}
+          </button>
         ))}
       </div>
 
       {/* Component header */}
-      <div style={{ marginBottom: 16, padding: '12px 16px', background: `${pillar.color}08`, border: `1px solid ${pillar.color}20`, borderRadius: 10 }}>
-        <div style={{ fontSize: 14, fontWeight: 700, color: pillar.color }}>{compData[activeComp].label} <span style={{ fontSize: 11, color: 'var(--text-muted)', fontWeight: 400 }}>× weight {compData[activeComp].weight}</span></div>
-        <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 2 }}>{compData[activeComp].subParams}</div>
-        <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginTop: 4, lineHeight: 1.5 }}>{compData[activeComp].desc}</div>
+      <div className="p-4 border-[0.5px] mb-4" style={{ borderColor: pillar.color + '30', backgroundColor: pillar.color + '08' }}>
+        <div className="text-label-md font-label-md" style={{ color: pillar.color }}>{compData[activeComp].label} <span className="text-technical-sm font-technical-sm text-surface-variant font-normal">× weight {compData[activeComp].weight}</span></div>
+        <div className="text-technical-sm font-technical-sm text-surface-variant mt-0.5">{compData[activeComp].subParams}</div>
+        <div className="text-technical-sm font-technical-sm text-on-surface-variant mt-1 leading-relaxed">{compData[activeComp].desc}</div>
       </div>
 
-      {/* Part A — Likert questions */}
+      {/* Part A — Likert */}
       {activeTab === 'partA' && (
         <div>
-          <div style={{ padding: '8px 12px', background: 'rgba(245,158,11,0.06)', border: '1px solid rgba(245,158,11,0.15)', borderRadius: 8, marginBottom: 16, fontSize: 12, color: 'var(--text-secondary)', lineHeight: 1.5 }}>
+          <div className="p-3 border-[0.5px] border-amber-500/30 bg-amber-500/5 text-technical-sm font-technical-sm text-on-surface-variant leading-relaxed mb-4">
             Rate each scenario 1 (Not at all) to 5 (Completely). Scoring: 1–2 = 0 pts · 3 = 1 pt · 4 = 2 pts · 5 = 3 pts → Max 12 marks
           </div>
           {compData[activeComp].questions[age].map((q, i) => {
             const val = scores[activeComp]?.partA?.[i] || 0;
             const marks = mapAQLikert(val);
             return (
-              <div key={i} style={{ marginBottom: 16, background: 'var(--navy-4)', border: '1px solid var(--border-light)', borderRadius: 12, padding: 16 }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 10 }}>
-                  <div style={{ flex: 1 }}>
-                    <div style={{ fontSize: 10, color: pillar.color, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 4 }}>{q.subParam}</div>
-                    <div style={{ fontSize: 13, fontWeight: 500, lineHeight: 1.6 }}>
-                      <span style={{ color: 'var(--text-muted)', marginRight: 6 }}>{i + 1}.</span>{q.q}
+              <div key={i} className="mb-4 p-4 bg-surface-container-low border-[0.5px] border-outline-variant">
+                <div className="flex justify-between items-start mb-3">
+                  <div className="flex-1">
+                    <div className="text-technical-sm font-technical-sm uppercase tracking-widest mb-1" style={{ color: pillar.color }}>{q.subParam}</div>
+                    <div className="text-technical-sm font-technical-sm leading-relaxed">
+                      <span className="text-surface-variant mr-1.5">{i + 1}.</span>{q.q}
                     </div>
                   </div>
                   {val > 0 && (
-                    <div style={{ marginLeft: 12, flexShrink: 0, padding: '3px 8px', borderRadius: 6, background: `${pillar.color}20`, color: pillar.color, fontSize: 11, fontWeight: 700 }}>
+                    <div className="ml-3 flex-shrink-0 px-2 py-0.5 text-[11px] font-bold" style={{ backgroundColor: pillar.color + '20', color: pillar.color }}>
                       {marks} pt{marks !== 1 ? 's' : ''}
                     </div>
                   )}
                 </div>
-                <div style={{ display: 'flex', gap: 6 }}>
+                <div className="flex gap-1.5">
                   {[1, 2, 3, 4, 5].map(n => {
                     const isSelected = val === n;
                     const pts = mapAQLikert(n);
                     return (
-                      <button key={n} onClick={() => onChange(activeComp, 'partA', i, n)} style={{
-                        flex: 1, padding: '8px 4px', borderRadius: 8, cursor: 'pointer',
-                        border: `2px solid ${isSelected ? pillar.color : 'var(--border-light)'}`,
-                        background: isSelected ? `${pillar.color}20` : 'transparent',
-                        color: isSelected ? pillar.color : 'var(--text-muted)',
-                        fontSize: 12, fontWeight: 700, transition: 'all 0.15s',
-                        display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2,
-                      }}>
-                        <span>{n}</span>
-                        <span style={{ fontSize: 8, fontWeight: 400 }}>{['Not at all', 'Rarely', 'Sometimes', 'Often', 'Completely'][n - 1]}</span>
-                        <span style={{ fontSize: 9, color: pts > 0 ? '#10b981' : 'var(--text-muted)' }}>{pts}pt</span>
+                      <button key={n} onClick={() => onChange(activeComp, 'partA', i, n)}
+                        className={`flex-1 py-2 px-1 cursor-pointer transition-all border-[0.5px] flex flex-col items-center gap-0.5 ${isSelected ? 'border-amber-500 bg-amber-500/15' : 'border-outline-variant bg-transparent text-surface-variant hover:border-amber-500'
+                          }`}
+                        style={{ color: isSelected ? pillar.color : undefined }}>
+                        <span className="text-sm font-bold">{n}</span>
+                        <span className="text-[8px] font-normal">{['Not at all', 'Rarely', 'Sometimes', 'Often', 'Completely'][n - 1]}</span>
+                        <span className="text-[9px]" style={{ color: pts > 0 ? '#10b981' : undefined }}>{pts}pt</span>
                       </button>
                     );
                   })}
@@ -859,11 +812,10 @@ function AQStep({ scores, onChange, ageGroup }) {
               </div>
             );
           })}
-          <div style={{ padding: '10px 14px', background: 'var(--navy-4)', border: '1px solid var(--border-light)', borderRadius: 10, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <span style={{ fontSize: 13, color: 'var(--text-secondary)' }}>Part A Sub-total ({activeComp})</span>
-            <span style={{ fontSize: 16, fontWeight: 800, color: pillar.color, fontFamily: 'Space Grotesk' }}>{getPartAMarks(activeComp)} / 12</span>
+          <div className="p-3 bg-surface-container-low border-[0.5px] border-outline-variant flex justify-between items-center">
+            <span className="text-technical-sm font-technical-sm text-on-surface-variant">Part A Sub-total ({activeComp})</span>
+            <span className="text-label-md font-label-md" style={{ color: pillar.color }}>{getPartAMarks(activeComp)} / 12</span>
           </div>
-          {/* AI-generated additional AQ scenarios */}
           <AIQuestionGenerator
             pillar="AQ" component={activeComp} ageGroup={age}
             questionType="likert" color={pillar.color}
@@ -877,8 +829,9 @@ function AQStep({ scores, onChange, ageGroup }) {
       {/* Part B — Activity rubric */}
       {activeTab === 'partB' && (
         <div>
-          <div style={{ padding: '10px 14px', background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.2)', borderRadius: 8, marginBottom: 16, fontSize: 12, color: 'var(--text-secondary)', lineHeight: 1.5 }}>
-            <strong style={{ color: pillar.color }}>Assessor-Scored Activity.</strong> Observe the participant and enter rubric scores below.
+          <div className="flex gap-2 p-3 border-[0.5px] border-amber-500/30 bg-amber-500/5 text-technical-sm font-technical-sm text-on-surface-variant leading-relaxed mb-4">
+            <AlertCircle size={14} className="text-amber-500 flex-shrink-0 mt-0.5" />
+            <div><strong className="text-amber-500">Assessor-Scored Activity.</strong> Observe the participant and enter rubric scores below.</div>
           </div>
 
           {(() => {
@@ -886,19 +839,19 @@ function AQStep({ scores, onChange, ageGroup }) {
             const actScores = scores[activeComp]?.partB || {};
             const total = act.rubric.reduce((s, r) => s + (actScores[r.criterion] || 0), 0);
             return (
-              <div style={{ background: 'var(--navy-4)', border: `1px solid ${pillar.color}20`, borderRadius: 14, overflow: 'hidden' }}>
-                <div style={{ padding: '14px 16px', background: `${pillar.color}08`, borderBottom: '1px solid var(--border-light)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div className="border-[0.5px] overflow-hidden" style={{ borderColor: pillar.color + '30' }}>
+                <div className="p-4 flex justify-between items-center border-b-[0.5px] border-outline-variant" style={{ backgroundColor: pillar.color + '08' }}>
                   <div>
-                    <div style={{ fontSize: 14, fontWeight: 700 }}>{act.label}</div>
-                    <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 2 }}>{act.method}</div>
+                    <div className="text-label-md font-label-md text-on-surface">{act.label}</div>
+                    <div className="text-technical-sm font-technical-sm text-surface-variant mt-0.5">{act.method}</div>
                   </div>
-                  <div style={{ fontSize: 22, fontWeight: 800, color: pillar.color, fontFamily: 'Space Grotesk' }}>{total}/{act.maxScore}</div>
+                  <div className="text-[22px] font-label-md" style={{ color: pillar.color }}>{total}/{act.maxScore}</div>
                 </div>
-                <div style={{ padding: 16 }}>
-                  <div style={{ fontSize: 12, color: 'var(--text-secondary)', lineHeight: 1.6, marginBottom: 14 }}>
+                <div className="p-4">
+                  <div className="text-technical-sm font-technical-sm text-on-surface-variant leading-relaxed mb-4">
                     {age === '11-18' ? act.desc11_18 : act.desc19_32}
                   </div>
-                  <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 10 }}>Assessor Rubric</div>
+                  <div className="text-technical-sm font-technical-sm text-surface-variant uppercase tracking-widest mb-3">Assessor Rubric</div>
                   {act.rubric.map(r => (
                     <RubricScorer
                       key={r.criterion}
@@ -928,17 +881,18 @@ function ReviewStep({ intake, rawScores }) {
   return (
     <div>
       {/* Intake summary */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 20 }}>
+      <div className="text-technical-sm font-technical-sm text-primary mb-6">§ VI · REVIEW & SUBMIT</div>
+      <div className="grid grid-cols-2 gap-3 mb-5">
         {Object.entries(intake).filter(([k]) => !['consent', 'purpose'].includes(k)).map(([k, v]) => (
-          <div key={k} style={{ padding: '10px 14px', background: 'var(--navy-4)', border: '1px solid var(--border-light)', borderRadius: 8 }}>
-            <div style={{ fontSize: 10, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 2 }}>{k.replace(/([A-Z])/g, ' $1').trim()}</div>
-            <div style={{ fontSize: 13, color: 'var(--text-primary)', fontWeight: 500 }}>{String(v) || '—'}</div>
+          <div key={k} className="p-3 bg-surface-container-low border-[0.5px] border-outline-variant">
+            <div className="text-technical-sm font-technical-sm text-surface-variant uppercase tracking-widest mb-1">{k.replace(/([A-Z])/g, ' $1').trim()}</div>
+            <div className="text-label-md font-label-md text-on-surface">{String(v) || '—'}</div>
           </div>
         ))}
       </div>
 
       {/* Pillar scores */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12, marginBottom: 20 }}>
+      <div className="grid grid-cols-4 gap-3 mb-5">
         {Object.entries(PILLARS).map(([id, pillar]) => {
           const score = pillarScores[id];
           const isIQ = id === 'IQ';
@@ -946,14 +900,13 @@ function ReviewStep({ intake, rawScores }) {
           const pct = Math.min(Math.round((score / displayMax) * 100), 100);
           const g = getGrade(isIQ ? Math.round((score / 125) * 100) : score);
           return (
-            <div key={id} style={{ padding: 16, background: 'var(--navy-4)', border: `1px solid ${pillar.color}30`, borderRadius: 12, textAlign: 'center', position: 'relative', overflow: 'hidden' }}>
-              <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 3, background: pillar.gradient }} />
-              <div style={{ fontSize: 11, color: pillar.color, fontWeight: 600, marginBottom: 4 }}>{pillar.short}</div>
-              <div style={{ fontSize: 32, fontWeight: 800, color: g.color, fontFamily: 'Space Grotesk' }}>{score}</div>
-              <div style={{ fontSize: 10, color: 'var(--text-muted)', marginBottom: 6 }}>/ {displayMax} · Grade {g.grade}</div>
-              {isIQ && <div style={{ fontSize: 9, color: '#06b6d4', marginBottom: 4 }}>incl. AI + Visual bonus</div>}
-              <div style={{ height: 4, background: 'rgba(255,255,255,0.08)', borderRadius: 2 }}>
-                <div style={{ height: '100%', width: `${pct}%`, background: pillar.gradient, borderRadius: 2, transition: 'width 0.5s' }} />
+            <div key={id} className="p-4 bg-surface-container-low border-[0.5px] text-center" style={{ borderColor: pillar.color + '30' }}>
+              <div className="text-technical-sm font-technical-sm mb-2" style={{ color: pillar.color }}>{pillar.short}</div>
+              <div className="text-[32px] font-label-md leading-none text-on-surface">{score}</div>
+              <div className="text-technical-sm font-technical-sm text-surface-variant mt-1">/ {displayMax} · Grade {g.grade}</div>
+              {isIQ && <div className="text-[9px] font-technical-sm text-primary mt-1">incl. AI + Visual bonus</div>}
+              <div className="h-1 bg-surface-variant/20 mt-3">
+                <div className="h-full transition-all duration-500" style={{ width: `${pct}%`, backgroundColor: g.color }} />
               </div>
             </div>
           );
@@ -961,12 +914,12 @@ function ReviewStep({ intake, rawScores }) {
       </div>
 
       {/* Unified score */}
-      <div style={{ padding: 20, background: grade.bg, border: `1px solid ${grade.color}40`, borderRadius: 14, textAlign: 'center' }}>
-        <div style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 4 }}>Unified QIDS Score</div>
-        <div style={{ fontSize: 56, fontWeight: 900, color: grade.color, fontFamily: 'Space Grotesk', lineHeight: 1 }}>{unified}</div>
-        <div style={{ fontSize: 14, color: grade.color, marginTop: 4 }}>Grade {grade.grade}: {grade.label}</div>
-        <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 8 }}>
-          IQ(÷125×100)×1.0 + EQ×2.0 + SQ×2.0 + AQ×1.28 ÷ 6.28
+      <div className="p-6 border-[0.5px] text-center" style={{ borderColor: grade.color + '40', backgroundColor: grade.color + '10' }}>
+        <div className="text-technical-sm font-technical-sm text-surface-variant mb-2 uppercase tracking-widest">Unified QIDS Score</div>
+        <div className="text-[56px] font-label-md leading-none" style={{ color: grade.color }}>{unified}</div>
+        <div className="text-label-md font-label-md mt-2" style={{ color: grade.color }}>Grade {grade.grade}: {grade.label}</div>
+        <div className="text-technical-sm font-technical-sm text-surface-variant mt-3">
+          Weighted: IQ(÷125×100)×1.0 + EQ×2.0 + SQ×2.0 + AQ×1.28 ÷ 6.28
         </div>
       </div>
     </div>
@@ -982,10 +935,10 @@ export default function Assessment() {
 
   const [step, setStep] = useState(0);
   const [intake, setIntake] = useState({ name: '', age: '', ageGroup: '11-18', institution: '', evaluator: '', purpose: '', consent: false });
-  const [iqScores, setIqScores] = useState({});       // { verbal: {0: val, 1: val...}, quantitative: {...}, ... }
-  const [eqScores, setEqScores] = useState({});       // { partA: { SA: {0: val...}, ... }, partB: { B1: { criterion: val }, ... } }
-  const [sqScores, setSqScores] = useState({});       // { ACE: { ACE1: { criterion: val }, ... }, CSI: { CSI1: optIdx }, PBA: {...}, selectedPBAs: [] }
-  const [aqScores, setAqScores] = useState({});       // { situational_agility: val, ... }
+  const [iqScores, setIqScores] = useState({});
+  const [eqScores, setEqScores] = useState({});
+  const [sqScores, setSqScores] = useState({});
+  const [aqScores, setAqScores] = useState({});
   const [submitted, setSubmitted] = useState(false);
   const [saving, setSaving] = useState(false);
   const [evaluators, setEvaluators] = useState([]);
@@ -994,7 +947,6 @@ export default function Assessment() {
 
   const updateIntake = (k, v) => setIntake(prev => ({ ...prev, [k]: v }));
 
-  // Load evaluators and current assignment
   useEffect(() => {
     if (!user) return;
     (async () => {
@@ -1045,12 +997,10 @@ export default function Assessment() {
     setLoadingEv(false);
   };
 
-  // IQ score updater
   const updateIQ = (section, qIndex, value) => {
     setIqScores(prev => ({ ...prev, [section]: { ...(prev[section] || {}), [qIndex]: value } }));
   };
 
-  // EQ score updater — partA: (partA, component, qIndex, value) | partB: (partB, actId, criterion, value) | partA_ai: AI-generated
   const updateEQ = (part, keyA, keyB, value) => {
     if (part === 'partA') {
       setEqScores(prev => ({
@@ -1070,7 +1020,6 @@ export default function Assessment() {
     }
   };
 
-  // SQ score updater
   const updateSQ = (component, keyA, keyB, value) => {
     if (component === 'selectedPBAs') {
       setSqScores(prev => ({ ...prev, selectedPBAs: keyA }));
@@ -1084,7 +1033,6 @@ export default function Assessment() {
     }
   };
 
-  // AQ score updater — (comp, part, key, value)
   const updateAQ = (comp, part, key, value) => {
     if (part === 'partA') {
       setAqScores(prev => ({
@@ -1104,9 +1052,7 @@ export default function Assessment() {
     }
   };
 
-  // Compute raw scores for storage
   const buildRawScores = () => {
-    // IQ: sum MCQ correct + open answered per sub-section → map to /25 each
     const iqRaw = {};
     ['verbal', 'quantitative', 'psychometric', 'performance'].forEach(sec => {
       const secScores = iqScores[sec] || {};
@@ -1122,7 +1068,7 @@ export default function Assessment() {
             if (q.answer !== undefined) {
               if (String(val).trim().toLowerCase() === String(q.answer).toLowerCase()) total += 1;
             } else {
-              total += 1; // subjective/explanation — needs assessor review
+              total += 1;
             }
           }
         });
@@ -1130,8 +1076,6 @@ export default function Assessment() {
       iqRaw[sec] = Math.min(total, 25);
     });
 
-    // IQ AI bonus: 4 sections × 2 questions × 2 marks = max 16
-    // MCQ answers validated against generated answer keys; open answers get auto-award
     let aiBonus = 0;
     const aiMcqSections = ['quantitative', 'psychometric'];
     const aiOpenSections = ['verbal', 'performance'];
@@ -1154,8 +1098,6 @@ export default function Assessment() {
     });
     iqRaw._aiBonus = Math.min(aiBonus, 16);
 
-    // IQ Visual bonus: diagram questions × 1 mark each, max 9
-    // Check correctness against answer keys in the stored diagram questions
     const diagramAnswers = iqScores._diagramAnswers?.[0] || {};
     const storedQs = iqScores._diagramQuestions?.[0] || [];
     const diagramQuestions = Array.isArray(storedQs) ? storedQs : Object.values(storedQs).flat().filter(Boolean);
@@ -1165,21 +1107,17 @@ export default function Assessment() {
     }).length;
     iqRaw._visualBonus = Math.min(correctDiagrams, 9);
 
-    // EQ: Part A Likert sum per component (5 questions × max 5 = 25 raw → normalize to 0-5)
-    //     Part B rubric sum per activity (max 5) → stays as-is
-    //     Combined per component: max 10 (5 + 5)
     const eqRaw = {};
     ['SA', 'ER', 'SM', 'E', 'IS'].forEach(comp => {
       const partAScores = eqScores.partA?.[comp] || {};
-      const partARaw = Object.values(partAScores).reduce((s, v) => s + (v || 0), 0); // 0-25
-      const partANorm = Math.round((partARaw / 25) * 5); // normalize to 0-5
+      const partARaw = Object.values(partAScores).reduce((s, v) => s + (v || 0), 0);
+      const partANorm = Math.round((partARaw / 25) * 5);
       const actId = `B${['SA', 'ER', 'SM', 'E', 'IS'].indexOf(comp) + 1}`;
       const partBScores = eqScores.partB?.[actId] || {};
-      const partBTotal = Object.values(partBScores).reduce((s, v) => s + (v || 0), 0); // 0-5
+      const partBTotal = Object.values(partBScores).reduce((s, v) => s + (v || 0), 0);
       eqRaw[comp] = Math.min(partANorm + partBTotal, 10);
     });
 
-    // SQ: ACE rubric totals, CSI marks, PBA rubric totals
     const aceTotal = SQ_QUESTIONS.component1_ACE.exercises.reduce((sum, ex) => {
       const exS = sqScores.ACE?.[ex.id] || {};
       return sum + ex.rubric.reduce((s, r) => s + (exS[r.criterion] || 0), 0);
@@ -1196,7 +1134,6 @@ export default function Assessment() {
     }, 0);
     const sqRaw = { ACE: aceTotal, CSI: csiTotal, PBA: pbaTotal };
 
-    // AQ: Part A Likert (mapped marks) + Part B rubric per component
     const aqRaw = {};
     ['SA', 'PM', 'RR', 'RC'].forEach(comp => {
       const partAScores = aqScores[comp]?.partA || {};
@@ -1223,7 +1160,6 @@ export default function Assessment() {
     const pillarScores = {};
     Object.keys(PILLARS).forEach(id => { pillarScores[id] = computePillarScore(id, rawScores[id] || {}); });
 
-    // Store raw Part A data so evaluator scores can be properly merged later
     const eqPartA = {};
     if (eqScores.partA) {
       ['SA', 'ER', 'SM', 'E', 'IS'].forEach(comp => {
@@ -1257,68 +1193,62 @@ export default function Assessment() {
 
   if (submitted) {
     return (
-      <div className="page-pad animate-fade" style={{ maxWidth: 600, margin: '0 auto', textAlign: 'center' }}>
-        <div style={{ width: 72, height: 72, borderRadius: '50%', background: 'rgba(16,185,129,0.15)', border: '2px solid #10b981', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 24px', boxShadow: '0 0 30px rgba(16,185,129,0.3)' }}>
-          <CheckCircle size={32} color="#10b981" />
+      <div className="page-pad py-12 md:py-24 max-w-[600px] mx-auto animate-fade text-center">
+        <div className="border-[0.5px] border-primary/50 bg-primary/10 w-20 h-20 flex items-center justify-center mx-auto mb-8">
+          <CheckCircle size={36} className="text-primary" />
         </div>
-        <h2 style={{ fontSize: 26, fontWeight: 800, marginBottom: 8 }}>Assessment Complete</h2>
-        <p style={{ fontSize: 14, color: 'var(--text-secondary)', marginBottom: 28, lineHeight: 1.7 }}>
-          Baseline data for <strong style={{ color: 'var(--text-primary)' }}>{intake.name || 'the individual'}</strong> has been recorded. Proceed to Pre-Intervention analysis to view scores, grades, and intervention mapping.
+        <div className="text-technical-sm font-technical-sm text-primary mb-4">§ · COMPLETION CONFIRMATION</div>
+        <h2 className="text-headline-md font-headline-md text-on-surface mb-4">Assessment Complete</h2>
+        <p className="text-body-md font-body-md text-on-surface-variant mb-10 leading-relaxed">
+          Baseline data for <strong className="text-on-surface">{intake.name || 'the individual'}</strong> has been recorded. Proceed to Pre-Intervention analysis to view scores, grades, and intervention mapping.
         </p>
-        <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
-          <button onClick={() => navigate('/app/pre-intervention')} className="btn btn-primary btn-lg">View Pre-Intervention Analysis</button>
-          <button onClick={() => { setSubmitted(false); setStep(0); setIntake({ name: '', age: '', ageGroup: '11-18', institution: '', evaluator: '', purpose: '', consent: false, _evUid: '' }); setCurrentEv(null); setIqScores({}); setEqScores({}); setSqScores({}); setAqScores({}); }} className="btn btn-secondary">New Assessment</button>
+        <div className="flex gap-4 justify-center flex-wrap">
+          <button onClick={() => navigate('/app/assessment')}
+            className="px-8 py-4 bg-primary text-on-primary text-label-md font-label-md hover:opacity-90 transition-all cursor-pointer border-none uppercase tracking-widest">
+            View Analysis
+          </button>
+          <button onClick={() => { setSubmitted(false); setStep(0); setIntake({ name: '', age: '', ageGroup: '11-18', institution: '', evaluator: '', purpose: '', consent: false, _evUid: '' }); setCurrentEv(null); setIqScores({}); setEqScores({}); setSqScores({}); setAqScores({}); }}
+            className="px-8 py-4 border-[0.5px] border-outline-variant text-on-surface-variant text-label-md font-label-md hover:text-primary hover:border-primary transition-all cursor-pointer bg-transparent uppercase tracking-widest">
+            New Assessment
+          </button>
         </div>
       </div>
     );
   }
 
   const stepIcons = [ClipboardList, Brain, Heart, Users, Shield, CheckCircle];
+  const stepLabels = ['01', '02', '03', '04', '05', '06'];
 
   return (
-    <div className="page-pad animate-fade" style={{ maxWidth: 960, margin: '0 auto' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 24 }}>
-        <div>
-          <h1 style={{ fontSize: 24, fontWeight: 800, marginBottom: 4 }}>Assessment Engine</h1>
-          <p style={{ fontSize: 14, color: 'var(--text-muted)' }}>Multi-step baseline assessment — IQ, EQ (DEC), SQ (SIAC), AQ (RDF)</p>
-        </div>
-        <div style={{ fontSize: 12, color: 'var(--text-muted)', padding: '6px 12px', background: 'var(--navy-4)', border: '1px solid var(--border-light)', borderRadius: 8 }}>
-          Step {step + 1} of {STEPS.length}
-        </div>
+    <div className="page-pad max-w-[960px] mx-auto animate-fade">
+      {/* Page header */}
+      <div className="mb-6 md:mb-10">
+        <div className="text-technical-sm font-technical-sm text-primary mb-2">§ · ASSESSMENT PROTOCOL</div>
+        <h1 className="text-headline-md font-headline-md text-on-background page-headline">Multi-Step Baseline Assessment</h1>
       </div>
 
       {/* Step indicator */}
-      <div style={{ display: 'flex', gap: 0, marginBottom: 28, overflowX: 'auto', paddingBottom: 4 }}>
+      <div className="flex gap-0 mb-6 md:mb-8 overflow-x-auto pb-2 border-b-[0.5px] border-outline-variant scrollbar-none">
         {STEPS.map((s, i) => {
-          const Icon = stepIcons[i];
-          const pillarColors = { 1: '#6366f1', 2: '#10b981', 3: '#a855f7', 4: '#f59e0b' };
-          const activeColor = pillarColors[i] || 'var(--indigo)';
+          const isActive = i === step;
+          const isCompleted = i < step;
           return (
-            <div key={s} style={{ display: 'flex', alignItems: 'center', flex: i < STEPS.length - 1 ? 1 : 'none' }}>
-              <div onClick={() => i < step && setStep(i)} style={{
-                display: 'flex', alignItems: 'center', gap: 6, cursor: i < step ? 'pointer' : 'default',
-                padding: '6px 10px', borderRadius: 8, whiteSpace: 'nowrap',
-                background: i === step ? `${activeColor}18` : 'transparent',
-                border: `1px solid ${i === step ? activeColor : 'transparent'}`,
-              }}>
-                <div style={{
-                  width: 24, height: 24, borderRadius: '50%', flexShrink: 0,
-                  background: i < step ? '#10b981' : i === step ? activeColor : 'var(--navy-5)',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  fontSize: 11, fontWeight: 700, color: 'white',
-                }}>
-                  {i < step ? '✓' : <Icon size={12} />}
-                </div>
-                <span style={{ fontSize: 12, color: i === step ? 'white' : 'var(--text-muted)', fontWeight: i === step ? 600 : 400 }}>{s}</span>
-              </div>
-              {i < STEPS.length - 1 && <div style={{ flex: 1, height: 1, background: i < step ? '#10b981' : 'var(--border-light)', minWidth: 12 }} />}
+            <div key={s} className={`flex items-center ${i < STEPS.length - 1 ? 'flex-1' : ''}`}>
+              <button onClick={() => i < step && setStep(i)}
+                className={`flex items-center gap-2 md:gap-3 px-2 md:px-4 py-2 md:py-3 whitespace-nowrap transition-all cursor-pointer bg-transparent border-none ${isActive ? 'text-primary' : isCompleted ? 'text-on-surface-variant' : 'text-surface-variant'
+                  }`}>
+                <div className={`border-[0.5px] w-7 h-7 md:w-8 md:h-8 flex items-center justify-center text-[10px] md:text-technical-sm font-technical-sm flex-shrink-0 ${isActive ? 'border-primary bg-primary/10 text-primary' : isCompleted ? 'border-primary/30 text-primary' : 'border-outline-variant text-surface-variant'
+                  }`}>{isCompleted ? '✓' : stepLabels[i]}</div>
+                <span className="text-[10px] md:text-technical-sm font-technical-sm hidden sm:block">{s}</span>
+              </button>
+              {i < STEPS.length - 1 && <div className={`flex-1 h-[0.5px] min-w-3 md:min-w-4 ${isCompleted ? 'bg-primary/30' : 'bg-outline-variant'}`} />}
             </div>
           );
         })}
       </div>
 
       {/* Step content */}
-      <div className="card" style={{ marginBottom: 20 }}>
+      <div className="bg-surface-container-lowest border-[0.5px] border-outline-variant p-4 md:p-8 mb-6">
         {step === 0 && <IntakeStep data={intake} onChange={updateIntake} evaluators={evaluators} currentEv={currentEv} onAssign={handleAssignEvaluator} onRemove={handleRemoveEvaluator} loadingEv={loadingEv} />}
         {step === 1 && <IQStep scores={iqScores} onChange={updateIQ} ageGroup={intake.ageGroup} context={context} />}
         {step === 2 && <EQStep scores={eqScores} onChange={updateEQ} ageGroup={intake.ageGroup} />}
@@ -1328,18 +1258,22 @@ export default function Assessment() {
       </div>
 
       {/* Navigation */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', position: 'sticky', bottom: 0, background: 'var(--navy)', borderTop: '1px solid var(--border-light)', padding: '14px 0', marginTop: 8, zIndex: 10 }}>
-        <button className="btn btn-secondary" onClick={() => setStep(s => Math.max(0, s - 1))} disabled={step === 0} style={{ opacity: step === 0 ? 0.4 : 1 }}>
-          <ChevronLeft size={14} /> Previous
+      <div className="flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-3 border-t-[0.5px] border-outline-variant pt-6">
+        <button onClick={() => setStep(s => Math.max(0, s - 1))} disabled={step === 0}
+          className={`px-6 py-3 border-[0.5px] text-label-md font-label-md transition-all cursor-pointer bg-transparent uppercase tracking-widest ${step === 0 ? 'border-outline-variant/30 text-surface-variant opacity-40 cursor-not-allowed' : 'border-outline-variant text-on-surface-variant hover:text-primary hover:border-primary'
+            }`}>
+          <ChevronLeft size={14} className="inline mr-2" /> Previous
         </button>
-        <div style={{ display: 'flex', gap: 8 }}>
+        <div className="flex gap-3 w-full sm:w-auto">
           {step < STEPS.length - 1 ? (
-            <button className="btn btn-primary" onClick={handleNext}>
-              Next <ChevronRight size={14} />
+            <button onClick={handleNext}
+              className="flex-1 sm:flex-none justify-center px-8 py-3 bg-primary text-on-primary text-label-md font-label-md hover:opacity-90 transition-all cursor-pointer border-none uppercase tracking-widest">
+              Next <ChevronRight size={14} className="inline ml-2" />
             </button>
           ) : (
-            <button className="btn btn-primary" onClick={handleSubmit} disabled={saving} style={{ background: 'linear-gradient(135deg, #10b981, #059669)' }}>
-              {saving ? 'Saving...' : <><Save size={14} /> Submit Assessment</>}
+            <button onClick={handleSubmit} disabled={saving}
+              className="flex-1 sm:flex-none justify-center px-8 py-3 bg-primary text-on-primary text-label-md font-label-md hover:opacity-90 transition-all cursor-pointer border-none uppercase tracking-widest disabled:opacity-50">
+              {saving ? 'Saving...' : <><Save size={14} className="inline mr-2" /> Submit Assessment</>}
             </button>
           )}
         </div>

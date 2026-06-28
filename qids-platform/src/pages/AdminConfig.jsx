@@ -39,33 +39,29 @@ const PLACEHOLDER_ITEMS = {
 };
 
 function ContentItem({ item, onEdit, onDelete }) {
+  const isActive = item.status === 'active';
   return (
-    <div style={{
-      display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-      padding: '12px 14px', background: 'var(--navy-4)', border: '1px solid var(--border-light)',
-      borderRadius: 10, marginBottom: 6,
-    }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-        <div style={{
-          padding: '2px 8px', borderRadius: 20, fontSize: 10, fontWeight: 600,
-          background: item.status === 'active' ? 'rgba(16,185,129,0.15)' : 'rgba(245,158,11,0.15)',
-          color: item.status === 'active' ? '#10b981' : '#f59e0b',
-          border: `1px solid ${item.status === 'active' ? 'rgba(16,185,129,0.3)' : 'rgba(245,158,11,0.3)'}`,
+    <div className="flex items-center justify-between px-3.5 py-3 bg-surface-container-low border border-outline-variant rounded-lg mb-1.5">
+      <div className="flex items-center gap-2.5">
+        <div className={`px-2 py-0.5 rounded-full text-[10px] font-semibold border`} style={{
+          background: isActive ? 'rgba(16,185,129,0.15)' : 'rgba(245,158,11,0.15)',
+          color: isActive ? '#10b981' : '#f59e0b',
+          borderColor: isActive ? 'rgba(16,185,129,0.3)' : 'rgba(245,158,11,0.3)',
         }}>
-          {item.status === 'active' ? 'ACTIVE' : 'PLACEHOLDER'}
+          {isActive ? 'ACTIVE' : 'PLACEHOLDER'}
         </div>
         <div>
-          <div style={{ fontSize: 13, fontWeight: 500 }}>{item.name}</div>
-          <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>
+          <div className="text-sm font-medium">{item.name}</div>
+          <div className="text-xs text-surface-variant">
             {[item.context, item.pillar, item.duration].filter(Boolean).join(' · ')}
           </div>
         </div>
       </div>
-      <div style={{ display: 'flex', gap: 6 }}>
-        <button onClick={() => onEdit(item)} style={{ padding: '5px 8px', borderRadius: 6, background: 'rgba(99,102,241,0.1)', border: '1px solid rgba(99,102,241,0.2)', color: '#818cf8', cursor: 'pointer' }}>
+      <div className="flex gap-1.5">
+        <button onClick={() => onEdit(item)} className="px-2 py-1.5 rounded-md cursor-pointer" style={{ background: 'rgba(99,102,241,0.1)', border: '1px solid rgba(99,102,241,0.2)', color: '#818cf8' }}>
           <Edit2 size={12} />
         </button>
-        <button onClick={() => onDelete(item.id)} style={{ padding: '5px 8px', borderRadius: 6, background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.2)', color: '#ef4444', cursor: 'pointer' }}>
+        <button onClick={() => onDelete(item.id)} className="px-2 py-1.5 rounded-md cursor-pointer" style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.2)', color: '#ef4444' }}>
           <Trash2 size={12} />
         </button>
       </div>
@@ -91,53 +87,49 @@ export default function AdminConfig() {
   const currentItems = items[activeSection] || [];
 
   return (
-    <div style={{ padding: 32, maxWidth: 1100, margin: '0 auto' }} className="animate-fade">
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 28 }}>
+    <div className="p-8 max-w-[1100px] mx-auto animate-fade">
+      <div className="flex justify-between items-start mb-7">
         <div>
-          <h1 style={{ fontSize: 24, fontWeight: 800, marginBottom: 4 }}>Admin / Configuration</h1>
-          <p style={{ fontSize: 14, color: 'var(--text-muted)' }}>Manage content library, scoring configuration, and platform settings</p>
+          <h1 className="text-2xl font-extrabold mb-1">Admin / Configuration</h1>
+          <p className="text-sm text-surface-variant">Manage content library, scoring configuration, and platform settings</p>
         </div>
-        <div style={{ padding: '6px 12px', background: 'rgba(245,158,11,0.1)', border: '1px solid rgba(245,158,11,0.3)', borderRadius: 8, fontSize: 12, color: '#f59e0b' }}>
+        <div className="px-3 py-1.5 rounded-lg text-xs" style={{ background: 'rgba(245,158,11,0.1)', border: '1px solid rgba(245,158,11,0.3)', color: '#f59e0b' }}>
           CMS-Ready — Placeholder Mode
         </div>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '240px 1fr', gap: 20 }}>
+      <div className="grid gap-5" style={{ gridTemplateColumns: '240px 1fr' }}>
         {/* Sidebar */}
         <div>
-          <div className="card" style={{ padding: 8 }}>
+          <div className="bg-surface-container-low border border-outline-variant rounded-xl p-2">
             {CONFIG_SECTIONS.map(({ id, label, icon: Icon, desc }) => (
-              <button key={id} onClick={() => setActiveSection(id)} style={{
-                width: '100%', display: 'flex', alignItems: 'center', gap: 10,
-                padding: '10px 12px', borderRadius: 8, cursor: 'pointer', marginBottom: 2,
-                background: activeSection === id ? 'rgba(99,102,241,0.15)' : 'transparent',
-                border: `1px solid ${activeSection === id ? 'var(--indigo)' : 'transparent'}`,
-                color: activeSection === id ? 'white' : 'var(--text-secondary)',
-                fontSize: 13, fontWeight: 500, textAlign: 'left', transition: 'all 0.15s',
-              }}>
-                <Icon size={14} style={{ flexShrink: 0 }} />
+              <button key={id} onClick={() => setActiveSection(id)} className={`w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg cursor-pointer mb-0.5 text-sm font-medium text-left transition-all ${activeSection === id ? 'bg-[#6366f1]/20 text-white border border-[#6366f1]' : 'bg-transparent text-on-surface-variant border border-transparent'}`}>
+                <Icon size={14} className="shrink-0" />
                 {label}
               </button>
             ))}
           </div>
 
           {/* Dynamic Weights config */}
-          <div className="card" style={{ marginTop: 16 }}>
-            <h4 style={{ fontSize: 13, fontWeight: 600, marginBottom: 12 }}>Dynamic Weights</h4>
+          <div className="bg-surface-container-low border border-outline-variant rounded-xl p-4 mt-4">
+            <h4 className="text-sm font-semibold mb-3">Dynamic Weights</h4>
             {Object.entries(weights).map(([k, v]) => (
-              <div key={k} style={{ marginBottom: 10 }}>
-                <label style={{ display: 'flex', justifyContent: 'space-between' }}>
+              <div key={k} className="mb-2.5">
+                <label className="flex justify-between">
                   <span>{k}</span>
                   <span style={{ color: '#818cf8' }}>×{v.toFixed(2)}</span>
                 </label>
                 <input
                   type="range" min={0.5} max={3} step={0.01} value={v}
                   onChange={e => setWeights(prev => ({ ...prev, [k]: parseFloat(e.target.value) }))}
-                  style={{ width: '100%', height: 4, border: 'none', padding: 0, cursor: 'pointer', appearance: 'none', background: `linear-gradient(90deg, #6366f1 ${((v - 0.5) / 2.5) * 100}%, rgba(255,255,255,0.1) ${((v - 0.5) / 2.5) * 100}%)`, borderRadius: 2 }}
+                  className="w-full h-1 border-none p-0 cursor-pointer appearance-none rounded-sm"
+                  style={{
+                    background: `linear-gradient(90deg, #6366f1 ${((v - 0.5) / 2.5) * 100}%, rgba(255,255,255,0.1) ${((v - 0.5) / 2.5) * 100}%)`,
+                  }}
                 />
               </div>
             ))}
-            <button onClick={handleSaveWeights} className="btn btn-primary btn-sm" style={{ width: '100%', justifyContent: 'center', marginTop: 4 }}>
+            <button onClick={handleSaveWeights} className="w-full inline-flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs rounded-lg bg-[#6366f1] text-white font-medium hover:opacity-90 cursor-pointer transition-all mt-1">
               {saved ? <><span>✓</span> Saved</> : <><Save size={12} /> Save Weights</>}
             </button>
           </div>
@@ -145,23 +137,19 @@ export default function AdminConfig() {
 
         {/* Main content */}
         <div>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+          <div className="flex justify-between items-center mb-4">
             <div>
-              <h3 style={{ fontSize: 16, fontWeight: 700 }}>{CONFIG_SECTIONS.find(s => s.id === activeSection)?.label}</h3>
-              <p style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 2 }}>{CONFIG_SECTIONS.find(s => s.id === activeSection)?.desc}</p>
+              <h3 className="text-base font-bold">{CONFIG_SECTIONS.find(s => s.id === activeSection)?.label}</h3>
+              <p className="text-xs text-surface-variant mt-0.5">{CONFIG_SECTIONS.find(s => s.id === activeSection)?.desc}</p>
             </div>
-            <div style={{ display: 'flex', gap: 8 }}>
-              <button className="btn btn-secondary btn-sm"><Upload size={12} /> Upload File</button>
-              <button className="btn btn-primary btn-sm"><Plus size={12} /> Add New</button>
+            <div className="flex gap-2">
+              <button className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs rounded-lg border border-outline-variant bg-surface-container-low text-on-surface hover:bg-surface cursor-pointer transition-all"><Upload size={12} /> Upload File</button>
+              <button className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs rounded-lg bg-[#6366f1] text-white font-medium hover:opacity-90 cursor-pointer transition-all"><Plus size={12} /> Add New</button>
             </div>
           </div>
 
           {/* Upload zone */}
-          <label htmlFor="file-upload" style={{
-            border: '2px dashed rgba(99,102,241,0.3)', borderRadius: 12, padding: 24,
-            textAlign: 'center', marginBottom: 16, cursor: 'pointer', transition: 'all 0.2s',
-            background: 'rgba(99,102,241,0.03)', display: 'block',
-          }}
+          <label htmlFor="file-upload" className="block p-6 text-center mb-4 cursor-pointer transition-all rounded-xl border-2 border-dashed" style={{ borderColor: 'rgba(99,102,241,0.3)', background: 'rgba(99,102,241,0.03)' }}
             onMouseEnter={e => e.currentTarget.style.borderColor = 'rgba(99,102,241,0.6)'}
             onMouseLeave={e => e.currentTarget.style.borderColor = 'rgba(99,102,241,0.3)'}
             onDragOver={e => { e.preventDefault(); e.currentTarget.style.borderColor = 'rgba(99,102,241,0.8)'; e.currentTarget.style.background = 'rgba(99,102,241,0.08)'; }}
@@ -174,11 +162,11 @@ export default function AdminConfig() {
               if (file) alert(`File "${file.name}" received. Backend integration required to process uploads.`);
             }}
           >
-            <input id="file-upload" type="file" accept=".pdf,.docx,.xlsx,.json" style={{ display: 'none' }}
+            <input id="file-upload" type="file" accept=".pdf,.docx,.xlsx,.json" className="hidden"
               onChange={e => { const f = e.target.files[0]; if (f) alert(`File "${f.name}" received. Backend integration required to process uploads.`); }} />
-            <Upload size={24} color="#6366f1" style={{ marginBottom: 8, opacity: 0.6 }} />
-            <div style={{ fontSize: 13, color: 'var(--text-secondary)', marginBottom: 4 }}>Drop files here or click to upload</div>
-            <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>Supports PDF, DOCX, XLSX, JSON</div>
+            <Upload size={24} color="#6366f1" className="mb-2 opacity-60" />
+            <div className="text-sm text-on-surface-variant mb-1">Drop files here or click to upload</div>
+            <div className="text-xs text-surface-variant">Supports PDF, DOCX, XLSX, JSON</div>
           </label>
 
           {/* Items list */}
@@ -191,17 +179,17 @@ export default function AdminConfig() {
               />
             ))
           ) : (
-            <div style={{ textAlign: 'center', padding: 40, color: 'var(--text-muted)' }}>
-              <Package size={32} style={{ marginBottom: 8, opacity: 0.3 }} />
-              <div style={{ fontSize: 14 }}>No items yet</div>
-              <div style={{ fontSize: 12, marginTop: 4 }}>Upload content or add placeholders to get started</div>
+            <div className="text-center p-10 text-surface-variant">
+              <Package size={32} className="mb-2 opacity-30 mx-auto" />
+              <div className="text-sm">No items yet</div>
+              <div className="text-xs mt-1">Upload content or add placeholders to get started</div>
             </div>
           )}
 
           {/* Info box */}
-          <div style={{ marginTop: 20, padding: 16, background: 'rgba(99,102,241,0.06)', border: '1px solid rgba(99,102,241,0.15)', borderRadius: 10 }}>
-            <div style={{ fontSize: 12, fontWeight: 600, color: '#818cf8', marginBottom: 6 }}>Content Library Architecture</div>
-            <p style={{ fontSize: 12, color: 'var(--text-secondary)', lineHeight: 1.6 }}>
+          <div className="mt-5 p-4 rounded-lg" style={{ background: 'rgba(99,102,241,0.06)', border: '1px solid rgba(99,102,241,0.15)' }}>
+            <div className="text-xs font-semibold mb-1.5" style={{ color: '#818cf8' }}>Content Library Architecture</div>
+            <p className="text-xs text-on-surface-variant leading-relaxed">
               This platform is built with a modular content architecture. All questionnaires, intervention modules, rubrics, and templates are stored as configurable objects — ready for database or CMS integration. Placeholder items indicate content slots awaiting real content from your team.
             </p>
           </div>

@@ -12,7 +12,6 @@ export default function ReportGenerator() {
   const postRaw = postData?.rawScores || {};
   const intake = assessmentData?.intake || { name: 'Alex Johnson', age: '28', institution: 'Demo Organization', evaluator: 'Dr. Smith' };
 
-  // Use evaluator-merged scores when available, otherwise fall back to original
   const hasEvalScores = mergedPillarScores !== null && evaluations?.length > 0;
 
   const preScores = {};
@@ -35,84 +34,82 @@ export default function ReportGenerator() {
   const handlePrint = () => window.print();
 
   return (
-    <div className="page-pad animate-fade" style={{ maxWidth: 1000, margin: '0 auto' }}>
-      {/* Controls */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
+    <div className="page-pad max-w-[1000px] mx-auto animate-fade">
+      {/* Page header */}
+      <div className="flex justify-between items-start mb-8">
         <div>
-          <h1 style={{ fontSize: 24, fontWeight: 800, marginBottom: 4 }}>Report Generator</h1>
-          <p style={{ fontSize: 14, color: 'var(--text-muted)' }}>Export-ready QIDS Development Report</p>
+          <div className="text-technical-sm font-technical-sm text-primary mb-2">§ · QIDS REPORT</div>
+          <h1 className="text-headline-md font-headline-md text-on-background">Report Generator</h1>
         </div>
-        <div style={{ display: 'flex', gap: 8 }}>
-          <button className="btn btn-secondary" onClick={handlePrint}><Printer size={14} /> Print</button>
-          <button className="btn btn-primary" onClick={handlePrint}><Download size={14} /> Export PDF</button>
+        <div className="flex gap-3">
+          <button onClick={handlePrint}
+            className="px-5 py-2.5 border-[0.5px] border-outline-variant text-on-surface-variant text-label-md font-label-md hover:text-primary hover:border-primary transition-all cursor-pointer bg-transparent uppercase tracking-widest">
+            <Printer size={13} className="inline mr-2" /> Print
+          </button>
+          <button onClick={handlePrint}
+            className="px-5 py-2.5 bg-primary text-on-primary text-label-md font-label-md hover:opacity-90 transition-all cursor-pointer border-none uppercase tracking-widest">
+            <Download size={13} className="inline mr-2" /> Export PDF
+          </button>
         </div>
       </div>
 
       {/* Report type selector */}
-      <div className="report-type-selector" style={{ marginBottom: 24 }}>
+      <div className="flex gap-2 mb-8 pb-6 border-b-[0.5px] border-outline-variant">
         {[
           { id: 'full', label: 'Full QIDS Report' },
           { id: 'profile', label: 'Individual Quotient Profile' },
           { id: 'progress', label: 'Progress & Intervention Summary' },
         ].map(({ id, label }) => (
-          <button key={id} onClick={() => setReportType(id)} style={{
-            padding: '8px 16px', borderRadius: 8, cursor: 'pointer',
-            background: reportType === id ? 'var(--indigo)' : 'var(--navy-4)',
-            color: reportType === id ? 'white' : 'var(--text-secondary)',
-            border: `1px solid ${reportType === id ? 'var(--indigo)' : 'var(--border-light)'}`,
-            fontSize: 13, fontWeight: 500, transition: 'all 0.15s',
-          }}>{label}</button>
+          <button key={id} onClick={() => setReportType(id)}
+            className={`px-5 py-2.5 text-label-md font-label-md transition-all cursor-pointer uppercase tracking-widest ${reportType === id ? 'bg-primary text-on-primary' : 'border-[0.5px] border-outline-variant text-on-surface-variant bg-transparent hover:text-primary hover:border-primary'
+              }`}>
+            {label}
+          </button>
         ))}
       </div>
 
       {/* Report document */}
-      <div id="report-content" style={{
-        background: 'var(--navy-3)', border: '1px solid var(--border)',
-        borderRadius: 16, overflow: 'hidden',
-      }}>
+      <div id="report-content" className="border-[0.5px] border-outline-variant">
         {/* Report header */}
-        <div className="report-header" style={{
-          background: 'linear-gradient(135deg, rgba(99,102,241,0.2), rgba(168,85,247,0.15), rgba(20,184,166,0.1))',
-          borderBottom: '1px solid var(--border)', padding: '32px 40px',
-        }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 12 }}>
+        <div className="p-8 border-b-[0.5px] border-outline-variant">
+          <div className="flex justify-between items-start flex-wrap gap-4">
             <div>
-              <div style={{ fontSize: 11, color: '#818cf8', fontWeight: 600, letterSpacing: '1px', textTransform: 'uppercase', marginBottom: 8 }}>
+              <div className="text-technical-sm font-technical-sm text-primary mb-3 uppercase tracking-widest">
                 Quadrant Intelligence Development System
               </div>
-              <h2 style={{ fontSize: 26, fontWeight: 800, marginBottom: 4 }}>
+              <h2 className="text-headline-md font-headline-md text-on-surface mb-1">
                 {reportType === 'full' ? 'QIDS Development Report' : reportType === 'profile' ? 'Individual Quotient Profile' : 'Progress & Intervention Summary'}
               </h2>
-              <p style={{ fontSize: 14, color: 'var(--text-secondary)' }}>Holistic Intelligence Assessment & Development Analysis</p>
+              <p className="text-technical-sm font-technical-sm text-surface-variant">Holistic Intelligence Assessment & Development Analysis</p>
             </div>
-            <div style={{ textAlign: 'right' }}>
-              <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 4 }}>Context</div>
-              <div style={{ fontSize: 14, fontWeight: 600, color: '#818cf8' }}>{ctx.icon} {ctx.label}</div>
-              <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 8 }}>Generated: {new Date().toLocaleDateString()}</div>
+            <div className="text-right">
+              <div className="text-technical-sm font-technical-sm text-surface-variant mb-1">Context</div>
+              <div className="text-label-md font-label-md text-primary">{ctx.icon} {ctx.label}</div>
+              <div className="text-technical-sm font-technical-sm text-surface-variant mt-3">Generated: {new Date().toLocaleDateString()}</div>
             </div>
           </div>
         </div>
 
-        <div className="report-body" style={{ padding: '32px 40px' }}>
+        <div className="p-8">
           {/* Subject info */}
-          <div className="report-info-grid" style={{ marginBottom: 28 }}>
+          <div className="grid grid-cols-4 gap-3 mb-8">
             {[
               { label: 'Name', val: intake.name || '—' },
               { label: 'Age', val: intake.age || '—' },
               { label: 'Institution', val: intake.institution || '—' },
               { label: 'Evaluator', val: intake.evaluator || '—' },
-              ...(hasEvalScores ? [{ label: 'Eval Scoring', val: <span style={{ color: '#34d399', display: 'flex', alignItems: 'center', gap: 4 }}><UserCheck size={12} /> {evaluations.length} pillar{(evaluations.length > 1 ? 's' : '')} scored</span> }] : []),
+              ...(hasEvalScores ? [{ label: 'Eval Scoring', val: <span className="text-primary flex items-center gap-1"><UserCheck size={12} /> {evaluations.length} pillar{(evaluations.length > 1 ? 's' : '')} scored</span> }] : []),
             ].map(({ label, val }) => (
-              <div key={label} style={{ padding: '10px 14px', background: 'rgba(255,255,255,0.03)', border: '1px solid var(--border-light)', borderRadius: 8 }}>
-                <div style={{ fontSize: 10, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 2 }}>{label}</div>
-                <div style={{ fontSize: 13, fontWeight: 500 }}>{val}</div>
+              <div key={label} className="p-3 bg-surface-container-low border-[0.5px] border-outline-variant">
+                <div className="text-technical-sm font-technical-sm text-surface-variant uppercase tracking-widest mb-1">{label}</div>
+                <div className="text-label-md font-label-md text-on-surface">{val}</div>
               </div>
             ))}
           </div>
 
           {/* Score summary */}
-          <h3 style={{ fontSize: 16, fontWeight: 700, marginBottom: 16 }}>Quotient Score Summary</h3>
-          <div className="report-score-grid" style={{ marginBottom: 24 }}>
+          <h3 className="text-label-md font-label-md text-on-surface mb-6 uppercase tracking-widest">Quotient Score Summary</h3>
+          <div className="grid grid-cols-4 gap-3 mb-8">
             {Object.entries(PILLARS).map(([id, pillar]) => {
               const pre = preScores[id];
               const post = postScores[id];
@@ -122,75 +119,69 @@ export default function ReportGenerator() {
               const grade = getGrade(normalizedPost);
               const pct = Math.min(Math.round((post / displayMax) * 100), 100);
               return (
-                <div key={id} style={{
-                  background: 'var(--navy-4)', border: `1px solid ${pillar.color}30`,
-                  borderRadius: 12, padding: 16, position: 'relative', overflow: 'hidden',
-                }}>
-                  <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 3, background: pillar.gradient }} />
-                  <div style={{ fontSize: 11, color: pillar.color, fontWeight: 600, marginBottom: 4 }}>{pillar.short}</div>
-                  <div style={{ fontSize: 28, fontWeight: 800, color: grade.color, fontFamily: 'Space Grotesk' }}>{post}</div>
-                  <div style={{ fontSize: 10, color: 'var(--text-muted)', marginBottom: 4 }}>/ {displayMax} · Grade {grade.grade} — {grade.label}</div>
-                  {isIQ && <div style={{ fontSize: 9, color: '#06b6d4', marginBottom: 4 }}>Normalized: {normalizedPost}/100 for unified score</div>}
-                  <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>Pre: {pre} | Δ {post - pre > 0 ? '+' : ''}{post - pre}</div>
-                  <div className="progress-bar" style={{ marginTop: 8 }}>
-                    <div className="progress-fill" style={{ width: `${pct}%`, background: pillar.gradient }} />
+                <div key={id} className="p-4 bg-surface-container-low border-[0.5px] border-outline-variant relative">
+                  <div className="text-technical-sm font-technical-sm mb-2" style={{ color: pillar.color }}>{pillar.short}</div>
+                  <div className="text-[28px] font-technical-sm text-on-surface">{post}</div>
+                  <div className="text-technical-sm font-technical-sm text-surface-variant mt-1">/ {displayMax} · Grade {grade.grade}</div>
+                  {isIQ && <div className="text-[10px] font-technical-sm text-primary mt-1">Normalized: {normalizedPost}/100</div>}
+                  <div className="text-technical-sm font-technical-sm text-surface-variant mt-1">Pre: {pre} | Δ {post - pre > 0 ? '+' : ''}{post - pre}</div>
+                  <div className="h-[3px] bg-surface-variant/30 mt-3">
+                    <div className="h-full transition-all duration-500" style={{ width: `${pct}%`, backgroundColor: pillar.color }} />
                   </div>
-                  <div style={{ fontSize: 10, color: 'var(--text-muted)', marginTop: 4 }}>Weight: ×{pillar.weight.toFixed(2)}</div>
+                  <div className="text-technical-sm font-technical-sm text-surface-variant mt-2">Weight: ×{pillar.weight.toFixed(2)}</div>
                 </div>
               );
             })}
           </div>
 
           {/* Unified score */}
-          <div className="report-unified-grid" style={{ marginBottom: 28 }}>
-            <div style={{
-              padding: 20, background: `${overallGrade.bg}`,
-              border: `1px solid ${overallGrade.color}40`, borderRadius: 14,
-            }}>
-              <div style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 4 }}>Unified QIDS Score (Post-Intervention)</div>
-              <div style={{ fontSize: 52, fontWeight: 900, color: overallGrade.color, fontFamily: 'Space Grotesk', lineHeight: 1 }}>{postUnified}</div>
-              <div style={{ fontSize: 14, color: overallGrade.color, marginTop: 4 }}>Grade {overallGrade.grade}: {overallGrade.label}</div>
-              <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 8 }}>
+          <div className="grid grid-cols-2 gap-4 mb-8">
+            <div className="p-6 border-[0.5px] border-primary/30 bg-primary/5">
+              <div className="text-technical-sm font-technical-sm text-surface-variant mb-2 uppercase tracking-widest">Unified QIDS Score</div>
+              <div className="text-[52px] font-technical-sm text-on-surface leading-none">{postUnified}</div>
+              <div className="text-label-md font-label-md text-primary mt-2">Grade {overallGrade.grade}: {overallGrade.label}</div>
+              <div className="text-technical-sm font-technical-sm text-surface-variant mt-3">
                 Pre-Intervention: {preUnified} | Improvement: +{postUnified - preUnified} pts
               </div>
             </div>
-            <div style={{ padding: 20, background: 'var(--navy-4)', border: '1px solid var(--border-light)', borderRadius: 14 }}>
-              <div style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 12 }}>Weighted Score Computation</div>
+            <div className="p-6 bg-surface-container-low border-[0.5px] border-outline-variant">
+              <div className="text-technical-sm font-technical-sm text-surface-variant mb-4 uppercase tracking-widest">Weighting</div>
               {Object.entries(WEIGHTS).map(([k, w]) => (
-                <div key={k} style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
-                  <span style={{ fontSize: 12, color: PILLARS[k].color }}>{k} ({postScores[k]}) × {w.toFixed(2)}</span>
-                  <span style={{ fontSize: 12, fontWeight: 600 }}>{Math.round(postScores[k] * w)}</span>
+                <div key={k} className="flex justify-between mb-2 text-technical-sm font-technical-sm">
+                  <span style={{ color: PILLARS[k].color }}>{k} ({postScores[k]}) × {w.toFixed(2)}</span>
+                  <span className="text-on-surface font-semibold">{Math.round(postScores[k] * w)}</span>
                 </div>
               ))}
-              <div style={{ borderTop: '1px solid var(--border-light)', paddingTop: 6, marginTop: 6, display: 'flex', justifyContent: 'space-between' }}>
-                <span style={{ fontSize: 12, fontWeight: 600 }}>Unified Score</span>
-                <span style={{ fontSize: 14, fontWeight: 800, color: overallGrade.color }}>{postUnified}</span>
+              <div className="border-t-[0.5px] border-outline-variant pt-3 mt-3 flex justify-between">
+                <span className="text-label-md font-label-md text-on-surface">Unified Score</span>
+                <span className="text-label-md font-label-md text-primary">{postUnified}</span>
               </div>
             </div>
           </div>
 
           {/* Radar + Heatmap */}
-          <div className="report-radar-grid" style={{ marginBottom: 28 }}>
-            <div className="card">
-              <h4 style={{ fontSize: 13, fontWeight: 600, marginBottom: 12 }}>Quotient Radar Profile</h4>
+          <div className="grid grid-cols-2 gap-4 mb-8">
+            <div className="p-6 bg-surface-container-low border-[0.5px] border-outline-variant">
+              <h4 className="text-label-md font-label-md text-on-surface mb-4 uppercase tracking-widest">Quotient Radar Profile</h4>
               <QIDSRadar data={preScores} compare={postScores} size={240} />
             </div>
-            <div className="card">
-              <h4 style={{ fontSize: 13, fontWeight: 600, marginBottom: 12 }}>Sub-Parameter Heatmap</h4>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            <div className="p-6 bg-surface-container-low border-[0.5px] border-outline-variant">
+              <h4 className="text-label-md font-label-md text-on-surface mb-4 uppercase tracking-widest">Sub-Parameter Heatmap</h4>
+              <div className="flex flex-col gap-3">
                 {Object.entries(PILLARS).map(([pid, pillar]) => (
                   <div key={pid}>
-                    <div style={{ fontSize: 10, color: pillar.color, fontWeight: 600, marginBottom: 4 }}>{pillar.short}</div>
-                    <div style={{ display: 'flex', gap: 3, flexWrap: 'wrap' }}>
+                    <div className="text-technical-sm font-technical-sm mb-2" style={{ color: pillar.color }}>{pillar.short}</div>
+                    <div className="flex gap-1.5 flex-wrap">
                       {pillar.subParams.map(sp => {
                         const raw = postRaw[pid]?.[sp.id] || 0;
                         const pct = Math.round((raw / sp.max) * 100);
-                        const bg = pct >= 75 ? '#10b981' : pct >= 60 ? '#f59e0b' : '#ef4444';
+                        const bg = pct >= 75 ? 'text-emerald-500' : pct >= 60 ? 'text-amber-500' : 'text-red-500';
+                        const borderBg = pct >= 75 ? 'border-emerald-500/40' : pct >= 60 ? 'border-amber-500/40' : 'border-red-500/40';
                         return (
-                          <div key={sp.id} style={{
-                            padding: '3px 6px', borderRadius: 4, fontSize: 9, fontWeight: 600,
-                            background: `${bg}20`, border: `1px solid ${bg}40`, color: bg,
-                          }}>{pct}%</div>
+                          <div key={sp.id}
+                            className={`px-2 py-1 text-[10px] font-technical-sm font-semibold border-[0.5px] ${bg} ${borderBg} ${pct >= 75 ? 'bg-emerald-500/10' : pct >= 60 ? 'bg-amber-500/10' : 'bg-red-500/10'}`}>
+                            {pct}%
+                          </div>
                         );
                       })}
                     </div>
@@ -201,54 +192,47 @@ export default function ReportGenerator() {
           </div>
 
           {/* Career & Skill Shape */}
-          <div className="report-career-grid" style={{ marginBottom: 28 }}>
-            <div className="card">
-              <h4 style={{ fontSize: 13, fontWeight: 600, marginBottom: 12 }}>Career Guidance</h4>
-              <div style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
-                <div>
-                  <div style={{ fontSize: 14, fontWeight: 700, marginBottom: 4 }}>{careerProfile.label}</div>
-                  <p style={{ fontSize: 12, color: 'var(--text-secondary)', lineHeight: 1.5, marginBottom: 8 }}>{careerProfile.desc}</p>
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
-                    {careerProfile.roles.map(r => (
-                      <span key={r} style={{ padding: '2px 8px', borderRadius: 20, background: 'rgba(99,102,241,0.15)', border: '1px solid rgba(99,102,241,0.3)', fontSize: 11, color: '#818cf8' }}>{r}</span>
-                    ))}
-                  </div>
-                </div>
+          <div className="grid grid-cols-2 gap-4 mb-8">
+            <div className="p-6 bg-surface-container-low border-[0.5px] border-outline-variant">
+              <h4 className="text-label-md font-label-md text-on-surface mb-4 uppercase tracking-widest">Career Guidance</h4>
+              <div className="text-headline-md font-headline-md text-on-surface mb-2">{careerProfile.label}</div>
+              <p className="text-technical-sm font-technical-sm text-surface-variant leading-relaxed mb-4">{careerProfile.desc}</p>
+              <div className="flex flex-wrap gap-2">
+                {careerProfile.roles.map(r => (
+                  <span key={r} className="px-3 py-1 border-[0.5px] border-primary/30 bg-primary/5 text-technical-sm font-technical-sm text-primary">{r}</span>
+                ))}
               </div>
             </div>
-            <div className="card">
-              <h4 style={{ fontSize: 13, fontWeight: 600, marginBottom: 12 }}>Skill Shape Topology</h4>
-              <div style={{ display: 'flex', gap: 16, alignItems: 'center' }}>
-                <div style={{ fontSize: 56, fontWeight: 900, color: '#818cf8', fontFamily: 'Space Grotesk' }}>{skillShape}</div>
+            <div className="p-6 bg-surface-container-low border-[0.5px] border-outline-variant">
+              <h4 className="text-label-md font-label-md text-on-surface mb-4 uppercase tracking-widest">Skill Shape</h4>
+              <div className="flex items-center gap-4">
+                <div className="text-[56px] font-technical-sm text-primary">{skillShape}</div>
                 <div>
-                  <div style={{ fontSize: 15, fontWeight: 700, marginBottom: 4 }}>{skillShapeData?.label}</div>
-                  <p style={{ fontSize: 12, color: 'var(--text-secondary)', lineHeight: 1.5 }}>{skillShapeData?.desc}</p>
+                  <div className="text-label-md font-label-md text-on-surface mb-1">{skillShapeData?.label}</div>
+                  <p className="text-technical-sm font-technical-sm text-surface-variant leading-relaxed">{skillShapeData?.desc}</p>
                 </div>
               </div>
             </div>
           </div>
 
           {/* Gap analysis */}
-          <div className="card" style={{ marginBottom: 24 }}>
-            <h4 style={{ fontSize: 13, fontWeight: 600, marginBottom: 12 }}>Gap Analysis & Recommendations</h4>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          <div className="p-6 bg-surface-container-low border-[0.5px] border-outline-variant mb-8">
+            <h4 className="text-label-md font-label-md text-on-surface mb-4 uppercase tracking-widest">Gap Analysis & Recommendations</h4>
+            <div className="flex flex-col gap-3">
               {Object.entries(PILLARS).map(([id, pillar]) => {
                 const score = postScores[id];
-                const gap = 100 - score;
                 const isCrit = score < 60;
                 return (
-                  <div key={id} style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                    <span style={{ fontSize: 12, fontWeight: 600, color: pillar.color, minWidth: 30 }}>{id}</span>
-                    <div style={{ flex: 1 }}>
-                      <div className="progress-bar">
-                        <div className="progress-fill" style={{ width: `${score}%`, background: pillar.gradient }} />
-                      </div>
+                  <div key={id} className="flex items-center gap-4">
+                    <span className="text-label-md font-label-md min-w-[30px]" style={{ color: pillar.color }}>{id}</span>
+                    <div className="flex-1 h-[5px] bg-surface-variant/30">
+                      <div className="h-full transition-all duration-500" style={{ width: `${score}%`, backgroundColor: pillar.color }} />
                     </div>
-                    <span style={{ fontSize: 12, color: isCrit ? '#ef4444' : '#10b981', fontWeight: 600, minWidth: 40 }}>{score}/100</span>
+                    <span className={`text-technical-sm font-technical-sm font-semibold min-w-[50px] ${isCrit ? 'text-error' : 'text-primary'}`}>{score}/100</span>
                     {isCrit && (
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                        <AlertTriangle size={11} color="#ef4444" />
-                        <span style={{ fontSize: 10, color: '#fca5a5' }}>Critical</span>
+                      <div className="flex items-center gap-1">
+                        <AlertTriangle size={11} className="text-error" />
+                        <span className="text-technical-sm font-technical-sm text-error">Critical</span>
                       </div>
                     )}
                   </div>
@@ -258,14 +242,11 @@ export default function ReportGenerator() {
           </div>
 
           {/* Final recommendation */}
-          <div style={{
-            padding: 20, background: 'linear-gradient(135deg, rgba(99,102,241,0.1), rgba(20,184,166,0.08))',
-            border: '1px solid rgba(99,102,241,0.25)', borderRadius: 14,
-          }}>
-            <h4 style={{ fontSize: 14, fontWeight: 700, marginBottom: 10 }}>Final Recommendation Summary</h4>
-            <p style={{ fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.7 }}>
-              Based on the post-intervention QIDS assessment, {intake.name || 'the individual'} demonstrates a <strong style={{ color: overallGrade.color }}>{overallGrade.label}</strong> overall profile (Grade {overallGrade.grade}, Score: {postUnified}/100).
-              The profile indicates a <strong style={{ color: '#818cf8' }}>{skillShapeData?.label}</strong> skill topology, best aligned with the <strong style={{ color: '#818cf8' }}>{careerProfile.label}</strong>.
+          <div className="p-6 border-[0.5px] border-primary/30 bg-primary/5">
+            <h4 className="text-label-md font-label-md text-on-surface mb-3 uppercase tracking-widest">Final Recommendation</h4>
+            <p className="text-technical-sm font-technical-sm text-on-surface-variant leading-relaxed">
+              Based on the post-intervention QIDS assessment, {intake.name || 'the individual'} demonstrates a <strong className="text-primary">{overallGrade.label}</strong> overall profile (Grade {overallGrade.grade}, Score: {postUnified}/100).
+              The profile indicates a <strong className="text-primary">{skillShapeData?.label}</strong> skill topology, best aligned with the <strong className="text-primary">{careerProfile.label}</strong>.
               Continued focus on maintenance activities and periodic reassessment is recommended to sustain and build upon the gains achieved during the intervention phase.
             </p>
           </div>

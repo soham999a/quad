@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { getUserAssessments, getUserReports } from '../services/firestoreService';
 import { PILLARS, getGrade, computeWeightedScore } from '../data/qidsData';
-import { ClipboardList, FileText, TrendingUp, Plus, Clock, ChevronRight, Activity, UserCheck } from 'lucide-react';
+import { ClipboardList, TrendingUp, FileText, Activity, ChevronRight } from 'lucide-react';
 import SeedExampleData from '../components/SeedExampleData';
 
 export default function Dashboard() {
@@ -17,7 +17,7 @@ export default function Dashboard() {
     if (!user) return;
     Promise.all([getUserAssessments(user.uid), getUserReports(user.uid)])
       .then(([a, r]) => { setAssessments(a); setReports(r); })
-      .catch(() => console.warn('Failed to load assessments/reports'))
+      .catch(() => {})
       .finally(() => setLoading(false));
   }, [user]);
 
@@ -26,142 +26,153 @@ export default function Dashboard() {
 
   const getLinkedPost = (preId) => postAssessments.find(p => p.linkedAssessmentId === preId) || null;
 
+  const totalAssessments = preAssessments.length;
+  const totalReports = reports.length;
+  const avgScore = preAssessments.length > 0
+    ? Math.round(preAssessments.reduce((sum, a) => {
+      const scores = a.pillarScores || {};
+      return sum + (computeWeightedScore(scores) || 0);
+    }, 0) / preAssessments.length)
+    : '--';
+
   return (
-    <div className="page-pad animate-fade" style={{ maxWidth: 1100, margin: '0 auto' }}>
-      {/* Welcome */}
-      <div className="dashboard-welcome" style={{
-        background: 'linear-gradient(135deg, rgba(99,102,241,0.12), rgba(168,85,247,0.08))',
-        border: '1px solid var(--border)', borderRadius: 16, padding: '20px 24px', marginBottom: 24,
-        display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-      }}>
-        <div>
-          <h1 style={{ fontSize: 22, fontWeight: 800, marginBottom: 4 }}>
-            Welcome back, {userProfile?.name || user?.displayName || 'there'}
-          </h1>
-          <p style={{ fontSize: 14, color: 'var(--text-muted)' }}>
-            {userProfile?.context ? `Context: ${userProfile.context}` : ''} · {userProfile?.role || 'Individual'}
-          </p>
+    <div className="page-pad max-w-[1200px] mx-auto animate-fade">
+      {/* Page Header */}
+      <section className="mb-10 md:mb-16">
+        <div className="text-technical-sm font-technical-sm text-primary mb-2">§ · DASHBOARD</div>
+        <h1 className="text-headline-md font-headline-md text-on-background page-headline">Good morning, {userProfile?.name || user?.displayName || 'there'}.</h1>
+      </section>
+
+      {/* Stats Row */}
+      <section className="responsive-grid-4 w-full border-y-[0.5px] border-outline-variant mb-10 md:mb-16">
+        <div className="py-6 md:py-8 pr-4 md:pr-8 border-r-[0.5px] border-outline-variant border-b-[0.5px] md:border-b-0 border-outline-variant">
+          <div className="text-technical-sm font-technical-sm text-surface-variant mb-3 md:mb-4 uppercase tracking-widest">Assessments</div>
+          <div className="text-[24px] md:text-[28px] font-technical-sm text-on-background">{totalAssessments}</div>
         </div>
-        <button className="btn btn-primary" onClick={() => navigate('/app/assessment')}>
-          <Plus size={14} /> New Assessment
-        </button>
-      </div>
+        <div className="py-6 md:py-8 px-4 md:px-8 border-r-[0.5px] border-outline-variant border-b-[0.5px] md:border-b-0 border-outline-variant">
+          <div className="text-technical-sm font-technical-sm text-surface-variant mb-3 md:mb-4 uppercase tracking-widest">Reports</div>
+          <div className="text-[24px] md:text-[28px] font-technical-sm text-on-background">{totalReports}</div>
+        </div>
+        <div className="py-6 md:py-8 px-4 md:px-8 border-r-[0.5px] border-outline-variant">
+          <div className="text-technical-sm font-technical-sm text-surface-variant mb-3 md:mb-4 uppercase tracking-widest">Avg Score</div>
+          <div className="text-[24px] md:text-[28px] font-technical-sm text-on-background">{avgScore}</div>
+        </div>
+        <div className="py-6 md:py-8 pl-4 md:pl-8">
+          <div className="text-technical-sm font-technical-sm text-surface-variant mb-3 md:mb-4 uppercase tracking-widest">Since Last</div>
+          <div className="text-[24px] md:text-[28px] font-technical-sm text-on-background">{preAssessments.length ? 'Active' : '--'}</div>
+        </div>
+      </section>
 
-      {/* Stats */}
-      <div className="grid-4" style={{ marginBottom: 24 }}>
-        {[
-          { label: 'Assessments', val: preAssessments.length, icon: ClipboardList, color: '#6366f1' },
-          { label: 'Post-Evaluations', val: postAssessments.length, icon: TrendingUp, color: '#14b8a6' },
-          { label: 'Reports Generated', val: reports.length, icon: FileText, color: '#a855f7' },
-          { label: 'Active Phase', val: preAssessments.length > postAssessments.length ? 'Intervention' : preAssessments.length === 0 ? 'Not Started' : 'Complete', icon: Activity, color: '#f59e0b', isText: true },
-        ].map(({ label, val, icon: Icon, color, isText }) => (
-          <div key={label} style={{ background: 'var(--navy-4)', border: '1px solid var(--border-light)', borderRadius: 12, padding: 16 }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-              <div>
-                <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 4 }}>{label}</div>
-                <div style={{ fontSize: isText ? 14 : 28, fontWeight: 800, color, fontFamily: 'Space Grotesk' }}>{val}</div>
-              </div>
-              <div style={{ width: 32, height: 32, borderRadius: 8, background: `${color}15`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <Icon size={15} color={color} />
-              </div>
-            </div>
-          </div>
-        ))}
-      </div>
-
+      {/* Seed Data */}
       {!loading && preAssessments.length === 0 && (
-        <div style={{ marginBottom: 28 }}>
+        <div className="mb-8 md:mb-12">
           <SeedExampleData onDone={() => {
             Promise.all([getUserAssessments(user.uid), getUserReports(user.uid)])
-              .then(([a, r]) => { setAssessments(a); setReports(r); }).catch(() => console.warn('Failed to reload after seed'));
+              .then(([a, r]) => { setAssessments(a); setReports(r); })
+              .catch(() => {});
           }} />
         </div>
       )}
 
-      <div className="grid-2" style={{ gap: 20 }}>
+      {/* Main Grid */}
+      <div className="responsive-grid-12 gap-6 md:gap-12">
         {/* Recent Assessments */}
-        <div className="card">
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-            <h3 style={{ fontSize: 14, fontWeight: 700 }}>Recent Assessments</h3>
-            <button className="btn btn-ghost btn-sm" onClick={() => navigate('/app/assessment')}>View all</button>
+        <div className="md:col-span-8 col-span-full">
+          <div className="flex justify-between items-end mb-4 md:mb-6 pb-2 border-b-[0.5px] border-outline-variant">
+            <h2 className="text-label-md font-label-md text-on-background">RECENT ASSESSMENTS</h2>
+            <span className="text-technical-sm font-technical-sm text-surface-variant">
+              Showing 01 — {Math.min(preAssessments.length, 4)} of {preAssessments.length}
+            </span>
           </div>
 
           {loading ? (
-            <div style={{ textAlign: 'center', padding: 24, color: 'var(--text-muted)', fontSize: 13 }}>Loading...</div>
+            <div className="py-8 text-center text-technical-sm font-technical-sm text-surface-variant">Loading...</div>
           ) : preAssessments.length === 0 ? (
-            <div style={{ textAlign: 'center', padding: 24 }}>
-              <ClipboardList size={28} color="var(--text-muted)" style={{ marginBottom: 8, opacity: 0.4 }} />
-              <div style={{ fontSize: 13, color: 'var(--text-muted)' }}>No assessments yet</div>
-              <button className="btn btn-primary btn-sm" style={{ marginTop: 12 }} onClick={() => navigate('/app/assessment')}>
-                Start First Assessment
+            <div className="py-10 md:py-16 text-center">
+              <ClipboardList size={24} className="text-surface-variant mx-auto mb-4 opacity-40" />
+              <div className="text-technical-sm font-technical-sm text-surface-variant mb-4">No assessments recorded</div>
+              <button onClick={() => navigate('/app/assessment')}
+                className="px-6 py-3 md:py-2 bg-primary text-on-primary text-label-md font-label-md hover:opacity-90 transition-all cursor-pointer border-none">
+                START FIRST ASSESSMENT
               </button>
             </div>
           ) : (
-            preAssessments.slice(0, 5).map(a => {
-              const scores = a.pillarScores || {};
-              const unified = computeWeightedScore(scores);
-              const grade = getGrade(unified);
-              return (
-                <div key={a.id} onClick={() => navigate('/app/pre-intervention', { state: { assessment: a, postAssessment: getLinkedPost(a.id) } })} style={{
-                  display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                  padding: '10px 12px', borderRadius: 8, cursor: 'pointer', marginBottom: 4,
-                  background: 'rgba(255,255,255,0.03)', border: '1px solid var(--border-light)',
-                  transition: 'all 0.15s',
-                }}
-                  onMouseEnter={e => e.currentTarget.style.borderColor = 'var(--indigo)'}
-                  onMouseLeave={e => e.currentTarget.style.borderColor = 'var(--border-light)'}
-                >
-                  <div>
-                    <div style={{ fontSize: 13, fontWeight: 500 }}>{a.intake?.name || 'Assessment'}</div>
-                    <div style={{ fontSize: 11, color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: 4, marginTop: 2 }}>
-                      <Clock size={10} />
-                      {a.createdAt?.toDate ? a.createdAt.toDate().toLocaleDateString() : 'Recent'}
+            <div className="flex flex-col">
+              {preAssessments.slice(0, 4).map((a, idx) => {
+                const scores = a.pillarScores || {};
+                const unified = computeWeightedScore(scores);
+                const grade = unified ? getGrade(unified) : null;
+                const hasPost = !!getLinkedPost(a.id);
+                return (
+                  <div key={a.id}
+                    onClick={() => navigate('/app/assessment', { state: { assessment: a, postAssessment: getLinkedPost(a.id) } })}
+                    className="h-14 md:h-16 flex items-center justify-between border-b-[0.5px] border-outline-variant group hover:bg-surface-container-low transition-colors px-2 cursor-pointer touch-target">
+                    <div className="flex items-center gap-4 md:gap-8 min-w-0 flex-1">
+                      <span className="text-technical-sm font-technical-sm text-surface-variant flex-shrink-0">{String(idx + 1).padStart(2, '0')}</span>
+                      <div className="min-w-0 flex-1">
+                        <div className="text-label-md font-label-md text-on-background truncate">{a.intake?.name || 'Assessment'}</div>
+                        <div className="text-technical-sm font-technical-sm text-surface-variant truncate">
+                          {a.createdAt?.toDate ? a.createdAt.toDate().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'Recent'}
+                          {hasPost && ' · Post-Complete'}
+                        </div>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-3 md:gap-8 flex-shrink-0">
+                      {unified && grade ? (
+                        <span className="px-2 md:px-3 py-1 bg-primary/10 text-primary text-technical-sm font-technical-sm tracking-wider">
+                          GRADE {grade.grade}
+                        </span>
+                      ) : (
+                        <span className="px-2 md:px-3 py-1 border-[0.5px] border-outline text-technical-sm font-technical-sm text-outline tracking-wider">
+                          PENDING
+                        </span>
+                      )}
+                      <ChevronRight size={14} className="text-surface-variant flex-shrink-0" />
                     </div>
                   </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                    {getLinkedPost(a.id) && (
-                      <span className="post-badge">✓ Post</span>
-                    )}
-                    <div style={{ padding: '3px 8px', borderRadius: 6, background: grade.bg, border: `1px solid ${grade.color}40`, fontSize: 12, fontWeight: 700, color: grade.color }}>
-                      {grade.grade} · {unified}
-                    </div>
-                    <ChevronRight size={13} color="var(--text-muted)" />
-                  </div>
-                </div>
-              );
-            })
+                );
+              })}
+            </div>
+          )}
+
+          {preAssessments.length > 0 && (
+            <div className="mt-6 md:mt-8">
+              <button onClick={() => navigate('/app/assessment')}
+                className="w-full md:w-auto px-6 py-3 md:py-2 border-[0.5px] border-outline-variant text-label-md font-label-md text-surface-variant hover:text-primary hover:border-primary transition-all cursor-pointer bg-transparent">
+                VIEW ALL ASSESSMENTS
+              </button>
+            </div>
           )}
         </div>
 
         {/* Quick Actions */}
-        <div className="card">
-          <h3 style={{ fontSize: 14, fontWeight: 700, marginBottom: 16 }}>Quick Actions</h3>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+        <div className="md:col-span-4 col-span-full">
+          <div className="mb-4 md:mb-6 pb-2 border-b-[0.5px] border-outline-variant">
+            <h2 className="text-label-md font-label-md text-on-background">QUICK ACTIONS</h2>
+          </div>
+          <ul className="flex flex-col gap-4 md:gap-6">
             {[
-              { label: 'Start New Assessment', desc: 'Begin baseline evaluation', path: '/app/assessment', color: '#6366f1', icon: ClipboardList },
-              { label: 'My Evaluator', desc: 'View evaluator & Part B scores', path: '/app/my-evaluator', color: '#14b8a6', icon: UserCheck },
-              { label: 'Pre-Intervention Analysis', desc: 'Review scores and gaps', path: '/app/pre-intervention', color: '#06b6d4', icon: TrendingUp },
-              { label: 'Generate Report', desc: 'Export development report', path: '/app/report', color: '#10b981', icon: FileText },
-            ].map(({ label, desc, path, color, icon: Icon }) => (
-              <button key={path} onClick={() => navigate(path)} style={{
-                display: 'flex', alignItems: 'center', gap: 12, padding: '12px 14px',
-                borderRadius: 10, cursor: 'pointer', textAlign: 'left',
-                background: 'rgba(255,255,255,0.03)', border: '1px solid var(--border-light)',
-                transition: 'all 0.15s', width: '100%',
-              }}
-                onMouseEnter={e => { e.currentTarget.style.borderColor = color; e.currentTarget.style.background = `${color}08`; }}
-                onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border-light)'; e.currentTarget.style.background = 'rgba(255,255,255,0.03)'; }}
-              >
-                <div style={{ width: 32, height: 32, borderRadius: 8, background: `${color}15`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                  <Icon size={14} color={color} />
-                </div>
-                <div>
-                  <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-primary)' }}>{label}</div>
-                  <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>{desc}</div>
-                </div>
-                <ChevronRight size={13} color="var(--text-muted)" style={{ marginLeft: 'auto' }} />
-              </button>
+              { label: 'Start Assessment', path: '/app/assessment' },
+              { label: 'Generate Report', path: '/app/report' },
+              { label: 'View My Evaluator', path: '/app/my-evaluator' },
+              { label: 'Intervention Plan', path: '/app/intervention-plan' },
+            ].map(({ label, path }) => (
+              <li key={label}>
+                <button onClick={() => navigate(path)}
+                  className="group flex items-center justify-between w-full text-body-md text-on-surface-variant hover:text-primary transition-colors cursor-pointer bg-transparent border-none touch-target">
+                  <span>{label}</span>
+                  <span className="font-technical-sm group-hover:translate-x-1 transition-transform">→</span>
+                </button>
+                <div className="h-[0.5px] bg-outline-variant opacity-50 mt-4 md:mt-6"></div>
+              </li>
             ))}
+          </ul>
+
+          <div className="mt-10 md:mt-16 p-6 md:p-8 border-[0.5px] border-outline-variant bg-surface-container-lowest">
+            <div className="text-technical-sm font-technical-sm text-primary mb-4">SYSTEM NOTIFICATION</div>
+            <p className="text-body-md text-on-surface-variant leading-relaxed">
+              Your intelligence profile is being updated. New dimensional insights will be available upon completion of your next assessment.
+            </p>
           </div>
         </div>
       </div>

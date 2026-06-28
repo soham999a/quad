@@ -85,54 +85,50 @@ export default function MyEvaluator() {
 
   if (loading) {
     return (
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '40vh' }}>
-        <div style={{ fontSize: 13, color: 'var(--text-muted)' }}>Loading...</div>
+      <div className="flex items-center justify-center min-h-[40vh]">
+        <div className="text-sm text-surface-variant">Loading...</div>
       </div>
     );
   }
 
   return (
-    <div style={{ maxWidth: 720, margin: '0 auto', padding: '24px 20px' }}>
+    <div className="max-w-[720px] mx-auto px-5 py-6">
       {/* Header */}
-      <div style={{ marginBottom: 28 }}>
-        <h1 style={{ fontSize: 24, fontWeight: 800, marginBottom: 6 }}>My Evaluator</h1>
-        <p style={{ fontSize: 13, color: 'var(--text-muted)' }}>Select an evaluator to assess your Part B activities</p>
+      <div className="mb-7">
+        <h1 className="text-2xl font-extrabold mb-1.5">My Evaluator</h1>
+        <p className="text-sm text-surface-variant">Select an evaluator to assess your Part B activities</p>
       </div>
 
       {/* Current evaluator */}
       {currentEvaluator ? (
-        <div style={{ background: 'var(--navy-3)', border: '1px solid var(--border)', borderRadius: 16, padding: 24, marginBottom: 28 }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-              <div style={{ width: 44, height: 44, borderRadius: '50%', background: 'linear-gradient(135deg, #6366f1, #a855f7)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                <span style={{ fontSize: 18, fontWeight: 800, color: 'white' }}>
+        <div className="bg-surface-container-low border border-outline-variant rounded-2xl p-6 mb-7">
+          <div className="flex items-center justify-between flex-wrap gap-3">
+            <div className="flex items-center gap-3.5">
+              <div className="w-11 h-11 rounded-full bg-[#6366f1] flex items-center justify-center shrink-0">
+                <span className="text-lg font-extrabold text-white">
                   {(currentEvaluator.name || 'E')[0].toUpperCase()}
                 </span>
               </div>
               <div>
-                <div style={{ fontSize: 15, fontWeight: 600 }}>{currentEvaluator.name || 'Evaluator'}</div>
-                <div style={{ fontSize: 12, color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: 4 }}>
-                  <Mail size={11} /> {currentEvaluator.email || ''}
+                <div className="text-base font-semibold">{currentEvaluator.name || 'Evaluator'}</div>
+                <div className="text-xs text-surface-variant flex items-center gap-1">
+                  <Mail size={11} className="text-surface-variant" /> {currentEvaluator.email || ''}
                 </div>
               </div>
             </div>
-            <button onClick={handleRemove} disabled={assigning} style={{
-              display: 'flex', alignItems: 'center', gap: 6, padding: '8px 16px', borderRadius: 8,
-              background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.2)',
-              color: '#f87171', cursor: 'pointer', fontSize: 12, fontWeight: 500, fontFamily: 'Inter',
-            }}>
+            <button onClick={handleRemove} disabled={assigning} className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg cursor-pointer text-xs font-medium" style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.2)', color: '#f87171' }}>
               <UserX size={13} /> Remove
             </button>
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 12, padding: '8px 12px', background: 'rgba(16,185,129,0.08)', borderRadius: 8, border: '1px solid rgba(16,185,129,0.15)' }}>
+          <div className="flex items-center gap-1.5 mt-3 px-3 py-2 rounded-lg border" style={{ background: 'rgba(16,185,129,0.08)', borderColor: 'rgba(16,185,129,0.15)' }}>
             <UserCheck size={13} color="#34d399" />
-            <span style={{ fontSize: 12, color: '#6ee7b7' }}>You are assigned to this evaluator</span>
+            <span className="text-xs" style={{ color: '#6ee7b7' }}>You are assigned to this evaluator</span>
           </div>
 
           {/* Evaluator Scores */}
           {evalAssessments.length > 0 && (
-            <div style={{ marginTop: 16 }}>
-              <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 10 }}>Evaluator Scores</div>
+            <div className="mt-4">
+              <div className="text-sm font-bold mb-2.5">Evaluator Scores</div>
               {evalAssessments.map(a => {
                 const evals = a.evaluations || [];
                 const scoredPillars = evals.filter(e => e.status === 'completed').map(e => e.pillar);
@@ -165,23 +161,19 @@ export default function MyEvaluator() {
                 const grade = getGrade(Math.round(score));
 
                 return (
-                  <div key={a.id} style={{
-                    padding: 12, marginBottom: 8, borderRadius: 8,
-                    background: 'rgba(255,255,255,0.03)', border: '1px solid var(--border-light)',
-                    cursor: 'pointer',
-                  }} onClick={() => navigate('/app/report')}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <div key={a.id} className="px-3 py-3 mb-2 rounded-lg cursor-pointer" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid var(--border-light)' }} onClick={() => navigate('/app/report')}>
+                    <div className="flex justify-between items-center">
                       <div>
-                        <div style={{ fontSize: 12, fontWeight: 600 }}>
+                        <div className="text-xs font-semibold">
                           {a.intake?.name || 'Assessment'} — {a.createdAt?.toDate ? a.createdAt.toDate().toLocaleDateString() : ''}
                         </div>
-                        <div style={{ fontSize: 11, color: 'var(--text-muted)', display: 'flex', gap: 6, marginTop: 3, flexWrap: 'wrap' }}>
+                        <div className="text-xs text-surface-variant flex gap-1.5 mt-1 flex-wrap">
                           {scoredPillars.map(p => (
-                            <span key={p} style={{ padding: '1px 6px', borderRadius: 4, background: `${PILLARS[p]?.color}15`, color: PILLARS[p]?.color, fontSize: 10, fontWeight: 600 }}>{p} ✓</span>
+                            <span key={p} className="px-1.5 py-0.5 rounded text-[10px] font-semibold" style={{ background: `${PILLARS[p]?.color}15`, color: PILLARS[p]?.color }}>{p} ✓</span>
                           ))}
                         </div>
                       </div>
-                      <div style={{ padding: '3px 8px', borderRadius: 6, background: grade.bg, border: `1px solid ${grade.color}40`, fontSize: 13, fontWeight: 700, color: grade.color }}>
+                      <div className="px-2 py-0.5 rounded-md text-sm font-bold" style={{ background: grade.bg, border: `1px solid ${grade.color}40`, color: grade.color }}>
                         {grade.grade}
                       </div>
                     </div>
@@ -189,7 +181,7 @@ export default function MyEvaluator() {
                 );
               })}
               {evalAssessments.every(a => (a.evaluations || []).filter(e => e.status === 'completed').length === 0) && (
-                <div style={{ fontSize: 12, color: 'var(--text-muted)', padding: 8, display: 'flex', alignItems: 'center', gap: 6 }}>
+                <div className="text-xs text-surface-variant p-2 flex items-center gap-1.5">
                   <Clock size={12} /> Awaiting evaluator scores
                 </div>
               )}
@@ -197,55 +189,50 @@ export default function MyEvaluator() {
           )}
         </div>
       ) : (
-        <div style={{ background: 'var(--navy-3)', border: '1px solid var(--border)', borderRadius: 16, padding: 24, marginBottom: 28 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
-            <AlertCircle size={14} color="var(--text-muted)" />
-            <span style={{ fontSize: 14, fontWeight: 600 }}>No evaluator assigned</span>
+        <div className="bg-surface-container-low border border-outline-variant rounded-2xl p-6 mb-7">
+          <div className="flex items-center gap-2 mb-2">
+            <AlertCircle size={14} className="text-surface-variant" />
+            <span className="text-sm font-semibold">No evaluator assigned</span>
           </div>
-          <p style={{ fontSize: 13, color: 'var(--text-muted)' }}>Choose an evaluator below to get started. They will review and score your Part B activities.</p>
+          <p className="text-sm text-surface-variant">Choose an evaluator below to get started. They will review and score your Part B activities.</p>
         </div>
       )}
 
       {/* Search */}
-      <div style={{ position: 'relative', marginBottom: 16 }}>
-        <Search size={14} color="var(--text-muted)" style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} />
+      <div className="relative mb-4">
+        <Search size={14} className="text-surface-variant absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
         <input type="text" placeholder="Search evaluators by name or email..." value={search} onChange={e => setSearch(e.target.value)}
-          style={{ width: '100%', padding: '10px 14px 10px 38px', borderRadius: 10, border: '1px solid var(--border-light)', background: 'var(--navy-3)', color: 'white', fontSize: 13, fontFamily: 'Inter', outline: 'none' }}
+          className="w-full py-2.5 pl-9 pr-3.5 rounded-lg border border-outline-variant bg-surface-container-low text-on-surface text-sm outline-none"
         />
       </div>
 
       {/* Evaluator list */}
       {filtered.length === 0 ? (
-        <div style={{ textAlign: 'center', padding: '40px 20px', color: 'var(--text-muted)', fontSize: 13 }}>
+        <div className="text-center px-5 py-10 text-surface-variant text-sm">
           {search ? 'No evaluators match your search.' : 'No evaluators available.'}
         </div>
       ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+        <div className="flex flex-col gap-2">
           {filtered.map(ev => (
-            <div key={ev.uid} style={{
-              display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-              padding: '14px 16px', background: 'var(--navy-3)', border: '1px solid var(--border-light)', borderRadius: 12,
-              transition: 'all 0.15s',
-              opacity: currentEvaluator?.uid === ev.uid ? 0.6 : 1,
-            }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                <div style={{ width: 38, height: 38, borderRadius: '50%', background: 'linear-gradient(135deg, #6366f1, #a855f7)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                  <span style={{ fontSize: 14, fontWeight: 800, color: 'white' }}>{(ev.name || 'E')[0].toUpperCase()}</span>
+            <div key={ev.uid} className={`flex items-center justify-between px-4 py-3.5 bg-surface-container-low border border-outline-variant rounded-xl transition-all ${currentEvaluator?.uid === ev.uid ? 'opacity-60' : ''}`}>
+              <div className="flex items-center gap-3">
+                <div className="w-[38px] h-[38px] rounded-full bg-[#6366f1] flex items-center justify-center shrink-0">
+                  <span className="text-sm font-extrabold text-white">{(ev.name || 'E')[0].toUpperCase()}</span>
                 </div>
                 <div>
-                  <div style={{ fontSize: 13, fontWeight: 600 }}>{ev.name || 'Unnamed'}</div>
-                  <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>{ev.email || ''}</div>
+                  <div className="text-sm font-semibold">{ev.name || 'Unnamed'}</div>
+                  <div className="text-xs text-surface-variant">{ev.email || ''}</div>
                 </div>
               </div>
               {currentEvaluator?.uid === ev.uid ? (
-                <div style={{ fontSize: 11, color: '#34d399', display: 'flex', alignItems: 'center', gap: 4 }}>
+                <div className="text-xs flex items-center gap-1" style={{ color: '#34d399' }}>
                   <UserCheck size={13} /> Assigned
                 </div>
               ) : (
-                <button onClick={() => handleAssign(ev.uid)} disabled={assigning || !!currentEvaluator} style={{
-                  padding: '6px 14px', borderRadius: 8, fontSize: 12, fontWeight: 500, cursor: assigning || currentEvaluator ? 'not-allowed' : 'pointer',
+                <button onClick={() => handleAssign(ev.uid)} disabled={assigning || !!currentEvaluator} className="px-3.5 py-1.5 rounded-lg text-xs font-medium" style={{
                   background: 'rgba(99,102,241,0.15)', border: '1px solid rgba(99,102,241,0.3)',
-                  color: assigning ? 'var(--text-muted)' : '#a5b4fc', fontFamily: 'Inter',
+                  color: assigning ? 'var(--text-muted)' : '#a5b4fc',
+                  cursor: assigning || currentEvaluator ? 'not-allowed' : 'pointer',
                   opacity: currentEvaluator ? 0.4 : 1,
                 }}>
                   {assigning ? '...' : 'Select'}
@@ -256,9 +243,9 @@ export default function MyEvaluator() {
         </div>
       )}
 
-      <div style={{ textAlign: 'center', marginTop: 20 }}>
-        <button onClick={loadData} className="btn btn-secondary" style={{ padding: '8px 16px', fontSize: 12 }}>
-          <RefreshCw size={12} style={{ marginRight: 6 }} /> Refresh
+      <div className="text-center mt-5">
+        <button onClick={loadData} className="inline-flex items-center gap-1.5 px-4 py-2 text-xs rounded-lg border border-outline-variant bg-surface-container-low text-on-surface hover:bg-surface cursor-pointer transition-all">
+          <RefreshCw size={12} /> Refresh
         </button>
       </div>
     </div>

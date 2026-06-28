@@ -72,31 +72,27 @@ function TreeNode({ node, depth = 0, expanded, onToggle, onSelect, selected }) {
     <div style={{ marginLeft: depth * 24 }}>
       <div
         onClick={() => { if (hasChildren) onToggle(node.id); onSelect(node); }}
+        className="flex items-center gap-2 px-3 py-2 rounded-lg cursor-pointer mb-1 transition-all"
         style={{
-          display: 'flex', alignItems: 'center', gap: 8,
-          padding: '8px 12px', borderRadius: 8, cursor: 'pointer',
           background: isSelected ? `${node.color}20` : 'transparent',
           border: `1px solid ${isSelected ? node.color + '60' : 'transparent'}`,
-          marginBottom: 4, transition: 'all 0.15s',
         }}
-        onMouseEnter={e => { if (!isSelected) e.currentTarget.style.background = 'rgba(255,255,255,0.04)'; }}
-        onMouseLeave={e => { if (!isSelected) e.currentTarget.style.background = 'transparent'; }}
       >
         {hasChildren ? (
           isExpanded ? <ChevronDown size={12} color={node.color} /> : <ChevronRight size={12} color={node.color} />
         ) : (
           <div style={{ width: 8, height: 8, borderRadius: '50%', background: node.color, flexShrink: 0 }} />
         )}
-        <span style={{ fontSize: 13, fontWeight: hasChildren ? 600 : 400, color: isSelected ? 'white' : 'var(--text-secondary)' }}>
+        <span className={`text-sm ${hasChildren ? 'font-semibold' : 'font-normal'} ${isSelected ? 'text-white' : 'text-on-surface-variant'}`}>
           {node.label}
         </span>
-        {NODE_DETAILS[node.id] && <Info size={11} color="var(--text-muted)" style={{ marginLeft: 'auto' }} />}
+        {NODE_DETAILS[node.id] && <Info size={11} className="text-surface-variant ml-auto" />}
       </div>
       {hasChildren && isExpanded && (
         <div style={{ borderLeft: `1px solid ${node.color}30`, marginLeft: 16, paddingLeft: 8 }}>
           {node.children.map(child => (
             typeof child === 'string' ? (
-              <div key={child} style={{ padding: '5px 12px', fontSize: 12, color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: 6 }}>
+              <div key={child} className="px-3 py-1.5 text-xs text-surface-variant flex items-center gap-1.5">
                 <div style={{ width: 4, height: 4, borderRadius: '50%', background: node.color, opacity: 0.5 }} />
                 {child}
               </div>
@@ -122,20 +118,16 @@ export default function FrameworkMap() {
   };
 
   return (
-    <div style={{ display: 'flex', height: 'calc(100vh - 56px)' }} className="animate-fade">
+    <div className="flex h-[calc(100vh-56px)] animate-fade">
       {/* Left: Tree */}
-      <div style={{ width: 340, borderRight: '1px solid var(--border-light)', padding: 24, overflowY: 'auto', background: 'var(--navy-2)' }}>
-        <h2 style={{ fontSize: 16, fontWeight: 700, marginBottom: 4 }}>Framework Architecture</h2>
-        <p style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 20 }}>Click any node to explore details</p>
+      <div className="w-[340px] border-r border-outline-variant p-6 overflow-y-auto bg-surface-container-low">
+        <h2 className="text-base font-bold mb-1">Framework Architecture</h2>
+        <p className="text-xs text-surface-variant mb-5">Click any node to explore details</p>
 
         {/* Root */}
-        <div style={{
-          padding: '12px 16px', borderRadius: 10, marginBottom: 16,
-          background: 'linear-gradient(135deg, rgba(99,102,241,0.2), rgba(168,85,247,0.15))',
-          border: '1px solid rgba(99,102,241,0.4)',
-        }}>
-          <div style={{ fontSize: 13, fontWeight: 700, color: 'white' }}>Quadrant Intelligence Development System</div>
-          <div style={{ fontSize: 11, color: '#818cf8', marginTop: 2 }}>QIDS — Holistic Development Platform</div>
+        <div className="px-4 py-3 rounded-lg mb-4 border" style={{ background: 'rgba(99,102,241,0.2)', borderColor: 'rgba(99,102,241,0.4)' }}>
+          <div className="text-sm font-bold text-white">Quadrant Intelligence Development System</div>
+          <div className="text-xs mt-0.5" style={{ color: '#818cf8' }}>QIDS — Holistic Development Platform</div>
         </div>
 
         {FRAMEWORK_TREE.branches.map(branch => (
@@ -144,39 +136,34 @@ export default function FrameworkMap() {
       </div>
 
       {/* Center: Visual Map */}
-      <div style={{ flex: 1, padding: 32, overflowY: 'auto' }}>
-        <h2 style={{ fontSize: 18, fontWeight: 700, marginBottom: 8 }}>QIDS System Architecture</h2>
-        <p style={{ fontSize: 13, color: 'var(--text-muted)', marginBottom: 28 }}>Interactive framework map — click any branch to explore</p>
+      <div className="flex-1 p-8 overflow-y-auto">
+        <h2 className="text-lg font-bold mb-2">QIDS System Architecture</h2>
+        <p className="text-sm text-surface-variant mb-7">Interactive framework map — click any branch to explore</p>
 
         {/* Mind map visual */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+        <div className="flex flex-col gap-3">
           {FRAMEWORK_TREE.branches.map(branch => (
-            <div key={branch.id} style={{
-              background: 'var(--navy-4)', border: `1px solid ${branch.color}30`,
-              borderLeft: `3px solid ${branch.color}`, borderRadius: 12, padding: 16,
-              cursor: 'pointer', transition: 'all 0.2s',
-            }}
+            <div key={branch.id}
+              className="rounded-xl p-4 cursor-pointer transition-all border-l-[3px]"
+              style={{ background: 'var(--navy-4)', borderColor: `${branch.color}30`, borderLeftColor: branch.color }}
               onClick={() => { toggle(branch.id); select(branch); }}
               onMouseEnter={e => e.currentTarget.style.borderColor = branch.color}
               onMouseLeave={e => e.currentTarget.style.borderColor = `${branch.color}30`}
             >
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: expanded[branch.id] ? 12 : 0 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                  <div style={{ width: 10, height: 10, borderRadius: '50%', background: branch.color, boxShadow: `0 0 8px ${branch.color}` }} />
-                  <span style={{ fontSize: 14, fontWeight: 700, color: 'white' }}>{branch.label}</span>
+              <div className={`flex items-center justify-between ${expanded[branch.id] ? 'mb-3' : ''}`}>
+                <div className="flex items-center gap-2.5">
+                  <div style={{ width: 10, height: 10, borderRadius: '50%', background: branch.color }} />
+                  <span className="text-sm font-bold text-white">{branch.label}</span>
                 </div>
                 {expanded[branch.id] ? <ChevronDown size={14} color={branch.color} /> : <ChevronRight size={14} color={branch.color} />}
               </div>
 
               {expanded[branch.id] && (
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, paddingLeft: 20 }}>
+                <div className="flex flex-wrap gap-2 pl-5">
                   {branch.children.map(child => (
-                    <div key={child.id} onClick={e => { e.stopPropagation(); select(child); }} style={{
-                      padding: '6px 12px', borderRadius: 8,
-                      background: `${child.color}15`, border: `1px solid ${child.color}40`,
-                      fontSize: 12, color: child.color, fontWeight: 500, cursor: 'pointer',
-                      transition: 'all 0.15s',
-                    }}
+                    <div key={child.id} onClick={e => { e.stopPropagation(); select(child); }}
+                      className="px-3 py-1.5 rounded-lg text-xs font-medium cursor-pointer transition-all"
+                      style={{ background: `${child.color}15`, border: `1px solid ${child.color}40`, color: child.color }}
                       onMouseEnter={e => e.currentTarget.style.background = `${child.color}25`}
                       onMouseLeave={e => e.currentTarget.style.background = `${child.color}15`}
                     >
@@ -190,9 +177,9 @@ export default function FrameworkMap() {
         </div>
 
         {/* Grading visual */}
-        <div style={{ marginTop: 28 }}>
-          <h3 style={{ fontSize: 15, fontWeight: 700, marginBottom: 16 }}>Grading Mechanism</h3>
-          <div style={{ display: 'flex', gap: 8 }}>
+        <div className="mt-7">
+          <h3 className="text-base font-bold mb-4">Grading Mechanism</h3>
+          <div className="flex gap-2">
             {[
               { g: 'A', label: 'Excellent', range: '90–100', color: '#10b981' },
               { g: 'B', label: 'Very Good', range: '75–89', color: '#06b6d4' },
@@ -200,35 +187,26 @@ export default function FrameworkMap() {
               { g: 'D', label: 'Satisfactory', range: '45–59', color: '#f97316' },
               { g: 'E', label: 'Needs Improvement', range: '<45', color: '#ef4444' },
             ].map(({ g, label, range, color }) => (
-              <div key={g} style={{
-                flex: 1, padding: '12px 10px', borderRadius: 10, textAlign: 'center',
-                background: `${color}15`, border: `1px solid ${color}40`,
-              }}>
-                <div style={{ fontSize: 22, fontWeight: 800, color, fontFamily: 'Space Grotesk' }}>{g}</div>
-                <div style={{ fontSize: 11, fontWeight: 600, color, marginTop: 2 }}>{label}</div>
-                <div style={{ fontSize: 10, color: 'var(--text-muted)', marginTop: 2 }}>{range}%</div>
+              <div key={g} className="flex-1 px-2.5 py-3 rounded-lg text-center" style={{ background: `${color}15`, border: `1px solid ${color}40` }}>
+                <div className="text-2xl font-extrabold" style={{ color }}>{g}</div>
+                <div className="text-xs font-semibold mt-0.5" style={{ color }}>{label}</div>
+                <div className="text-[10px] text-surface-variant mt-0.5">{range}%</div>
               </div>
             ))}
           </div>
         </div>
 
         {/* Standardization formula */}
-        <div style={{
-          marginTop: 24, padding: 20, borderRadius: 12,
-          background: 'rgba(99,102,241,0.08)', border: '1px solid rgba(99,102,241,0.2)',
-        }}>
-          <h4 style={{ fontSize: 13, fontWeight: 600, color: '#818cf8', marginBottom: 8 }}>Standardization Algorithm</h4>
-          <div style={{
-            fontFamily: 'monospace', fontSize: 14, color: 'var(--text-primary)',
-            background: 'rgba(0,0,0,0.3)', padding: '10px 16px', borderRadius: 8,
-          }}>
+        <div className="mt-6 p-5 rounded-xl" style={{ background: 'rgba(99,102,241,0.08)', border: '1px solid rgba(99,102,241,0.2)' }}>
+          <h4 className="text-sm font-semibold mb-2" style={{ color: '#818cf8' }}>Standardization Algorithm</h4>
+          <div className="font-mono text-sm text-on-surface bg-black/30 px-4 py-2.5 rounded-lg">
             Standardized Score (%) = (Raw Score / Maximum Possible Score) × 100
           </div>
-          <div style={{ marginTop: 12, display: 'flex', gap: 16, flexWrap: 'wrap' }}>
+          <div className="mt-3 flex gap-4 flex-wrap">
             {[['IQ', '×1.00', '#6366f1'], ['EQ', '×2.00', '#10b981'], ['SQ', '×2.00', '#a855f7'], ['AQ', '×1.28', '#f59e0b']].map(([k, w, c]) => (
-              <div key={k} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                <span style={{ fontSize: 12, fontWeight: 700, color: c }}>{k}</span>
-                <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>{w}</span>
+              <div key={k} className="flex items-center gap-1.5">
+                <span className="text-xs font-bold" style={{ color: c }}>{k}</span>
+                <span className="text-xs text-surface-variant">{w}</span>
               </div>
             ))}
           </div>
@@ -237,26 +215,19 @@ export default function FrameworkMap() {
 
       {/* Right: Detail Panel */}
       {detail && (
-        <div style={{
-          width: 280, borderLeft: '1px solid var(--border-light)',
-          background: 'var(--navy-2)', padding: 24, overflowY: 'auto',
-        }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 16 }}>
-            <h3 style={{ fontSize: 14, fontWeight: 700 }}>{NODE_DETAILS[detail.id]?.title || detail.label}</h3>
-            <button onClick={() => setDetail(null)} className="btn btn-ghost btn-sm" style={{ padding: 4 }}><X size={13} /></button>
+        <div className="w-[280px] border-l border-outline-variant bg-surface-container-low p-6 overflow-y-auto">
+          <div className="flex justify-between items-start mb-4">
+            <h3 className="text-sm font-bold">{NODE_DETAILS[detail.id]?.title || detail.label}</h3>
+            <button onClick={() => setDetail(null)} className="p-1 bg-transparent text-on-surface-variant hover:bg-surface-container-low cursor-pointer transition-all rounded"><X size={13} /></button>
           </div>
-          <p style={{ fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.7 }}>
+          <p className="text-sm text-on-surface-variant leading-relaxed">
             {NODE_DETAILS[detail.id]?.desc || 'Select a node to view details.'}
           </p>
           {detail.children && detail.children.length > 0 && (
-            <div style={{ marginTop: 16 }}>
-              <div style={{ fontSize: 11, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 8 }}>Components</div>
+            <div className="mt-4">
+              <div className="text-xs text-surface-variant uppercase tracking-widest mb-2">Components</div>
               {detail.children.map(c => (
-                <div key={typeof c === 'string' ? c : c.id} style={{
-                  padding: '6px 10px', marginBottom: 4, borderRadius: 6,
-                  background: 'rgba(255,255,255,0.04)', border: '1px solid var(--border-light)',
-                  fontSize: 12, color: 'var(--text-secondary)',
-                }}>
+                <div key={typeof c === 'string' ? c : c.id} className="px-2.5 py-1.5 mb-1 rounded-md text-xs text-on-surface-variant" style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid var(--border-light)' }}>
                   {typeof c === 'string' ? c : c.label}
                 </div>
               ))}

@@ -347,44 +347,41 @@ const PLAN = {
 function ModuleCard({ module, color }) {
   const [open, setOpen] = useState(false);
   return (
-    <div style={{ marginBottom: 10, background: 'var(--navy-4)', border: `1px solid ${color}20`, borderRadius: 12, overflow: 'hidden' }}>
-      <button onClick={() => setOpen(!open)} style={{
-        width: '100%', display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-        padding: '12px 16px', background: 'transparent', border: 'none', cursor: 'pointer', color: 'var(--text-primary)',
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, textAlign: 'left' }}>
-          <div style={{ width: 8, height: 8, borderRadius: '50%', background: color, flexShrink: 0 }} />
-          <span style={{ fontSize: 13, fontWeight: 600 }}>{module.title}</span>
+    <div className="mb-2.5 bg-surface-container-low overflow-hidden rounded-xl" style={{ border: `1px solid ${color}20` }}>
+      <button onClick={() => setOpen(!open)} className="w-full flex justify-between items-center px-4 py-3 bg-transparent border-none cursor-pointer text-on-surface">
+        <div className="flex items-center gap-2.5 text-left">
+          <div className="size-2 rounded-full shrink-0" style={{ background: color }} />
+          <span className="text-[13px] font-semibold">{module.title}</span>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-            <Clock size={11} color="var(--text-muted)" />
-            <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>{module.frequency}</span>
+        <div className="flex items-center gap-2 shrink-0">
+          <div className="flex items-center gap-1">
+            <Clock size={11} className="text-surface-variant" />
+            <span className="text-technical-sm text-surface-variant">{module.frequency}</span>
           </div>
-          {open ? <ChevronUp size={13} color="var(--text-muted)" /> : <ChevronDown size={13} color="var(--text-muted)" />}
+          {open ? <ChevronUp size={13} className="text-surface-variant" /> : <ChevronDown size={13} className="text-surface-variant" />}
         </div>
       </button>
       {open && (
-        <div style={{ padding: '0 16px 16px', borderTop: '1px solid var(--border-light)' }}>
-          <div style={{ marginTop: 12, padding: '8px 12px', background: `${color}08`, border: `1px solid ${color}20`, borderRadius: 8, marginBottom: 12 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4 }}>
-              <Target size={11} color={color} />
-              <span style={{ fontSize: 11, fontWeight: 600, color }}>Objective</span>
+        <div className="px-4 pb-4 border-t border-outline-variant">
+          <div className="mt-3 px-3 py-2 mb-3 rounded-lg" style={{ background: `${color}08`, border: `1px solid ${color}20` }}>
+            <div className="flex items-center gap-1.5 mb-1">
+              <Target size={11} style={{ color }} />
+              <span className="text-technical-sm font-semibold" style={{ color }}>Objective</span>
             </div>
-            <p style={{ fontSize: 12, color: 'var(--text-secondary)', margin: 0, lineHeight: 1.5 }}>{module.objective}</p>
+            <p className="text-label-md text-on-surface-variant m-0 leading-normal">{module.objective}</p>
           </div>
-          <div style={{ marginBottom: 12 }}>
-            <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 8 }}>Activities</div>
+          <div className="mb-3">
+            <div className="text-technical-sm font-semibold text-surface-variant uppercase tracking-[0.5px] mb-2">Activities</div>
             {module.activities.map((act, i) => (
-              <div key={i} style={{ display: 'flex', gap: 8, marginBottom: 6 }}>
-                <div style={{ width: 5, height: 5, borderRadius: '50%', background: color, flexShrink: 0, marginTop: 5 }} />
-                <span style={{ fontSize: 12, color: 'var(--text-secondary)', lineHeight: 1.5 }}>{act}</span>
+              <div key={i} className="flex gap-2 mb-1.5">
+                <div className="size-[5px] rounded-full shrink-0 mt-[5px]" style={{ background: color }} />
+                <span className="text-label-md text-on-surface-variant leading-normal">{act}</span>
               </div>
             ))}
           </div>
-          <div style={{ padding: '8px 12px', background: 'rgba(255,255,255,0.03)', border: '1px solid var(--border-light)', borderRadius: 8 }}>
-            <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-muted)' }}>Example: </span>
-            <span style={{ fontSize: 12, color: 'var(--text-secondary)', fontStyle: 'italic' }}>{module.example}</span>
+          <div className="px-3 py-2 border border-outline-variant rounded-lg" style={{ background: 'rgba(255,255,255,0.03)' }}>
+            <span className="text-technical-sm font-semibold text-surface-variant">Example: </span>
+            <span className="text-label-md text-on-surface-variant italic">{module.example}</span>
           </div>
         </div>
       )}
@@ -400,48 +397,45 @@ export default function InterventionPlan() {
   const modules = PLAN[activePillar]?.[activeBand] || [];
 
   return (
-    <div style={{ display: 'flex', height: 'calc(100vh - 56px)' }} className="animate-fade">
-      {/* Sidebar */}
-      <div style={{ width: 220, borderRight: '1px solid var(--border-light)', background: 'var(--navy-2)', padding: 20, overflowY: 'auto', flexShrink: 0 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16 }}>
-          <BookOpen size={16} color="#6366f1" />
-          <span style={{ fontSize: 14, fontWeight: 700 }}>Intervention Plan</span>
+    <div className="flex h-[calc(100vh-56px)] animate-fade">
+      {/* Sidebar - hidden on mobile */}
+      <div className="w-[220px] border-r border-outline-variant bg-surface-container p-5 overflow-y-auto shrink-0 hide-mobile">
+        <div className="flex items-center gap-2 mb-4">
+          <BookOpen size={16} className="text-indigo-500" />
+          <span className="text-[14px] font-bold">Intervention Plan</span>
         </div>
-        <p style={{ fontSize: 12, color: 'var(--text-muted)', lineHeight: 1.5, marginBottom: 16 }}>
+        <p className="text-label-md text-surface-variant leading-normal mb-4">
           Structured modules for each pillar and performance band.
         </p>
         <div className="divider" />
-        <div style={{ fontSize: 11, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 10 }}>Pillar</div>
+        <div className="text-technical-sm text-surface-variant uppercase tracking-[0.5px] mb-2.5">Pillar</div>
         {Object.entries(PILLARS).map(([id, p]) => (
-          <button key={id} onClick={() => setActivePillar(id)} style={{
-            width: '100%', display: 'flex', alignItems: 'center', gap: 10,
-            padding: '9px 12px', borderRadius: 9, marginBottom: 4, cursor: 'pointer',
+          <button key={id} onClick={() => setActivePillar(id)} className="w-full flex items-center gap-2.5 px-3 py-[9px] rounded-lg mb-1 cursor-pointer text-left text-[13px]" style={{
             background: activePillar === id ? `${p.color}18` : 'transparent',
             border: `1px solid ${activePillar === id ? p.color + '50' : 'transparent'}`,
-            color: activePillar === id ? p.color : 'var(--text-secondary)',
-            fontSize: 13, fontWeight: activePillar === id ? 600 : 400, textAlign: 'left',
+            color: activePillar === id ? p.color : undefined,
+            fontWeight: activePillar === id ? 600 : 400,
             transition: 'all 0.15s',
           }}>
-            <span style={{ fontSize: 16 }}>{p.emoji}</span>
+            <span className="text-[16px]">{p.emoji}</span>
             <div>
-              <div style={{ fontSize: 12, fontWeight: 700 }}>{id}</div>
-              <div style={{ fontSize: 10, color: 'var(--text-muted)', fontWeight: 400 }}>{p.label}</div>
+              <div className="text-label-md font-bold">{id}</div>
+              <div className="text-technical-sm text-surface-variant font-normal">{p.label}</div>
             </div>
           </button>
         ))}
         <div className="divider" />
-        <div style={{ fontSize: 11, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 10 }}>Band</div>
+        <div className="text-technical-sm text-surface-variant uppercase tracking-[0.5px] mb-2.5">Band</div>
         {Object.entries(BANDS).map(([id, b]) => (
-          <button key={id} onClick={() => setActiveBand(id)} style={{
-            width: '100%', padding: '8px 12px', borderRadius: 9, marginBottom: 4, cursor: 'pointer',
+          <button key={id} onClick={() => setActiveBand(id)} className="w-full px-3 py-2 rounded-lg mb-1 cursor-pointer text-left text-label-md" style={{
             background: activeBand === id ? `${b.color}15` : 'transparent',
             border: `1px solid ${activeBand === id ? b.color + '40' : 'transparent'}`,
-            color: activeBand === id ? b.color : 'var(--text-secondary)',
-            fontSize: 12, fontWeight: activeBand === id ? 600 : 400, textAlign: 'left',
+            color: activeBand === id ? b.color : undefined,
+            fontWeight: activeBand === id ? 600 : 400,
             transition: 'all 0.15s',
           }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <div style={{ width: 8, height: 8, borderRadius: '50%', background: b.color, flexShrink: 0 }} />
+            <div className="flex items-center gap-2">
+              <div className="size-2 rounded-full shrink-0" style={{ background: b.color }} />
               {b.label}
             </div>
           </button>
@@ -449,31 +443,49 @@ export default function InterventionPlan() {
       </div>
 
       {/* Main */}
-      <div style={{ flex: 1, overflowY: 'auto', padding: 24 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 8 }}>
-          <div style={{ width: 40, height: 40, borderRadius: 12, background: `${pillar.color}20`, border: `1px solid ${pillar.color}40`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20 }}>
+      <div className="flex-1 overflow-y-auto p-4 md:p-6">
+        {/* Mobile selectors */}
+        <div className="hide-desktop mb-4 flex gap-2">
+          <select value={activePillar} onChange={e => setActivePillar(e.target.value)}
+            className="flex-1 px-4 py-3 bg-surface-container-low border border-outline-variant text-on-surface font-technical-sm outline-none focus:border-primary"
+            style={{ fontSize: 16 }}>
+            {Object.entries(PILLARS).map(([id, p]) => (
+              <option key={id} value={id}>{id} — {p.label}</option>
+            ))}
+          </select>
+          <select value={activeBand} onChange={e => setActiveBand(e.target.value)}
+            className="flex-1 px-4 py-3 bg-surface-container-low border border-outline-variant text-on-surface font-technical-sm outline-none focus:border-primary"
+            style={{ fontSize: 16 }}>
+            {Object.entries(BANDS).map(([id, b]) => (
+              <option key={id} value={id}>{b.label}</option>
+            ))}
+          </select>
+        </div>
+
+        <div className="flex items-center gap-3 mb-2">
+          <div className="size-10 rounded-xl flex items-center justify-center text-xl" style={{ background: `${pillar.color}20`, border: `1px solid ${pillar.color}40` }}>
             {pillar.emoji}
           </div>
-          <div>
-            <h2 style={{ fontSize: 18, fontWeight: 800, margin: 0, fontFamily: 'Space Grotesk' }}>{activePillar} — {pillar.label}</h2>
-            <p style={{ fontSize: 12, color: 'var(--text-muted)', margin: 0 }}>Intervention modules for {band.label}</p>
+          <div className="min-w-0 flex-1">
+            <h2 className="text-[18px] font-extrabold m-0 font-headline-md truncate">{activePillar} — {pillar.label}</h2>
+            <p className="text-label-md text-surface-variant m-0">Intervention modules for {band.label}</p>
           </div>
         </div>
 
         {/* Band info */}
-        <div style={{ padding: '10px 16px', background: `${band.color}10`, border: `1px solid ${band.color}30`, borderRadius: 10, marginBottom: 20, display: 'flex', alignItems: 'center', gap: 10 }}>
-          <div style={{ width: 10, height: 10, borderRadius: '50%', background: band.color, flexShrink: 0 }} />
-          <div>
-            <span style={{ fontSize: 13, fontWeight: 700, color: band.color }}>{band.label}</span>
-            <span style={{ fontSize: 12, color: 'var(--text-muted)', marginLeft: 8 }}>{band.desc}</span>
+        <div className="px-4 py-2.5 rounded-lg mb-5 flex items-center gap-2.5" style={{ background: `${band.color}10`, border: `1px solid ${band.color}30` }}>
+          <div className="size-[10px] rounded-full shrink-0" style={{ background: band.color }} />
+          <div className="min-w-0 flex-1">
+            <span className="text-[13px] font-bold" style={{ color: band.color }}>{band.label}</span>
+            <span className="text-label-md text-surface-variant ml-2">{band.desc}</span>
           </div>
-          <div style={{ marginLeft: 'auto', padding: '3px 10px', borderRadius: 20, background: `${band.color}15`, border: `1px solid ${band.color}30`, fontSize: 11, fontWeight: 600, color: band.color }}>
+          <div className="ml-auto px-2.5 py-[3px] rounded-full text-technical-sm font-semibold shrink-0" style={{ background: `${band.color}15`, border: `1px solid ${band.color}30`, color: band.color }}>
             {modules.length} Module{modules.length !== 1 ? 's' : ''}
           </div>
         </div>
 
         {modules.length === 0 ? (
-          <div style={{ textAlign: 'center', padding: 40, color: 'var(--text-muted)', fontSize: 13 }}>
+          <div className="text-center p-10 text-surface-variant text-[13px]">
             No modules defined for this combination yet.
           </div>
         ) : (
@@ -481,12 +493,12 @@ export default function InterventionPlan() {
         )}
 
         {/* 6-month roadmap summary */}
-        <div style={{ marginTop: 24, padding: 20, background: 'rgba(99,102,241,0.06)', border: '1px solid rgba(99,102,241,0.15)', borderRadius: 14 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
-            <Calendar size={14} color="#818cf8" />
-            <span style={{ fontSize: 13, fontWeight: 700, color: '#818cf8' }}>6-Month Roadmap Overview</span>
+        <div className="mt-6 p-4 md:p-5 rounded-xl" style={{ background: 'rgba(99,102,241,0.06)', border: '1px solid rgba(99,102,241,0.15)' }}>
+          <div className="flex items-center gap-2 mb-3">
+            <Calendar size={14} className="text-indigo-400" />
+            <span className="text-[13px] font-bold text-indigo-400">6-Month Roadmap Overview</span>
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8 }}>
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
             {[
               { month: 'Month 1–2', focus: 'Assessment & Orientation, Red Band Intensive' },
               { month: 'Month 2–3', focus: 'Yellow Band Strengthening, EQ & AQ Focus' },
@@ -495,9 +507,9 @@ export default function InterventionPlan() {
               { month: 'Month 5–6', focus: 'Integration Sessions, Peer Mentoring' },
               { month: 'Month 6', focus: 'Post-Intervention Assessment & Review' },
             ].map(({ month, focus }) => (
-              <div key={month} style={{ padding: '10px 12px', background: 'rgba(99,102,241,0.06)', border: '1px solid rgba(99,102,241,0.12)', borderRadius: 10 }}>
-                <div style={{ fontSize: 11, fontWeight: 700, color: '#818cf8', marginBottom: 4 }}>{month}</div>
-                <div style={{ fontSize: 11, color: 'var(--text-secondary)', lineHeight: 1.4 }}>{focus}</div>
+              <div key={month} className="px-3 py-2.5 rounded-lg" style={{ background: 'rgba(99,102,241,0.06)', border: '1px solid rgba(99,102,241,0.12)' }}>
+                <div className="text-technical-sm font-bold text-indigo-400 mb-1">{month}</div>
+                <div className="text-technical-sm text-on-surface-variant leading-[1.4]">{focus}</div>
               </div>
             ))}
           </div>

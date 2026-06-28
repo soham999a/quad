@@ -17,8 +17,6 @@ function PostAssessmentForm({ assessmentData, onSubmit }) {
     Object.keys(PILLARS).forEach(pid => {
       init[pid] = {};
       PILLARS[pid].subParams.forEach(sp => {
-        // For EQ Part A scores stored as SA/ER/SM/E/IS, pre-fill from context
-        // For SQ stored as ACE/CSI/PBA, pre-fill from context
         init[pid][sp.id] = pre[pid]?.[sp.id] ?? 0;
       });
     });
@@ -40,52 +38,51 @@ function PostAssessmentForm({ assessmentData, onSubmit }) {
   };
 
   return (
-    <div style={{ padding: 24, maxWidth: 900, margin: '0 auto' }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 20 }}>
+    <div className="p-6 max-w-[900px] mx-auto">
+      <div className="flex items-center gap-2.5 mb-5">
         <ClipboardList size={18} color="#14b8a6" />
-        <h2 style={{ fontSize: 18, fontWeight: 800, margin: 0 }}>Post-Intervention Assessment</h2>
-        <div style={{ marginLeft: 'auto', padding: '4px 12px', background: 'rgba(20,184,166,0.15)', border: '1px solid rgba(20,184,166,0.3)', borderRadius: 20, fontSize: 11, color: '#2dd4bf', fontWeight: 600 }}>Phase 3</div>
+        <h2 className="text-headline-md font-extrabold m-0">Post-Intervention Assessment</h2>
+        <div className="ml-auto px-3 py-1 rounded-full text-[11px] font-semibold text-[#2dd4bf]" style={{ background: 'rgba(20,184,166,0.15)', border: '1px solid rgba(20,184,166,0.3)' }}>Phase 3</div>
       </div>
-      <p style={{ fontSize: 13, color: 'var(--text-muted)', marginBottom: 24 }}>
+      <p className="text-technical-sm text-surface-variant mb-6">
         Re-assess all four pillars after the intervention period. Adjust the sliders to reflect the student's current performance.
       </p>
 
       {Object.entries(PILLARS).map(([pid, pillar]) => (
-        <div key={pid} style={{ marginBottom: 20, background: 'var(--navy-4)', border: `1px solid ${pillar.color}25`, borderRadius: 14, padding: 20 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
-            <div style={{ width: 10, height: 10, borderRadius: '50%', background: pillar.color, boxShadow: `0 0 8px ${pillar.color}` }} />
-            <span style={{ fontSize: 14, fontWeight: 700, color: pillar.color }}>{pillar.label}</span>
-            <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>— {pillar.framework}</span>
+        <div key={pid} className="mb-5 bg-surface-container-low p-5 rounded-[14px]" style={{ border: `1px solid ${pillar.color}25` }}>
+          <div className="flex items-center gap-2.5 mb-4">
+            <div className="w-2.5 h-2.5 rounded-full" style={{ background: pillar.color }} />
+            <span className="text-label-md font-bold" style={{ color: pillar.color }}>{pillar.label}</span>
+            <span className="text-technical-sm text-surface-variant">— {pillar.framework}</span>
           </div>
-          <div className="grid-2" style={{ gap: 14 }}>
+          <div className="grid-2 gap-3.5">
             {pillar.subParams.map(sp => {
               const val = rawScores[pid]?.[sp.id] ?? 0;
               const preVal = assessmentData?.rawScores?.[pid]?.[sp.id] ?? 0;
               const pct = Math.round((val / sp.max) * 100);
               return (
-                <div key={sp.id} style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid var(--border-light)', borderRadius: 10, padding: 14 }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
+                <div key={sp.id} className="p-3.5 rounded-[10px] border border-outline-variant" style={{ background: 'rgba(255,255,255,0.02)' }}>
+                  <div className="flex justify-between mb-1.5">
                     <div>
-                      <div style={{ fontSize: 13, fontWeight: 600 }}>{sp.label}</div>
-                      <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>Pre: {preVal}/{sp.max}</div>
+                      <div className="text-technical-sm font-semibold">{sp.label}</div>
+                      <div className="text-[11px] text-surface-variant">Pre: {preVal}/{sp.max}</div>
                     </div>
-                    <div style={{ textAlign: 'right' }}>
-                      <div style={{ fontSize: 18, fontWeight: 700, color: pillar.color }}>{val}</div>
-                      <div style={{ fontSize: 10, color: 'var(--text-muted)' }}>/ {sp.max}</div>
+                    <div className="text-right">
+                      <div className="text-lg font-bold" style={{ color: pillar.color }}>{val}</div>
+                      <div className="text-[10px] text-surface-variant">/ {sp.max}</div>
                     </div>
                   </div>
                   <input type="range" min={0} max={sp.max} value={val}
                     onChange={e => updateScore(pid, sp.id, parseInt(e.target.value))}
+                    className="w-full h-1.5 rounded-[3px] outline-none border-none p-0 cursor-pointer appearance-none"
                     style={{
-                      width: '100%', height: 6, borderRadius: 3, outline: 'none', border: 'none',
-                      padding: 0, cursor: 'pointer', appearance: 'none',
                       background: `linear-gradient(90deg, ${pillar.color} ${pct}%, rgba(255,255,255,0.1) ${pct}%)`,
                     }}
                   />
-                  <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 4 }}>
-                    <span style={{ fontSize: 10, color: 'var(--text-muted)' }}>0</span>
-                    <span style={{ fontSize: 10, fontWeight: 600, color: pct >= 60 ? '#10b981' : '#ef4444' }}>{pct}%</span>
-                    <span style={{ fontSize: 10, color: 'var(--text-muted)' }}>{sp.max}</span>
+                  <div className="flex justify-between mt-1">
+                    <span className="text-[10px] text-surface-variant">0</span>
+                    <span className="text-[10px] font-semibold" style={{ color: pct >= 60 ? '#10b981' : '#ef4444' }}>{pct}%</span>
+                    <span className="text-[10px] text-surface-variant">{sp.max}</span>
                   </div>
                 </div>
               );
@@ -94,7 +91,7 @@ function PostAssessmentForm({ assessmentData, onSubmit }) {
         </div>
       ))}
 
-      <button onClick={handleSubmit} disabled={saving} className="btn btn-primary" style={{ width: '100%', justifyContent: 'center', padding: '14px', fontSize: 14, borderRadius: 12, background: 'linear-gradient(135deg, #14b8a6, #0d9488)' }}>
+      <button onClick={handleSubmit} disabled={saving} className="btn btn-primary w-full justify-center p-3.5 text-sm rounded-xl bg-[#14b8a6]">
         {saving ? 'Saving...' : <><Save size={14} /> Submit Post-Assessment</>}
       </button>
     </div>
@@ -107,13 +104,11 @@ export default function PostIntervention() {
   const navigate = useNavigate();
   const location = useLocation();
   const toast = useToast();
-  // Prefer route state (clicked from dashboard) over context
   const assessmentData = location.state?.assessment || ctxAssessment;
   const [activeNode, setActiveNode] = useState(null);
   const [activeTab, setActiveTab] = useState('comparison');
   const [submitted, setSubmitted] = useState(false);
 
-  // postData: prefer route state, then submitted local state, then context
   const [localPostData, setLocalPostData] = useState(location.state?.postAssessment || null);
   const postData = localPostData || ctxPostData;
 
@@ -135,22 +130,21 @@ export default function PostIntervention() {
     }
   };
 
-  // Show form if no post data yet
   if (!postData && !submitted) {
     if (!assessmentData) {
       return (
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: 'calc(100vh - 52px)', flexDirection: 'column', gap: 16 }}>
-          <div style={{ opacity: 0.3 }}>
+        <div className="flex items-center justify-center h-[calc(100vh-52px)] flex-col gap-4">
+          <div className="opacity-30">
             <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
           </div>
-          <h3 style={{ fontSize: 18, fontWeight: 700 }}>No Assessment Found</h3>
-          <p style={{ fontSize: 14, color: 'var(--text-muted)' }}>Complete a pre-assessment first before doing post-intervention.</p>
+          <h3 className="text-lg font-bold">No Assessment Found</h3>
+          <p className="text-sm text-surface-variant">Complete a pre-assessment first before doing post-intervention.</p>
           <button onClick={() => navigate('/app/assessment')} className="btn btn-primary">Start Assessment</button>
         </div>
       );
     }
     return (
-      <div style={{ overflowY: 'auto', height: 'calc(100vh - 52px)' }} className="animate-fade">
+      <div className="overflow-y-auto h-[calc(100vh-52px)] animate-fade">
         <PostAssessmentForm assessmentData={assessmentData} onSubmit={handlePostSubmit} />
       </div>
     );
@@ -184,42 +178,36 @@ export default function PostIntervention() {
   }));
 
   return (
-    <div className="three-panel animate-fade" style={{ display: 'flex', height: 'calc(100vh - 52px)' }}>
-      {/* Mobile summary strip */}
-      <div className="mobile-panel-summary" style={{ display: 'none' }}>
+    <div className="three-panel animate-fade flex h-[calc(100vh-52px)]">
+      <div className="mobile-panel-summary hidden">
         {Object.entries(PILLARS).map(([id, pillar]) => {
           const d = postScores[id] - preScores[id];
           return (
-            <div key={id} style={{
-              flexShrink: 0, padding: '6px 12px', borderRadius: 8,
-              background: `${pillar.color}15`, border: `1px solid ${pillar.color}30`,
-              display: 'flex', alignItems: 'center', gap: 6,
-            }}>
-              <span style={{ fontSize: 11, color: pillar.color, fontWeight: 700 }}>{id}</span>
-              <span style={{ fontSize: 13, fontWeight: 800, color: pillar.color }}>{postScores[id]}</span>
-              <span style={{ fontSize: 10, color: d >= 0 ? '#10b981' : '#ef4444', fontWeight: 600 }}>{d >= 0 ? `+${d}` : d}</span>
+            <div key={id} className="shrink-0 px-3 py-1.5 rounded-lg flex items-center gap-1.5" style={{ background: `${pillar.color}15`, border: `1px solid ${pillar.color}30` }}>
+              <span className="text-[11px] font-bold" style={{ color: pillar.color }}>{id}</span>
+              <span className="text-sm font-extrabold" style={{ color: pillar.color }}>{postScores[id]}</span>
+              <span className="text-[10px] font-semibold" style={{ color: d >= 0 ? '#10b981' : '#ef4444' }}>{d >= 0 ? `+${d}` : d}</span>
             </div>
           );
         })}
       </div>
-      {/* Left sidebar */}
-      <div className="panel-left" style={{ width: 240, borderRight: '1px solid var(--border-light)', background: 'var(--navy-2)', padding: 20, overflowY: 'auto', flexShrink: 0 }}>
-        <div style={{ padding: '4px 10px', background: 'rgba(20,184,166,0.15)', border: '1px solid rgba(20,184,166,0.3)', borderRadius: 20, fontSize: 11, color: '#2dd4bf', fontWeight: 600, display: 'inline-block', marginBottom: 12 }}>Phase 3</div>
-        <h3 style={{ fontSize: 15, fontWeight: 700, marginBottom: 8 }}>Post-Intervention</h3>
-        <p style={{ fontSize: 12, color: 'var(--text-muted)', lineHeight: 1.5, marginBottom: 16 }}>Progress evaluation, outcome synthesis, and final development roadmap.</p>
+      <div className="panel-left w-60 border-r border-outline-variant bg-surface overflow-y-auto shrink-0 p-5">
+        <div className="px-2.5 py-1 rounded-full text-[11px] font-semibold text-[#2dd4bf] inline-block mb-3" style={{ background: 'rgba(20,184,166,0.15)', border: '1px solid rgba(20,184,166,0.3)' }}>Phase 3</div>
+        <h3 className="text-[15px] font-bold mb-2">Post-Intervention</h3>
+        <p className="text-technical-sm text-surface-variant leading-normal mb-4">Progress evaluation, outcome synthesis, and final development roadmap.</p>
 
         <div className="divider" />
 
-        <div style={{ fontSize: 11, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 10 }}>Score Delta</div>
+        <div className="text-[11px] text-surface-variant uppercase tracking-[0.5px] mb-2.5">Score Delta</div>
         {Object.entries(PILLARS).map(([id, pillar]) => {
           const d = postScores[id] - preScores[id];
           return (
-            <div key={id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-              <span style={{ fontSize: 12, color: pillar.color }}>{id}</span>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>{preScores[id]} →</span>
-                <span style={{ fontSize: 12, fontWeight: 700, color: pillar.color }}>{postScores[id]}</span>
-                <span style={{ fontSize: 11, color: d > 0 ? '#10b981' : d < 0 ? '#ef4444' : 'var(--text-muted)', fontWeight: 600 }}>
+            <div key={id} className="flex justify-between items-center mb-2">
+              <span className="text-technical-sm" style={{ color: pillar.color }}>{id}</span>
+              <div className="flex items-center gap-1">
+                <span className="text-technical-sm text-surface-variant">{preScores[id]} →</span>
+                <span className="text-technical-sm font-bold" style={{ color: pillar.color }}>{postScores[id]}</span>
+                <span className="text-[11px] font-semibold" style={{ color: d > 0 ? '#10b981' : d < 0 ? '#ef4444' : 'var(--text-muted)' }}>
                   {d > 0 ? `+${d}` : d}
                 </span>
               </div>
@@ -229,29 +217,25 @@ export default function PostIntervention() {
 
         <div className="divider" />
 
-        <div style={{ fontSize: 11, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 10 }}>Process Nodes</div>
+        <div className="text-[11px] text-surface-variant uppercase tracking-[0.5px] mb-2.5">Process Nodes</div>
         {POST_INTERVENTION_NODES.map(node => (
-          <div key={node.id} onClick={() => setActiveNode(node)} style={{
-            padding: '8px 10px', borderRadius: 8, cursor: 'pointer', marginBottom: 4,
+          <div key={node.id} onClick={() => setActiveNode(node)} className="px-2.5 py-2 rounded-lg cursor-pointer mb-1" style={{
             background: activeNode?.id === node.id ? 'rgba(20,184,166,0.15)' : 'transparent',
             border: `1px solid ${activeNode?.id === node.id ? '#14b8a6' : 'transparent'}`,
-            transition: 'all 0.15s',
           }}>
-            <div style={{ fontSize: 12, fontWeight: 500 }}>{node.label}</div>
+            <div className="text-technical-sm font-medium">{node.label}</div>
           </div>
         ))}
       </div>
 
-      {/* Main */}
-      <div className="panel-main" style={{ flex: 1, overflowY: 'auto', padding: 24 }}>
-        {/* Phase swimlane */}
-        <div style={{ marginBottom: 24 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
-            <div style={{ padding: '3px 10px', background: 'rgba(20,184,166,0.15)', border: '1px solid rgba(20,184,166,0.3)', borderRadius: 20, fontSize: 11, color: '#2dd4bf', fontWeight: 600 }}>Phase 3</div>
-            <span style={{ fontSize: 14, fontWeight: 700 }}>Post-Intervention Evaluation</span>
+      <div className="panel-main flex-1 overflow-y-auto p-6">
+        <div className="mb-6">
+          <div className="flex items-center gap-2.5 mb-3">
+            <div className="px-2.5 py-[3px] rounded-full text-[11px] font-semibold text-[#2dd4bf]" style={{ background: 'rgba(20,184,166,0.15)', border: '1px solid rgba(20,184,166,0.3)' }}>Phase 3</div>
+            <span className="text-label-md font-bold">Post-Intervention Evaluation</span>
           </div>
-          <div style={{ background: 'rgba(20,184,166,0.04)', border: '1px solid rgba(20,184,166,0.15)', borderRadius: 14, padding: 16, overflowX: 'auto' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 0, minWidth: 'max-content' }}>
+          <div className="p-4 rounded-[14px] overflow-x-auto" style={{ background: 'rgba(20,184,166,0.04)', border: '1px solid rgba(20,184,166,0.15)' }}>
+            <div className="flex items-center gap-0 min-w-max">
               {POST_INTERVENTION_NODES.map((node, i) => (
                 <ProcessNode key={node.id} node={node} color="#14b8a6" index={i} isLast={i === POST_INTERVENTION_NODES.length - 1} onClick={setActiveNode} active={activeNode?.id === node.id} />
               ))}
@@ -259,44 +243,35 @@ export default function PostIntervention() {
           </div>
         </div>
 
-        {/* Unified score comparison */}
-        <div className="score-grid-4" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12, marginBottom: 20 }}>
+        <div className="score-grid-4 grid grid-cols-3 gap-3 mb-5">
           {[
             { label: 'Pre-Intervention Score', val: preUnified, color: '#6366f1', grade: getGrade(preUnified) },
             { label: 'Post-Intervention Score', val: postUnified, color: '#14b8a6', grade: getGrade(postUnified) },
             { label: 'Overall Improvement', val: delta, color: delta >= 0 ? '#10b981' : '#ef4444', isPercent: false, isDelta: true },
           ].map(({ label, val, color, grade, isDelta }) => (
-            <div key={label} style={{
-              background: 'var(--navy-4)', border: `1px solid ${color}30`,
-              borderRadius: 14, padding: 20, textAlign: 'center',
-            }}>
-              <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 4 }}>{label}</div>
-              <div style={{ fontSize: 40, fontWeight: 800, color, fontFamily: 'Space Grotesk', lineHeight: 1 }}>
+            <div key={label} className="bg-surface-container-low p-5 text-center rounded-[14px]" style={{ border: `1px solid ${color}30` }}>
+              <div className="text-[11px] text-surface-variant mb-1">{label}</div>
+              <div className="text-[40px] font-extrabold leading-none" style={{ color }}>
                 {isDelta ? (delta >= 0 ? `+${delta}` : delta) : val}
               </div>
-              {grade && <div style={{ fontSize: 12, color: grade.color, marginTop: 4 }}>Grade {grade.grade}: {grade.label}</div>}
-              {isDelta && <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 4 }}>points gained</div>}
+              {grade && <div className="text-technical-sm mt-1" style={{ color: grade.color }}>Grade {grade.grade}: {grade.label}</div>}
+              {isDelta && <div className="text-technical-sm text-surface-variant mt-1">points gained</div>}
             </div>
           ))}
         </div>
 
-        {/* Tabs */}
-        <div style={{ display: 'flex', gap: 4, marginBottom: 20, background: 'var(--navy-4)', padding: 4, borderRadius: 10, width: 'fit-content' }}>
+        <div className="flex gap-1 mb-5 bg-surface-container-low p-1 rounded-[10px] w-fit">
           {['comparison', 'radar', 'career', 'idp'].map(t => (
-            <button key={t} onClick={() => setActiveTab(t)} style={{
-              padding: '7px 16px', borderRadius: 8, cursor: 'pointer',
-              background: activeTab === t ? '#14b8a6' : 'transparent',
-              color: activeTab === t ? 'white' : 'var(--text-secondary)',
-              border: 'none', fontSize: 13, fontWeight: 500, transition: 'all 0.15s',
-              textTransform: 'capitalize',
-            }}>{t}</button>
+            <button key={t} onClick={() => setActiveTab(t)}
+              className={`px-4 py-1.5 rounded-lg cursor-pointer border-none text-sm font-medium capitalize ${activeTab === t ? 'bg-[#14b8a6] text-white' : 'bg-transparent text-on-surface-variant'}`}
+            >{t}</button>
           ))}
         </div>
 
         {activeTab === 'comparison' && (
           <div>
-            <h3 style={{ fontSize: 15, fontWeight: 700, marginBottom: 16 }}>Before vs After Comparison</h3>
-            <div style={{ background: 'var(--navy-4)', border: '1px solid var(--border-light)', borderRadius: 14, padding: 20, marginBottom: 16 }}>
+            <h3 className="text-[15px] font-bold mb-4">Before vs After Comparison</h3>
+            <div className="bg-surface-container-low border border-outline-variant rounded-[14px] p-5 mb-4">
               <ResponsiveContainer width="100%" height={240}>
                 <BarChart data={comparisonData} barGap={4}>
                   <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
@@ -310,21 +285,21 @@ export default function PostIntervention() {
               </ResponsiveContainer>
             </div>
 
-            <div className="post-compare-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 10 }}>
+            <div className="post-compare-grid grid grid-cols-4 gap-2.5">
               {Object.entries(PILLARS).map(([id, pillar]) => {
                 const d = postScores[id] - preScores[id];
                 const pct = preScores[id] > 0 ? Math.round((d / preScores[id]) * 100) : 0;
                 return (
-                  <div key={id} style={{ background: 'var(--navy-4)', border: `1px solid ${pillar.color}25`, borderRadius: 12, padding: 14 }}>
-                    <div style={{ fontSize: 11, color: pillar.color, fontWeight: 600, marginBottom: 6 }}>{pillar.short}</div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
-                      <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>{preScores[id]}</span>
-                      <ArrowRight size={12} color="var(--text-muted)" />
-                      <span style={{ fontSize: 14, fontWeight: 700, color: pillar.color }}>{postScores[id]}</span>
+                  <div key={id} className="bg-surface-container-low p-3.5 rounded-xl" style={{ border: `1px solid ${pillar.color}25` }}>
+                    <div className="text-[11px] font-semibold mb-1.5" style={{ color: pillar.color }}>{pillar.short}</div>
+                    <div className="flex justify-between mb-1.5">
+                      <span className="text-technical-sm text-surface-variant">{preScores[id]}</span>
+                      <ArrowRight size={12} className="stroke-surface-variant" />
+                      <span className="text-label-md font-bold" style={{ color: pillar.color }}>{postScores[id]}</span>
                     </div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                      {d > 0 ? <TrendingUp size={12} color="#10b981" /> : d < 0 ? <TrendingDown size={12} color="#ef4444" /> : <Minus size={12} color="var(--text-muted)" />}
-                      <span style={{ fontSize: 12, fontWeight: 600, color: d > 0 ? '#10b981' : d < 0 ? '#ef4444' : 'var(--text-muted)' }}>
+                    <div className="flex items-center gap-1">
+                      {d > 0 ? <TrendingUp size={12} color="#10b981" /> : d < 0 ? <TrendingDown size={12} color="#ef4444" /> : <Minus size={12} className="stroke-surface-variant" />}
+                      <span className="text-technical-sm font-semibold" style={{ color: d > 0 ? '#10b981' : d < 0 ? '#ef4444' : 'var(--text-muted)' }}>
                         {d > 0 ? `+${d}` : d} pts ({pct > 0 ? '+' : ''}{pct}%)
                       </span>
                     </div>
@@ -336,22 +311,17 @@ export default function PostIntervention() {
         )}
 
         {activeTab === 'radar' && (
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
+          <div className="grid grid-cols-2 gap-5">
             <div className="card">
-              <h4 style={{ fontSize: 13, fontWeight: 600, marginBottom: 12 }}>Pre vs Post Radar</h4>
+              <h4 className="text-technical-sm font-semibold mb-3">Pre vs Post Radar</h4>
               <QIDSRadar data={preScores} compare={postScores} size={280} />
             </div>
             <div className="card">
-              <h4 style={{ fontSize: 13, fontWeight: 600, marginBottom: 12 }}>Skill Shape Topology</h4>
-              <div style={{ textAlign: 'center', padding: 20 }}>
-                <div style={{
-                  fontSize: 72, fontWeight: 900, fontFamily: 'Space Grotesk',
-                  background: 'linear-gradient(135deg, #6366f1, #14b8a6)',
-                  WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
-                  marginBottom: 12,
-                }}>{skillShape}</div>
-                <div style={{ fontSize: 16, fontWeight: 700, marginBottom: 8 }}>{skillShapeData?.label}</div>
-                <p style={{ fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.6 }}>{skillShapeData?.desc}</p>
+              <h4 className="text-technical-sm font-semibold mb-3">Skill Shape Topology</h4>
+              <div className="text-center p-5">
+                <div className="text-[72px] font-black mb-3 text-[#6366f1]">{skillShape}</div>
+                <div className="text-base font-bold mb-2">{skillShapeData?.label}</div>
+                <p className="text-technical-sm text-on-surface-variant leading-relaxed">{skillShapeData?.desc}</p>
               </div>
             </div>
           </div>
@@ -359,38 +329,31 @@ export default function PostIntervention() {
 
         {activeTab === 'career' && (
           <div>
-            <h3 style={{ fontSize: 15, fontWeight: 700, marginBottom: 16 }}>Career Guidance & Recommendations</h3>
-            <div style={{
-              padding: 24, background: 'rgba(99,102,241,0.08)',
-              border: '1px solid rgba(99,102,241,0.25)', borderRadius: 16, marginBottom: 16,
-            }}>
-              <div style={{ display: 'flex', alignItems: 'flex-start', gap: 16 }}>
+            <h3 className="text-[15px] font-bold mb-4">Career Guidance & Recommendations</h3>
+            <div className="p-6 rounded-2xl mb-4" style={{ background: 'rgba(99,102,241,0.08)', border: '1px solid rgba(99,102,241,0.25)' }}>
+              <div className="flex items-start gap-4">
                 <div>
-                  <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 4 }}>Recommended Track</div>
-                  <h3 style={{ fontSize: 18, fontWeight: 800, marginBottom: 6 }}>{careerProfile.label}</h3>
-                  <div style={{ fontSize: 12, color: '#818cf8', marginBottom: 8 }}>Condition: {careerProfile.condition}</div>
-                  <p style={{ fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.6, marginBottom: 12 }}>{careerProfile.desc}</p>
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                  <div className="text-[11px] text-surface-variant mb-1">Recommended Track</div>
+                  <h3 className="text-lg font-extrabold mb-1.5">{careerProfile.label}</h3>
+                  <div className="text-technical-sm text-[#818cf8] mb-2">Condition: {careerProfile.condition}</div>
+                  <p className="text-technical-sm text-on-surface-variant leading-relaxed mb-3">{careerProfile.desc}</p>
+                  <div className="flex flex-wrap gap-1.5">
                     {careerProfile.roles.map(r => (
-                      <span key={r} style={{ padding: '4px 10px', borderRadius: 20, background: 'rgba(99,102,241,0.15)', border: '1px solid rgba(99,102,241,0.3)', fontSize: 12, color: '#818cf8' }}>{r}</span>
+                      <span key={r} className="px-2.5 py-1 rounded-full text-technical-sm text-[#818cf8]" style={{ background: 'rgba(99,102,241,0.15)', border: '1px solid rgba(99,102,241,0.3)' }}>{r}</span>
                     ))}
                   </div>
                 </div>
               </div>
             </div>
 
-            <h4 style={{ fontSize: 13, fontWeight: 600, marginBottom: 12 }}>All Career Profiles</h4>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+            <h4 className="text-technical-sm font-semibold mb-3">All Career Profiles</h4>
+            <div className="grid grid-cols-2 gap-2.5">
               {CAREER_PROFILES.map(cp => (
-                <div key={cp.id} style={{
-                  padding: 14, background: cp.id === careerProfile.id ? 'rgba(99,102,241,0.1)' : 'var(--navy-4)',
-                  border: `1px solid ${cp.id === careerProfile.id ? 'rgba(99,102,241,0.4)' : 'var(--border-light)'}`,
-                  borderRadius: 10,
-                }}>
-                  <div style={{ display: 'flex', gap: 8, alignItems: 'flex-start' }}>
+                <div key={cp.id} className={`p-3.5 rounded-[10px] border ${cp.id === careerProfile.id ? 'bg-[#6366f1]/10 border-[#6366f1]/40' : 'bg-surface-container-low border-outline-variant'}`}>
+                  <div className="flex gap-2 items-start">
                     <div>
-                      <div style={{ fontSize: 12, fontWeight: 600, marginBottom: 2 }}>{cp.label}</div>
-                      <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>{cp.condition}</div>
+                      <div className="text-technical-sm font-semibold mb-0.5">{cp.label}</div>
+                      <div className="text-[11px] text-surface-variant">{cp.condition}</div>
                     </div>
                   </div>
                 </div>
@@ -401,25 +364,25 @@ export default function PostIntervention() {
 
         {activeTab === 'idp' && (
           <div>
-            <h3 style={{ fontSize: 15, fontWeight: 700, marginBottom: 16 }}>Individual Development Plan (IDP)</h3>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+            <h3 className="text-[15px] font-bold mb-4">Individual Development Plan (IDP)</h3>
+            <div className="grid grid-cols-2 gap-4">
               <div className="card">
-                <h4 style={{ fontSize: 13, fontWeight: 600, color: '#14b8a6', marginBottom: 12 }}>Achieved Milestones</h4>
+                <h4 className="text-technical-sm font-semibold text-[#14b8a6] mb-3">Achieved Milestones</h4>
                 {Object.entries(PILLARS).filter(([id]) => postScores[id] > preScores[id]).map(([id, p]) => (
-                  <div key={id} style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
-                    <div style={{ width: 16, height: 16, borderRadius: '50%', background: 'rgba(16,185,129,0.2)', border: '1px solid #10b981', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                      <span style={{ fontSize: 9, color: '#10b981' }}>✓</span>
+                  <div key={id} className="flex gap-2 mb-2">
+                    <div className="w-4 h-4 rounded-full flex items-center justify-center shrink-0" style={{ background: 'rgba(16,185,129,0.2)', border: '1px solid #10b981' }}>
+                      <span className="text-[9px] text-[#10b981]">✓</span>
                     </div>
-                    <span style={{ fontSize: 13, color: 'var(--text-secondary)' }}>{p.label}: {preScores[id]} → {postScores[id]} (+{postScores[id] - preScores[id]})</span>
+                    <span className="text-technical-sm text-on-surface-variant">{p.label}: {preScores[id]} → {postScores[id]} (+{postScores[id] - preScores[id]})</span>
                   </div>
                 ))}
               </div>
               <div className="card">
-                <h4 style={{ fontSize: 13, fontWeight: 600, color: '#f59e0b', marginBottom: 12 }}>Maintenance Roadmap</h4>
+                <h4 className="text-technical-sm font-semibold text-[#f59e0b] mb-3">Maintenance Roadmap</h4>
                 {['Monthly self-assessment check-ins', 'Quarterly facilitator review sessions', 'Annual full QIDS reassessment', 'Ongoing EQ practice (Stop-Think-Act)', 'Peer accountability partnerships'].map(item => (
-                  <div key={item} style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
-                    <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#f59e0b', marginTop: 5, flexShrink: 0 }} />
-                    <span style={{ fontSize: 12, color: 'var(--text-secondary)' }}>{item}</span>
+                  <div key={item} className="flex gap-2 mb-2">
+                    <div className="w-1.5 h-1.5 rounded-full bg-[#f59e0b] mt-[5px] shrink-0" />
+                    <span className="text-technical-sm text-on-surface-variant">{item}</span>
                   </div>
                 ))}
               </div>
@@ -428,21 +391,20 @@ export default function PostIntervention() {
         )}
       </div>
 
-      {/* Right panel */}
-      <div className="panel-right" style={{ width: 260, borderLeft: '1px solid var(--border-light)', background: 'var(--navy-2)', padding: 20, overflowY: 'auto', flexShrink: 0 }}>
-        <div style={{ fontSize: 12, fontWeight: 600, color: '#2dd4bf', marginBottom: 12 }}>Outcome Summary</div>
-        <div style={{ padding: 14, background: 'rgba(20,184,166,0.08)', border: '1px solid rgba(20,184,166,0.2)', borderRadius: 10, marginBottom: 16 }}>
-          <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 4 }}>Unified Score Change</div>
-          <div style={{ fontSize: 28, fontWeight: 800, color: '#14b8a6', fontFamily: 'Space Grotesk' }}>{preUnified} → {postUnified}</div>
-          <div style={{ fontSize: 12, color: delta >= 0 ? '#10b981' : '#ef4444', fontWeight: 600 }}>{delta >= 0 ? `+${delta}` : delta} points ({Math.round((delta / preUnified) * 100)}%)</div>
+      <div className="panel-right w-[260px] border-l border-outline-variant bg-surface overflow-y-auto shrink-0 p-5">
+        <div className="text-technical-sm font-semibold text-[#2dd4bf] mb-3">Outcome Summary</div>
+        <div className="p-3.5 rounded-[10px] mb-4" style={{ background: 'rgba(20,184,166,0.08)', border: '1px solid rgba(20,184,166,0.2)' }}>
+          <div className="text-[11px] text-surface-variant mb-1">Unified Score Change</div>
+          <div className="text-[28px] font-extrabold text-[#14b8a6]">{preUnified} → {postUnified}</div>
+          <div className="text-technical-sm font-semibold" style={{ color: delta >= 0 ? '#10b981' : '#ef4444' }}>{delta >= 0 ? `+${delta}` : delta} points ({Math.round((delta / preUnified) * 100)}%)</div>
         </div>
 
         <div className="divider" />
 
-        <div style={{ fontSize: 12, fontWeight: 600, marginBottom: 10 }}>Skill Shape</div>
-        <div style={{ padding: 12, background: 'rgba(99,102,241,0.08)', border: '1px solid rgba(99,102,241,0.2)', borderRadius: 10, marginBottom: 16, textAlign: 'center' }}>
-          <div style={{ fontSize: 36, fontWeight: 900, color: '#818cf8', fontFamily: 'Space Grotesk' }}>{skillShape}</div>
-          <div style={{ fontSize: 12, color: 'var(--text-secondary)' }}>{skillShapeData?.label}</div>
+        <div className="text-technical-sm font-semibold mb-2.5">Skill Shape</div>
+        <div className="p-3 rounded-[10px] mb-4 text-center" style={{ background: 'rgba(99,102,241,0.08)', border: '1px solid rgba(99,102,241,0.2)' }}>
+          <div className="text-[36px] font-black text-[#818cf8]">{skillShape}</div>
+          <div className="text-technical-sm text-on-surface-variant">{skillShapeData?.label}</div>
         </div>
 
         <div className="divider" />
@@ -451,7 +413,7 @@ export default function PostIntervention() {
 
         <div className="divider" />
 
-        <button className="btn btn-primary btn-sm" style={{ width: '100%', justifyContent: 'center' }} onClick={() => navigate('/app/report')}>
+        <button className="btn btn-primary btn-sm w-full justify-center" onClick={() => navigate('/app/report')}>
           <Download size={12} /> Generate Full Report
         </button>
       </div>

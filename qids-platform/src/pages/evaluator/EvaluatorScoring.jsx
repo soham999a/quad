@@ -11,23 +11,24 @@ const PILLARS_WITH_RUBRICS = ['EQ', 'SQ', 'AQ'];
 
 function RubricScorer({ criterion, marks, desc, value, onChange, color }) {
   return (
-    <div style={{ marginBottom: 10, background: 'rgba(255,255,255,0.02)', border: '1px solid var(--border-light)', borderRadius: 8, padding: 12 }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 6 }}>
-        <div style={{ flex: 1 }}>
-          <div style={{ fontSize: 12, fontWeight: 600 }}>{criterion}</div>
-          <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 2, lineHeight: 1.4 }}>{desc}</div>
+    <div className="mb-2.5 bg-white/[.02] border border-outline-variant rounded-[10px] p-3">
+      <div className="flex justify-between items-start mb-1.5">
+        <div className="flex-1">
+          <div className="text-technical-sm font-semibold">{criterion}</div>
+          <div className="text-technical-sm text-surface-variant mt-0.5 leading-[1.4]">{desc}</div>
         </div>
-        <div style={{ fontSize: 11, color: 'var(--text-muted)', marginLeft: 10, flexShrink: 0 }}>Max: {marks}</div>
+        <div className="text-technical-sm text-surface-variant ml-2.5 shrink-0">Max: {marks}</div>
       </div>
-      <div style={{ display: 'flex', gap: 5 }}>
+      <div className="flex gap-[5px]">
         {Array.from({ length: marks + 1 }, (_, i) => (
-          <button key={i} onClick={() => onChange(i)} style={{
-            width: 32, height: 32, borderRadius: 6, cursor: 'pointer',
-            border: `2px solid ${value === i ? color : 'var(--border-light)'}`,
-            background: value === i ? `${color}20` : 'transparent',
-            color: value === i ? color : 'var(--text-muted)',
-            fontSize: 12, fontWeight: 700, transition: 'all 0.15s',
-          }}>{i}</button>
+          <button key={i} onClick={() => onChange(i)}
+            className="w-8 h-8 rounded-md cursor-pointer text-technical-sm font-bold transition-all duration-150"
+            style={{
+              border: `2px solid ${value === i ? color : 'var(--border-light)'}`,
+              background: value === i ? `${color}20` : 'transparent',
+              color: value === i ? color : 'var(--text-muted)',
+            }}
+          >{i}</button>
         ))}
       </div>
     </div>
@@ -91,29 +92,27 @@ function PillarScoringSection({ pillar, scores, onScoreChange, completed }) {
   else if (pillar === 'AQ') content = getAqContent();
 
   return (
-    <div style={{
-      marginBottom: 20, borderRadius: 14, overflow: 'hidden',
-      border: `1px solid ${completed ? `${pillarColor}40` : `${pillarColor}20`}`,
-      opacity: completed ? 0.75 : 1,
-    }}>
-      <div style={{
-        padding: '12px 16px', background: `${pillarColor}08`,
-        borderBottom: '1px solid var(--border-light)',
-        display: 'flex', alignItems: 'center', gap: 10,
-      }}>
+    <div className={`mb-5 rounded-[14px] overflow-hidden${completed ? ' opacity-75' : ''}`}
+      style={{
+        border: `1px solid ${completed ? `${pillarColor}40` : `${pillarColor}20`}`,
+      }}
+    >
+      <div className="px-4 py-3 border-b border-outline-variant flex items-center gap-2.5"
+        style={{ background: `${pillarColor}08` }}
+      >
         <Icon size={16} color={pillarColor} />
-        <span style={{ fontSize: 14, fontWeight: 700, color: pillarColor, flex: 1 }}>
+        <span className="text-label-md font-bold flex-1" style={{ color: pillarColor }}>
           {PILLARS[pillar]?.label || pillar} — Part B Rubric
         </span>
         {completed && (
-          <span style={{ fontSize: 11, padding: '3px 8px', borderRadius: 6, background: 'rgba(16,185,129,0.15)', color: '#34d399', display: 'flex', alignItems: 'center', gap: 4 }}>
+          <span className="text-technical-sm py-[3px] px-2 rounded-md bg-emerald-500/[.15] text-emerald-400 flex items-center gap-1">
             <CheckCircle size={11} /> Completed
           </span>
         )}
       </div>
-      <div style={{ padding: 16 }}>
+      <div className="p-4">
         {!content || content.length === 0 ? (
-          <div style={{ fontSize: 12, color: 'var(--text-muted)', padding: 12, textAlign: 'center' }}>
+          <div className="text-technical-sm text-surface-variant p-3 text-center">
             No rubric activities found for {pillar}.
           </div>
         ) : (
@@ -121,16 +120,18 @@ function PillarScoringSection({ pillar, scores, onScoreChange, completed }) {
             if (!item) return null;
             if (item.type === 'eq') {
               return (
-                <div key={item.activity.id} style={{ marginBottom: 16, background: 'rgba(255,255,255,0.02)', borderRadius: 10, border: '1px solid var(--border-light)', overflow: 'hidden' }}>
-                  <div style={{ padding: '10px 14px', background: `${pillarColor}06`, borderBottom: '1px solid var(--border-light)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div key={item.activity.id} className="mb-4 bg-white/[.02] rounded-[10px] border border-outline-variant overflow-hidden">
+                  <div className="px-3.5 py-2.5 border-b border-outline-variant flex justify-between items-center"
+                    style={{ background: `${pillarColor}06` }}
+                  >
                     <div>
-                      <div style={{ fontSize: 13, fontWeight: 700 }}>{item.activity.id}: {item.activity.label}</div>
-                      <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>{item.activity.component} | Max: {item.activity.maxScore} marks</div>
+                      <div className="text-label-md font-bold">{item.activity.id}: {item.activity.label}</div>
+                      <div className="text-technical-sm text-surface-variant">{item.activity.component} | Max: {item.activity.maxScore} marks</div>
                     </div>
-                    <div style={{ fontSize: 18, fontWeight: 800, color: pillarColor, fontFamily: 'Space Grotesk' }}>{item.total}/{item.activity.maxScore}</div>
+                    <div className="text-lg font-extrabold font-['Space_Grotesk']" style={{ color: pillarColor }}>{item.total}/{item.activity.maxScore}</div>
                   </div>
-                  <div style={{ padding: 12 }}>
-                    <div style={{ fontSize: 11, color: 'var(--text-secondary)', lineHeight: 1.5, marginBottom: 10 }}>{item.activity.desc}</div>
+                  <div className="p-3">
+                    <div className="text-technical-sm text-on-surface-variant leading-[1.5] mb-2.5">{item.activity.desc}</div>
                     {item.activity.rubric.map(r => (
                       <RubricScorer
                         key={r.criterion} criterion={r.criterion} marks={r.marks} desc={r.desc}
@@ -144,16 +145,18 @@ function PillarScoringSection({ pillar, scores, onScoreChange, completed }) {
               );
             } else if (item.type === 'sq_ace') {
               return (
-                <div key={item.exercise.id} style={{ marginBottom: 16, background: 'rgba(255,255,255,0.02)', borderRadius: 10, border: '1px solid var(--border-light)', overflow: 'hidden' }}>
-                  <div style={{ padding: '10px 14px', background: `${pillarColor}06`, borderBottom: '1px solid var(--border-light)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div key={item.exercise.id} className="mb-4 bg-white/[.02] rounded-[10px] border border-outline-variant overflow-hidden">
+                  <div className="px-3.5 py-2.5 border-b border-outline-variant flex justify-between items-center"
+                    style={{ background: `${pillarColor}06` }}
+                  >
                     <div>
-                      <div style={{ fontSize: 13, fontWeight: 700 }}>{item.exercise.label}</div>
-                      <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>{item.exercise.subParam} | Max: {item.exercise.marks} marks</div>
+                      <div className="text-label-md font-bold">{item.exercise.label}</div>
+                      <div className="text-technical-sm text-surface-variant">{item.exercise.subParam} | Max: {item.exercise.marks} marks</div>
                     </div>
-                    <div style={{ fontSize: 18, fontWeight: 800, color: pillarColor, fontFamily: 'Space Grotesk' }}>{item.total}/{item.exercise.marks}</div>
+                    <div className="text-lg font-extrabold font-['Space_Grotesk']" style={{ color: pillarColor }}>{item.total}/{item.exercise.marks}</div>
                   </div>
-                  <div style={{ padding: 12 }}>
-                    <div style={{ fontSize: 11, color: 'var(--text-secondary)', lineHeight: 1.5, marginBottom: 10 }}>{item.exercise.desc}</div>
+                  <div className="p-3">
+                    <div className="text-technical-sm text-on-surface-variant leading-[1.5] mb-2.5">{item.exercise.desc}</div>
                     {item.exercise.rubric.map(r => (
                       <RubricScorer
                         key={r.criterion} criterion={r.criterion} marks={r.marks} desc={r.desc}
@@ -167,17 +170,19 @@ function PillarScoringSection({ pillar, scores, onScoreChange, completed }) {
               );
             } else if (item.type === 'sq_pba') {
               return (
-                <div key={item.act.id} style={{ marginBottom: 16, ...(item.act.id ? {} : {}) }}>
+                <div key={item.act.id} className="mb-4">
                   {item.act && (
-                    <div style={{ background: 'rgba(255,255,255,0.02)', borderRadius: 10, border: '1px solid var(--border-light)', overflow: 'hidden' }}>
-                      <div style={{ padding: '10px 14px', background: `${pillarColor}06`, borderBottom: '1px solid var(--border-light)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div className="bg-white/[.02] rounded-[10px] border border-outline-variant overflow-hidden">
+                      <div className="px-3.5 py-2.5 border-b border-outline-variant flex justify-between items-center"
+                        style={{ background: `${pillarColor}06` }}
+                      >
                         <div>
-                          <div style={{ fontSize: 13, fontWeight: 700 }}>{item.act.label}</div>
-                          <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>Max: {item.act.marks} marks</div>
+                          <div className="text-label-md font-bold">{item.act.label}</div>
+                          <div className="text-technical-sm text-surface-variant">Max: {item.act.marks} marks</div>
                         </div>
-                        <div style={{ fontSize: 18, fontWeight: 800, color: pillarColor, fontFamily: 'Space Grotesk' }}>{item.total}/{item.act.marks}</div>
+                        <div className="text-lg font-extrabold font-['Space_Grotesk']" style={{ color: pillarColor }}>{item.total}/{item.act.marks}</div>
                       </div>
-                      <div style={{ padding: 12 }}>
+                      <div className="p-3">
                         {item.act.rubric.map(r => (
                           <RubricScorer
                             key={r.criterion} criterion={r.criterion} marks={r.marks} desc={r.desc}
@@ -193,16 +198,18 @@ function PillarScoringSection({ pillar, scores, onScoreChange, completed }) {
               );
             } else if (item.type === 'aq') {
               return (
-                <div key={item.comp} style={{ marginBottom: 16, background: 'rgba(255,255,255,0.02)', borderRadius: 10, border: '1px solid var(--border-light)', overflow: 'hidden' }}>
-                  <div style={{ padding: '10px 14px', background: `${pillarColor}06`, borderBottom: '1px solid var(--border-light)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div key={item.comp} className="mb-4 bg-white/[.02] rounded-[10px] border border-outline-variant overflow-hidden">
+                  <div className="px-3.5 py-2.5 border-b border-outline-variant flex justify-between items-center"
+                    style={{ background: `${pillarColor}06` }}
+                  >
                     <div>
-                      <div style={{ fontSize: 13, fontWeight: 700 }}>{item.activity.label}</div>
-                      <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>{AQ_QUESTIONS?.components?.[item.comp]?.label || item.comp} | Max: {item.activity.maxScore} marks</div>
+                      <div className="text-label-md font-bold">{item.activity.label}</div>
+                      <div className="text-technical-sm text-surface-variant">{AQ_QUESTIONS?.components?.[item.comp]?.label || item.comp} | Max: {item.activity.maxScore} marks</div>
                     </div>
-                    <div style={{ fontSize: 18, fontWeight: 800, color: pillarColor, fontFamily: 'Space Grotesk' }}>{item.total}/{item.activity.maxScore}</div>
+                    <div className="text-lg font-extrabold font-['Space_Grotesk']" style={{ color: pillarColor }}>{item.total}/{item.activity.maxScore}</div>
                   </div>
-                  <div style={{ padding: 12 }}>
-                    <div style={{ fontSize: 11, color: 'var(--text-secondary)', lineHeight: 1.5, marginBottom: 10 }}>{item.activity.desc11_18 || item.activity.desc19_32 || ''}</div>
+                  <div className="p-3">
+                    <div className="text-technical-sm text-on-surface-variant leading-[1.5] mb-2.5">{item.activity.desc11_18 || item.activity.desc19_32 || ''}</div>
                     {item.activity.rubric.map(r => (
                       <RubricScorer
                         key={r.criterion} criterion={r.criterion} marks={r.marks} desc={r.desc}
@@ -259,9 +266,9 @@ export default function EvaluatorScoring() {
 
   if (!assessment || !student) {
     return (
-      <div className="page-pad animate-fade" style={{ maxWidth: 800, margin: '0 auto', paddingTop: 60, textAlign: 'center' }}>
-        <AlertCircle size={32} color="var(--text-muted)" style={{ marginBottom: 12 }} />
-        <div style={{ fontSize: 14, color: 'var(--text-muted)', marginBottom: 8 }}>Assessment data not available</div>
+      <div className="page-pad animate-fade max-w-[800px] mx-auto pt-[60px] text-center">
+        <AlertCircle size={32} color="var(--text-muted)" className="mb-3" />
+        <div className="text-label-md text-surface-variant mb-2">Assessment data not available</div>
         <button onClick={() => navigate('/app/evaluator')} className="btn btn-primary btn-sm">Back to Dashboard</button>
       </div>
     );
@@ -300,32 +307,32 @@ export default function EvaluatorScoring() {
   const studentName = student?.name || student?.email || 'this student';
 
   return (
-    <div className="page-pad animate-fade" style={{ maxWidth: 900, margin: '0 auto' }}>
-      <button onClick={() => navigate('/app/evaluator')} className="btn btn-ghost btn-sm" style={{ marginBottom: 16, display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+    <div className="page-pad animate-fade max-w-[900px] mx-auto">
+      <button onClick={() => navigate('/app/evaluator')} className="btn btn-ghost btn-sm mb-4 inline-flex items-center gap-1.5">
         <ArrowLeft size={14} /> Back to Dashboard
       </button>
 
-      <div style={{ marginBottom: 24 }}>
-        <h1 style={{ fontSize: 22, fontWeight: 800, marginBottom: 4 }}>Scoring: {studentName}</h1>
-        <p style={{ fontSize: 13, color: 'var(--text-muted)' }}>
+      <div className="mb-6">
+        <h1 className="text-headline-md font-extrabold mb-1">Scoring: {studentName}</h1>
+        <p className="text-label-md text-surface-variant">
           Fill in the rubric scores for Part B activities. These are observer-rated assessments.
         </p>
       </div>
 
       {/* Pillar tabs */}
-      <div style={{ display: 'flex', gap: 4, marginBottom: 20, background: 'var(--navy-4)', padding: 4, borderRadius: 10, width: 'fit-content' }}>
+      <div className="flex gap-1 mb-5 bg-surface-container-low p-1 rounded-xl w-fit">
         {PILLARS_WITH_RUBRICS.map(p => {
           const Icon = PILLAR_ICONS[p] || Brain;
           const color = PILLARS[p]?.color || '#6366f1';
           const isDone = existingEvals[p];
           return (
-            <button key={p} onClick={() => setActivePillar(p)} style={{
-              padding: '8px 16px', borderRadius: 8, cursor: 'pointer', fontSize: 13, fontWeight: 500,
-              background: activePillar === p ? color : 'transparent',
-              color: activePillar === p ? 'white' : 'var(--text-secondary)',
-              border: 'none', transition: 'all 0.15s',
-              display: 'flex', alignItems: 'center', gap: 6,
-            }}>
+            <button key={p} onClick={() => setActivePillar(p)}
+              className="px-4 py-2 rounded-lg cursor-pointer text-label-md font-medium border-none transition-all duration-150 flex items-center gap-1.5"
+              style={{
+                background: activePillar === p ? color : 'transparent',
+                color: activePillar === p ? 'white' : 'var(--text-secondary)',
+              }}
+            >
               <Icon size={13} />
               {p}
               {isDone && <CheckCircle size={11} color={activePillar === p ? 'white' : '#34d399'} />}
@@ -343,12 +350,11 @@ export default function EvaluatorScoring() {
       />
 
       {/* Save button */}
-      <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, marginTop: 8 }}>
+      <div className="flex justify-end gap-2 mt-2">
         <button
           onClick={() => handleSave(activePillar)}
           disabled={saving}
-          className="btn btn-primary"
-          style={{ display: 'flex', alignItems: 'center', gap: 6 }}
+          className="btn btn-primary flex items-center gap-1.5"
         >
           <Save size={14} />
           {saving ? 'Saving...' : existingEvals[activePillar] ? 'Update Scores' : 'Save Scores'}

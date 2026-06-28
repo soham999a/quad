@@ -1,7 +1,9 @@
 import React, { useState, createContext, useContext, useEffect } from 'react';
 import { BrowserRouter, Routes, Route, NavLink, useNavigate, Navigate, useLocation } from 'react-router-dom';
-import { Brain, Map, ClipboardList, TrendingUp, FileText, UserCheck,
-  ChevronRight, Menu, LogOut, Home, BookOpen, ListChecks, X, Shield, Users } from 'lucide-react';
+import {
+  Brain, Map, ClipboardList, TrendingUp, FileText, UserCheck,
+  ChevronRight, Menu, LogOut, Home, BookOpen, ListChecks, X, Shield, Users, Sparkles, BarChart3, Plus
+} from 'lucide-react';
 import { PILLARS, CONTEXTS, computePillarScore, mergeEvaluationScores } from './data/qidsData';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
@@ -27,26 +29,18 @@ import InterventionPlan from './pages/InterventionPlan';
 export const AppContext = createContext(null);
 export const useApp = () => useContext(AppContext);
 
-const CONTEXT_THEMES = {
-  school:     { accent: '#6366f1', gradient: 'linear-gradient(135deg, #6366f1, #818cf8)', badge: '🏫 School' },
-  college:    { accent: '#8b5cf6', gradient: 'linear-gradient(135deg, #8b5cf6, #a855f7)', badge: '🎓 College' },
-  corporate:  { accent: '#06b6d4', gradient: 'linear-gradient(135deg, #06b6d4, #22d3ee)', badge: '🏢 Corporate' },
-  individual: { accent: '#10b981', gradient: 'linear-gradient(135deg, #10b981, #34d399)', badge: '🧠 Individual' },
-  custom:     { accent: '#f59e0b', gradient: 'linear-gradient(135deg, #f59e0b, #fbbf24)', badge: '⚙️ Custom' },
-};
-
 const NAV_GROUPS = [
   {
-    label: 'Main',
+    label: 'MAIN',
     items: [
       { path: '/app/dashboard', label: 'Dashboard', icon: Home },
       { path: '/app/assessment', label: 'Assessment', icon: ClipboardList },
-      { path: '/app/progress', label: 'My Progress', icon: TrendingUp },
+      { path: '/app/progress', label: 'Progress', icon: TrendingUp },
       { path: '/app/report', label: 'Reports', icon: FileText },
     ]
   },
   {
-    label: 'Resources',
+    label: 'RESOURCES',
     items: [
       { path: '/app/pillars', label: 'Four Pillars', icon: Brain },
       { path: '/app/framework', label: 'Framework Guide', icon: Map },
@@ -82,131 +76,98 @@ function Sidebar({ collapsed, setCollapsed }) {
   }
 
   return (
-    <aside className="desktop-sidebar" style={{
-      width: collapsed ? 60 : 228,
-      minHeight: '100vh',
-      background: 'var(--navy-2)',
-      borderRight: '1px solid var(--border-light)',
-      display: 'flex', flexDirection: 'column',
-      transition: 'width 0.3s cubic-bezier(0.4,0,0.2,1)',
-      flexShrink: 0, position: 'sticky', top: 0, height: '100vh',
-      overflow: 'hidden', zIndex: 20,
-    }}>
-      <div style={{ padding: '16px 12px', borderBottom: '1px solid var(--border-light)', display: 'flex', alignItems: 'center', gap: 10, minHeight: 60 }}>
-        <div style={{
-          width: 36, height: 36, borderRadius: 11, flexShrink: 0,
-          background: 'linear-gradient(135deg, #6366f1 0%, #a855f7 100%)',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          boxShadow: '0 0 20px rgba(99,102,241,0.5), inset 0 1px 0 rgba(255,255,255,0.2)',
-        }}>
-          <Brain size={17} color="white" />
-        </div>
-        {!collapsed && (
-          <div style={{ overflow: 'hidden' }}>
-            <div style={{ fontSize: 14, fontWeight: 800, fontFamily: 'Space Grotesk', letterSpacing: '-0.02em', whiteSpace: 'nowrap' }}>QIDS</div>
-            <div style={{ fontSize: 9.5, color: 'var(--text-muted)', letterSpacing: '0.8px', textTransform: 'uppercase', whiteSpace: 'nowrap' }}>Intelligence Platform</div>
+    <aside className="desktop-sidebar fixed left-0 top-0 h-screen flex-col z-40 bg-background border-r-[0.5px] border-outline-variant"
+      style={{ width: collapsed ? 60 : 228, transition: 'width 0.3s cubic-bezier(0.4,0,0.2,1)' }}>
+      <div className="px-6 mt-8 mb-12" style={{ overflow: 'hidden' }}>
+        {collapsed ? (
+          <div className="flex justify-center">
+            <Brain size={20} className="text-primary" />
           </div>
+        ) : (
+          <>
+            <div className="text-label-md font-label-md uppercase tracking-widest text-primary mb-1">QIDS Platform</div>
+            <div className="text-technical-sm font-technical-sm text-surface-variant">§ ARCHITECTURE</div>
+          </>
         )}
       </div>
 
-      <nav style={{ flex: 1, padding: '8px 8px', overflowY: 'auto' }}>
+      <nav className="flex-grow overflow-y-auto">
         {NAV_GROUPS.map(group => (
-          <div key={group.label} style={{ marginBottom: 4 }}>
+          <div key={group.label} className="mb-2">
             {!collapsed && (
-              <div style={{ fontSize: 9.5, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.8px', padding: '8px 10px 4px' }}>
-                {group.label}
-              </div>
+              <div className="text-technical-sm font-technical-sm text-surface-variant uppercase tracking-widest px-4 mb-2">{group.label}</div>
             )}
             {group.items.map(({ path, label, icon: Icon }) => (
-              <NavLink key={path} to={path} end={path === '/app/dashboard'} style={({ isActive }) => ({
-                display: 'flex', alignItems: 'center', gap: 9,
-                padding: collapsed ? '9px' : '8px 10px',
-                borderRadius: 9, marginBottom: 1,
-                textDecoration: 'none', fontSize: 13, fontWeight: isActive ? 600 : 400,
-                color: isActive ? 'white' : 'var(--text-secondary)',
-                background: isActive ? 'linear-gradient(135deg, rgba(99,102,241,0.2), rgba(139,92,246,0.1))' : 'transparent',
-                borderLeft: isActive ? '2px solid var(--indigo)' : '2px solid transparent',
-                transition: 'all 0.15s cubic-bezier(0.4,0,0.2,1)',
-                whiteSpace: 'nowrap', overflow: 'hidden',
-                justifyContent: collapsed ? 'center' : 'flex-start',
-              })}>
-                <Icon size={14} style={{ flexShrink: 0, opacity: 0.9 }} />
-                {!collapsed && <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>{label}</span>}
+              <NavLink key={path} to={path} end={path === '/app/dashboard'}
+                className={({ isActive }) =>
+                  `flex items-center gap-4 py-3 transition-all ${isActive
+                    ? 'text-primary font-bold border-l-2 border-primary bg-surface-container-low'
+                    : 'text-on-surface-variant hover:text-primary hover:bg-surface-container-low'
+                  } ${collapsed ? 'justify-center mx-2 rounded-lg border-l-0' : 'pl-4'}`
+                }>
+                <Icon size={16} strokeWidth={1.5} />
+                {!collapsed && <span className="text-label-md font-label-md">{label}</span>}
               </NavLink>
             ))}
-            {!collapsed && <div style={{ height: 1, background: 'var(--border-light)', margin: '6px 4px' }} />}
           </div>
         ))}
+
         {roleNavItems.length > 0 && (
-          <div style={{ marginBottom: 4 }}>
+          <div className="mb-2">
             {!collapsed && (
-              <div style={{ fontSize: 9.5, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.8px', padding: '8px 10px 4px' }}>
-                {role === 'admin' ? 'Administration' : 'Evaluation'}
+              <div className="text-technical-sm font-technical-sm text-surface-variant uppercase tracking-widest px-4 mb-2">
+                {role === 'admin' ? 'ADMIN' : 'EVAL'}
               </div>
             )}
             {roleNavItems.map(({ path, label, icon: Icon }) => (
-              <NavLink key={path} to={path} end style={({ isActive }) => ({
-                display: 'flex', alignItems: 'center', gap: 9,
-                padding: collapsed ? '9px' : '8px 10px',
-                borderRadius: 9, marginBottom: 1,
-                textDecoration: 'none', fontSize: 13, fontWeight: isActive ? 600 : 400,
-                color: isActive ? 'white' : 'var(--text-secondary)',
-                background: isActive ? 'linear-gradient(135deg, rgba(99,102,241,0.2), rgba(139,92,246,0.1))' : 'transparent',
-                borderLeft: isActive ? '2px solid var(--indigo)' : '2px solid transparent',
-                transition: 'all 0.15s cubic-bezier(0.4,0,0.2,1)',
-                whiteSpace: 'nowrap', overflow: 'hidden',
-                justifyContent: collapsed ? 'center' : 'flex-start',
-              })}>
-                <Icon size={14} style={{ flexShrink: 0, opacity: 0.9 }} />
-                {!collapsed && <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>{label}</span>}
+              <NavLink key={path} to={path} end
+                className={({ isActive }) =>
+                  `flex items-center gap-4 py-3 transition-all ${isActive
+                    ? 'text-primary font-bold border-l-2 border-primary bg-surface-container-low'
+                    : 'text-on-surface-variant hover:text-primary hover:bg-surface-container-low'
+                  } ${collapsed ? 'justify-center mx-2 rounded-lg border-l-0' : 'pl-4'}`
+                }>
+                <Icon size={16} strokeWidth={1.5} />
+                {!collapsed && <span className="text-label-md font-label-md">{label}</span>}
               </NavLink>
             ))}
-            {!collapsed && <div style={{ height: 1, background: 'var(--border-light)', margin: '6px 4px' }} />}
           </div>
         )}
       </nav>
 
-      {user && (
-        <div style={{ padding: '8px', borderTop: '1px solid var(--border-light)' }}>
-          {!collapsed && (
-            <div style={{ padding: '8px 10px', marginBottom: 4, display: 'flex', alignItems: 'center', gap: 9, background: 'rgba(255,255,255,0.03)', borderRadius: 9, border: '1px solid var(--border-light)' }}>
-              <div style={{ width: 30, height: 30, borderRadius: '50%', background: 'linear-gradient(135deg, #6366f1, #a855f7)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, boxShadow: '0 0 10px rgba(99,102,241,0.4)' }}>
-                <span style={{ fontSize: 12, fontWeight: 800, color: 'white' }}>
-                  {(userProfile?.name || user.displayName || user.email || 'U')[0].toUpperCase()}
-                </span>
-              </div>
-              <div style={{ overflow: 'hidden', flex: 1 }}>
-                <div style={{ fontSize: 12, fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                  {userProfile?.name || user.displayName || 'User'}
-                </div>
-                <div style={{ fontSize: 10, color: 'var(--text-muted)', textTransform: 'capitalize' }}>{userProfile?.role || 'individual'}</div>
-              </div>
-            </div>
-          )}
-          <button onClick={handleLogout} style={{
-            width: '100%', display: 'flex', alignItems: 'center', gap: 8, justifyContent: collapsed ? 'center' : 'flex-start',
-            padding: '7px 10px', borderRadius: 8, cursor: 'pointer',
-            background: 'transparent', border: 'none',
-            color: 'var(--text-muted)', fontSize: 12, transition: 'all 0.15s', fontFamily: 'Inter',
-          }}
-            onMouseEnter={e => { e.currentTarget.style.background = 'rgba(239,68,68,0.08)'; e.currentTarget.style.color = '#f87171'; }}
-            onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--text-muted)'; }}
-          >
-            <LogOut size={13} style={{ flexShrink: 0 }} />
-            {!collapsed && 'Sign Out'}
-          </button>
-        </div>
-      )}
+      <div className="px-6 mb-8">
+        <button className="w-full py-3 text-label-md font-label-md bg-primary text-on-primary-container hover:opacity-90 transition-opacity cursor-pointer">
+          NEW ASSESSMENT
+        </button>
+      </div>
 
-      <button onClick={() => setCollapsed(!collapsed)} style={{
-        margin: '6px 8px 8px', padding: '7px', borderRadius: 8,
-        background: 'rgba(255,255,255,0.03)', border: '1px solid var(--border-light)',
-        color: 'var(--text-muted)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
-        transition: 'all 0.15s',
-      }}
-        onMouseEnter={e => { e.currentTarget.style.borderColor = 'rgba(99,102,241,0.4)'; e.currentTarget.style.color = 'var(--indigo)'; }}
-        onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border-light)'; e.currentTarget.style.color = 'var(--text-muted)'; }}
-      >
+      <div className="mt-auto">
+        {user && (
+          <div className="border-t-[0.5px] border-outline-variant py-4 px-4">
+            {!collapsed && (
+              <div className="flex items-center gap-3 px-2 mb-3">
+                <div className="w-8 h-8 bg-surface-container-highest flex items-center justify-center text-technical-sm font-technical-sm text-on-surface flex-shrink-0">
+                  {(userProfile?.name || user.displayName || user.email || 'U')[0].toUpperCase()}
+                </div>
+                <div className="overflow-hidden flex-1 min-w-0">
+                  <div className="text-label-md font-label-md text-on-surface truncate">
+                    {userProfile?.name || user.displayName || 'User'}
+                  </div>
+                  <div className="text-technical-sm font-technical-sm text-surface-variant capitalize">{userProfile?.role || 'individual'}</div>
+                </div>
+              </div>
+            )}
+            <button onClick={handleLogout}
+              className="w-full flex items-center gap-3 py-3 pl-4 text-on-surface-variant hover:text-error hover:bg-error/10 transition-all cursor-pointer">
+              <LogOut size={16} strokeWidth={1.5} />
+              {!collapsed && <span className="text-label-md font-label-md">Sign Out</span>}
+            </button>
+          </div>
+        )}
+      </div>
+
+      <button onClick={() => setCollapsed(!collapsed)}
+        className="mx-4 mb-4 py-2 flex items-center justify-center border-[0.5px] border-outline-variant text-on-surface-variant hover:text-primary hover:border-primary transition-all cursor-pointer">
         {collapsed ? <ChevronRight size={13} /> : <Menu size={13} />}
       </button>
     </aside>
@@ -218,17 +179,18 @@ function MobileNav({ onMenuOpen }) {
   return (
     <nav className="mobile-nav">
       {MOBILE_NAV.map(({ path, label, icon: Icon }) => {
-        const isActive = path === '/' ? location.pathname === '/' : location.pathname.startsWith(path);
+        const isActive = location.pathname.startsWith(path);
         return (
-          <NavLink key={path} to={path} end={path === '/'} className={`mobile-nav-item${isActive ? ' active' : ''}`}>
-            <Icon size={18} />
-            <span>{label}</span>
+          <NavLink key={path} to={path} end={path === '/app/dashboard'}
+            className={`mobile-nav-item ${isActive ? 'active' : ''}`}>
+            <Icon size={20} strokeWidth={isActive ? 2.5 : 1.5} className="mobile-nav-icon" />
+            <span style={{ fontSize: 10, fontWeight: isActive ? 600 : 400 }}>{label}</span>
           </NavLink>
         );
       })}
-      <button className="mobile-nav-item" onClick={onMenuOpen}>
-        <Menu size={18} />
-        <span>More</span>
+      <button onClick={onMenuOpen} className="mobile-nav-item">
+        <Menu size={20} strokeWidth={1.5} className="mobile-nav-icon" />
+        <span style={{ fontSize: 10 }}>More</span>
       </button>
     </nav>
   );
@@ -240,119 +202,89 @@ function MobileMenuDrawer({ onClose }) {
   const handleLogout = async () => { await logout(); onClose(); navigate('/login'); };
 
   return (
-    <div className="mobile-menu-drawer">
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <div style={{ width: 32, height: 32, borderRadius: 10, background: 'linear-gradient(135deg, #6366f1, #a855f7)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <Brain size={15} color="white" />
-          </div>
-          <div>
-            <div style={{ fontSize: 14, fontWeight: 800, fontFamily: 'Space Grotesk' }}>QIDS</div>
-            <div style={{ fontSize: 9, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.8px' }}>Intelligence Platform</div>
-          </div>
+    <div className="fixed inset-0 z-[100] bg-surface overflow-y-auto animate-fade-up">
+      <div className="flex justify-between items-center p-6 border-b-[0.5px] border-outline-variant">
+        <div>
+          <div className="text-label-md font-label-md uppercase tracking-widest text-primary">QIDS Platform</div>
+          <div className="text-technical-sm font-technical-sm text-surface-variant">§ ARCHITECTURE</div>
         </div>
-        <button onClick={onClose} style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid var(--border-light)', borderRadius: 8, padding: 8, cursor: 'pointer', color: 'var(--text-muted)' }}>
+        <button onClick={onClose}
+          className="p-2 border-[0.5px] border-outline-variant text-on-surface-variant hover:text-primary transition-all cursor-pointer bg-transparent">
           <X size={16} />
         </button>
       </div>
 
       {user && (
-        <div style={{ padding: '10px 12px', marginBottom: 16, display: 'flex', alignItems: 'center', gap: 10, background: 'rgba(255,255,255,0.03)', borderRadius: 10, border: '1px solid var(--border-light)' }}>
-          <div style={{ width: 34, height: 34, borderRadius: '50%', background: 'linear-gradient(135deg, #6366f1, #a855f7)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-            <span style={{ fontSize: 13, fontWeight: 800, color: 'white' }}>
-              {(userProfile?.name || user.displayName || user.email || 'U')[0].toUpperCase()}
-            </span>
+        <div className="flex items-center gap-4 p-6 border-b-[0.5px] border-outline-variant">
+          <div className="w-10 h-10 bg-surface-container-highest flex items-center justify-center text-technical-sm font-technical-sm text-on-surface flex-shrink-0">
+            {(userProfile?.name || user.displayName || user.email || 'U')[0].toUpperCase()}
           </div>
           <div>
-            <div style={{ fontSize: 13, fontWeight: 600 }}>{userProfile?.name || user.displayName || 'User'}</div>
-            <div style={{ fontSize: 11, color: 'var(--text-muted)', textTransform: 'capitalize' }}>{userProfile?.role || 'individual'}</div>
+            <div className="text-label-md font-label-md text-on-surface">{userProfile?.name || user.displayName || 'User'}</div>
+            <div className="text-technical-sm font-technical-sm text-surface-variant capitalize">{userProfile?.role || 'individual'}</div>
           </div>
         </div>
       )}
 
-      {NAV_GROUPS.map(group => (
-        <div key={group.label} style={{ marginBottom: 16 }}>
-          <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.8px', marginBottom: 6, paddingLeft: 4 }}>
-            {group.label}
+      <div className="p-6 space-y-8">
+        {NAV_GROUPS.map(group => (
+          <div key={group.label}>
+            <div className="text-technical-sm font-technical-sm text-surface-variant uppercase tracking-widest mb-3">{group.label}</div>
+            {group.items.map(({ path, label, icon: Icon }) => (
+              <NavLink key={path} to={path} end={path === '/app/dashboard'} onClick={onClose}
+                className={({ isActive }) =>
+                  `flex items-center gap-4 py-3 transition-all ${isActive ? 'text-primary font-bold border-l-2 border-primary pl-3' : 'text-on-surface-variant hover:text-primary pl-3'
+                  }`
+                }>
+                <Icon size={16} strokeWidth={1.5} />
+                <span className="text-label-md font-label-md">{label}</span>
+              </NavLink>
+            ))}
           </div>
-          {group.items.map(({ path, label, icon: Icon }) => (
-            <NavLink key={path} to={path} end={path === '/app' || path === '/app/dashboard'}
-              onClick={onClose}
-              style={({ isActive }) => ({
-                display: 'flex', alignItems: 'center', gap: 10,
-                padding: '10px 12px', borderRadius: 10, marginBottom: 2,
-                textDecoration: 'none', fontSize: 14, fontWeight: isActive ? 600 : 400,
-                color: isActive ? 'white' : 'var(--text-secondary)',
-                background: isActive ? 'linear-gradient(135deg, rgba(99,102,241,0.2), rgba(139,92,246,0.1))' : 'transparent',
-                borderLeft: isActive ? '2px solid var(--indigo)' : '2px solid transparent',
-              })}>
-              <Icon size={15} style={{ flexShrink: 0 }} />
-              {label}
-            </NavLink>
-          ))}
-        </div>
-      ))}
-      {(userProfile?.role === 'individual' || userProfile?.role === 'student') && (
-        <div style={{ marginBottom: 16 }}>
-          <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.8px', marginBottom: 6, paddingLeft: 4 }}>
-            Assessment
-          </div>
-          <NavLink to="/app/my-evaluator" onClick={onClose}
-            style={({ isActive }) => ({
-              display: 'flex', alignItems: 'center', gap: 10,
-              padding: '10px 12px', borderRadius: 10, marginBottom: 2,
-              textDecoration: 'none', fontSize: 14, fontWeight: isActive ? 600 : 400,
-              color: isActive ? 'white' : 'var(--text-secondary)',
-              background: isActive ? 'linear-gradient(135deg, rgba(99,102,241,0.2), rgba(139,92,246,0.1))' : 'transparent',
-              borderLeft: isActive ? '2px solid var(--indigo)' : '2px solid transparent',
-            })}>
-            <UserCheck size={15} style={{ flexShrink: 0 }} />
-            My Evaluator
-          </NavLink>
-        </div>
-      )}
-      {(userProfile?.role === 'evaluator' || userProfile?.role === 'admin') && (
-        <div style={{ marginBottom: 16 }}>
-          <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.8px', marginBottom: 6, paddingLeft: 4 }}>
-            {userProfile?.role === 'admin' ? 'Administration' : 'Evaluation'}
-          </div>
-          <NavLink to="/app/evaluator" onClick={onClose}
-            style={({ isActive }) => ({
-              display: 'flex', alignItems: 'center', gap: 10,
-              padding: '10px 12px', borderRadius: 10, marginBottom: 2,
-              textDecoration: 'none', fontSize: 14, fontWeight: isActive ? 600 : 400,
-              color: isActive ? 'white' : 'var(--text-secondary)',
-              background: isActive ? 'linear-gradient(135deg, rgba(99,102,241,0.2), rgba(139,92,246,0.1))' : 'transparent',
-              borderLeft: isActive ? '2px solid var(--indigo)' : '2px solid transparent',
-            })}>
-            <Users size={15} style={{ flexShrink: 0 }} />
-            Evaluator Dashboard
-          </NavLink>
-          {userProfile?.role === 'admin' && (
-            <NavLink to="/app/admin" onClick={onClose}
-              style={({ isActive }) => ({
-                display: 'flex', alignItems: 'center', gap: 10,
-                padding: '10px 12px', borderRadius: 10, marginBottom: 2,
-                textDecoration: 'none', fontSize: 14, fontWeight: isActive ? 600 : 400,
-                color: isActive ? 'white' : 'var(--text-secondary)',
-                background: isActive ? 'linear-gradient(135deg, rgba(99,102,241,0.2), rgba(139,92,246,0.1))' : 'transparent',
-                borderLeft: isActive ? '2px solid var(--indigo)' : '2px solid transparent',
-              })}>
-              <Shield size={15} style={{ flexShrink: 0 }} />
-              Admin Panel
-            </NavLink>
-          )}
-        </div>
-      )}
+        ))}
 
-      <div style={{ marginTop: 8, paddingTop: 16, borderTop: '1px solid var(--border-light)' }}>
-        <button onClick={handleLogout} style={{
-          width: '100%', display: 'flex', alignItems: 'center', gap: 10,
-          padding: '10px 12px', borderRadius: 10, cursor: 'pointer',
-          background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)',
-          color: '#f87171', fontSize: 14, fontFamily: 'Inter', fontWeight: 500,
-        }}>
-          <LogOut size={15} />
+        {(userProfile?.role === 'individual' || userProfile?.role === 'student') && (
+          <div>
+            <div className="text-technical-sm font-technical-sm text-surface-variant uppercase tracking-widest mb-3">ASSESSMENT</div>
+            <NavLink to="/app/my-evaluator" onClick={onClose}
+              className={({ isActive }) =>
+                `flex items-center gap-4 py-3 transition-all ${isActive ? 'text-primary font-bold border-l-2 border-primary pl-3' : 'text-on-surface-variant hover:text-primary pl-3'
+                }`}>
+              <UserCheck size={16} strokeWidth={1.5} />
+              <span className="text-label-md font-label-md">My Evaluator</span>
+            </NavLink>
+          </div>
+        )}
+
+        {(userProfile?.role === 'evaluator' || userProfile?.role === 'admin') && (
+          <div>
+            <div className="text-technical-sm font-technical-sm text-surface-variant uppercase tracking-widest mb-3">
+              {userProfile?.role === 'admin' ? 'ADMIN' : 'EVALUATION'}
+            </div>
+            <NavLink to="/app/evaluator" onClick={onClose}
+              className={({ isActive }) =>
+                `flex items-center gap-4 py-3 transition-all ${isActive ? 'text-primary font-bold border-l-2 border-primary pl-3' : 'text-on-surface-variant hover:text-primary pl-3'
+                }`}>
+              <Users size={16} strokeWidth={1.5} />
+              <span className="text-label-md font-label-md">Evaluator Dashboard</span>
+            </NavLink>
+            {userProfile?.role === 'admin' && (
+              <NavLink to="/app/admin" onClick={onClose}
+                className={({ isActive }) =>
+                  `flex items-center gap-4 py-3 transition-all ${isActive ? 'text-primary font-bold border-l-2 border-primary pl-3' : 'text-on-surface-variant hover:text-primary pl-3'
+                  }`}>
+                <Shield size={16} strokeWidth={1.5} />
+                <span className="text-label-md font-label-md">Admin Panel</span>
+              </NavLink>
+            )}
+          </div>
+        )}
+      </div>
+
+      <div className="p-6 border-t-[0.5px] border-outline-variant" style={{ paddingBottom: 'calc(24px + env(safe-area-inset-bottom, 0px))' }}>
+        <button onClick={handleLogout}
+          className="w-full flex items-center justify-center gap-3 py-4 border-[0.5px] border-error/30 text-error text-label-md font-label-md hover:bg-error/10 transition-all cursor-pointer bg-transparent">
+          <LogOut size={16} strokeWidth={1.5} />
           Sign Out
         </button>
       </div>
@@ -360,39 +292,34 @@ function MobileMenuDrawer({ onClose }) {
   );
 }
 
-function TopBar({ context, setContext }) {
-  const theme = CONTEXT_THEMES[context] || CONTEXT_THEMES.individual;
+function TopBar({ context, setContext, onMenuOpen }) {
   return (
-    <header style={{
-      height: 52, background: 'rgba(8,13,26,0.9)', borderBottom: '1px solid var(--border-light)',
-      display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-      padding: '0 16px', position: 'sticky', top: 0, zIndex: 10,
-      backdropFilter: 'blur(12px)',
-    }}>
-      <div className="mobile-topbar-logo">
-        <div style={{ width: 28, height: 28, borderRadius: 8, background: theme.gradient, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <Brain size={13} color="white" />
-        </div>
-        <span style={{ fontSize: 13, fontWeight: 800, fontFamily: 'Space Grotesk' }}>QIDS</span>
+    <header className="topbar">
+      <div className="flex items-center gap-12 topbar-nav">
+        <div className="text-headline-md font-headline-md font-medium text-primary uppercase tracking-tight">QIDS</div>
+        <nav className="hidden md:flex gap-8">
+          <NavLink to="/app/dashboard" className="text-label-md font-label-md text-primary border-b-[0.5px] border-primary pb-1 transition-opacity">
+            § I · ANALYTICS
+          </NavLink>
+          <NavLink to="/app/report" className="text-label-md font-label-md text-on-surface-variant hover:text-primary transition-colors">
+            § II · ARCHIVE
+          </NavLink>
+        </nav>
       </div>
-
-      <div className="topbar-phases" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-        <span style={{
-          padding: '3px 12px', borderRadius: 20, fontSize: 11, fontWeight: 600,
-          background: `${theme.accent}18`, border: `1px solid ${theme.accent}30`, color: theme.accent,
-        }}>{theme.badge}</span>
-      </div>
-
-      <div className="topbar-right" style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+      <div className="flex items-center gap-6 topbar-actions">
         <select value={context} onChange={e => setContext(e.target.value)}
-          style={{ width: 'auto', padding: '5px 10px', fontSize: 12, borderColor: context !== 'individual' ? theme.accent + '40' : 'var(--border-light)' }}>
+          className="bg-transparent text-technical-sm font-technical-sm text-on-surface-variant border-[0.5px] border-outline-variant px-3 py-2 cursor-pointer">
           {CONTEXTS.map(c => <option key={c.id} value={c.id}>{c.icon} {c.label}</option>)}
         </select>
-        <NavLink to="/app/report" style={{ textDecoration: 'none' }}>
-          <button className="btn btn-primary btn-sm" style={{ background: theme.gradient }}>
-            <FileText size={12} /> <span className="topbar-export-label">Report</span>
-          </button>
-        </NavLink>
+        <button className="px-6 py-2.5 bg-primary text-on-primary-container text-label-md font-label-md hover:opacity-90 transition-opacity cursor-pointer">
+          NEW REPORT
+        </button>
+      </div>
+      <div className="topbar-mobile-actions hide-desktop">
+        <button onClick={onMenuOpen}
+          className="p-2 text-on-surface-variant hover:text-primary transition-colors cursor-pointer bg-transparent border-none">
+          <Menu size={20} />
+        </button>
       </div>
     </header>
   );
@@ -404,18 +331,16 @@ function AppShell() {
   const [assessmentData, setAssessmentData] = useState(null);
   const [postData, setPostData] = useState(null);
   const [evaluations, setEvaluations] = useState([]);
+  const [mergedPillarScores, setMergedPillarScores] = useState(null);
+  const [evalStatus, setEvalStatus] = useState({});
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { user } = useAuth();
 
   useEffect(() => {
     if (!user) return;
-    getLatestAssessment(user.uid).then(a => { if (a) setAssessmentData(a); }).catch(() => console.warn('Failed to load latest assessment'));
-    getLatestPostAssessment(user.uid).then(p => { if (p) setPostData(p); }).catch(() => console.warn('Failed to load post assessment'));
+    getLatestAssessment(user.uid).then(a => { if (a) setAssessmentData(a); }).catch(() => {});
+    getLatestPostAssessment(user.uid).then(p => { if (p) setPostData(p); }).catch(() => {});
   }, [user]);
-
-  // Load evaluations and compute merged pillar scores when assessment changes
-  const [mergedPillarScores, setMergedPillarScores] = useState(null);
-  const [evalStatus, setEvalStatus] = useState({});
 
   useEffect(() => {
     if (!assessmentData?.id) { setEvaluations([]); setMergedPillarScores(null); setEvalStatus({}); return; }
@@ -424,7 +349,6 @@ function AppShell() {
       const status = {};
       evals.forEach(e => { status[e.pillar] = true; });
       setEvalStatus(status);
-
       const merged = mergeEvaluationScores(assessmentData.rawScores || {}, evals, assessmentData);
       if (merged.merged) {
         const newPillarScores = {};
@@ -435,16 +359,16 @@ function AppShell() {
       } else {
         setMergedPillarScores(null);
       }
-    }).catch(() => console.warn('Failed to load evaluations'));
+    }).catch(() => {});
   }, [assessmentData?.id]);
 
   return (
     <AppContext.Provider value={{ context, setContext, assessmentData, setAssessmentData, postData, setPostData, evaluations, mergedPillarScores, evalStatus, demoMode: false }}>
-      <div className="app-shell-layout" style={{ display: 'flex', minHeight: '100vh' }}>
+      <div className="flex min-h-screen bg-background">
         <Sidebar collapsed={collapsed} setCollapsed={setCollapsed} />
-        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0 }}>
-          <TopBar context={context} setContext={setContext} />
-          <main style={{ flex: 1, overflow: 'auto', background: 'var(--navy)' }}>
+        <div className={`app-content ${collapsed ? 'sidebar-collapsed' : ''}`}>
+          <TopBar context={context} setContext={setContext} onMenuOpen={() => setMobileMenuOpen(true)} />
+          <main className="flex-1 overflow-auto">
             <Routes>
               <Route index element={<Navigate to="/app/dashboard" replace />} />
               <Route path="dashboard" element={<Dashboard />} />
