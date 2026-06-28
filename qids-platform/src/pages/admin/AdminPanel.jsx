@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { getAllUsers, assignEvaluator, removeAssignment, getEvaluatorAssignments, updateUserRole } from '../../services/firestoreService';
 import { useToast } from '../../components/Toast';
-import { Shield, UserCheck, UserX, Users, Search, ChevronDown, ChevronUp, RefreshCw, Mail, AlertCircle } from 'lucide-react';
+import { Shield, UserCheck, UserX, Users, Search, RefreshCw, Mail, AlertCircle, ChevronDown, ChevronUp } from 'lucide-react';
 
 export default function AdminPanel() {
   const { user, userProfile } = useAuth();
@@ -17,22 +17,19 @@ export default function AdminPanel() {
   if (role !== 'admin') {
     return (
       <div className="flex items-center justify-center min-h-[60vh] flex-col gap-3">
-        <Shield size={40} className="text-surface-variant/40" />
-        <div className="text-base font-semibold text-on-surface-variant">Admin access required</div>
-        <div className="text-sm text-surface-variant">You don't have permission to view this page.</div>
+        <Shield size={40} className="text-[#ebc073]/40" />
+        <div className="text-base font-semibold text-[#e5e2e1]">Admin access required</div>
+        <div className="text-sm text-[#d1c5b3]">You don't have permission to view this page.</div>
       </div>
     );
   }
 
-  useEffect(() => {
-    loadData();
-  }, []);
+  useEffect(() => { loadData(); }, []);
 
   const loadData = async () => {
     setLoading(true);
     const users = await getAllUsers();
     setAllUsers(users);
-
     const assignMap = {};
     const evaluators = users.filter(u => u.role === 'evaluator');
     for (const ev of evaluators) {
@@ -60,11 +57,7 @@ export default function AdminPanel() {
   const handleRemove = async (studentUid, evaluatorUid) => {
     const ok = await removeAssignment(evaluatorUid, studentUid);
     if (ok) {
-      setAssignments(prev => {
-        const next = { ...prev };
-        delete next[studentUid];
-        return next;
-      });
+      setAssignments(prev => { const n = { ...prev }; delete n[studentUid]; return n; });
       toast('Assignment removed', 'success');
     } else {
       toast('Failed to remove assignment', 'error');
@@ -93,113 +86,121 @@ export default function AdminPanel() {
   };
 
   return (
-    <div className="px-6 py-6 animate-fade max-w-[1100px] mx-auto">
-      <div className="flex justify-between items-start mb-6">
+    <div className="page-pad animate-fade max-w-[1100px] mx-auto">
+      {/* Header */}
+      <div className="flex justify-between items-start mb-10">
         <div>
-          <h1 className="text-2xl font-extrabold mb-1">Admin Panel</h1>
-          <p className="text-sm text-surface-variant">Manage users, assign evaluators, and configure roles</p>
+          <div className="text-technical-sm font-technical-sm text-[#ebc073] mb-2 uppercase tracking-[0.2em]">Administration</div>
+          <h1 className="text-[28px] font-medium m-0" style={{ fontFamily: "'Avenir Next', sans-serif", letterSpacing: '-0.01em', color: '#e5e2e1' }}>Admin Panel</h1>
+          <p className="text-[14px] mt-1.5 m-0" style={{ fontFamily: "'Sora', sans-serif", color: '#d1c5b3' }}>Manage users, assign evaluators, configure roles</p>
         </div>
-        <button onClick={loadData} disabled={loading} className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs rounded-lg border border-outline-variant bg-surface-container-low text-on-surface hover:bg-surface cursor-pointer transition-all disabled:opacity-50">
-          <RefreshCw size={13} className={loading ? 'animate-spin' : ''} /> Refresh
+        <button onClick={loadData} disabled={loading}
+          className="inline-flex items-center gap-1.5 px-3.5 py-2 text-[12px] border-[0.5px] border-[#4e4638] text-[#d1c5b3] hover:text-[#ebc073] hover:border-[#ebc073] transition-all cursor-pointer bg-transparent uppercase tracking-widest"
+          style={{ fontFamily: "'JetBrains Mono', monospace", borderRadius: '8px' }}>
+          <RefreshCw size={12} className={loading ? 'animate-spin' : ''} /> Refresh
         </button>
       </div>
 
-      {/* Stats */}
-      <div className="grid grid-cols-3 gap-3.5 mb-6">
+      {/* Stats — architectural minimal labels */}
+      <div className="flex gap-0 mb-10 border-b-[0.5px] border-[#4e4638] pb-6">
         {[
-          { label: 'Students', count: students.length, icon: Users, color: '#6366f1' },
-          { label: 'Evaluators', count: evaluators.length, icon: UserCheck, color: '#10b981' },
-          { label: 'Admins', count: admins.length, icon: Shield, color: '#f59e0b' },
-        ].map(stat => (
-          <div key={stat.label} className="p-4 bg-surface-container-low border border-outline-variant rounded-xl flex items-center gap-3.5">
-            <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ background: `${stat.color}15`, border: `1px solid ${stat.color}30` }}>
-              <stat.icon size={18} color={stat.color} />
-            </div>
-            <div>
-              <div className="text-2xl font-extrabold" style={{ color: stat.color }}>{stat.count}</div>
-              <div className="text-xs text-surface-variant">{stat.label}</div>
-            </div>
+          { label: 'Students', count: students.length },
+          { label: 'Evaluators', count: evaluators.length },
+          { label: 'Admins', count: admins.length },
+        ].map((stat, i) => (
+          <div key={stat.label} className={`flex items-center gap-4 ${i < 2 ? 'pr-8 mr-8 border-r-[0.5px] border-[#4e4638]' : ''}`}>
+            <div className="text-[32px] font-medium" style={{ fontFamily: "'JetBrains Mono', monospace", color: '#ebc073', lineHeight: 1 }}>{String(stat.count).padStart(2, '0')}</div>
+            <div className="text-[12px] uppercase tracking-[0.15em]" style={{ fontFamily: "'Sora', sans-serif", color: '#d1c5b3' }}>{stat.label}</div>
           </div>
         ))}
       </div>
 
       {/* Search */}
-      <div className="relative mb-5">
-        <Search size={14} className="text-surface-variant absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+      <div className="relative mb-6">
+        <Search size={13} className="text-[#9a8f7f] absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
         <input
           type="text" placeholder="Search students by name or email..."
           value={search} onChange={e => setSearch(e.target.value)}
-          className="w-full py-2.5 pl-9 pr-3.5 rounded-lg text-sm"
+          style={{ borderRadius: '8px', border: '0.5px solid #4e4638', background: '#131313', color: '#e5e2e1', fontFamily: "'JetBrains Mono', monospace", fontSize: '12px' }}
+          className="w-full py-2.5 pl-9 pr-3.5 outline-none focus:border-[#ebc073] transition-all"
         />
       </div>
 
-      {/* Students Table */}
-      <div className="bg-surface-container-low border border-outline-variant rounded-xl overflow-hidden">
-        <div className="px-4 py-3.5 border-b border-outline-variant text-sm font-bold text-on-surface-variant">
-          Students ({filtered.length})
+      {/* Students section */}
+      <div className="border-[0.5px] border-[#4e4638] mb-8" style={{ borderRadius: '0' }}>
+        <div className="px-4 py-3 border-b-[0.5px] border-[#4e4638]">
+          <span className="text-[12px] font-medium uppercase tracking-[0.15em]" style={{ fontFamily: "'Sora', sans-serif", color: '#d1c5b3' }}>
+            Students
+          </span>
+          <span className="ml-2 text-[12px]" style={{ fontFamily: "'JetBrains Mono', monospace", color: '#9a8f7f' }}>({filtered.length})</span>
         </div>
         {loading ? (
-          <div className="p-10 text-center text-surface-variant text-sm">Loading users...</div>
+          <div className="p-10 text-center text-[12px]" style={{ fontFamily: "'JetBrains Mono', monospace", color: '#9a8f7f' }}>Loading users...</div>
         ) : filtered.length === 0 ? (
-          <div className="p-10 text-center text-surface-variant text-sm">No students found.</div>
+          <div className="p-10 text-center text-[12px]" style={{ fontFamily: "'JetBrains Mono', monospace", color: '#9a8f7f' }}>No students found.</div>
         ) : (
           filtered.map((student, i) => {
             const isExpanded = expandedStudent === student.uid;
             const evaluator = getCurrentEvaluator(student.uid);
             return (
-              <div key={student.uid} className={i < filtered.length - 1 ? 'border-b border-outline-variant' : ''}>
+              <div key={student.uid}>
                 <div
                   onClick={() => setExpandedStudent(isExpanded ? null : student.uid)}
-                  className="px-4 py-3 flex items-center gap-3 cursor-pointer transition-all hover:bg-white/[0.02]"
+                  className="flex items-center gap-3 px-4 py-3 cursor-pointer transition-all hover:bg-[#1c1b1b]"
+                  style={{ borderBottom: i < filtered.length - 1 ? '0.5px solid #4e4638' : 'none' }}
                 >
-                  <div className="w-8 h-8 rounded-full bg-[#6366f1] flex items-center justify-center shrink-0">
-                    <span className="text-xs font-extrabold text-white">{(student.name || student.email || '?')[0].toUpperCase()}</span>
+                  <div className="size-8 flex items-center justify-center shrink-0 border-[0.5px] border-[#4e4638] text-[11px] font-medium"
+                    style={{ borderRadius: '8px', background: '#1c1b1b', color: '#ebc073', fontFamily: "'JetBrains Mono', monospace" }}>
+                    {(student.name || student.email || '?')[0].toUpperCase()}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <div className="text-sm font-semibold truncate">{student.name || 'Unnamed'}</div>
-                    <div className="text-xs text-surface-variant flex items-center gap-1.5">
-                      <Mail size={10} className="text-surface-variant" /> {student.email || '—'}
+                    <div className="text-[13px] font-medium truncate" style={{ fontFamily: "'Sora', sans-serif", color: '#e5e2e1' }}>{student.name || 'Unnamed'}</div>
+                    <div className="text-[11px] flex items-center gap-1" style={{ fontFamily: "'JetBrains Mono', monospace", color: '#9a8f7f' }}>
+                      <Mail size={9} /> {student.email || '—'}
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
                     {evaluator ? (
-                      <span className="text-xs px-2 py-0.5 rounded-md flex items-center gap-1" style={{ background: 'rgba(16,185,129,0.12)', color: '#34d399', border: '1px solid rgba(16,185,129,0.25)' }}>
-                        <UserCheck size={11} /> {evaluator.name || 'Assigned'}
+                      <span className="text-[11px] inline-flex items-center gap-1 px-2 py-0.5 border-[0.5px] border-[#ebc073]/30"
+                        style={{ borderRadius: '8px', background: 'transparent', color: '#ebc073', fontFamily: "'Sora', sans-serif" }}>
+                        <UserCheck size={10} /> {evaluator.name || 'Assigned'}
                       </span>
                     ) : (
-                      <span className="text-xs px-2 py-0.5 rounded-md flex items-center gap-1" style={{ background: 'rgba(245,158,11,0.12)', color: '#fbbf24', border: '1px solid rgba(245,158,11,0.25)' }}>
-                        <AlertCircle size={11} /> Unassigned
+                      <span className="text-[11px] inline-flex items-center gap-1 px-2 py-0.5 border-[0.5px] border-[#4e4638]"
+                        style={{ borderRadius: '8px', background: 'transparent', color: '#9a8f7f', fontFamily: "'Sora', sans-serif" }}>
+                        <AlertCircle size={10} /> Unassigned
                       </span>
                     )}
-                    {isExpanded ? <ChevronUp size={14} className="text-surface-variant" /> : <ChevronDown size={14} className="text-surface-variant" />}
+                    {isExpanded ? <ChevronUp size={13} className="text-[#9a8f7f]" /> : <ChevronDown size={13} className="text-[#9a8f7f]" />}
                   </div>
                 </div>
 
                 {isExpanded && (
-                  <div className="px-4 pb-4 pt-1 border-t border-outline-variant">
-                    {/* Assign evaluator */}
-                    <div className="text-xs font-semibold text-surface-variant mb-2">
+                  <div className="px-4 pb-4 pt-2 border-t-[0.5px] border-[#4e4638]" style={{ background: '#0e0e0e' }}>
+                    <div className="text-[11px] font-medium uppercase tracking-wider mb-2.5" style={{ fontFamily: "'Sora', sans-serif", color: '#9a8f7f' }}>
                       {evaluator ? 'Change Evaluator' : 'Assign Evaluator'}
                     </div>
                     <div className="flex gap-1.5 flex-wrap">
                       {evaluators.filter(e => e.uid !== assignments[student.uid]).map(ev => (
-                        <button key={ev.uid} onClick={() => handleAssign(student.uid, ev.uid)} className="px-3 py-1.5 rounded-lg cursor-pointer text-xs flex items-center gap-1.5" style={{ background: 'rgba(16,185,129,0.1)', border: '1px solid rgba(16,185,129,0.3)', color: '#34d399' }}>
-                          <UserCheck size={12} /> {ev.name || ev.email}
+                        <button key={ev.uid} onClick={() => handleAssign(student.uid, ev.uid)}
+                          className="px-3 py-1.5 cursor-pointer text-[11px] inline-flex items-center gap-1.5 border-[0.5px] border-[#ebc073]/40 text-[#ebc073] hover:bg-[#ebc073]/10 transition-all"
+                          style={{ borderRadius: '8px', background: 'transparent', fontFamily: "'Sora', sans-serif" }}>
+                          <UserCheck size={11} /> {ev.name || ev.email}
                         </button>
                       ))}
                       {evaluators.filter(e => e.uid !== assignments[student.uid]).length === 0 && evaluators.length > 0 && (
-                        <span className="text-xs text-surface-variant">All evaluators already assigned</span>
+                        <span className="text-[11px]" style={{ fontFamily: "'Sora', sans-serif", color: '#9a8f7f' }}>All evaluators already assigned</span>
                       )}
                       {evaluators.length === 0 && (
-                        <span className="text-xs text-surface-variant">No evaluators available. Change a user's role to evaluator first.</span>
+                        <span className="text-[11px]" style={{ fontFamily: "'Sora', sans-serif", color: '#9a8f7f' }}>No evaluators available. Change a user's role to evaluator first.</span>
                       )}
                     </div>
-
-                    {/* Remove current evaluator */}
                     {evaluator && (
                       <div className="mt-2.5">
-                        <button onClick={() => handleRemove(student.uid, evaluator.uid)} className="px-3 py-1.5 rounded-lg cursor-pointer text-xs inline-flex items-center gap-1" style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)', color: '#f87171' }}>
-                          <UserX size={11} /> Remove {evaluator.name}
+                        <button onClick={() => handleRemove(student.uid, evaluator.uid)}
+                          className="px-3 py-1.5 cursor-pointer text-[11px] inline-flex items-center gap-1 border-[0.5px] border-[#ffb4ab]/40 text-[#ffb4ab] hover:bg-[#ffb4ab]/10 transition-all"
+                          style={{ borderRadius: '8px', background: 'transparent', fontFamily: "'Sora', sans-serif" }}>
+                          <UserX size={10} /> Remove {evaluator.name}
                         </button>
                       </div>
                     )}
@@ -211,26 +212,31 @@ export default function AdminPanel() {
         )}
       </div>
 
-      {/* All Users list with role management */}
-      <div className="bg-surface-container-low border border-outline-variant rounded-xl mt-5 overflow-hidden">
-        <div className="px-4 py-3.5 border-b border-outline-variant text-sm font-bold text-on-surface-variant">
-          All Users — Role Management
+      {/* Role Management */}
+      <div className="border-[0.5px] border-[#4e4638]">
+        <div className="px-4 py-3 border-b-[0.5px] border-[#4e4638]">
+          <span className="text-[12px] font-medium uppercase tracking-[0.15em]" style={{ fontFamily: "'Sora', sans-serif", color: '#d1c5b3' }}>
+            All Users — Role Management
+          </span>
         </div>
         <div className="p-4">
-          <div className="grid gap-2">
+          <div className="space-y-[1px]">
             {allUsers.filter(u => u.uid !== user?.uid).map(u => (
-              <div key={u.uid} className="flex items-center gap-3 px-3 py-2 bg-surface-container-low rounded-lg border border-outline-variant">
-                <div className="w-7 h-7 rounded-full bg-[#6366f1] flex items-center justify-center shrink-0">
-                  <span className="text-[10px] font-extrabold text-white">{(u.name || u.email || '?')[0].toUpperCase()}</span>
+              <div key={u.uid} className="flex items-center gap-3 px-3 py-2.5 border-[0.5px] border-[#4e4638]"
+                style={{ borderRadius: '8px', background: '#1c1b1b' }}>
+                <div className="size-7 flex items-center justify-center shrink-0 border-[0.5px] border-[#4e4638] text-[10px] font-medium"
+                  style={{ borderRadius: '8px', background: '#131313', color: '#ebc073', fontFamily: "'JetBrains Mono', monospace" }}>
+                  {(u.name || u.email || '?')[0].toUpperCase()}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <div className="text-xs font-semibold">{u.name || 'Unnamed'}</div>
-                  <div className="text-[10px] text-surface-variant">{u.email}</div>
+                  <div className="text-[12px] font-medium" style={{ fontFamily: "'Sora', sans-serif", color: '#e5e2e1' }}>{u.name || 'Unnamed'}</div>
+                  <div className="text-[10px]" style={{ fontFamily: "'JetBrains Mono', monospace", color: '#9a8f7f' }}>{u.email}</div>
                 </div>
                 <select
                   value={u.role || 'student'}
                   onChange={e => handleRoleChange(u.uid, e.target.value)}
-                  className="py-1 px-2 text-xs rounded-md"
+                  style={{ borderRadius: '8px', border: '0.5px solid #4e4638', background: '#131313', color: '#e5e2e1', fontFamily: "'JetBrains Mono', monospace", fontSize: '11px' }}
+                  className="py-1 px-2 outline-none cursor-pointer"
                 >
                   <option value="student">Student</option>
                   <option value="evaluator">Evaluator</option>

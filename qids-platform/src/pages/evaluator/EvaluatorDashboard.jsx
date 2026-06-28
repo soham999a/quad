@@ -5,9 +5,7 @@ import { db } from '../../firebase';
 import { useAuth } from '../../context/AuthContext';
 import { getEvaluatorAssignments, getUserAssessments, getAllEvaluations } from '../../services/firestoreService';
 import { PILLARS } from '../../data/qidsData';
-import { Users, ClipboardList, CheckCircle, Clock, ChevronRight, RefreshCw, Mail, Brain, Heart, Users as UsersIcon, Shield } from 'lucide-react';
-
-const PILLAR_ICONS = { IQ: Brain, EQ: Heart, SQ: UsersIcon, AQ: Shield };
+import { Users, ClipboardList, CheckCircle, Clock, ChevronRight, RefreshCw, Mail } from 'lucide-react';
 
 export default function EvaluatorDashboard() {
   const { user, userProfile } = useAuth();
@@ -27,41 +25,36 @@ export default function EvaluatorDashboard() {
     setLoading(true);
     const assigns = await getEvaluatorAssignments(user.uid);
     setAssignments(assigns);
-
     const studentMap = {};
     const assessmentMap = {};
     const evalMap = {};
-
     for (const a of assigns) {
       try {
         const snap = await getDoc(doc(db, 'users', a.studentUid));
         if (snap.exists()) studentMap[a.studentUid] = snap.data();
       } catch (e) { console.warn('Failed to load user doc', e); }
-
       const userAssessments = await getUserAssessments(a.studentUid);
       assessmentMap[a.studentUid] = userAssessments;
-
       for (const asm of userAssessments) {
         const evals = await getAllEvaluations(asm.id);
         evalMap[asm.id] = evals.reduce((acc, e) => ({ ...acc, [e.pillar]: e }), {});
       }
     }
-
     setStudents(studentMap);
     setAssessments(assessmentMap);
     setEvaluations(evalMap);
     setLoading(false);
   };
 
-  const getPillarEvalStatus = (assessmentId, pillar) => {
+  const getPillarStatus = (assessmentId, pillar) => {
     const pillarEvals = evaluations[assessmentId] || {};
     return pillarEvals[pillar] || null;
   };
 
   if (loading) {
     return (
-      <div className="px-6 py-6 animate-fade max-w-[1000px] mx-auto text-center pt-20">
-        <div className="text-sm text-surface-variant">Loading your dashboard...</div>
+      <div className="page-pad animate-fade max-w-[1000px] mx-auto text-center pt-20">
+        <div className="text-[12px]" style={{ fontFamily: "'JetBrains Mono', monospace", color: '#9a8f7f' }}>Loading your dashboard...</div>
       </div>
     );
   }
@@ -70,75 +63,74 @@ export default function EvaluatorDashboard() {
   if (role !== 'evaluator' && role !== 'admin') {
     return (
       <div className="flex items-center justify-center min-h-[60vh] flex-col gap-3">
-        <ClipboardList size={40} className="text-surface-variant/40" />
-        <div className="text-base font-semibold text-on-surface-variant">Evaluator access required</div>
-        <div className="text-sm text-surface-variant">You don't have permission to view this page.</div>
+        <ClipboardList size={40} className="text-[#ebc073]/40" />
+        <div className="text-base font-semibold text-[#e5e2e1]">Evaluator access required</div>
+        <div className="text-sm text-[#d1c5b3]">You don't have permission to view this page.</div>
       </div>
     );
   }
 
   return (
-    <div className="px-6 py-6 animate-fade max-w-[1000px] mx-auto">
-      <div className="flex justify-between items-start mb-6">
+    <div className="page-pad animate-fade max-w-[1000px] mx-auto">
+      {/* Header */}
+      <div className="flex justify-between items-start mb-10">
         <div>
-          <h1 className="text-2xl font-extrabold mb-1">Evaluator Dashboard</h1>
-          <p className="text-sm text-surface-variant">
+          <div className="text-technical-sm font-technical-sm text-[#ebc073] mb-2 uppercase tracking-[0.2em]">Evaluation</div>
+          <h1 className="text-[28px] font-medium m-0" style={{ fontFamily: "'Avenir Next', sans-serif", letterSpacing: '-0.01em', color: '#e5e2e1' }}>Evaluator Dashboard</h1>
+          <p className="text-[14px] mt-1.5 m-0" style={{ fontFamily: "'Sora', sans-serif", color: '#d1c5b3' }}>
             {assignments.length > 0
-              ? `You have ${assignments.length} assigned student${assignments.length > 1 ? 's' : ''} to evaluate`
+              ? `${assignments.length} assigned student${assignments.length > 1 ? 's' : ''}`
               : 'No students assigned to you yet'}
           </p>
         </div>
-        <button onClick={loadData} className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs rounded-lg border border-outline-variant bg-surface-container-low text-on-surface hover:bg-surface cursor-pointer transition-all">
-          <RefreshCw size={13} /> Refresh
+        <button onClick={loadData}
+          className="inline-flex items-center gap-1.5 px-3.5 py-2 text-[12px] border-[0.5px] border-[#4e4638] text-[#d1c5b3] hover:text-[#ebc073] hover:border-[#ebc073] transition-all cursor-pointer bg-transparent uppercase tracking-widest"
+          style={{ fontFamily: "'JetBrains Mono', monospace", borderRadius: '8px' }}>
+          <RefreshCw size={12} /> Refresh
         </button>
       </div>
 
       {assignments.length === 0 ? (
-        <div className="bg-surface-container-low border border-outline-variant rounded-xl p-10 text-center">
-          <Users size={32} className="text-surface-variant mb-3 mx-auto" />
-          <div className="text-sm text-surface-variant mb-1">No students assigned</div>
-          <div className="text-xs text-surface-variant">
+        <div className="border-[0.5px] border-[#4e4638] p-12 text-center">
+          <Users size={28} className="text-[#9a8f7f] mb-3 mx-auto" />
+          <div className="text-[13px] mb-1" style={{ fontFamily: "'Sora', sans-serif", color: '#d1c5b3' }}>No students assigned</div>
+          <div className="text-[11px]" style={{ fontFamily: "'Sora', sans-serif", color: '#9a8f7f' }}>
             Contact an admin to get assigned students to evaluate.
           </div>
         </div>
       ) : (
-        <div className="grid gap-4">
+        <div className="space-y-5">
           {assignments.map(assignment => {
             const student = students[assignment.studentUid];
             const studentAssessments = assessments[assignment.studentUid] || [];
-            const preAssessments = studentAssessments.filter(a => a.phase === 'pre');
-            const postAssessments = studentAssessments.filter(a => a.phase === 'post');
+            const preCount = studentAssessments.filter(a => a.phase === 'pre').length;
+            const postCount = studentAssessments.filter(a => a.phase === 'post').length;
 
             return (
-              <div key={assignment.id} className="bg-surface-container-low border border-outline-variant rounded-xl overflow-hidden">
-                {/* Student Header */}
-                <div className="px-4 py-3.5 flex items-center gap-3 border-b border-outline-variant" style={{ background: 'rgba(99,102,241,0.04)' }}>
-                  <div className="w-9 h-9 rounded-full bg-[#6366f1] flex items-center justify-center shrink-0">
-                    <span className="text-sm font-extrabold text-white">
-                      {(student?.name || student?.email || '?')[0].toUpperCase()}
-                    </span>
+              <div key={assignment.id} className="border-[0.5px] border-[#4e4638]">
+                {/* Student header */}
+                <div className="flex items-center gap-3 px-4 py-3.5 border-b-[0.5px] border-[#4e4638]">
+                  <div className="size-9 flex items-center justify-center shrink-0 border-[0.5px] border-[#4e4638] text-[12px] font-medium"
+                    style={{ borderRadius: '8px', background: '#1c1b1b', color: '#ebc073', fontFamily: "'JetBrains Mono', monospace" }}>
+                    {(student?.name || student?.email || '?')[0].toUpperCase()}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <div className="text-sm font-bold">{student?.name || 'Unnamed Student'}</div>
-                    <div className="text-xs text-surface-variant flex items-center gap-1.5">
-                      <Mail size={10} className="text-surface-variant" /> {student?.email || '—'}
+                    <div className="text-[13px] font-medium truncate" style={{ fontFamily: "'Sora', sans-serif", color: '#e5e2e1' }}>{student?.name || 'Unnamed Student'}</div>
+                    <div className="text-[11px] flex items-center gap-1.5" style={{ fontFamily: "'JetBrains Mono', monospace", color: '#9a8f7f' }}>
+                      <Mail size={9} /> {student?.email || '—'}
                       {student?.context && <span>| {student.context}</span>}
                     </div>
                   </div>
-                  <div className="text-xs text-surface-variant text-right">
-                    <div className="font-semibold" style={{ color: preAssessments.length > 0 ? '#34d399' : '' }}>
-                      {preAssessments.length} Pre
-                    </div>
-                    <div className="font-semibold" style={{ color: postAssessments.length > 0 ? '#34d399' : '' }}>
-                      {postAssessments.length} Post
-                    </div>
+                  <div className="flex gap-3 text-[11px]" style={{ fontFamily: "'JetBrains Mono', monospace', monospace" }}>
+                    <span className={preCount > 0 ? 'text-[#ebc073]' : 'text-[#9a8f7f]'}>{preCount} Pre</span>
+                    <span className={postCount > 0 ? 'text-[#ebc073]' : 'text-[#9a8f7f]'}>{postCount} Post</span>
                   </div>
                 </div>
 
-                {/* Assessment List */}
+                {/* Assessment list */}
                 <div className="p-3">
                   {studentAssessments.length === 0 ? (
-                    <div className="p-4 text-center text-surface-variant text-xs">
+                    <div className="p-6 text-center text-[11px]" style={{ fontFamily: "'Sora', sans-serif", color: '#9a8f7f' }}>
                       No assessments yet
                     </div>
                   ) : (
@@ -146,46 +138,44 @@ export default function EvaluatorDashboard() {
                       <div
                         key={asm.id}
                         onClick={() => navigate(`/app/evaluator/assess/${asm.id}`, { state: { student, assessment: asm } })}
-                        className="px-3 py-2.5 mb-1.5 rounded-lg cursor-pointer flex items-center gap-2.5 transition-all"
-                        style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid var(--border-light)' }}
-                        onMouseEnter={e => { e.currentTarget.style.borderColor = 'rgba(99,102,241,0.3)'; e.currentTarget.style.background = 'rgba(99,102,241,0.04)'; }}
-                        onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border-light)'; e.currentTarget.style.background = 'rgba(255,255,255,0.02)'; }}
+                        className="flex items-center gap-2.5 px-3 py-2.5 mb-1.5 cursor-pointer border-[0.5px] border-transparent hover:border-[#4e4638] hover:bg-[#1c1b1b] transition-all"
+                        style={{ borderRadius: '8px' }}
                       >
-                        <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" style={{
-                          background: asm.phase === 'pre' ? 'rgba(99,102,241,0.15)' : 'rgba(20,184,166,0.15)',
-                          border: `1px solid ${asm.phase === 'pre' ? 'rgba(99,102,241,0.3)' : 'rgba(20,184,166,0.3)'}`,
-                        }}>
-                          <ClipboardList size={14} color={asm.phase === 'pre' ? '#818cf8' : '#14b8a6'} />
+                        <div className="size-8 flex items-center justify-center shrink-0 border-[0.5px] border-[#4e4638]"
+                          style={{ borderRadius: '8px' }}>
+                          <ClipboardList size={13} className="text-[#9a8f7f]" />
                         </div>
                         <div className="flex-1 min-w-0">
-                          <div className="text-xs font-semibold capitalize">
+                          <div className="text-[12px] font-medium capitalize" style={{ fontFamily: "'Sora', sans-serif", color: '#e5e2e1' }}>
                             {asm.phase === 'pre' ? 'Pre-Intervention' : 'Post-Intervention'} Assessment
                           </div>
-                          <div className="text-[10px] text-surface-variant">
+                          <div className="text-[10px]" style={{ fontFamily: "'JetBrains Mono', monospace", color: '#9a8f7f' }}>
                             {asm.createdAt?.toDate?.()?.toLocaleDateString() || asm.timestamp ? new Date(asm.timestamp).toLocaleDateString() : 'No date'}
                           </div>
                         </div>
 
-                        {/* Pillar evaluation status */}
+                        {/* Pillar status indicators */}
                         <div className="flex gap-1">
                           {['EQ', 'SQ', 'AQ'].map(pillar => {
-                            const ev = getPillarEvalStatus(asm.id, pillar);
-                            const pillarColor = PILLARS[pillar]?.color || '#6366f1';
+                            const ev = getPillarStatus(asm.id, pillar);
                             return (
-                              <div key={pillar} className="w-[22px] h-[22px] rounded-md flex items-center justify-center" style={{
-                                background: ev ? `${pillarColor}18` : 'rgba(255,255,255,0.04)',
-                                border: `1px solid ${ev ? pillarColor : 'var(--border-light)'}`,
-                              }} title={`${pillar}: ${ev ? 'Scored' : 'Pending'}`}>
+                              <div key={pillar} className="size-[22px] flex items-center justify-center border-[0.5px]"
+                                style={{
+                                  borderRadius: '6px',
+                                  borderColor: ev ? '#ebc073' : '#4e4638',
+                                  background: ev ? 'rgba(235,192,115,0.08)' : 'transparent'
+                                }}
+                                title={`${pillar}: ${ev ? 'Scored' : 'Pending'}`}>
                                 {ev
-                                  ? <CheckCircle size={10} color={pillarColor} />
-                                  : <Clock size={10} className="text-surface-variant" />
+                                  ? <CheckCircle size={9} className="text-[#ebc073]" />
+                                  : <Clock size={9} className="text-[#9a8f7f]" />
                                 }
                               </div>
                             );
                           })}
                         </div>
 
-                        <ChevronRight size={14} className="text-surface-variant" />
+                        <ChevronRight size={13} className="text-[#9a8f7f]" />
                       </div>
                     ))
                   )}
