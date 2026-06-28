@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { getAllUsers, getStudentEvaluator, assignEvaluator, removeAssignment, getUserAssessments, getAllEvaluations } from '../../services/firestoreService';
+import { Check } from 'lucide-react';
 import { useToast } from '../../components/Toast';
 import { PILLARS, computePillarScore, computeWeightedScore, getGrade } from '../../data/qidsData';
 import { UserCheck, UserX, Users, RefreshCw, Mail, Search, AlertCircle, CheckCircle, Clock } from 'lucide-react';
@@ -169,7 +170,7 @@ export default function MyEvaluator() {
                         </div>
                         <div className="text-xs text-surface-variant flex gap-1.5 mt-1 flex-wrap">
                           {scoredPillars.map(p => (
-                            <span key={p} className="px-1.5 py-0.5 rounded text-[10px] font-semibold" style={{ background: `${PILLARS[p]?.color}15`, color: PILLARS[p]?.color }}>{p} ✓</span>
+                            <span key={p} className="px-1.5 py-0.5 rounded text-[10px] font-semibold inline-flex items-center gap-0.5" style={{ background: `${PILLARS[p]?.color}15`, color: PILLARS[p]?.color }}>{p} <Check size={9} /></span>
                           ))}
                         </div>
                       </div>

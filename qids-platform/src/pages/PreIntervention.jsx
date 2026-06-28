@@ -5,7 +5,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import ProcessNode, { NodeDetailPanel } from '../components/ProcessNode';
 import ScoreCard from '../components/ScoreCard';
 import QIDSRadar from '../components/RadarChart';
-import { AlertTriangle, CheckCircle, Info } from 'lucide-react';
+import { AlertTriangle, CheckCircle, Info, ArrowRight } from 'lucide-react';
 
 function Heatmap({ pillarScores, rawScores }) {
   return (
@@ -276,7 +276,7 @@ export default function PreIntervention() {
               className="btn btn-primary btn-sm w-full justify-center"
               onClick={() => navigate('/app/post-intervention', { state: { assessment: assessmentData, postAssessment: location.state.postAssessment } })}
             >
-              View Post-Intervention →
+              View Post-Intervention <ArrowRight size={14} />
             </button>
           </>
         )}

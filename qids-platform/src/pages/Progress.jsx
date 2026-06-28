@@ -10,7 +10,7 @@ import ProcessNode, { NodeDetailPanel } from '../components/ProcessNode';
 import ScoreCard from '../components/ScoreCard';
 import QIDSRadar from '../components/RadarChart';
 import { useToast } from '../components/Toast';
-import { AlertTriangle, CheckCircle, Info, TrendingUp, TrendingDown, Minus, ArrowRight,
+import { AlertTriangle, CheckCircle, Check, Info, TrendingUp, TrendingDown, Minus, ArrowRight,
   Calendar, Clock, Package, Plus, ChevronDown, ChevronUp, Save, Download, ClipboardList, BarChart3 } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Legend } from 'recharts';
 
@@ -652,9 +652,9 @@ function PostSection({ preScores, postScores, rawScores, activeNode, setActiveNo
               {Object.entries(PILLARS).filter(([id]) => postScores[id] > preScores[id]).map(([id, p]) => (
                 <div key={id} className="flex gap-2 mb-2">
                   <div className="w-4 h-4 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: 'rgba(16,185,129,0.2)', border: '1px solid #10b981' }}>
-                    <span className="text-[9px] text-[#10b981]">✓</span>
+                    <Check size={10} className="text-[#10b981]" />
                   </div>
-                  <span className="text-[13px] text-on-surface-variant">{p.label}: {preScores[id]} → {postScores[id]} (+{postScores[id] - preScores[id]})</span>
+                  <span className="text-[13px] text-on-surface-variant">{p.label}: {preScores[id]} {'>'} {postScores[id]} (+{postScores[id] - preScores[id]})</span>
                 </div>
               ))}
             </div>
@@ -686,7 +686,7 @@ function PostRightPanel({ preScores, postScores }) {
       <div className="text-technical-sm font-[600] text-[#2dd4bf] mb-3">Outcome Summary</div>
       <div className="p-3.5 rounded-[10px] mb-4" style={{ background: 'rgba(20,184,166,0.08)', border: '1px solid rgba(20,184,166,0.2)' }}>
         <div className="text-[11px] text-surface-variant mb-1">Unified Score Change</div>
-        <div className="text-[28px] font-[800] text-[#14b8a6] leading-none">{preUnified} → {postUnified}</div>
+        <div className="text-[28px] font-[800] text-[#14b8a6] leading-none">{preUnified} {'>'} {postUnified}</div>
         <div className="text-technical-sm font-[600]" style={{ color: delta >= 0 ? '#10b981' : '#ef4444' }}>{delta >= 0 ? `+${delta}` : delta} points ({preUnified > 0 ? Math.round((delta / preUnified) * 100) : 0}%)</div>
       </div>
 
@@ -824,7 +824,7 @@ export default function Progress() {
                   </div>
                   <div className="text-[10px] text-surface-variant">{phase.phase}</div>
                 </div>
-                {completed && <span className="text-[9px] text-[#10b981]">✓</span>}
+                {completed && <Check size={10} className="text-[#10b981]" />}
               </button>
             );
           })}
@@ -863,7 +863,7 @@ export default function Progress() {
                 <div key={id} className="flex justify-between items-center mb-2">
                   <span className="text-technical-sm" style={{ color: pillar.color }}>{id}</span>
                   <div className="flex items-center gap-1">
-                    <span className="text-technical-sm text-surface-variant">{preScores[id]} →</span>
+                    <span className="text-technical-sm text-surface-variant">{preScores[id]} {'>'}</span>
                     <span className="text-technical-sm font-bold" style={{ color: pillar.color }}>{postScores[id]}</span>
                     <span className="text-[11px] font-[600]" style={{ color: d > 0 ? '#10b981' : d < 0 ? '#ef4444' : '#353534' }}>
                       {d > 0 ? `+${d}` : d}

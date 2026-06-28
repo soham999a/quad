@@ -1,11 +1,11 @@
 // QIDS Core Data Configuration — real assessment instruments from PDF specs
 
 export const CONTEXTS = [
-  { id: 'school',     label: 'School',     icon: '🏫', desc: 'Foundational development with age-appropriate activities and developmental milestones.' },
-  { id: 'college',    label: 'College',    icon: '🎓', desc: 'Advanced development with specialization based on academic and career paths.' },
-  { id: 'corporate',  label: 'Corporate',  icon: '🏢', desc: 'Professional application with focus on leadership, teamwork, and organizational effectiveness.' },
-  { id: 'individual', label: 'Individual', icon: '🧠', desc: 'Personalized holistic development pathway tailored to unique goals and strengths.' },
-  { id: 'custom',     label: 'Custom',     icon: '⚙️', desc: 'Configurable context for specialized institutions and unique developmental needs.' },
+  { id: 'school',     label: 'School',     icon: 'GraduationCap', desc: 'Foundational development with age-appropriate activities and developmental milestones.' },
+  { id: 'college',    label: 'College',    icon: 'GraduationCap', desc: 'Advanced development with specialization based on academic and career paths.' },
+  { id: 'corporate',  label: 'Corporate',  icon: 'Building2',     desc: 'Professional application with focus on leadership, teamwork, and organizational effectiveness.' },
+  { id: 'individual', label: 'Individual', icon: 'User',          desc: 'Personalized holistic development pathway tailored to unique goals and strengths.' },
+  { id: 'custom',     label: 'Custom',     icon: 'Settings',      desc: 'Configurable context for specialized institutions and unique developmental needs.' },
 ];
 
 export const WEIGHTS = { IQ: 1.00, EQ: 2.00, SQ: 2.00, AQ: 1.28 };
@@ -24,7 +24,7 @@ export const PILLARS = {
   IQ: {
     id: 'IQ', label: 'Intelligence Quotient', short: 'IQ',
     color: '#6366f1', gradient: 'linear-gradient(135deg, #6366f1, #818cf8)',
-    weight: 1.00, maxScore: 125, emoji: '🧠',
+    weight: 1.00, maxScore: 125, emoji: 'Brain',
     description: 'Extends beyond traditional IQ testing to encompass multiple dimensions of cognitive ability including verbal, quantitative, psychometric, and performance intelligence — plus AI-generated and visual/diagram questions for a comprehensive 125-point assessment.',
     framework: 'Four-Parameter Cognitive Model + AI & Visual Extension',
     subParams: [
@@ -45,7 +45,7 @@ export const PILLARS = {
   EQ: {
     id: 'EQ', label: 'Emotional Quotient', short: 'EQ',
     color: '#10b981', gradient: 'linear-gradient(135deg, #10b981, #34d399)',
-    weight: 2.00, maxScore: 100, emoji: '❤️',
+    weight: 2.00, maxScore: 100, emoji: 'Heart',
     description: 'Assessed through the Dynamic Emotional Competency (DEC) Framework — measuring real-time emotional adaptability and contextual integration rather than static traits.',
     framework: 'Dynamic Emotional Competency (DEC)',
     subParams: [
@@ -62,7 +62,7 @@ export const PILLARS = {
   SQ: {
     id: 'SQ', label: 'Social Quotient', short: 'SQ',
     color: '#a855f7', gradient: 'linear-gradient(135deg, #a855f7, #c084fc)',
-    weight: 2.00, maxScore: 100, emoji: '🤝',
+    weight: 2.00, maxScore: 100, emoji: 'Users',
     description: 'Measures the ability to navigate social environments effectively, build meaningful relationships, and demonstrate cognitive social intelligence.',
     framework: 'Social Intelligence Assessment Center',
     subParams: [
@@ -77,7 +77,7 @@ export const PILLARS = {
   AQ: {
     id: 'AQ', label: 'Adversity Quotient', short: 'AQ',
     color: '#f59e0b', gradient: 'linear-gradient(135deg, #f59e0b, #fbbf24)',
-    weight: 1.28, maxScore: 100, emoji: '⚡',
+    weight: 1.28, maxScore: 100, emoji: 'Zap',
     description: 'Evaluated through the Resilience Dynamics Framework (RDF) — measuring the ability to anticipate, navigate, and grow through adversity as a dynamic, developable system across four weighted components.',
     framework: 'Resilience Dynamics Framework (RDF)',
     subParams: [
@@ -89,7 +89,7 @@ export const PILLARS = {
     assessmentMethods: ['CORE-style scenario questionnaire (Likert 1–5)', 'Simulation exercises', 'Performance tasks', 'Peer evaluation', 'Self-reflection tool', 'Structured interview'],
     developmentFocus: ['Resilience-building modules', 'Anticipation and adaptability training', 'Relational boundary coaching', 'Regenerative capacity workshops'],
     careerAlignment: 'High AQ profiles are suited for high-pressure, adaptive, and resilience-heavy roles including entrepreneurship, crisis management, and military/emergency services.',
-    // RDF weighted scoring: (SA×1.5)+(PM×1.0)+(RR×1.0)+(RC×1.5) → max 95 → ÷95×100
+    // RDF weighted scoring: (SA×1.5)+(PM×1.0)+(RR×1.0)+(RC×1.5) > max 95 > ÷95×100
     rdWeights: { SA: 1.5, PM: 1.0, RR: 1.0, RC: 1.5 },
     rdMax: 95,
   },
@@ -498,11 +498,11 @@ export const SQ_QUESTIONS = {
 };
 
 // ─── AQ QUESTIONS (from PDF — Resilience Dynamics Framework) ─────────────────
-// Scoring key: 1–2 → 0pts | 3 → 1pt | 4 → 2pts | 5 → 3pts
+// Scoring key: 1–2 > 0pts | 3 > 1pt | 4 > 2pts | 5 > 3pts
 // Part A: 4 Qs × 3pts max = 12 marks per component
 // Part B: Assessor rubric = 7 marks per component
 // Raw total: 4 × 19 = 76 (+ 2 bonus) = 78
-// Weighted: (SA×1.5)+(PM×1.0)+(RR×1.0)+(RC×1.5) → max 95 → ÷95×100
+// Weighted: (SA×1.5)+(PM×1.0)+(RR×1.0)+(RC×1.5) > max 95 > ÷95×100
 export const AQ_QUESTIONS = {
   scoringKey: { 1: 0, 2: 0, 3: 1, 4: 2, 5: 3 },
   components: {
@@ -640,7 +640,7 @@ export const AQ_QUESTIONS = {
   ],
 };
 
-// AQ scoring: Likert 1–5 → marks: 1–2=0, 3=1, 4=2, 5=3
+// AQ scoring: Likert 1–5 > marks: 1–2=0, 3=1, 4=2, 5=3
 export function mapAQLikert(val) {
   if (val <= 2) return 0;
   if (val === 3) return 1;
@@ -1037,14 +1037,14 @@ export function computePillarScore(pillarId, scores) {
   }
 
   if (pillarId === 'SQ') {
-    // SQ: ACE(0-20) + CSI(0-10) + PBA(0-20) = 0-50 → normalize to 0-100
+    // SQ: ACE(0-20) + CSI(0-10) + PBA(0-20) = 0-50 > normalize to 0-100
     const totalRaw = (scores.ACE || 0) + (scores.CSI || 0) + (scores.PBA || 0);
     return computeStandardized(totalRaw, 50); // 0-100
   }
 
   if (pillarId === 'AQ') {
     // AQ: RDF weighted formula
-    // (SA×1.5) + (PM×1.0) + (RR×1.0) + (RC×1.5) → max = 19×1.5 + 19×1.0 + 19×1.0 + 19×1.5 = 95
+    // (SA×1.5) + (PM×1.0) + (RR×1.0) + (RC×1.5) > max = 19×1.5 + 19×1.0 + 19×1.0 + 19×1.5 = 95
     const rdWeights = { SA: 1.5, PM: 1.0, RR: 1.0, RC: 1.5 };
     const AQ_RD_MAX = 95; // 19×1.5 + 19×1.0 + 19×1.0 + 19×1.5
     const rdScore = Object.entries(rdWeights).reduce((sum, [comp, w]) => {
@@ -1185,7 +1185,7 @@ export function getCareerProfile(pillarScores) {
 // EQ scoring helpers
 // Part A: 5 components × 5 questions × max 5 = 25 raw
 // Part B: 5 activities × max 5 = 25 raw
-// Total raw: 50 → ×2 = 100
+// Total raw: 50 > ×2 = 100
 export function computeEQScore(eqScores) {
   // eqScores: { SA: {partA: n, partB: n}, ER: {...}, SM: {...}, E: {...}, IS: {...} }
   let total = 0;
@@ -1196,7 +1196,7 @@ export function computeEQScore(eqScores) {
 }
 
 // SQ scoring helpers
-// ACE: /20, CSI: /10, PBA: /20 → total /50 → ×2 = 100
+// ACE: /20, CSI: /10, PBA: /20 > total /50 > ×2 = 100
 export function computeSQScore(sqScores) {
   const raw = (sqScores.ACE || 0) + (sqScores.CSI || 0) + (sqScores.PBA || 0);
   return Math.round((raw / 50) * 100);

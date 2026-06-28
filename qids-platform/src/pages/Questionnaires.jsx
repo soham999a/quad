@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
-import { ClipboardList, ChevronDown, ChevronUp, BookOpen, Download, ExternalLink } from 'lucide-react';
+import { ClipboardList, ChevronDown, ChevronUp, BookOpen, Download, ExternalLink, Brain, Heart, Users, Zap } from 'lucide-react';
+
+const PILLAR_ICONS = { Brain: <Brain size={20} />, Heart: <Heart size={20} />, Users: <Users size={20} />, Zap: <Zap size={20} /> };
 import { PILLARS, EQ_QUESTIONS, SQ_QUESTIONS, IQ_QUESTIONS, AQ_QUESTIONS, mapAQLikert } from '../data/qidsData';
 
 
@@ -47,7 +49,7 @@ function EQQuestionnaire({ color }) {
 
       <div className="px-3 py-2 rounded-lg mb-4 text-xs text-on-surface-variant"
         style={{ background: `${color}08`, border: `1px solid ${color}20` }}>
-        <strong style={{ color }}>Part A — Self-Report Questionnaire (25 marks)</strong> · Rate each statement 1 (Never) to 5 (Always)
+        <strong style={{ color }}>Part A — Self-Report Questionnaire (25 marks)</strong> | Rate each statement 1 (Never) to 5 (Always)
       </div>
 
       <div className="flex gap-1.5 mb-5 flex-wrap">
@@ -79,7 +81,7 @@ function EQQuestionnaire({ color }) {
 
       <div className="mt-6 px-3.5 py-2.5 rounded-lg text-xs text-on-surface-variant"
         style={{ background: `${color}08`, border: `1px solid ${color}20` }}>
-        <strong style={{ color }}>Part B — Activity-Based Assessment (25 marks)</strong> · Assessor-scored. See Assessment Engine for full rubrics.
+        <strong style={{ color }}>Part B — Activity-Based Assessment (25 marks)</strong> | Assessor-scored. See Assessment Engine for full rubrics.
       </div>
       {EQ_QUESTIONS.partB.map(act => (
         <div key={act.id} className="mt-3 px-3.5 py-3 border border-outline-variant rounded-xl bg-surface-container-low">
@@ -270,7 +272,7 @@ function AQQuestionnaire({ color }) {
         ))}
         <div className="ml-auto px-3 py-1.5 rounded-lg text-[11px]"
           style={{ background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.2)', color: '#f59e0b' }}>
-          Scoring: 1–2 = 0pt · 3 = 1pt · 4 = 2pts · 5 = 3pts
+          Scoring: 1–2 = 0pt | 3 = 1pt | 4 = 2pts | 5 = 3pts
         </div>
       </div>
 
@@ -377,7 +379,7 @@ export default function Questionnaires() {
               fontWeight: activePillar === id ? 600 : 400,
               transition: 'all 0.15s',
             }}>
-            <span className="text-base">{p.emoji}</span>
+            <span className="text-base">{PILLAR_ICONS[p.emoji] || null}</span>
             <div>
               <div className="text-xs font-bold">{id}</div>
               <div className="text-[10px] text-surface-variant font-normal">{p.label}</div>
@@ -413,7 +415,7 @@ export default function Questionnaires() {
 
         <div className="flex items-center gap-3 mb-5">
           <div className="size-10 rounded-xl flex items-center justify-center text-xl" style={{ background: `${pillar.color}20`, border: `1px solid ${pillar.color}40` }}>
-            {pillar.emoji}
+            {PILLAR_ICONS[pillar.emoji] || null}
           </div>
           <div className="min-w-0 flex-1">
             <h2 className="text-lg font-extrabold m-0">{activePillar} — {pillar.label}</h2>

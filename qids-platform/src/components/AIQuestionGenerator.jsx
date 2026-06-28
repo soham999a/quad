@@ -80,7 +80,7 @@ function AIQuestionCard({ question, index, answers, onAnswer, color, questionTyp
     <div style={{ marginBottom: 14, background: 'var(--navy-4)', border: `1px solid ${color}20`, borderRadius: 12, padding: 16, position: 'relative' }}>
       <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8, marginBottom: 10 }}>
         <div style={{ padding: '2px 8px', borderRadius: 6, background: `${color}15`, border: `1px solid ${color}30`, fontSize: 10, fontWeight: 700, color, flexShrink: 0, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-          AI · {question.subParam || question.subparam || 'Generated'}
+          AI | {question.subParam || question.subparam || 'Generated'}
         </div>
         <div style={{ position: 'absolute', top: 12, right: 12, fontSize: 10, color: 'var(--text-muted)' }}>
           Q{index + 1}

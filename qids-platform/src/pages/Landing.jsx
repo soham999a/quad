@@ -1,4 +1,5 @@
 import React from 'react';
+import { ArrowRight } from 'lucide-react';
 import { useNavigate, Link } from 'react-router-dom';
 
 const DIMENSIONS = [
@@ -24,17 +25,17 @@ const PHASES = [
   {
     num: 'PHASE 01', title: 'Atmospheric Baseline',
     desc: 'We begin by establishing a neural baseline through a series of micro-decisions. This is not a test of knowledge, but a study of reaction. We measure latency, ocular focus, and the weight of your initial choices.',
-    meta: 'Duration: 12m · Complexity: Low'
+    meta: 'Duration: 12m | Complexity: Low'
   },
   {
     num: 'PHASE 02', title: 'Stress Simulation',
     desc: 'Cognitive dimensions are pushed to their limits through recursive logic puzzles that introduce noise and contradictory data. Here, we measure your ability to filter signal from chaos.',
-    meta: 'Duration: 24m · Complexity: Extreme'
+    meta: 'Duration: 24m | Complexity: Extreme'
   },
   {
     num: 'PHASE 03', title: 'The Synthesis Phase',
     desc: 'Final integration where all four dimensions are engaged simultaneously. You will navigate a simulated institutional crisis, requiring emotional maturity and social intelligence to resolve effectively.',
-    meta: 'Duration: 15m · Complexity: High'
+    meta: 'Duration: 15m | Complexity: High'
   },
 ];
 
@@ -66,8 +67,8 @@ export default function Landing() {
         <div className="flex items-center gap-12">
           <span className="text-headline-md font-headline-md font-medium text-primary tracking-tighter">QIDS</span>
           <div className="hidden md:flex gap-8">
-            <a className="text-label-md font-label-md text-primary font-medium border-b border-primary pb-1" href="#problem">§ I · ANALYTICS</a>
-            <a className="text-label-md font-label-md text-on-surface-variant font-medium hover:text-primary transition-colors" href="#dimensions">§ II · ARCHIVE</a>
+            <a className="text-label-md font-label-md text-primary font-medium border-b border-primary pb-1" href="#problem">I | ANALYTICS</a>
+            <a className="text-label-md font-label-md text-on-surface-variant font-medium hover:text-primary transition-colors" href="#dimensions">II | ARCHIVE</a>
           </div>
         </div>
         <div className="flex items-center gap-6">
@@ -93,19 +94,19 @@ export default function Landing() {
           </p>
           <div className="mt-12 flex flex-col md:flex-row gap-4 justify-center items-center">
             <div className="editorial-rule hidden md:block w-32 self-center bg-primary"></div>
-            <span className="text-technical-sm font-technical-sm self-center">SCROLL TO EXPLORE § 01 — 04</span>
+            <span className="text-technical-sm font-technical-sm self-center">SCROLL TO EXPLORE 01 — 04</span>
             <div className="editorial-rule hidden md:block w-32 self-center"></div>
           </div>
         </div>
       </header>
 
       <main className="space-y-32 md:space-y-64 pb-64">
-        {/* § I · THE PROBLEM */}
+        {/* I | THE PROBLEM */}
         <section className="px-margin-mobile md:px-[80px] mx-auto" id="problem" style={{ maxWidth: '1440px' }}>
           <div className="flex flex-col md:flex-row gap-12 md:gap-24">
             <div className="md:w-1/3">
               <span className="text-technical-sm font-technical-sm text-primary mb-4 block">01 / 04</span>
-              <h2 className="text-headline-md font-label-md uppercase tracking-widest text-on-surface">§ I · THE PROBLEM</h2>
+              <h2 className="text-headline-md font-label-md uppercase tracking-widest text-on-surface">I | THE PROBLEM</h2>
             </div>
             <div className="md:w-2/3 space-y-8">
               <h3 className="text-headline-lg font-headline-lg text-on-surface leading-tight">The IQ test is a relic of the industrial age. It measures logic in a vacuum, ignoring the fluid complexities of the modern world.</h3>
@@ -118,11 +119,11 @@ export default function Landing() {
           </div>
         </section>
 
-        {/* § II · THE FOUR DIMENSIONS */}
+        {/* II | THE FOUR DIMENSIONS */}
         <section className="px-margin-mobile md:px-[80px] mx-auto" id="dimensions" style={{ maxWidth: '1440px' }}>
           <div className="mb-24">
             <span className="text-technical-sm font-technical-sm text-primary mb-4 block">02 / 04</span>
-            <h2 className="text-headline-md font-label-md uppercase tracking-widest text-on-surface">§ II · THE FOUR DIMENSIONS</h2>
+            <h2 className="text-headline-md font-label-md uppercase tracking-widest text-on-surface">II | THE FOUR DIMENSIONS</h2>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 border-l-[0.5px] border-r-[0.5px] border-outline-variant">
             {DIMENSIONS.map(d => (
@@ -136,18 +137,18 @@ export default function Landing() {
           </div>
         </section>
 
-        {/* § III · THE METHOD */}
+        {/* III | THE METHOD */}
         <section className="px-margin-mobile md:px-[80px] mx-auto" id="method" style={{ maxWidth: '1440px' }}>
           <div className="flex flex-col md:flex-row gap-24">
             <div className="md:w-1/3">
               <span className="text-technical-sm font-technical-sm text-primary mb-4 block">03 / 04</span>
-              <h2 className="text-headline-md font-label-md uppercase tracking-widest text-on-surface">§ III · THE METHOD</h2>
+              <h2 className="text-headline-md font-label-md uppercase tracking-widest text-on-surface">III | THE METHOD</h2>
               <div className="mt-16 sticky top-32">
                 <div className="bg-surface-container-low p-8 border-[0.5px] border-outline-variant">
                   <div className="w-full h-auto mb-6 bg-surface-variant/30 flex items-center justify-center aspect-[4/3]">
                     <span className="text-technical-sm font-technical-sm text-on-surface-variant">Neural Mapping Diagram</span>
                   </div>
-                  <p className="text-technical-sm font-technical-sm text-on-surface-variant italic">Figure 01 · Neural Mapping Protocol · QIDS Foundation</p>
+                  <p className="text-technical-sm font-technical-sm text-on-surface-variant italic">Figure 01 | Neural Mapping Protocol | QIDS Foundation</p>
                 </div>
               </div>
             </div>
@@ -166,11 +167,11 @@ export default function Landing() {
           </div>
         </section>
 
-        {/* § IV · THREE AUDIENCES */}
+        {/* IV | THREE AUDIENCES */}
         <section className="px-margin-mobile md:px-[80px] mx-auto" id="audiences" style={{ maxWidth: '1440px' }}>
           <div className="mb-24 text-center">
             <span className="text-technical-sm font-technical-sm text-primary mb-4 block">04 / 04</span>
-            <h2 className="text-headline-md font-label-md uppercase tracking-widest text-on-surface">§ IV · THREE AUDIENCES</h2>
+            <h2 className="text-headline-md font-label-md uppercase tracking-widest text-on-surface">IV | THREE AUDIENCES</h2>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             {AUDIENCES.map(a => (
@@ -180,7 +181,7 @@ export default function Landing() {
                 <p className="text-body-md font-body-md text-on-surface-variant mb-auto">{a.desc}</p>
                 <a className="mt-8 text-label-md font-label-md text-primary flex items-center gap-2 group no-underline" href="#">
                   {a.cta}
-                  <span className="text-[16px] group-hover:translate-x-1 transition-transform">→</span>
+                  <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />
                 </a>
               </div>
             ))}
@@ -195,7 +196,7 @@ export default function Landing() {
               START QIDS ASSESSMENT
             </button>
           </Link>
-          <p className="mt-8 text-technical-sm font-technical-sm opacity-60">Estimated Time: 51 Minutes · No Interruption Required</p>
+          <p className="mt-8 text-technical-sm font-technical-sm opacity-60">Estimated Time: 51 Minutes | No Interruption Required</p>
         </section>
       </main>
 
@@ -238,7 +239,7 @@ export default function Landing() {
         </div>
         <div className="flex flex-col md:flex-row justify-between items-center border-t-[0.5px] border-outline-variant pt-8 text-technical-sm font-technical-sm text-on-surface-variant opacity-50">
           <span>© 2025 QIDS INTELLECTUAL SYSTEMS</span>
-          <span className="mt-4 md:mt-0 tracking-[0.3em]">BEYOND IQ · BEYOND EQ</span>
+          <span className="mt-4 md:mt-0 tracking-[0.3em]">BEYOND IQ | BEYOND EQ</span>
         </div>
       </footer>
     </div>

@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { getUserAssessments, getUserReports } from '../services/firestoreService';
 import { PILLARS, getGrade, computeWeightedScore } from '../data/qidsData';
-import { ClipboardList, TrendingUp, FileText, Activity, ChevronRight } from 'lucide-react';
+import { ClipboardList, TrendingUp, FileText, Activity, ChevronRight, ArrowRight } from 'lucide-react';
 import SeedExampleData from '../components/SeedExampleData';
 
 export default function Dashboard() {
@@ -39,7 +39,7 @@ export default function Dashboard() {
     <div className="page-pad max-w-[1200px] mx-auto animate-fade">
       {/* Page Header */}
       <section className="mb-10 md:mb-16">
-        <div className="text-technical-sm font-technical-sm text-primary mb-2">§ · DASHBOARD</div>
+        <div className="text-technical-sm font-technical-sm text-primary mb-2">DASHBOARD</div>
         <h1 className="text-headline-md font-headline-md text-on-background page-headline">Good morning, {userProfile?.name || user?.displayName || 'there'}.</h1>
       </section>
 
@@ -113,7 +113,7 @@ export default function Dashboard() {
                         <div className="text-label-md font-label-md text-on-background truncate">{a.intake?.name || 'Assessment'}</div>
                         <div className="text-technical-sm font-technical-sm text-surface-variant truncate">
                           {a.createdAt?.toDate ? a.createdAt.toDate().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'Recent'}
-                          {hasPost && ' · Post-Complete'}
+                          {hasPost && ' | Post-Complete'}
                         </div>
                       </div>
                     </div>
@@ -161,7 +161,7 @@ export default function Dashboard() {
                 <button onClick={() => navigate(path)}
                   className="group flex items-center justify-between w-full text-body-md text-on-surface-variant hover:text-primary transition-colors cursor-pointer bg-transparent border-none touch-target">
                   <span>{label}</span>
-                  <span className="font-technical-sm group-hover:translate-x-1 transition-transform">→</span>
+                  <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform" />
                 </button>
                 <div className="h-[0.5px] bg-outline-variant opacity-50 mt-4 md:mt-6"></div>
               </li>

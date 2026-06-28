@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
-import { BookOpen, ChevronDown, ChevronUp, Clock, Calendar, Target } from 'lucide-react';
+import { BookOpen, ChevronDown, ChevronUp, Clock, Calendar, Target, Brain, Heart, Users, Zap } from 'lucide-react';
+
+const PILLAR_ICONS = { Brain: <Brain size={20} />, Heart: <Heart size={20} />, Users: <Users size={20} />, Zap: <Zap size={20} /> };
 import { PILLARS } from '../data/qidsData';
 
 const BANDS = {
@@ -112,7 +114,7 @@ const PLAN = {
           'Rapport building — discussing student details, family, likes, hobbies, dreams',
           'Thorough discussion on good/bad memories, fears, coping strategies',
           'Situation and problem solving (hypothetical and current scenarios)',
-          'CBT: Thought → Action → Behaviour implementation',
+          'CBT: Thought > Action > Behaviour implementation',
         ],
         example: 'Discuss fears through puppet-based storytelling to build trust and emotional vocabulary.',
       },
@@ -417,7 +419,7 @@ export default function InterventionPlan() {
             fontWeight: activePillar === id ? 600 : 400,
             transition: 'all 0.15s',
           }}>
-            <span className="text-[16px]">{p.emoji}</span>
+            <span className="text-[16px]">{PILLAR_ICONS[p.emoji] || null}</span>
             <div>
               <div className="text-label-md font-bold">{id}</div>
               <div className="text-technical-sm text-surface-variant font-normal">{p.label}</div>
@@ -464,7 +466,7 @@ export default function InterventionPlan() {
 
         <div className="flex items-center gap-3 mb-2">
           <div className="size-10 rounded-xl flex items-center justify-center text-xl" style={{ background: `${pillar.color}20`, border: `1px solid ${pillar.color}40` }}>
-            {pillar.emoji}
+            {PILLAR_ICONS[pillar.emoji] || null}
           </div>
           <div className="min-w-0 flex-1">
             <h2 className="text-[18px] font-extrabold m-0 font-headline-md truncate">{activePillar} — {pillar.label}</h2>

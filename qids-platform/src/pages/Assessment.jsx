@@ -8,7 +8,7 @@ import { useApp } from '../App';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { saveAssessment, getStudentEvaluator, getAllUsers, assignEvaluator, removeAssignment } from '../services/firestoreService';
-import { Save, ChevronRight, ChevronLeft, CheckCircle, AlertCircle, ClipboardList, Brain, Heart, Users, Shield } from 'lucide-react';
+import { Save, ChevronRight, ChevronLeft, Check, CheckCircle, AlertCircle, ClipboardList, Brain, Heart, Users, Shield, ArrowRight } from 'lucide-react';
 import { useToast } from '../components/Toast';
 
 const STEPS = ['Intake & Consent', 'IQ Assessment', 'EQ Assessment', 'SQ Assessment', 'AQ Assessment', 'Review & Submit'];
@@ -117,7 +117,7 @@ function IntakeStep({ data, onChange, evaluators, currentEv, onAssign, onRemove,
   const labelClass = "text-technical-sm font-technical-sm text-surface-variant uppercase tracking-widest";
   return (
     <div>
-      <div className="text-technical-sm font-technical-sm text-primary mb-6">§ I · INTAKE & CONSENT</div>
+      <div className="text-technical-sm font-technical-sm text-primary mb-6">I | INTAKE & CONSENT</div>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
         {[
           { key: 'name', label: 'Full Name', placeholder: 'Enter full name' },
@@ -507,7 +507,7 @@ function SQStep({ scores, onChange }) {
     <div>
       <SectionHeader
         title="Social Quotient (SQ) — Social Intelligence Assessment Center"
-        subtitle="3 Components | Raw /50 → ×2 = 100 pts | Assessor-scored"
+        subtitle="3 Components | Raw /50 > ×2 = 100 pts | Assessor-scored"
         color={pillar.color}
       />
 
@@ -635,7 +635,7 @@ function SQStep({ scores, onChange }) {
                     className={`px-3 py-2.5 text-left border-[0.5px] transition-all cursor-pointer ${isDisabled ? 'opacity-40 cursor-not-allowed' : ''} ${isSelected ? 'border-[#a855f7] bg-[#a855f7]/10' : 'border-outline-variant bg-surface-container-low hover:border-[#a855f7]'
                       }`}>
                     <div className="text-technical-sm font-technical-sm" style={{ color: isSelected ? pillar.color : undefined }}>{act.id}: {act.label}</div>
-                    <div className="text-[10px] text-surface-variant mt-0.5">{act.time} · {act.bestFor}</div>
+                    <div className="text-[10px] text-surface-variant mt-0.5">{act.time} | {act.bestFor}</div>
                   </button>
                 );
               })}
@@ -715,7 +715,7 @@ function AQStep({ scores, onChange, ageGroup }) {
     <div>
       <SectionHeader
         title="Adversity Quotient (AQ) — Resilience Dynamics Framework"
-        subtitle={`Age Group: ${age === '11-18' ? '11–18 Years' : '19–32 Years'} | 4 Components × 19 marks | Weighted formula → /100`}
+        subtitle={`Age Group: ${age === '11-18' ? '11–18 Years' : '19–32 Years'} | 4 Components × 19 marks | Weighted formula > /100`}
         color={pillar.color}
       />
 
@@ -723,7 +723,7 @@ function AQStep({ scores, onChange, ageGroup }) {
       <div className="flex items-center gap-3 p-4 border-[0.5px] border-amber-500/30 bg-amber-500/5 mb-5">
         <div className="flex-1">
           <div className="text-technical-sm font-technical-sm text-surface-variant mb-1">Live RD Score Preview</div>
-          <div className="text-technical-sm font-technical-sm text-on-surface-variant">Formula: (SA×1.5) + (PM×1.0) + (RR×1.0) + (RC×1.5) → max 95 → RD÷95×100</div>
+          <div className="text-technical-sm font-technical-sm text-on-surface-variant">Formula: (SA×1.5) + (PM×1.0) + (RR×1.0) + (RC×1.5) {'>'} max 95 {'>'} RD÷95×100</div>
         </div>
         <div className="text-right">
           <div className="text-[28px] font-label-md leading-none" style={{ color: pillar.color }}>{converted}</div>
@@ -744,7 +744,7 @@ function AQStep({ scores, onChange, ageGroup }) {
                 }`}
               style={{ backgroundColor: isActive ? pillar.color + '20' : 'transparent', color: isActive ? pillar.color : undefined }}>
               <span className="font-bold">{comp}</span>
-              <span className="text-[10px] opacity-80">{answered}/4 · B:{partBTotal}/7</span>
+              <span className="text-[10px] opacity-80">{answered}/4 | B:{partBTotal}/7</span>
             </button>
           );
         })}
@@ -773,7 +773,7 @@ function AQStep({ scores, onChange, ageGroup }) {
       {activeTab === 'partA' && (
         <div>
           <div className="p-3 border-[0.5px] border-amber-500/30 bg-amber-500/5 text-technical-sm font-technical-sm text-on-surface-variant leading-relaxed mb-4">
-            Rate each scenario 1 (Not at all) to 5 (Completely). Scoring: 1–2 = 0 pts · 3 = 1 pt · 4 = 2 pts · 5 = 3 pts → Max 12 marks
+            Rate each scenario 1 (Not at all) to 5 (Completely). Scoring: 1–2 = 0 pts | 3 = 1 pt | 4 = 2 pts | 5 = 3 pts {'>'} Max 12 marks
           </div>
           {compData[activeComp].questions[age].map((q, i) => {
             const val = scores[activeComp]?.partA?.[i] || 0;
@@ -881,7 +881,7 @@ function ReviewStep({ intake, rawScores }) {
   return (
     <div>
       {/* Intake summary */}
-      <div className="text-technical-sm font-technical-sm text-primary mb-6">§ VI · REVIEW & SUBMIT</div>
+      <div className="text-technical-sm font-technical-sm text-primary mb-6">VI | REVIEW & SUBMIT</div>
       <div className="grid grid-cols-2 gap-3 mb-5">
         {Object.entries(intake).filter(([k]) => !['consent', 'purpose'].includes(k)).map(([k, v]) => (
           <div key={k} className="p-3 bg-surface-container-low border-[0.5px] border-outline-variant">
@@ -903,7 +903,7 @@ function ReviewStep({ intake, rawScores }) {
             <div key={id} className="p-4 bg-surface-container-low border-[0.5px] text-center" style={{ borderColor: pillar.color + '30' }}>
               <div className="text-technical-sm font-technical-sm mb-2" style={{ color: pillar.color }}>{pillar.short}</div>
               <div className="text-[32px] font-label-md leading-none text-on-surface">{score}</div>
-              <div className="text-technical-sm font-technical-sm text-surface-variant mt-1">/ {displayMax} · Grade {g.grade}</div>
+              <div className="text-technical-sm font-technical-sm text-surface-variant mt-1">/ {displayMax} | Grade {g.grade}</div>
               {isIQ && <div className="text-[9px] font-technical-sm text-primary mt-1">incl. AI + Visual bonus</div>}
               <div className="h-1 bg-surface-variant/20 mt-3">
                 <div className="h-full transition-all duration-500" style={{ width: `${pct}%`, backgroundColor: g.color }} />
@@ -1197,7 +1197,7 @@ export default function Assessment() {
         <div className="border-[0.5px] border-primary/50 bg-primary/10 w-20 h-20 flex items-center justify-center mx-auto mb-8">
           <CheckCircle size={36} className="text-primary" />
         </div>
-        <div className="text-technical-sm font-technical-sm text-primary mb-4">§ · COMPLETION CONFIRMATION</div>
+        <div className="text-technical-sm font-technical-sm text-primary mb-4">COMPLETION CONFIRMATION</div>
         <h2 className="text-headline-md font-headline-md text-on-surface mb-4">Assessment Complete</h2>
         <p className="text-body-md font-body-md text-on-surface-variant mb-10 leading-relaxed">
           Baseline data for <strong className="text-on-surface">{intake.name || 'the individual'}</strong> has been recorded. Proceed to Pre-Intervention analysis to view scores, grades, and intervention mapping.
@@ -1223,7 +1223,7 @@ export default function Assessment() {
     <div className="page-pad max-w-[960px] mx-auto animate-fade">
       {/* Page header */}
       <div className="mb-6 md:mb-10">
-        <div className="text-technical-sm font-technical-sm text-primary mb-2">§ · ASSESSMENT PROTOCOL</div>
+        <div className="text-technical-sm font-technical-sm text-primary mb-2">ASSESSMENT PROTOCOL</div>
         <h1 className="text-headline-md font-headline-md text-on-background page-headline">Multi-Step Baseline Assessment</h1>
       </div>
 
@@ -1238,7 +1238,7 @@ export default function Assessment() {
                 className={`flex items-center gap-2 md:gap-3 px-2 md:px-4 py-2 md:py-3 whitespace-nowrap transition-all cursor-pointer bg-transparent border-none ${isActive ? 'text-primary' : isCompleted ? 'text-on-surface-variant' : 'text-surface-variant'
                   }`}>
                 <div className={`border-[0.5px] w-7 h-7 md:w-8 md:h-8 flex items-center justify-center text-[10px] md:text-technical-sm font-technical-sm flex-shrink-0 ${isActive ? 'border-primary bg-primary/10 text-primary' : isCompleted ? 'border-primary/30 text-primary' : 'border-outline-variant text-surface-variant'
-                  }`}>{isCompleted ? '✓' : stepLabels[i]}</div>
+                  }`}>{isCompleted ? <Check size={10} /> : stepLabels[i]}</div>
                 <span className="text-[10px] md:text-technical-sm font-technical-sm hidden sm:block">{s}</span>
               </button>
               {i < STEPS.length - 1 && <div className={`flex-1 h-[0.5px] min-w-3 md:min-w-4 ${isCompleted ? 'bg-primary/30' : 'bg-outline-variant'}`} />}

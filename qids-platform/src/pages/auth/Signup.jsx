@@ -71,7 +71,7 @@ export default function Signup() {
         <section className="flex flex-col space-y-6">
           <div className="flex flex-col space-y-2">
             <span className="text-technical-sm font-technical-sm text-outline uppercase tracking-widest">
-              § · Registration
+              Registration
             </span>
             <div className="w-full h-[0.5px] bg-outline-variant"></div>
           </div>
@@ -121,7 +121,7 @@ export default function Signup() {
               <label className="text-technical-sm font-technical-sm text-on-surface-variant uppercase">Context</label>
               <select value={form.context} onChange={e => set('context', e.target.value)}
                 className="w-full h-12 px-4 bg-background border-[0.5px] border-outline-variant rounded-xl text-on-surface font-technical-sm outline-none focus:border-primary cursor-pointer">
-                {CONTEXTS.map(c => <option key={c.id} value={c.id}>{c.icon} {c.label}</option>)}
+                {CONTEXTS.map(c => <option key={c.id} value={c.id}>{c.label}</option>)}
               </select>
             </div>
 

@@ -38,7 +38,7 @@ export default function ReportGenerator() {
       {/* Page header */}
       <div className="flex justify-between items-start mb-8">
         <div>
-          <div className="text-technical-sm font-technical-sm text-primary mb-2">§ · QIDS REPORT</div>
+          <div className="text-technical-sm font-technical-sm text-primary mb-2">QIDS REPORT</div>
           <h1 className="text-headline-md font-headline-md text-on-background">Report Generator</h1>
         </div>
         <div className="flex gap-3">
@@ -122,7 +122,7 @@ export default function ReportGenerator() {
                 <div key={id} className="p-4 bg-surface-container-low border-[0.5px] border-outline-variant relative">
                   <div className="text-technical-sm font-technical-sm mb-2" style={{ color: pillar.color }}>{pillar.short}</div>
                   <div className="text-[28px] font-technical-sm text-on-surface">{post}</div>
-                  <div className="text-technical-sm font-technical-sm text-surface-variant mt-1">/ {displayMax} · Grade {grade.grade}</div>
+                  <div className="text-technical-sm font-technical-sm text-surface-variant mt-1">/ {displayMax} | Grade {grade.grade}</div>
                   {isIQ && <div className="text-[10px] font-technical-sm text-primary mt-1">Normalized: {normalizedPost}/100</div>}
                   <div className="text-technical-sm font-technical-sm text-surface-variant mt-1">Pre: {pre} | Δ {post - pre > 0 ? '+' : ''}{post - pre}</div>
                   <div className="h-[3px] bg-surface-variant/30 mt-3">

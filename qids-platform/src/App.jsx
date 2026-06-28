@@ -86,7 +86,7 @@ function Sidebar({ collapsed, setCollapsed }) {
         ) : (
           <>
             <div className="text-label-md font-label-md uppercase tracking-widest text-primary mb-1">QIDS Platform</div>
-            <div className="text-technical-sm font-technical-sm text-surface-variant">§ ARCHITECTURE</div>
+<div className="text-technical-sm font-technical-sm text-surface-variant">ARCHITECTURE</div>
           </>
         )}
       </div>
@@ -206,7 +206,7 @@ function MobileMenuDrawer({ onClose }) {
       <div className="flex justify-between items-center p-6 border-b-[0.5px] border-outline-variant">
         <div>
           <div className="text-label-md font-label-md uppercase tracking-widest text-primary">QIDS Platform</div>
-          <div className="text-technical-sm font-technical-sm text-surface-variant">§ ARCHITECTURE</div>
+          <div className="text-technical-sm font-technical-sm text-surface-variant">ARCHITECTURE</div>
         </div>
         <button onClick={onClose}
           className="p-2 border-[0.5px] border-outline-variant text-on-surface-variant hover:text-primary transition-all cursor-pointer bg-transparent">
@@ -299,17 +299,17 @@ function TopBar({ context, setContext, onMenuOpen }) {
         <div className="text-headline-md font-headline-md font-medium text-primary uppercase tracking-tight">QIDS</div>
         <nav className="hidden md:flex gap-8">
           <NavLink to="/app/dashboard" className="text-label-md font-label-md text-primary border-b-[0.5px] border-primary pb-1 transition-opacity">
-            § I · ANALYTICS
+            I | ANALYTICS
           </NavLink>
           <NavLink to="/app/report" className="text-label-md font-label-md text-on-surface-variant hover:text-primary transition-colors">
-            § II · ARCHIVE
+            II | ARCHIVE
           </NavLink>
         </nav>
       </div>
       <div className="flex items-center gap-6 topbar-actions">
         <select value={context} onChange={e => setContext(e.target.value)}
           className="bg-transparent text-technical-sm font-technical-sm text-on-surface-variant border-[0.5px] border-outline-variant px-3 py-2 cursor-pointer">
-          {CONTEXTS.map(c => <option key={c.id} value={c.id}>{c.icon} {c.label}</option>)}
+          {CONTEXTS.map(c => <option key={c.id} value={c.id}>{c.label}</option>)}
         </select>
         <button className="px-6 py-2.5 bg-primary text-on-primary-container text-label-md font-label-md hover:opacity-90 transition-opacity cursor-pointer">
           NEW REPORT

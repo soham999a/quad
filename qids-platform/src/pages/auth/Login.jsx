@@ -89,7 +89,7 @@ export default function Login() {
           <div className="space-y-4">
             <div className="flex flex-col space-y-2">
               <span className="text-technical-sm font-technical-sm text-outline uppercase tracking-widest">
-                § · Sign In
+                Sign In
               </span>
               <div className="w-full h-[0.5px] bg-outline-variant"></div>
             </div>

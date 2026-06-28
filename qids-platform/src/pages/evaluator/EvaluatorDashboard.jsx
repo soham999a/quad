@@ -122,7 +122,7 @@ export default function EvaluatorDashboard() {
                     <div className="text-sm font-bold">{student?.name || 'Unnamed Student'}</div>
                     <div className="text-xs text-surface-variant flex items-center gap-1.5">
                       <Mail size={10} className="text-surface-variant" /> {student?.email || '—'}
-                      {student?.context && <span>· {student.context}</span>}
+                      {student?.context && <span>| {student.context}</span>}
                     </div>
                   </div>
                   <div className="text-xs text-surface-variant text-right">

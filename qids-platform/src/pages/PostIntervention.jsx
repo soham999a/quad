@@ -6,7 +6,7 @@ import { savePostAssessment } from '../services/firestoreService';
 import ProcessNode, { NodeDetailPanel } from '../components/ProcessNode';
 import QIDSRadar from '../components/RadarChart';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { TrendingUp, TrendingDown, Minus, ArrowRight, Download, Save, CheckCircle, ClipboardList } from 'lucide-react';
+import { TrendingUp, TrendingDown, Minus, ArrowRight, Download, Save, CheckCircle, Check, ClipboardList } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Legend } from 'recharts';
 import { useToast } from '../components/Toast';
 
@@ -205,7 +205,7 @@ export default function PostIntervention() {
             <div key={id} className="flex justify-between items-center mb-2">
               <span className="text-technical-sm" style={{ color: pillar.color }}>{id}</span>
               <div className="flex items-center gap-1">
-                <span className="text-technical-sm text-surface-variant">{preScores[id]} →</span>
+                <span className="text-technical-sm text-surface-variant">{preScores[id]} {'>'}</span>
                 <span className="text-technical-sm font-bold" style={{ color: pillar.color }}>{postScores[id]}</span>
                 <span className="text-[11px] font-semibold" style={{ color: d > 0 ? '#10b981' : d < 0 ? '#ef4444' : 'var(--text-muted)' }}>
                   {d > 0 ? `+${d}` : d}
@@ -371,9 +371,9 @@ export default function PostIntervention() {
                 {Object.entries(PILLARS).filter(([id]) => postScores[id] > preScores[id]).map(([id, p]) => (
                   <div key={id} className="flex gap-2 mb-2">
                     <div className="w-4 h-4 rounded-full flex items-center justify-center shrink-0" style={{ background: 'rgba(16,185,129,0.2)', border: '1px solid #10b981' }}>
-                      <span className="text-[9px] text-[#10b981]">✓</span>
+                      <Check size={10} className="text-[#10b981]" />
                     </div>
-                    <span className="text-technical-sm text-on-surface-variant">{p.label}: {preScores[id]} → {postScores[id]} (+{postScores[id] - preScores[id]})</span>
+                    <span className="text-technical-sm text-on-surface-variant">{p.label}: {preScores[id]} {'>'} {postScores[id]} (+{postScores[id] - preScores[id]})</span>
                   </div>
                 ))}
               </div>
@@ -395,7 +395,7 @@ export default function PostIntervention() {
         <div className="text-technical-sm font-semibold text-[#2dd4bf] mb-3">Outcome Summary</div>
         <div className="p-3.5 rounded-[10px] mb-4" style={{ background: 'rgba(20,184,166,0.08)', border: '1px solid rgba(20,184,166,0.2)' }}>
           <div className="text-[11px] text-surface-variant mb-1">Unified Score Change</div>
-          <div className="text-[28px] font-extrabold text-[#14b8a6]">{preUnified} → {postUnified}</div>
+          <div className="text-[28px] font-extrabold text-[#14b8a6]">{preUnified} {'>'} {postUnified}</div>
           <div className="text-technical-sm font-semibold" style={{ color: delta >= 0 ? '#10b981' : '#ef4444' }}>{delta >= 0 ? `+${delta}` : delta} points ({Math.round((delta / preUnified) * 100)}%)</div>
         </div>
 

@@ -1,6 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Brain, Zap, TrendingUp, ClipboardList, ArrowRight, CheckCircle, Star } from 'lucide-react';
+import { Brain, Zap, TrendingUp, ClipboardList, ArrowRight, CheckCircle, Star, GraduationCap, Building2, User, Settings } from 'lucide-react';
 import { useApp } from '../App';
 import { CONTEXTS, PILLARS } from '../data/qidsData';
 
@@ -66,7 +66,7 @@ export default function Overview() {
           <div className="grid grid-cols-2 gap-2">
             {CONTEXTS.map(c => (
               <button key={c.id} onClick={() => setContext(c.id)} className={`px-3 py-2.5 rounded-lg cursor-pointer text-sm font-medium text-left flex items-center gap-2 transition-all ${context === c.id ? 'bg-[#6366f1]/20 text-white border border-[#6366f1]' : 'bg-white/5 text-on-surface-variant border border-outline-variant'}`}>
-                <span>{c.icon}</span> {c.label}
+                {c.icon === 'GraduationCap' ? <GraduationCap size={16} /> : c.icon === 'Building2' ? <Building2 size={16} /> : c.icon === 'User' ? <User size={16} /> : <Settings size={16} />} {c.label}
               </button>
             ))}
           </div>

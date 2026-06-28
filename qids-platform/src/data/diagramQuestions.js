@@ -155,7 +155,7 @@ export const DIAGRAM_QUESTIONS = [
     subParam: 'Psychometric Abilities',
     type: 'diagram_mcq',
     diagram: DIAGRAMS.pattern1,
-    q: 'What shape comes next in the sequence: Square → Circle → Triangle → Square → Circle → ?',
+    q: 'What shape comes next in the sequence: Square > Circle > Triangle > Square > Circle > ?',
     options: ['Square', 'Triangle', 'Circle', 'Pentagon'],
     answer: 1,
     explanation: 'The pattern repeats: Square, Circle, Triangle. After Circle comes Triangle.',
@@ -185,7 +185,7 @@ export const DIAGRAM_QUESTIONS = [
       'Square with dot at top-right, diagonal line from bottom-right',
     ],
     answer: 2,
-    explanation: 'After 3 rotations of 90° clockwise (total 270°), the dot moves from top-right → bottom-right → bottom-left → top-left... wait, 3×90=270°, so dot is at bottom-left.',
+    explanation: 'After 3 rotations of 90° clockwise (total 270°), the dot moves from top-right > bottom-right > bottom-left > top-left... wait, 3×90=270°, so dot is at bottom-left.',
   },
   {
     id: 'DQ4',

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Settings, Upload, FileText, Package, BookOpen, BarChart2, Plus, Trash2, Edit2, Save } from 'lucide-react';
+import { Settings, Upload, FileText, Package, BookOpen, BarChart2, Plus, Trash2, Edit2, Save, Check } from 'lucide-react';
 
 const CONFIG_SECTIONS = [
   { id: 'questionnaires', label: 'Questionnaires', icon: FileText, desc: 'Upload and manage assessment questionnaires for each pillar and context.' },
@@ -53,7 +53,7 @@ function ContentItem({ item, onEdit, onDelete }) {
         <div>
           <div className="text-sm font-medium">{item.name}</div>
           <div className="text-xs text-surface-variant">
-            {[item.context, item.pillar, item.duration].filter(Boolean).join(' · ')}
+            {[item.context, item.pillar, item.duration].filter(Boolean).join(' | ')}
           </div>
         </div>
       </div>
@@ -130,7 +130,7 @@ export default function AdminConfig() {
               </div>
             ))}
             <button onClick={handleSaveWeights} className="w-full inline-flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs rounded-lg bg-[#6366f1] text-white font-medium hover:opacity-90 cursor-pointer transition-all mt-1">
-              {saved ? <><span>✓</span> Saved</> : <><Save size={12} /> Save Weights</>}
+              {saved ? <><Check size={12} /> Saved</> : <><Save size={12} /> Save Weights</>}
             </button>
           </div>
         </div>
