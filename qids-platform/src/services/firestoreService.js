@@ -46,6 +46,8 @@ export async function getLatestPostAssessment(uid) {
 }
 
 export async function getUserAssessments(uid) {
+  const td = typeof window !== 'undefined' ? window.__FIRESTORE_DATA__ : null;
+  if (td?.assessments?.[uid]) return td.assessments[uid];
   try {
     const q = query(collection(db, 'assessments'), where('uid', '==', uid));
     const snap = await getDocs(q);
@@ -54,6 +56,8 @@ export async function getUserAssessments(uid) {
 }
 
 export async function getUserReports(uid) {
+  const td = typeof window !== 'undefined' ? window.__FIRESTORE_DATA__ : null;
+  if (td?.reports?.[uid]) return td.reports[uid];
   try {
     const q = query(collection(db, 'reports'), where('uid', '==', uid));
     const snap = await getDocs(q);
@@ -109,6 +113,8 @@ export async function getInterventionPlan(uid, assessmentId) {
 // ── Evaluator System ──────────────────────────────────────────────────────────
 
 export async function getAllUsers() {
+  const td = typeof window !== 'undefined' ? window.__FIRESTORE_DATA__ : null;
+  if (td?.users) return td.users;
   try {
     const snap = await getDocs(collection(db, 'users'));
     return snap.docs.map(d => ({ id: d.id, ...d.data() }));
@@ -134,6 +140,8 @@ export async function removeAssignment(evaluatorUid, studentUid) {
 }
 
 export async function getEvaluatorAssignments(evaluatorUid) {
+  const td = typeof window !== 'undefined' ? window.__FIRESTORE_DATA__ : null;
+  if (td?.evaluatorAssignments?.[evaluatorUid]) return td.evaluatorAssignments[evaluatorUid];
   try {
     const q = query(collection(db, 'evaluatorAssignments'), where('evaluatorUid', '==', evaluatorUid));
     const snap = await getDocs(q);
@@ -163,13 +171,18 @@ export async function saveEvaluation(assessmentId, evaluatorUid, studentUid, pil
 }
 
 export async function getEvaluation(assessmentId, pillar) {
+  const td = typeof window !== 'undefined' ? window.__FIRESTORE_DATA__ : null;
+  const key = `${assessmentId}_${pillar}`;
+  if (td?.evaluationsByPillar?.[key]) return td.evaluationsByPillar[key];
   try {
-    const snap = await getDoc(doc(db, 'evaluations', `${assessmentId}_${pillar}`));
+    const snap = await getDoc(doc(db, 'evaluations', key));
     return snap.exists() ? snap.data() : null;
   } catch (e) { console.warn('getEvaluation failed:', e.message); return null; }
 }
 
 export async function getAllEvaluations(assessmentId) {
+  const td = typeof window !== 'undefined' ? window.__FIRESTORE_DATA__ : null;
+  if (td?.evaluations?.[assessmentId]) return td.evaluations[assessmentId];
   try {
     const q = query(collection(db, 'evaluations'), where('assessmentId', '==', assessmentId));
     const snap = await getDocs(q);

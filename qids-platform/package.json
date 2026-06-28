@@ -6,11 +6,15 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "test:e2e": "node tests/visual_test.mjs",
+    "test:e2e:run": "node tests/visual_test.mjs",
+    "pretest:e2e": "echo 'Make sure dev server is running: npm run dev'"
   },
   "devDependencies": {
     "@vitejs/plugin-react": "^6.0.1",
     "pdf-parse": "^2.4.5",
+    "playwright": "^1.61.1",
     "typescript": "~5.9.3",
     "vite": "^8.0.1"
   },

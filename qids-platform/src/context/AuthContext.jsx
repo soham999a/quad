@@ -21,6 +21,14 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    const testAuth = typeof window !== 'undefined' && window.__TEST_AUTH__;
+    if (testAuth) {
+      setUser(testAuth.user);
+      setUserProfile(testAuth.profile);
+      setLoading(false);
+      return;
+    }
+
     const unsub = onAuthStateChanged(auth, async (firebaseUser) => {
       setUser(firebaseUser);
       if (firebaseUser) {
