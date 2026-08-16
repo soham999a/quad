@@ -1,7 +1,10 @@
 import React, { useState } from 'react';
 import { PILLARS, PRE_INTERVENTION_NODES, INTERVENTION_NODES, POST_INTERVENTION_NODES, INTERVENTION_MODULES,
-  computePillarScore, computeWeightedScore, getGrade, isCritical, WEIGHTS, GRADE_BANDS,
-  CAREER_PROFILES, SKILL_SHAPES, getCareerProfile, getSkillShape } from '../data/qidsData';
+  CAREER_PROFILES, SKILL_SHAPES } from '../data/qidsData';
+import {
+  computeWeightedScore, getGrade, isCritical, WEIGHTS, GRADE_BANDS,
+  getCareerProfile, getSkillShape, IQ_MAX_SCORE, evaluateQidsAssessment, computeQidsPillarScores,
+} from '../core/engine/qids';
 import { useApp } from '../App';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
@@ -419,11 +422,10 @@ function PostAssessmentForm({ assessmentData, onSubmit }) {
 
   const handleSubmit = async () => {
     setSaving(true);
-    const pillarScores = {};
-    Object.keys(PILLARS).forEach(id => {
-      pillarScores[id] = computePillarScore(id, rawScores[id] || {});
+    const { result, pillarScores } = evaluateQidsAssessment({
+      rawScores, intake: assessmentData?.intake, ageGroup: assessmentData?.ageGroup,
     });
-    await onSubmit({ rawScores, pillarScores, intake: assessmentData?.intake, timestamp: new Date().toISOString() });
+    await onSubmit({ rawScores, pillarScores, result, unifiedScore: result.unifiedScore, grade: result.grade, intake: assessmentData?.intake, timestamp: new Date().toISOString() });
     setSaving(false);
   };
 
@@ -719,16 +721,10 @@ export default function Progress() {
   const postData = localPostData || ctxPostData;
 
   const rawScores = assessmentData?.rawScores || {};
-  const preScores = {};
-  Object.keys(PILLARS).forEach(id => {
-    preScores[id] = computePillarScore(id, rawScores[id] || {});
-  });
+  const preScores = computeQidsPillarScores(rawScores);
 
   const postRaw = postData?.rawScores || {};
-  const postScores = {};
-  Object.keys(PILLARS).forEach(id => {
-    postScores[id] = computePillarScore(id, postRaw[id] || {});
-  });
+  const postScores = computeQidsPillarScores(postRaw);
 
   const handlePostSubmit = async (data) => {
     try {

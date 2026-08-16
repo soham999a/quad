@@ -2,7 +2,8 @@ import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useApp } from '../App';
 import { saveAssessment, savePostAssessment } from '../services/firestoreService';
-import { PILLARS, DEMO_SCORES, DEMO_POST_SCORES, computePillarScore } from '../data/qidsData';
+import { PILLARS, DEMO_SCORES, DEMO_POST_SCORES } from '../data/qidsData';
+import { computePillarScore } from '../core/engine/qids';
 import { Sparkles, CheckCircle, Loader } from 'lucide-react';
 
 const EXAMPLE_INTAKE = {

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { PILLARS, INTERVENTION_NODES, INTERVENTION_MODULES, computePillarScore, isCritical } from '../data/qidsData';
+import { PILLARS, INTERVENTION_NODES, INTERVENTION_MODULES } from '../data/qidsData';
+import { computePillarScore, isCritical } from '../core/engine/qids';
 import { useApp } from '../App';
 import ProcessNode, { NodeDetailPanel } from '../components/ProcessNode';
 import { Calendar, Clock, Users, Package, Plus, ChevronDown, ChevronUp, Zap } from 'lucide-react';

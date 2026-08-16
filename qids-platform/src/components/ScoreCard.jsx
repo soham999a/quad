@@ -1,5 +1,5 @@
 import React from 'react';
-import { getGrade, isCritical } from '../data/qidsData';
+import { getGrade, isCritical } from '../core/engine/qids';
 import { AlertTriangle } from 'lucide-react';
 
 export default function ScoreCard({ pillar, score, showWeight = false }) {

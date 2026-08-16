@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { PILLARS, PRE_INTERVENTION_NODES, computePillarScore, computeWeightedScore, getGrade, isCritical, WEIGHTS, GRADE_BANDS } from '../data/qidsData';
+import { PILLARS, PRE_INTERVENTION_NODES } from '../data/qidsData';
+import { computePillarScore, computeWeightedScore, getGrade, isCritical, WEIGHTS, GRADE_BANDS } from '../core/engine/qids';
 import { useApp } from '../App';
 import { useNavigate, useLocation } from 'react-router-dom';
 import ProcessNode, { NodeDetailPanel } from '../components/ProcessNode';

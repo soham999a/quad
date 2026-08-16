@@ -69,6 +69,8 @@ export default function Landing() {
           <div className="hidden md:flex gap-8">
             <a className="text-label-md font-label-md text-primary font-medium border-b border-primary pb-1" href="#problem">I | ANALYTICS</a>
             <a className="text-label-md font-label-md text-on-surface-variant font-medium hover:text-primary transition-colors" href="#dimensions">II | ARCHIVE</a>
+            <a className="text-label-md font-label-md text-on-surface-variant font-medium hover:text-primary transition-colors" href="#method">III | METHOD</a>
+            <a className="text-label-md font-label-md text-on-surface-variant font-medium hover:text-primary transition-colors" href="#audiences">IV | AUDIENCES</a>
           </div>
         </div>
         <div className="flex items-center gap-6">
@@ -83,6 +85,13 @@ export default function Landing() {
 
       {/* ─── HERO ─── */}
       <header className="relative min-h-screen flex flex-col justify-center items-center text-center px-margin-mobile overflow-hidden">
+        <div aria-hidden="true" className="absolute inset-0 pointer-events-none"
+          style={{
+            backgroundImage: 'radial-gradient(ellipse at 50% 38%, rgba(99,102,241,0.10), transparent 58%), linear-gradient(rgba(255,255,255,0.025) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.025) 1px, transparent 1px)',
+            backgroundSize: '100% 100%, 64px 64px, 64px 64px',
+          }} />
+        <div aria-hidden="true" className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[760px] h-[760px] rounded-full border-[0.5px] border-primary/20 pointer-events-none" />
+        <div aria-hidden="true" className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[520px] h-[520px] rounded-full border-[0.5px] border-primary/10 pointer-events-none" />
         <div className="relative z-10 max-w-4xl">
           <p className="text-technical-sm font-technical-sm text-primary mb-6 tracking-[0.2em] uppercase">Architecture of the Mind</p>
           <h1 className="text-display-xl font-display-xl text-on-surface mb-8 leading-[1.05]">
@@ -92,7 +101,19 @@ export default function Landing() {
           <p className="text-body-lg font-body-lg text-on-surface-variant max-w-2xl mx-auto">
             Four dimensions. One score. Cognitive, Emotional, Social, Adaptive. A new blueprint for human potential.
           </p>
-          <div className="mt-12 flex flex-col md:flex-row gap-4 justify-center items-center">
+          <div className="mt-12 flex flex-col sm:flex-row gap-4 justify-center items-center">
+            <Link to="/signup" className="no-underline">
+              <button className="bg-primary text-on-primary px-10 py-4 rounded-xl text-label-md font-label-md font-semibold tracking-widest hover:opacity-90 hover:translate-y-[-1px] active:translate-y-0 transition-all duration-150 cursor-pointer border-none w-full sm:w-auto">
+                BEGIN ASSESSMENT
+              </button>
+            </Link>
+            <a href="#method" className="no-underline">
+              <button className="px-10 py-4 rounded-xl text-label-md font-label-md font-semibold tracking-widest border border-outline-variant text-on-surface-variant hover:text-primary hover:border-primary transition-all cursor-pointer bg-transparent w-full sm:w-auto">
+                EXPLORE THE METHOD
+              </button>
+            </a>
+          </div>
+          <div className="mt-16 flex flex-col md:flex-row gap-4 justify-center items-center">
             <div className="editorial-rule hidden md:block w-32 self-center bg-primary"></div>
             <span className="text-technical-sm font-technical-sm self-center">SCROLL TO EXPLORE 01 — 04</span>
             <div className="editorial-rule hidden md:block w-32 self-center"></div>
@@ -179,10 +200,10 @@ export default function Landing() {
                 <span className="text-technical-sm font-technical-sm text-primary block mb-4">{a.label}</span>
                 <h4 className="text-headline-md font-headline-md text-on-surface mb-6">{a.title}</h4>
                 <p className="text-body-md font-body-md text-on-surface-variant mb-auto">{a.desc}</p>
-                <a className="mt-8 text-label-md font-label-md text-primary flex items-center gap-2 group no-underline" href="#">
+                <Link to="/signup" className="mt-8 text-label-md font-label-md text-primary flex items-center gap-2 group no-underline inline-block">
                   {a.cta}
                   <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />
-                </a>
+                </Link>
               </div>
             ))}
           </div>
@@ -191,12 +212,16 @@ export default function Landing() {
         {/* ─── FINAL CTA ─── */}
         <section className="px-margin-mobile md:px-[80px] py-32 bg-primary text-on-primary text-center">
           <h2 className="text-display-xl font-display-xl mb-12">Determine Your Score.</h2>
-          <Link to="/signup">
-            <button className="bg-on-primary text-primary px-12 py-6 rounded-xl text-label-md font-label-md font-bold tracking-widest hover:bg-on-primary/90 transition-all uppercase cursor-pointer border-none">
+          <Link to="/signup" className="no-underline inline-block">
+            <button className="bg-on-primary text-primary px-12 py-6 rounded-xl text-label-md font-label-md font-bold tracking-widest hover:bg-on-primary/90 hover:translate-y-[-1px] active:translate-y-0 transition-all duration-150 uppercase cursor-pointer border-none">
               START QIDS ASSESSMENT
             </button>
           </Link>
-          <p className="mt-8 text-technical-sm font-technical-sm opacity-60">Estimated Time: 51 Minutes | No Interruption Required</p>
+          <div className="mt-8 flex flex-col md:flex-row items-center justify-center gap-4 text-technical-sm font-technical-sm">
+            <span className="opacity-60">Estimated Time: 51 Minutes | No Interruption Required</span>
+            <span className="opacity-40 hidden md:inline">·</span>
+            <Link to="/login" className="text-on-primary underline underline-offset-4 opacity-80 hover:opacity-100 transition-opacity no-underline">Already have an account? Sign in</Link>
+          </div>
         </section>
       </main>
 
@@ -206,28 +231,28 @@ export default function Landing() {
           <div>
             <h5 className="text-label-md font-label-md text-primary mb-8">PLATFORM</h5>
             <ul className="space-y-4 text-technical-sm font-technical-sm text-on-surface-variant">
-              <li><a className="hover:text-primary transition-colors no-underline" href="#">The Assessment</a></li>
-              <li><a className="hover:text-primary transition-colors no-underline" href="#">Dimensions</a></li>
-              <li><a className="hover:text-primary transition-colors no-underline" href="#">Enterprise</a></li>
-              <li><a className="hover:text-primary transition-colors no-underline" href="#">Academic Use</a></li>
+              <li><a className="hover:text-primary transition-colors no-underline" href="#method">The Assessment</a></li>
+              <li><a className="hover:text-primary transition-colors no-underline" href="#dimensions">Dimensions</a></li>
+              <li><Link className="hover:text-primary transition-colors no-underline" to="/signup">Enterprise</Link></li>
+              <li><Link className="hover:text-primary transition-colors no-underline" to="/signup">Academic Use</Link></li>
             </ul>
           </div>
           <div>
             <h5 className="text-label-md font-label-md text-primary mb-8">RESOURCES</h5>
             <ul className="space-y-4 text-technical-sm font-technical-sm text-on-surface-variant">
-              <li><a className="hover:text-primary transition-colors no-underline" href="#">Methodology Paper</a></li>
-              <li><a className="hover:text-primary transition-colors no-underline" href="#">Case Studies</a></li>
-              <li><a className="hover:text-primary transition-colors no-underline" href="#">API Docs</a></li>
-              <li><a className="hover:text-primary transition-colors no-underline" href="#">Help Center</a></li>
+              <li><Link className="hover:text-primary transition-colors no-underline" to="/signup">Methodology Paper</Link></li>
+              <li><Link className="hover:text-primary transition-colors no-underline" to="/signup">Case Studies</Link></li>
+              <li><Link className="hover:text-primary transition-colors no-underline" to="/signup">API Docs</Link></li>
+              <li><Link className="hover:text-primary transition-colors no-underline" to="/signup">Help Center</Link></li>
             </ul>
           </div>
           <div>
             <h5 className="text-label-md font-label-md text-primary mb-8">COMPANY</h5>
             <ul className="space-y-4 text-technical-sm font-technical-sm text-on-surface-variant">
-              <li><a className="hover:text-primary transition-colors no-underline" href="#">Our Ethos</a></li>
-              <li><a className="hover:text-primary transition-colors no-underline" href="#">Privacy Policy</a></li>
-              <li><a className="hover:text-primary transition-colors no-underline" href="#">Terms of Service</a></li>
-              <li><a className="hover:text-primary transition-colors no-underline" href="#">Contact</a></li>
+              <li><Link className="hover:text-primary transition-colors no-underline" to="/signup">Our Ethos</Link></li>
+              <li><Link className="hover:text-primary transition-colors no-underline" to="/signup">Privacy Policy</Link></li>
+              <li><Link className="hover:text-primary transition-colors no-underline" to="/signup">Terms of Service</Link></li>
+              <li><Link className="hover:text-primary transition-colors no-underline" to="/signup">Contact</Link></li>
             </ul>
           </div>
           <div className="col-span-2 md:col-span-1">

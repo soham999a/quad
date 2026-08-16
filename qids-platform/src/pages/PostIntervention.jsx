@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { PILLARS, POST_INTERVENTION_NODES, DEMO_POST_SCORES, computePillarScore, computeWeightedScore, getGrade, getCareerProfile, getSkillShape, SKILL_SHAPES, CAREER_PROFILES } from '../data/qidsData';
+import { PILLARS, POST_INTERVENTION_NODES, DEMO_POST_SCORES, SKILL_SHAPES, CAREER_PROFILES } from '../data/qidsData';
+import { computePillarScore, computeWeightedScore, getGrade, getCareerProfile, getSkillShape } from '../core/engine/qids';
 import { useApp } from '../App';
 import { useAuth } from '../context/AuthContext';
 import { savePostAssessment } from '../services/firestoreService';

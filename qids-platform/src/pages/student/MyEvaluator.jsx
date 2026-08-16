@@ -4,7 +4,8 @@ import { useAuth } from '../../context/AuthContext';
 import { getAllUsers, getStudentEvaluator, assignEvaluator, removeAssignment, getUserAssessments, getAllEvaluations } from '../../services/firestoreService';
 import { Check } from 'lucide-react';
 import { useToast } from '../../components/Toast';
-import { PILLARS, computePillarScore, computeWeightedScore, getGrade } from '../../data/qidsData';
+import { PILLARS } from '../../data/qidsData';
+import { computePillarScore, computeWeightedScore, getGrade } from '../../core/engine/qids';
 import { UserCheck, UserX, Users, RefreshCw, Mail, Search, AlertCircle, CheckCircle, Clock } from 'lucide-react';
 
 export default function MyEvaluator() {

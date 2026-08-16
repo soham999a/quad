@@ -106,12 +106,206 @@ body {
   overflow-x: hidden;
 }
 
+/* ── Text selection ── */
+::selection {
+  background: rgba(235, 192, 115, 0.28);
+  color: var(--color-on-surface);
+}
+
+/* ── Focus visibility (a11y) ── */
+:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: 1px solid var(--color-primary);
+  outline-offset: 0;
+}
+
+/* ── Reduced motion ── */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ── Skeleton loading ── */
+@keyframes shimmer {
+  0% { background-position: -400px 0; }
+  100% { background-position: 400px 0; }
+}
+
+.skeleton {
+  background: linear-gradient(90deg, var(--color-surface-container-low) 25%, var(--color-surface-container) 50%, var(--color-surface-container-low) 75%);
+  background-size: 800px 100%;
+  animation: shimmer 1.4s ease infinite;
+  border-radius: 2px;
+}
+
 /* ── Hairline Utilities ── */
 .hairline-b { border-bottom: 0.5px solid var(--color-outline-variant); }
 .hairline-t { border-top: 0.5px solid var(--color-outline-variant); }
 .hairline-l { border-left: 0.5px solid var(--color-outline-variant); }
 .hairline-r { border-right: 0.5px solid var(--color-outline-variant); }
 .hairline-all { border: 0.5px solid var(--color-outline-variant); }
+
+/* ── Card Surface ── */
+.card {
+  border: 0.5px solid var(--color-outline-variant);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.02), transparent 45%), var(--color-surface-container-lowest);
+  border-radius: 0.75rem;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03), 0 8px 24px rgba(0, 0, 0, 0.25);
+}
+
+.card-hover { transition: border-color 0.18s ease, transform 0.18s ease, box-shadow 0.18s ease, background 0.18s ease; }
+.card-hover:hover {
+  border-color: rgba(235, 192, 115, 0.45);
+  transform: translateY(-1px);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04), 0 14px 34px rgba(0, 0, 0, 0.35), 0 0 0 1px rgba(235, 192, 115, 0.08);
+}
+
+.card-gold {
+  border-color: rgba(235, 192, 115, 0.55);
+  box-shadow: inset 0 0 0 1px rgba(235, 192, 115, 0.35), 0 0 28px rgba(235, 192, 115, 0.12), 0 12px 32px rgba(0, 0, 0, 0.3);
+}
+
+/* ── Chip (rounded pill badge) ── */
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 9999px;
+  font-family: var(--font-technical-sm);
+  font-size: 12px;
+  line-height: 1.4;
+  letter-spacing: 0.04em;
+  border: 0.5px solid var(--color-outline-variant);
+  color: var(--color-on-surface-variant);
+  background: var(--color-surface-container-low);
+  white-space: nowrap;
+}
+
+/* ── Section kicker + gradient rule ── */
+.kicker {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-family: var(--font-technical-sm);
+  font-size: 12px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--color-primary);
+}
+
+.gradient-rule {
+  height: 1px;
+  border: none;
+  background: linear-gradient(90deg, rgba(235, 192, 115, 0.75), rgba(235, 192, 115, 0.08), transparent);
+}
+
+/* ── Gradient headline text ── */
+.text-gradient {
+  background: linear-gradient(120deg, #f7dcae 0%, var(--color-primary) 55%, #c99c4e 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* ── Gold glow for primary CTAs ── */
+.glow { box-shadow: 0 0 0 1px rgba(235, 192, 115, 0.4), 0 10px 34px rgba(235, 192, 115, 0.28); }
+
+/* ── Buttons ── */
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px 28px;
+  border-radius: 0.75rem;
+  background: var(--color-primary);
+  color: var(--color-on-primary);
+  font-family: var(--font-label-md);
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  border: none;
+  transition: transform 0.15s ease, opacity 0.15s ease, box-shadow 0.15s ease;
+}
+.btn-primary:hover:not(:disabled) {
+  opacity: 0.94;
+  transform: translateY(-1px);
+  box-shadow: 0 0 0 1px rgba(235, 192, 115, 0.35), 0 10px 28px rgba(235, 192, 115, 0.22);
+}
+.btn-primary:active:not(:disabled) { transform: translateY(0); }
+.btn-primary:disabled { opacity: 0.4; cursor: not-allowed; box-shadow: none; }
+
+.btn-outline {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px 28px;
+  border-radius: 0.75rem;
+  border: 0.5px solid var(--color-outline-variant);
+  background: transparent;
+  color: var(--color-on-surface-variant);
+  font-family: var(--font-label-md);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: color 0.15s ease, border-color 0.15s ease, transform 0.15s ease;
+}
+.btn-outline:hover:not(:disabled) { color: var(--color-primary); border-color: var(--color-primary); transform: translateY(-1px); }
+.btn-outline:disabled { opacity: 0.3; cursor: not-allowed; }
+
+/* ── Entrance animation ── */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.fade-up { animation: fadeUp 0.5s cubic-bezier(0.4, 0, 0.2, 1) both; }
+
+/* ── Range sliders ── */
+input[type="range"] {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 6px;
+  border-radius: 9999px;
+  background: var(--color-surface-container-high);
+  outline: none;
+}
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--color-primary);
+  border: 2px solid var(--color-background);
+  box-shadow: 0 0 0 1px rgba(235, 192, 115, 0.55), 0 2px 8px rgba(0, 0, 0, 0.45);
+  cursor: pointer;
+}
+input[type="range"]::-moz-range-thumb {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--color-primary);
+  border: 2px solid var(--color-background);
+  box-shadow: 0 0 0 1px rgba(235, 192, 115, 0.55), 0 2px 8px rgba(0, 0, 0, 0.45);
+  cursor: pointer;
+}
 
 /* ── Editorial Rule ── */
 .editorial-rule {
@@ -158,6 +352,7 @@ body {
 
 .app-content {
   margin-left: 228px;
+  width: calc(100vw - 228px);
   transition: margin-left 0.3s cubic-bezier(0.4,0,0.2,1);
   min-height: 100vh;
   display: flex;
@@ -166,6 +361,7 @@ body {
 
 .app-content.sidebar-collapsed {
   margin-left: 60px;
+  width: calc(100vw - 60px);
 }
 
 /* Top bar – responsive */
@@ -197,11 +393,13 @@ body {
 
   .app-content {
     margin-left: 0 !important;
+    width: 100% !important;
     padding-bottom: calc(64px + var(--safe-bottom));
   }
 
   .app-content.sidebar-collapsed {
     margin-left: 0 !important;
+    width: 100% !important;
   }
 
   .topbar {
@@ -259,6 +457,7 @@ body {
   }
   .app-content {
     margin-left: 60px !important;
+    width: calc(100vw - 60px) !important;
   }
   .sidebar-expanded-content {
     display: none;
@@ -388,5 +587,24 @@ body {
 @media (min-width: 769px) {
   .hide-desktop {
     display: none !important;
+  }
+}
+
+/* print CSS */
+@media print {
+  body { background: #ffffff !important; color: #000 !important; }
+  #root { padding: 0 !important; }
+  nav, header, footer, .print-hidden { display: none !important; }
+  .pip-report { margin: 0 auto; max-width: 794px; }
+  .pip-page {
+    background: #ffffff !important;
+    color: #111 !important;
+    border: 1px solid #ddd !important;
+    page-break-inside: avoid;
+  }
+  .pip-page-break { page-break-after: always; }
+  .pip-page .text-on-background, .pip-page .text-on-surface, .pip-page .text-on-surface-variant,
+  .pip-page .text-surface-variant, .pip-page .text-label-md, .pip-page .text-body-md, .pip-page .text-technical-sm {
+    color: #111 !important;
   }
 }

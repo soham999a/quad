@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { PILLARS, computePillarScore, computeWeightedScore, getGrade, EQ_QUESTIONS, SQ_QUESTIONS, IQ_QUESTIONS, AQ_QUESTIONS, mapAQLikert } from '../data/qidsData';
+import { PILLARS, EQ_QUESTIONS, SQ_QUESTIONS, IQ_QUESTIONS, AQ_QUESTIONS, mapAQLikert } from '../data/qidsData';
+import { evaluateQidsAssessment, getGrade } from '../core/engine/qids';
 import { getRandomDiagramQuestions } from '../data/diagramQuestions';
 import { generateIQQuestions, generateEQQuestions, generateAQQuestions, generateSQQuestions } from '../services/groqService';
 import DiagramQuestion from '../components/DiagramQuestion';
@@ -873,10 +874,9 @@ function AQStep({ scores, onChange, ageGroup }) {
 
 // ─── REVIEW STEP ──────────────────────────────────────────────────────────────
 function ReviewStep({ intake, rawScores }) {
-  const pillarScores = {};
-  Object.keys(PILLARS).forEach(id => { pillarScores[id] = computePillarScore(id, rawScores[id] || {}); });
-  const unified = computeWeightedScore(pillarScores);
-  const grade = getGrade(unified);
+  const { result, pillarScores } = evaluateQidsAssessment({ rawScores, intake });
+  const unified = result.unifiedScore ?? 0;
+  const grade = result.grade ?? getGrade(unified);
 
   return (
     <div>
@@ -1157,8 +1157,11 @@ export default function Assessment() {
 
   const handleSubmit = async () => {
     const rawScores = buildRawScores();
-    const pillarScores = {};
-    Object.keys(PILLARS).forEach(id => { pillarScores[id] = computePillarScore(id, rawScores[id] || {}); });
+    const { result, pillarScores } = evaluateQidsAssessment({
+      rawScores,
+      intake: { ...intake, ageGroup: intake.ageGroup },
+      ageGroup: intake.ageGroup,
+    });
 
     const eqPartA = {};
     if (eqScores.partA) {
@@ -1173,7 +1176,7 @@ export default function Assessment() {
       aqPartA[comp] = [0, 1, 2, 3].map(i => vals[i] || 0);
     });
 
-    const data = { intake, rawScores, pillarScores, ageGroup: intake.ageGroup, timestamp: new Date().toISOString(), _eqPartA: eqPartA, _aqPartA: aqPartA };
+    const data = { intake, rawScores, pillarScores, result, unifiedScore: result.unifiedScore, grade: result.grade, ageGroup: intake.ageGroup, timestamp: new Date().toISOString(), _eqPartA: eqPartA, _aqPartA: aqPartA };
     setAssessmentData(data);
     setSaving(true);
     try {

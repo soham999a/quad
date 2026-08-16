@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { PILLARS, computePillarScore, computeWeightedScore, getGrade, getCareerProfile, getSkillShape, SKILL_SHAPES, WEIGHTS, GRADE_BANDS, CONTEXTS, IQ_MAX_SCORE, mergeEvaluationScores } from '../data/qidsData';
+import { PILLARS, SKILL_SHAPES, CONTEXTS, mergeEvaluationScores } from '../data/qidsData';
+import { computePillarScore, computeWeightedScore, getGrade, getCareerProfile, getSkillShape, WEIGHTS, GRADE_BANDS, IQ_MAX_SCORE } from '../core/engine/qids';
 import { useApp } from '../App';
 import QIDSRadar from '../components/RadarChart';
 import { Download, Printer, AlertTriangle, UserCheck } from 'lucide-react';

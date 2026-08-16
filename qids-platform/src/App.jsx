@@ -2,9 +2,10 @@ import React, { useState, createContext, useContext, useEffect } from 'react';
 import { BrowserRouter, Routes, Route, NavLink, useNavigate, Navigate, useLocation } from 'react-router-dom';
 import {
   Brain, Map, ClipboardList, TrendingUp, FileText, UserCheck,
-  ChevronRight, Menu, LogOut, Home, BookOpen, ListChecks, X, Shield, Users, Sparkles, BarChart3, Plus
+  ChevronRight, Menu, LogOut, Home, BookOpen, ListChecks, X, Shield, Users, Sparkles, BarChart3, Plus, Building2, Target
 } from 'lucide-react';
-import { PILLARS, CONTEXTS, computePillarScore, mergeEvaluationScores } from './data/qidsData';
+import { PILLARS, CONTEXTS, mergeEvaluationScores } from './data/qidsData';
+import { computePillarScore } from './core/engine/qids';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
 import { ToastProvider } from './components/Toast';
@@ -25,6 +26,8 @@ import EvaluatorScoring from './pages/evaluator/EvaluatorScoring';
 import MyEvaluator from './pages/student/MyEvaluator';
 import Questionnaires from './pages/Questionnaires';
 import InterventionPlan from './pages/InterventionPlan';
+import EnterpriseRunner from './pages/enterprise/EnterpriseRunner';
+import EmployerDashboard from './pages/employer/EmployerDashboard';
 
 export const AppContext = createContext(null);
 export const useApp = () => useContext(AppContext);
@@ -46,6 +49,14 @@ const NAV_GROUPS = [
       { path: '/app/framework', label: 'Framework Guide', icon: Map },
       { path: '/app/questionnaires', label: 'Questionnaires', icon: ListChecks },
       { path: '/app/intervention-plan', label: 'Intervention Plan', icon: BookOpen },
+    ]
+  },
+  {
+    label: 'INTELLIGENCE',
+    items: [
+      { path: '/app/enterprise', label: 'Enterprise (QGRA+)', icon: Building2 },
+      { path: '/app/role-fit', label: 'Role Fit', icon: Target },
+      { path: '/app/talent', label: 'Talent Console', icon: Users },
     ]
   },
 ];
@@ -91,7 +102,7 @@ function Sidebar({ collapsed, setCollapsed }) {
         )}
       </div>
 
-      <nav className="flex-grow overflow-y-auto">
+      <nav className="flex-grow overflow-y-auto" aria-label="Sections">
         {NAV_GROUPS.map(group => (
           <div key={group.label} className="mb-2">
             {!collapsed && (
@@ -136,7 +147,8 @@ function Sidebar({ collapsed, setCollapsed }) {
       </nav>
 
       <div className="px-6 mb-8">
-        <button className="w-full py-3 text-label-md font-label-md bg-primary text-on-primary-container hover:opacity-90 transition-opacity cursor-pointer">
+        <button onClick={() => navigate('/app/assessment')}
+          className="btn-primary glow w-full">
           NEW ASSESSMENT
         </button>
       </div>
@@ -146,7 +158,7 @@ function Sidebar({ collapsed, setCollapsed }) {
           <div className="border-t-[0.5px] border-outline-variant py-4 px-4">
             {!collapsed && (
               <div className="flex items-center gap-3 px-2 mb-3">
-                <div className="w-8 h-8 bg-surface-container-highest flex items-center justify-center text-technical-sm font-technical-sm text-on-surface flex-shrink-0">
+                <div className="w-8 h-8 rounded-full bg-surface-container-highest flex items-center justify-center text-technical-sm font-technical-sm text-on-surface flex-shrink-0">
                   {(userProfile?.name || user.displayName || user.email || 'U')[0].toUpperCase()}
                 </div>
                 <div className="overflow-hidden flex-1 min-w-0">
@@ -157,7 +169,7 @@ function Sidebar({ collapsed, setCollapsed }) {
                 </div>
               </div>
             )}
-            <button onClick={handleLogout}
+            <button onClick={handleLogout} aria-label="Sign out"
               className="w-full flex items-center gap-3 py-3 pl-4 text-on-surface-variant hover:text-error hover:bg-error/10 transition-all cursor-pointer">
               <LogOut size={16} strokeWidth={1.5} />
               {!collapsed && <span className="text-label-md font-label-md">Sign Out</span>}
@@ -166,7 +178,7 @@ function Sidebar({ collapsed, setCollapsed }) {
         )}
       </div>
 
-      <button onClick={() => setCollapsed(!collapsed)}
+      <button onClick={() => setCollapsed(!collapsed)} aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
         className="mx-4 mb-4 py-2 flex items-center justify-center border-[0.5px] border-outline-variant text-on-surface-variant hover:text-primary hover:border-primary transition-all cursor-pointer">
         {collapsed ? <ChevronRight size={13} /> : <Menu size={13} />}
       </button>
@@ -188,7 +200,7 @@ function MobileNav({ onMenuOpen }) {
           </NavLink>
         );
       })}
-      <button onClick={onMenuOpen} className="mobile-nav-item">
+      <button onClick={onMenuOpen} aria-label="More menu" className="mobile-nav-item">
         <Menu size={20} strokeWidth={1.5} className="mobile-nav-icon" />
         <span style={{ fontSize: 10 }}>More</span>
       </button>
@@ -208,7 +220,7 @@ function MobileMenuDrawer({ onClose }) {
           <div className="text-label-md font-label-md uppercase tracking-widest text-primary">QIDS Platform</div>
           <div className="text-technical-sm font-technical-sm text-surface-variant">ARCHITECTURE</div>
         </div>
-        <button onClick={onClose}
+        <button onClick={onClose} aria-label="Close menu"
           className="p-2 border-[0.5px] border-outline-variant text-on-surface-variant hover:text-primary transition-all cursor-pointer bg-transparent">
           <X size={16} />
         </button>
@@ -293,11 +305,12 @@ function MobileMenuDrawer({ onClose }) {
 }
 
 function TopBar({ context, setContext, onMenuOpen }) {
+  const navigate = useNavigate();
   return (
     <header className="topbar">
       <div className="flex items-center gap-12 topbar-nav">
         <div className="text-headline-md font-headline-md font-medium text-primary uppercase tracking-tight">QIDS</div>
-        <nav className="hidden md:flex gap-8">
+        <nav className="hidden md:flex gap-8" aria-label="Primary">
           <NavLink to="/app/dashboard" className="text-label-md font-label-md text-primary border-b-[0.5px] border-primary pb-1 transition-opacity">
             I | ANALYTICS
           </NavLink>
@@ -307,16 +320,20 @@ function TopBar({ context, setContext, onMenuOpen }) {
         </nav>
       </div>
       <div className="flex items-center gap-6 topbar-actions">
-        <select value={context} onChange={e => setContext(e.target.value)}
-          className="bg-transparent text-technical-sm font-technical-sm text-on-surface-variant border-[0.5px] border-outline-variant px-3 py-2 cursor-pointer">
-          {CONTEXTS.map(c => <option key={c.id} value={c.id}>{c.label}</option>)}
-        </select>
-        <button className="px-6 py-2.5 bg-primary text-on-primary-container text-label-md font-label-md hover:opacity-90 transition-opacity cursor-pointer">
+        <label className="flex items-center gap-2 cursor-pointer">
+          <span className="text-technical-sm font-technical-sm text-surface-variant uppercase tracking-widest">Context</span>
+          <select value={context} onChange={e => setContext(e.target.value)}
+            className="bg-transparent text-technical-sm font-technical-sm text-on-surface-variant border-[0.5px] border-outline-variant px-3 py-2 rounded-md cursor-pointer hover:border-primary/50 transition-colors">
+            {CONTEXTS.map(c => <option key={c.id} value={c.id}>{c.label}</option>)}
+          </select>
+        </label>
+        <button onClick={() => navigate('/app/report')}
+          className="btn-primary">
           NEW REPORT
         </button>
       </div>
       <div className="topbar-mobile-actions hide-desktop">
-        <button onClick={onMenuOpen}
+        <button onClick={onMenuOpen} aria-label="Open menu"
           className="p-2 text-on-surface-variant hover:text-primary transition-colors cursor-pointer bg-transparent border-none">
           <Menu size={20} />
         </button>
@@ -384,6 +401,11 @@ function AppShell() {
               <Route path="my-evaluator" element={<MyEvaluator />} />
               <Route path="questionnaires" element={<Questionnaires />} />
               <Route path="intervention-plan" element={<InterventionPlan />} />
+              <Route path="enterprise" element={<EnterpriseRunner mode="enterprise" />} />
+              <Route path="enterprise/:tier" element={<EnterpriseRunner mode="enterprise" />} />
+              <Route path="role-fit" element={<EnterpriseRunner mode="role" />} />
+              <Route path="role-fit/:tier" element={<EnterpriseRunner mode="role" />} />
+              <Route path="talent" element={<EmployerDashboard />} />
               <Route path="*" element={<Navigate to="/app/dashboard" replace />} />
             </Routes>
           </main>

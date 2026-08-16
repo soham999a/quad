@@ -9,9 +9,13 @@
     "preview": "vite preview",
     "test:e2e": "node tests/visual_test.mjs",
     "test:e2e:run": "node tests/visual_test.mjs",
+    "test:engine": "tsc -p tests/tsconfig.smoke.json && node -e \"require('fs').writeFileSync('tests/.smoke-out/package.json', JSON.stringify({type:'commonjs'}))\" && node tests/.smoke-out/tests/engine-smoke.cjs",
+    "test:runner": "node tests/runner_test.mjs",
     "pretest:e2e": "echo 'Make sure dev server is running: npm run dev'"
   },
   "devDependencies": {
+    "@types/react": "^19.2.18",
+    "@types/react-dom": "^19.2.4",
     "@vitejs/plugin-react": "^6.0.1",
     "pdf-parse": "^2.4.5",
     "playwright": "^1.61.1",
