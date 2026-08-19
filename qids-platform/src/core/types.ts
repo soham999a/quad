@@ -18,7 +18,7 @@ export const TIER_SCALING: Record<EnterpriseTier, number> = {
   QLIA: 1.28,
 };
 
-export type UserRole = 'student' | 'individual' | 'evaluator' | 'employer' | 'admin';
+export type UserRole = 'student' | 'individual' | 'evaluator' | 'employer' | 'admin' | 'teacher';
 
 // ── QIDS individual / school pillars ─────────────────────────────────────────
 
@@ -219,4 +219,116 @@ export interface RunnerStep {
   deployCount: number;
   timeMin: number;
   instructions: string;
+}
+
+// ── Interview assessment types ────────────────────────────────────────────────
+
+export type InterviewMode = 'post' | 'live';
+export type InterviewSessionStatus = 'scheduled' | 'in_progress' | 'completed' | 'cancelled';
+
+/** The 8 rubric dimensions, each scored 1–5. */
+export type RubricDimensionId =
+  | 'Communication' | 'ProblemSolving' | 'Leadership'
+  | 'EmotionalIntelligence' | 'Adaptability' | 'Teamwork'
+  | 'Integrity' | 'CriticalThinking';
+
+export interface RubricDimension {
+  id: RubricDimensionId;
+  label: string;
+  shortLabel: string;
+  description: string;
+  /** Maps to QIDS pillar for composite scoring. */
+  pillar: PillarId;
+  weight: number;
+  descriptors: Record<number, string>;
+}
+
+export interface RubricEvaluation {
+  dimensionId: RubricDimensionId;
+  score: number;          // 1–5
+  notes?: string;
+}
+
+export interface InterviewSession {
+  id: string;
+  sessionId: string;
+  candidateName: string;
+  candidateUid?: string;
+  evaluatorName: string;
+  evaluatorUid: string;
+  mode: InterviewMode;
+  role?: string;
+  status: InterviewSessionStatus;
+  /** Self-assessment scores (post mode only). */
+  selfAssessment?: RubricEvaluation[];
+  /** Evaluator rubric scores. */
+  evaluatorAssessment?: RubricEvaluation[];
+  /** Merged scores (post = 60% self + 40% evaluator; live = 100% evaluator). */
+  mergedScores?: Record<RubricDimensionId, number>;
+  /** Final pillar scores mapped from rubric dimensions. */
+  pillarScores?: PillarScores;
+  unifiedScore?: number;
+  grade?: { grade: string; label: string; color: string };
+  skillShape?: 'T' | 'I' | 'X' | 'M';
+  notes?: string;
+  createdAt?: unknown;
+  completedAt?: unknown;
+  /** Live mode fields. */
+  liveStartedAt?: unknown;
+  liveQuestionIndex?: number;
+  liveResponses?: { questionId: string; response: string; score?: number }[];
+}
+
+export interface InterviewQuestion {
+  id: string;
+  text: string;
+  dimension: RubricDimensionId;
+  context?: string;
+  followUp?: string;
+}
+
+// ── School assessment types ───────────────────────────────────────────────────
+
+export interface SchoolClass {
+  id: string;
+  name: string;
+  schoolId: string;
+  teacherUid: string;
+  teacherName: string;
+  classCode: string;       // 6-char unique join code
+  gradeLevel: string;
+  subject?: string;
+  createdAt?: unknown;
+}
+
+export interface ClassStudent {
+  id: string;
+  classId: string;
+  studentUid: string;
+  name: string;
+  email?: string;
+  joinedAt?: unknown;
+}
+
+export interface SchoolAssessment {
+  id: string;
+  classId: string;
+  teacherUid: string;
+  title: string;
+  description?: string;
+  mode: AssessmentMode;
+  status: 'active' | 'completed' | 'archived';
+  createdAt?: unknown;
+  completedAt?: unknown;
+}
+
+export interface ClassAnalytics {
+  classId: string;
+  studentCount: number;
+  assessmentCount: number;
+  avgUnifiedScore: number;
+  avgPillarScores: PillarScores;
+  gradeDistribution: Record<string, number>;
+  topPerformers: { name: string; score: number }[];
+  shapeDistribution: Record<string, number>;
 }

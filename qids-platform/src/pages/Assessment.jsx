@@ -7,7 +7,7 @@ import DiagramQuestion from '../components/DiagramQuestion';
 import AIQuestionGenerator from '../components/AIQuestionGenerator';
 import { useApp } from '../App';
 import { useAuth } from '../context/AuthContext';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { saveAssessment, getStudentEvaluator, getAllUsers, assignEvaluator, removeAssignment } from '../services/firestoreService';
 import { Save, ChevronRight, ChevronLeft, Check, CheckCircle, AlertCircle, ClipboardList, Brain, Heart, Users, Shield, ArrowRight } from 'lucide-react';
 import { useToast } from '../components/Toast';
@@ -931,10 +931,20 @@ export default function Assessment() {
   const { setAssessmentData, demoMode, context } = useApp();
   const { user } = useAuth();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const toast = useToast();
+  const mode = searchParams.get('mode') || 'qids';
 
   const [step, setStep] = useState(0);
-  const [intake, setIntake] = useState({ name: '', age: '', ageGroup: '11-18', institution: '', evaluator: '', purpose: '', consent: false });
+  const [intake, setIntake] = useState({
+    name: '',
+    age: '',
+    ageGroup: searchParams.get('ageGroup') || '11-18',
+    institution: '',
+    evaluator: '',
+    purpose: searchParams.get('purpose') || '',
+    consent: false,
+  });
   const [iqScores, setIqScores] = useState({});
   const [eqScores, setEqScores] = useState({});
   const [sqScores, setSqScores] = useState({});
@@ -1161,6 +1171,7 @@ export default function Assessment() {
       rawScores,
       intake: { ...intake, ageGroup: intake.ageGroup },
       ageGroup: intake.ageGroup,
+      mode: mode === 'individual' ? 'qids' : mode,
     });
 
     const eqPartA = {};
@@ -1176,7 +1187,7 @@ export default function Assessment() {
       aqPartA[comp] = [0, 1, 2, 3].map(i => vals[i] || 0);
     });
 
-    const data = { intake, rawScores, pillarScores, result, unifiedScore: result.unifiedScore, grade: result.grade, ageGroup: intake.ageGroup, timestamp: new Date().toISOString(), _eqPartA: eqPartA, _aqPartA: aqPartA };
+    const data = { intake, rawScores, pillarScores, result, unifiedScore: result.unifiedScore, grade: result.grade, ageGroup: intake.ageGroup, mode, timestamp: new Date().toISOString(), _eqPartA: eqPartA, _aqPartA: aqPartA };
     setAssessmentData(data);
     setSaving(true);
     try {
@@ -1206,10 +1217,17 @@ export default function Assessment() {
           Baseline data for <strong className="text-on-surface">{intake.name || 'the individual'}</strong> has been recorded. Proceed to Pre-Intervention analysis to view scores, grades, and intervention mapping.
         </p>
         <div className="flex gap-4 justify-center flex-wrap">
-          <button onClick={() => navigate('/app/assessment')}
-            className="px-8 py-4 bg-primary text-on-primary text-label-md font-label-md hover:opacity-90 transition-all cursor-pointer border-none uppercase tracking-widest">
-            View Analysis
-          </button>
+          {mode === 'individual' ? (
+            <button onClick={() => navigate('/app/individual')}
+              className="px-8 py-4 bg-primary text-on-primary text-label-md font-label-md hover:opacity-90 transition-all cursor-pointer border-none uppercase tracking-widest">
+              View My Results
+            </button>
+          ) : (
+            <button onClick={() => navigate('/app/assessment')}
+              className="px-8 py-4 bg-primary text-on-primary text-label-md font-label-md hover:opacity-90 transition-all cursor-pointer border-none uppercase tracking-widest">
+              View Analysis
+            </button>
+          )}
           <button onClick={() => { setSubmitted(false); setStep(0); setIntake({ name: '', age: '', ageGroup: '11-18', institution: '', evaluator: '', purpose: '', consent: false, _evUid: '' }); setCurrentEv(null); setIqScores({}); setEqScores({}); setSqScores({}); setAqScores({}); }}
             className="px-8 py-4 border-[0.5px] border-outline-variant text-on-surface-variant text-label-md font-label-md hover:text-primary hover:border-primary transition-all cursor-pointer bg-transparent uppercase tracking-widest">
             New Assessment

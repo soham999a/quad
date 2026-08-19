@@ -594,7 +594,7 @@ input[type="range"]::-moz-range-thumb {
 @media print {
   body { background: #ffffff !important; color: #000 !important; }
   #root { padding: 0 !important; }
-  nav, header, footer, .print-hidden { display: none !important; }
+  nav, header, footer, .print-hidden, .no-print, .desktop-sidebar, .mobile-nav { display: none !important; }
   .pip-report { margin: 0 auto; max-width: 794px; }
   .pip-page {
     background: #ffffff !important;
@@ -607,4 +607,12 @@ input[type="range"]::-moz-range-thumb {
   .pip-page .text-surface-variant, .pip-page .text-label-md, .pip-page .text-body-md, .pip-page .text-technical-sm {
     color: #111 !important;
   }
+  .page-pad { padding: 0 !important; max-width: none !important; }
+  .card, .card-gold, .card-hover { border: 1px solid #ddd !important; box-shadow: none !important; background: #fff !important; }
+  .btn-primary, .btn-outline, .glow { display: none !important; }
+  .chip { border: 1px solid #ccc !important; background: #f5f5f5 !important; color: #111 !important; }
+  #credential { border: none !important; padding: 24px !important; }
+  svg text { fill: #111 !important; }
+  .text-gradient, .gradient-rule { background: none !important; color: #111 !important; }
+  .animate-fade { animation: none !important; }
 }

@@ -15,6 +15,14 @@ function sortByCreatedAt(docs) {
 
 // ── Assessments ──────────────────────────────────────────────────────────────
 
+export async function getAssessment(assessmentId) {
+  try {
+    const snap = await getDoc(doc(db, 'assessments', assessmentId));
+    if (!snap.exists()) return null;
+    return { id: snap.id, ...snap.data() };
+  } catch (e) { console.warn('getAssessment failed:', e.message); return null; }
+}
+
 export async function saveAssessment(uid, data) {
   try {
     const ref = await addDoc(collection(db, 'assessments'), {

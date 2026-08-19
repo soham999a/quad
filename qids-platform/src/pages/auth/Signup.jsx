@@ -5,6 +5,8 @@ import { CONTEXTS } from '../../data/qidsData';
 
 const ROLES = [
   { id: 'individual', label: 'Individual', desc: 'Personal development journey' },
+  { id: 'student', label: 'Student', desc: 'School or institutional learner' },
+  { id: 'teacher', label: 'Teacher', desc: 'Manage classes and assessments' },
   { id: 'evaluator', label: 'Evaluator / Counselor', desc: 'Assess and guide others' },
   { id: 'admin', label: 'Institution Admin', desc: 'Manage an organization' },
 ];

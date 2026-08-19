@@ -28,6 +28,19 @@ import Questionnaires from './pages/Questionnaires';
 import InterventionPlan from './pages/InterventionPlan';
 import EnterpriseRunner from './pages/enterprise/EnterpriseRunner';
 import EmployerDashboard from './pages/employer/EmployerDashboard';
+import IndividualOnboarding from './pages/individual/IndividualOnboarding';
+import IndividualResults from './pages/individual/IndividualResults';
+import IndividualCredential from './pages/individual/IndividualCredential';
+import InterviewerDashboard from './pages/interview/InterviewerDashboard';
+import InterviewSetup from './pages/interview/InterviewSetup';
+import InterviewPostScoring from './pages/interview/InterviewPostScoring';
+import InterviewLive from './pages/interview/InterviewLive';
+import InterviewReport from './pages/interview/InterviewReport';
+import TeacherDashboard from './pages/school/TeacherDashboard';
+import ClassManager from './pages/school/ClassManager';
+import ClassAnalytics from './pages/school/ClassAnalytics';
+import StudentJoin from './pages/school/StudentJoin';
+import SchoolReports from './pages/school/SchoolReports';
 
 export const AppContext = createContext(null);
 export const useApp = () => useContext(AppContext);
@@ -70,17 +83,29 @@ const MOBILE_NAV = [
 ];
 
 function Sidebar({ collapsed, setCollapsed }) {
-  const { user, userProfile, logout } = useAuth();
+  const { user, userProfile, logout, updateUserRole } = useAuth();
   const navigate = useNavigate();
   const handleLogout = async () => { await logout(); navigate('/login'); };
   const role = userProfile?.role || 'student';
+  const [showRoleSwitcher, setShowRoleSwitcher] = useState(false);
+
+  const ROLE_OPTIONS = ['student', 'individual', 'teacher', 'evaluator', 'admin', 'employer'];
 
   const roleNavItems = [];
   if (role === 'individual' || role === 'student') {
+    roleNavItems.push({ path: '/app/individual', label: 'My Assessment', icon: Sparkles });
     roleNavItems.push({ path: '/app/my-evaluator', label: 'My Evaluator', icon: UserCheck });
   }
   if (role === 'evaluator' || role === 'admin') {
     roleNavItems.push({ path: '/app/evaluator', label: 'Evaluator Dashboard', icon: Users });
+    roleNavItems.push({ path: '/app/interview', label: 'Interview Studio', icon: Users });
+  }
+  if (role === 'teacher' || role === 'admin') {
+    roleNavItems.push({ path: '/app/school', label: 'School Dashboard', icon: BookOpen });
+    roleNavItems.push({ path: '/app/school/reports', label: 'School Reports', icon: FileText });
+  }
+  if (role === 'student') {
+    roleNavItems.push({ path: '/app/school/join', label: 'Join Class', icon: BookOpen });
   }
   if (role === 'admin') {
     roleNavItems.push({ path: '/app/admin', label: 'Admin Panel', icon: Shield });
@@ -127,7 +152,7 @@ function Sidebar({ collapsed, setCollapsed }) {
           <div className="mb-2">
             {!collapsed && (
               <div className="text-technical-sm font-technical-sm text-surface-variant uppercase tracking-widest px-4 mb-2">
-                {role === 'admin' ? 'ADMIN' : 'EVAL'}
+                {role === 'admin' ? 'ADMIN' : role === 'teacher' ? 'TEACHER' : role === 'evaluator' ? 'EVALUATOR' : 'TOOLS'}
               </div>
             )}
             {roleNavItems.map(({ path, label, icon: Icon }) => (
@@ -157,15 +182,51 @@ function Sidebar({ collapsed, setCollapsed }) {
         {user && (
           <div className="border-t-[0.5px] border-outline-variant py-4 px-4">
             {!collapsed && (
-              <div className="flex items-center gap-3 px-2 mb-3">
-                <div className="w-8 h-8 rounded-full bg-surface-container-highest flex items-center justify-center text-technical-sm font-technical-sm text-on-surface flex-shrink-0">
-                  {(userProfile?.name || user.displayName || user.email || 'U')[0].toUpperCase()}
-                </div>
-                <div className="overflow-hidden flex-1 min-w-0">
-                  <div className="text-label-md font-label-md text-on-surface truncate">
-                    {userProfile?.name || user.displayName || 'User'}
+              <>
+                <div className="flex items-center gap-3 px-2 mb-2">
+                  <div className="w-8 h-8 rounded-full bg-surface-container-highest flex items-center justify-center text-technical-sm font-technical-sm text-on-surface flex-shrink-0">
+                    {(userProfile?.name || user.displayName || user.email || 'U')[0].toUpperCase()}
                   </div>
-                  <div className="text-technical-sm font-technical-sm text-surface-variant capitalize">{userProfile?.role || 'individual'}</div>
+                  <div className="overflow-hidden flex-1 min-w-0">
+                    <div className="text-label-md font-label-md text-on-surface truncate">
+                      {userProfile?.name || user.displayName || 'User'}
+                    </div>
+                    <div className="text-technical-sm font-technical-sm text-surface-variant capitalize">{userProfile?.role || 'individual'}</div>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setShowRoleSwitcher(!showRoleSwitcher)}
+                  className="w-full text-left px-2 mb-2 text-technical-sm font-technical-sm text-primary hover:underline cursor-pointer bg-transparent border-none p-0 py-1"
+                >
+                  {showRoleSwitcher ? 'Hide role switcher' : 'Switch role (dev)'}
+                </button>
+                {showRoleSwitcher && (
+                  <div className="px-2 mb-3 space-y-1">
+                    {ROLE_OPTIONS.map(r => (
+                      <button
+                        key={r}
+                        onClick={async () => {
+                          await updateUserRole(user.uid, r);
+                          setShowRoleSwitcher(false);
+                          window.location.reload();
+                        }}
+                        className={`w-full text-left px-3 py-1.5 text-technical-sm font-technical-sm border-[0.5px] transition-all cursor-pointer ${
+                          role === r
+                            ? 'bg-primary/10 border-primary/30 text-primary'
+                            : 'bg-transparent border-outline-variant text-surface-variant hover:border-primary/20'
+                        }`}
+                      >
+                        {r.charAt(0).toUpperCase() + r.slice(1)}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </>
+            )}
+            {collapsed && (
+              <div className="flex justify-center mb-2">
+                <div className="w-8 h-8 rounded-full bg-surface-container-highest flex items-center justify-center text-technical-sm font-technical-sm text-on-surface">
+                  {(userProfile?.name || user.displayName || user.email || 'U')[0].toUpperCase()}
                 </div>
               </div>
             )}
@@ -406,6 +467,20 @@ function AppShell() {
               <Route path="role-fit" element={<EnterpriseRunner mode="role" />} />
               <Route path="role-fit/:tier" element={<EnterpriseRunner mode="role" />} />
               <Route path="talent" element={<EmployerDashboard />} />
+              <Route path="individual" element={<IndividualOnboarding />} />
+              <Route path="individual/results/:id" element={<IndividualResults />} />
+              <Route path="individual/credential/:id" element={<IndividualCredential />} />
+              <Route path="interview" element={<InterviewerDashboard />} />
+              <Route path="interview/setup" element={<InterviewSetup />} />
+              <Route path="interview/scoring/:sessionId" element={<InterviewPostScoring />} />
+              <Route path="interview/live/:sessionId" element={<InterviewLive />} />
+              <Route path="interview/report/:sessionId" element={<InterviewReport />} />
+              <Route path="school" element={<TeacherDashboard />} />
+              <Route path="school/create" element={<ClassManager />} />
+              <Route path="school/class/:classId" element={<ClassManager />} />
+              <Route path="school/class/:classId/analytics" element={<ClassAnalytics />} />
+              <Route path="school/join" element={<StudentJoin />} />
+              <Route path="school/reports" element={<SchoolReports />} />
               <Route path="*" element={<Navigate to="/app/dashboard" replace />} />
             </Routes>
           </main>

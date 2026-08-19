@@ -4,8 +4,9 @@ import { useAuth } from '../context/AuthContext';
 import { getUserAssessments, getUserReports } from '../services/firestoreService';
 import { PILLARS, getGrade, computeWeightedScore } from '../data/qidsData';
 import { computeQidsPillarScores } from '../core/engine/qids';
-import { ClipboardList, TrendingUp, FileText, Activity, ChevronRight, ArrowRight } from 'lucide-react';
+import { ClipboardList, TrendingUp, FileText, Activity, ChevronRight, ArrowRight, Sparkles } from 'lucide-react';
 import SeedExampleData from '../components/SeedExampleData';
+import { getSkillShape } from '../core/engine/scoring';
 
 export default function Dashboard() {
   const { user, userProfile } = useAuth();
@@ -103,6 +104,32 @@ export default function Dashboard() {
               </div>
               <div className="text-[24px] md:text-[28px] font-technical-sm text-on-background">{preAssessments.length ? 'Active' : '--'}</div>
             </div>
+            {preAssessments.length > 0 && (() => {
+              const latest = preAssessments[0];
+              const latestMode = latest.mode || 'qids';
+              if (latestMode !== 'individual') return null;
+              const { pillarScores } = getResult(latest);
+              const shape = getSkillShape(pillarScores);
+              const shapeLabel = { T: 'T-Shaped', I: 'I-Shaped', X: 'X-Shaped', M: 'M-Shaped' }[shape] || shape;
+              return (
+                <div className="card p-5 md:p-6">
+                  <div className="flex items-center gap-2 mb-3 md:mb-4">
+                    <span className="w-6 h-6 rounded-lg bg-primary/15 flex items-center justify-center"><Sparkles size={13} className="text-primary" /></span>
+                    <div className="text-technical-sm font-technical-sm text-surface-variant uppercase tracking-widest">Skill Shape</div>
+                  </div>
+                  <div className="flex items-end gap-3">
+                    <div className="text-[24px] md:text-[28px] font-technical-sm text-on-background">{shape}</div>
+                    <button
+                      onClick={() => navigate(`/app/individual/results/${latest.id}`)}
+                      className="text-technical-sm font-technical-sm text-primary hover:underline cursor-pointer bg-transparent border-none p-0 mb-1"
+                    >
+                      View Results →
+                    </button>
+                  </div>
+                  <div className="text-body-sm font-body-sm text-surface-variant mt-1">{shapeLabel}</div>
+                </div>
+              );
+            })()}
           </>
         )}
       </section>
@@ -158,14 +185,18 @@ export default function Dashboard() {
               {preAssessments.slice(0, 4).map((a, idx) => {
                 const { unified, grade } = getResult(a);
                 const hasPost = !!getLinkedPost(a.id);
+                const isIndividual = a.mode === 'individual';
                 return (
                   <div key={a.id}
-                    onClick={() => navigate('/app/assessment', { state: { assessment: a, postAssessment: getLinkedPost(a.id) } })}
+                    onClick={() => isIndividual ? navigate(`/app/individual/results/${a.id}`) : navigate('/app/assessment', { state: { assessment: a, postAssessment: getLinkedPost(a.id) } })}
                     className="h-14 md:h-16 flex items-center justify-between border-b-[0.5px] border-outline-variant group hover:bg-surface-container-low transition-colors px-2 cursor-pointer touch-target">
                     <div className="flex items-center gap-4 md:gap-8 min-w-0 flex-1">
                       <span className="text-technical-sm font-technical-sm text-surface-variant flex-shrink-0">{String(idx + 1).padStart(2, '0')}</span>
                       <div className="min-w-0 flex-1">
-                        <div className="text-label-md font-label-md text-on-background truncate">{a.intake?.name || 'Assessment'}</div>
+                        <div className="text-label-md font-label-md text-on-background truncate">
+                          {a.intake?.name || 'Assessment'}
+                          {isIndividual && <span className="chip ml-2 text-[10px] py-0 px-2" style={{ background: 'rgba(235,192,115,0.12)', color: 'var(--color-primary)', borderColor: 'rgba(235,192,115,0.35)' }}>INDIVIDUAL</span>}
+                        </div>
                         <div className="text-technical-sm font-technical-sm text-surface-variant truncate">
                           {a.createdAt?.toDate ? a.createdAt.toDate().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'Recent'}
                           {hasPost && ' | Post-Complete'}

@@ -1,0 +1,136 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ── Helpers ─────────────────────────────────────────────────────────────
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    // Role helpers read directly from the user doc — no recursive get()
+    // needed because /users allow read when isOwner is true (self-read).
+    function hasRole(role) {
+      return isSignedIn() &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == role;
+    }
+
+    function isAdmin()     { return hasRole('admin'); }
+    function isEvaluator() { return hasRole('evaluator'); }
+    function isTeacher()   { return hasRole('teacher'); }
+
+    // ── Users (profiles) ───────────────────────────────────────────────────
+    // Self-read is required so the role helpers above can resolve.
+    match /users/{userId} {
+      allow read: if isOwner(userId);
+      allow create: if isOwner(userId);
+      allow update: if isOwner(userId) || isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    // ── Assessments ─────────────────────────────────────────────────────────
+    match /assessments/{assessmentId} {
+      allow read: if isOwner(resource.data.uid) || isAdmin();
+      allow create: if isSignedIn() && request.resource.data.uid == request.auth.uid;
+      allow update: if isOwner(resource.data.uid) || isAdmin();
+      allow delete: if isOwner(resource.data.uid) || isAdmin();
+    }
+
+    // ── Reports ─────────────────────────────────────────────────────────────
+    match /reports/{reportId} {
+      allow read: if isOwner(resource.data.uid) || isAdmin();
+      allow create: if isSignedIn() && request.resource.data.uid == request.auth.uid;
+      allow update: if isOwner(resource.data.uid) || isAdmin();
+      allow delete: if isOwner(resource.data.uid) || isAdmin();
+    }
+
+    // ── Intervention Plans ──────────────────────────────────────────────────
+    match /interventionPlans/{planId} {
+      allow read: if isOwner(resource.data.uid) || isAdmin();
+      allow create: if isSignedIn() && request.resource.data.uid == request.auth.uid;
+      allow update: if isOwner(resource.data.uid) || isAdmin();
+      allow delete: if isOwner(resource.data.uid) || isAdmin();
+    }
+
+    // ── Evaluator Assignments ──────────────────────────────────────────────
+    match /evaluatorAssignments/{assignmentId} {
+      allow read: if isSignedIn() && (
+        resource.data.evaluatorUid == request.auth.uid ||
+        resource.data.studentUid == request.auth.uid ||
+        isAdmin()
+      );
+      allow create: if isEvaluator() || isAdmin();
+      allow update: if isEvaluator() || isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    // ── Evaluations ─────────────────────────────────────────────────────────
+    match /evaluations/{evaluationId} {
+      allow read: if isSignedIn() && (
+        resource.data.evaluatorUid == request.auth.uid ||
+        resource.data.studentUid == request.auth.uid ||
+        isAdmin()
+      );
+      allow create: if isEvaluator() || isAdmin();
+      allow update: if (isEvaluator() && resource.data.evaluatorUid == request.auth.uid) || isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    // ── Interview Sessions ─────────────────────────────────────────────────
+    match /interviewSessions/{sessionId} {
+      allow read: if isSignedIn() && (
+        resource.data.candidateUid == request.auth.uid ||
+        resource.data.evaluatorUid == request.auth.uid ||
+        isAdmin()
+      );
+      allow create: if isSignedIn();
+      allow update: if isSignedIn() && (
+        resource.data.candidateUid == request.auth.uid ||
+        resource.data.evaluatorUid == request.auth.uid ||
+        isAdmin()
+      );
+      allow delete: if isSignedIn() && (
+        resource.data.candidateUid == request.auth.uid ||
+        resource.data.evaluatorUid == request.auth.uid ||
+        isAdmin()
+      );
+    }
+
+    // ── School Classes ─────────────────────────────────────────────────────
+    match /schoolClasses/{classId} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn() &&
+        request.resource.data.teacherUid == request.auth.uid;
+      allow update: if isSignedIn() && (
+        resource.data.teacherUid == request.auth.uid || isAdmin()
+      );
+      allow delete: if isSignedIn() && (
+        resource.data.teacherUid == request.auth.uid || isAdmin()
+      );
+    }
+
+    // ── Class Students ─────────────────────────────────────────────────────
+    match /classStudents/{entryId} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn();
+      allow update: if isSignedIn();
+      allow delete: if isSignedIn();
+    }
+
+    // ── School Assessments ─────────────────────────────────────────────────
+    match /schoolAssessments/{assessmentId} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn() &&
+        request.resource.data.teacherUid == request.auth.uid;
+      allow update: if isSignedIn() && (
+        resource.data.teacherUid == request.auth.uid || isAdmin()
+      );
+      allow delete: if isSignedIn() && (
+        resource.data.teacherUid == request.auth.uid || isAdmin()
+      );
+    }
+  }
+}
