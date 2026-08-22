@@ -21,7 +21,7 @@ function SectionHeader({ title, subtitle, color }) {
   return (
     <div className="flex items-center gap-3 p-4 mb-5 border-l-2 border-primary bg-surface-container-low hairline-b hairline-t hairline-r">
       <div>
-        <div className="text-label-md font-label-md" style={{ color: color || '#ebc073' }}>{title}</div>
+        <div className="text-label-md font-label-md" style={{ color: color || '#B8924A' }}>{title}</div>
         {subtitle && <div className="text-technical-sm font-technical-sm text-surface-variant mt-1">{subtitle}</div>}
       </div>
     </div>

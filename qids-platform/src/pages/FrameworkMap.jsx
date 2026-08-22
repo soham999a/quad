@@ -227,7 +227,7 @@ export default function FrameworkMap() {
             <div className="mt-4">
               <div className="text-xs text-surface-variant uppercase tracking-widest mb-2">Components</div>
               {detail.children.map(c => (
-                <div key={typeof c === 'string' ? c : c.id} className="px-2.5 py-1.5 mb-1 rounded-md text-xs text-on-surface-variant" style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid var(--border-light)' }}>
+                <div key={typeof c === 'string' ? c : c.id} className="px-2.5 py-1.5 mb-1 rounded-[2px] text-xs text-on-surface-variant" style={{ background: 'rgba(10,10,10,0.03)', border: '1px solid var(--border-light)' }}>
                   {typeof c === 'string' ? c : c.label}
                 </div>
               ))}

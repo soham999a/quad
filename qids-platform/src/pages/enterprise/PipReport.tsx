@@ -175,7 +175,7 @@ function DimensionalRadar({ points, norm }: { points: RadarPoint[]; norm: Record
         <PolarGrid stroke="rgba(148,163,184,0.2)" />
         <PolarAngleAxis dataKey="subject" tick={{ fill: '#94a3b8', fontSize: 11, fontWeight: 600 }} />
         <PolarRadiusAxis angle={90} domain={[0, 100]} tick={false} axisLine={false} />
-        <Radar dataKey="Candidate" stroke="#ebc073" fill="#ebc073" fillOpacity={0.28} strokeWidth={2} dot={{ fill: '#ebc073', r: 3 }} />
+        <Radar dataKey="Candidate" stroke="#B8924A" fill="#B8924A" fillOpacity={0.28} strokeWidth={2} dot={{ fill: '#B8924A', r: 3 }} />
         <Radar dataKey="Peer Norm" stroke="#64748b" fill="#64748b" fillOpacity={0.06} strokeWidth={1.5} strokeDasharray="4 4" />
         <Tooltip contentStyle={{ background: '#0f172a', border: '1px solid rgba(148,163,184,0.2)', borderRadius: 8, color: '#e2e8f0', fontSize: 12 }} />
       </ReRadar>
@@ -198,14 +198,14 @@ function Page2({ p }: { p: PipReportData['page2'] }) {
                   <div className="text-technical-sm font-technical-sm text-surface-variant">{DIM_LABELS[pt.dimension]}</div>
                 </div>
                 <div className="flex-1 h-[5px] bg-surface-container-high overflow-hidden mx-3">
-                  <div className="h-full" style={{ width: `${Math.max(pt.score, 2)}%`, background: BAND_COLOR[pt.band] || '#ebc073' }} />
+                  <div className="h-full" style={{ width: `${Math.max(pt.score, 2)}%`, background: BAND_COLOR[pt.band] || '#B8924A' }} />
                 </div>
                 <div className="w-24 flex-shrink-0 text-right">
                   <span className="text-label-md font-label-md text-on-background">{pt.tScore}</span>
                   <span className="text-technical-sm font-technical-sm text-surface-variant ml-2">T·P{String(pt.percentile).padStart(2, '0')}</span>
                 </div>
                 <div className="w-20 flex-shrink-0 text-right">
-                  <Pill color={BAND_COLOR[pt.band] || '#ebc073'}>{pt.band}</Pill>
+                  <Pill color={BAND_COLOR[pt.band] || '#B8924A'}>{pt.band}</Pill>
                 </div>
               </div>
             ))}
@@ -243,7 +243,7 @@ function Page3({ p }: { p: PipReportData['page3'] }) {
                 <td className="py-3 pr-4 text-label-md font-label-md text-on-background">{r.module}</td>
                 <td className="py-3 pr-4">
                   <span className="text-body-md text-on-surface-variant">{r.name}</span>
-                  {r.roleRelevant && <Pill color="#ebc073">role-fit</Pill>}
+                  {r.roleRelevant && <Pill color="#B8924A">role-fit</Pill>}
                 </td>
                 <td className="py-3 pr-4 text-right text-technical-sm font-technical-sm text-surface-variant">{r.raw}/{r.max}</td>
                 <td className="py-3 pr-4 text-right text-label-md font-label-md text-on-background">{r.tScore}</td>

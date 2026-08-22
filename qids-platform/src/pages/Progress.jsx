@@ -357,7 +357,7 @@ function InterventionRightPanel({ pillarScores }) {
         <div key={pid} className="mb-3">
           <div className="text-[11px] font-[600] mb-1.5" style={{ color: PILLARS[pid].color }}>{pid}</div>
           {mods.map(m => (
-            <div key={m.id} className="px-2 py-1.5 mb-0.5 text-[11px] text-on-surface-variant rounded-[6px]" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid #4e4638' }}>
+            <div key={m.id} className="px-2 py-1.5 mb-0.5 text-[11px] text-on-surface-variant rounded-[2px]" style={{ background: 'rgba(10,10,10,0.03)', border: '1px solid #DBD6CA' }}>
               {m.label}
             </div>
           ))}
@@ -453,7 +453,7 @@ function PostAssessmentForm({ assessmentData, onSubmit }) {
               const preVal = assessmentData?.rawScores?.[pid]?.[sp.id] ?? 0;
               const pct = Math.round((val / sp.max) * 100);
               return (
-                <div key={sp.id} className="rounded-[10px] p-3.5" style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid #4e4638' }}>
+                <div key={sp.id} className="rounded-[2px] p-3.5" style={{ background: 'rgba(10,10,10,0.02)', border: '1px solid #DBD6CA' }}>
                   <div className="flex justify-between mb-1.5">
                     <div>
                       <div className="text-[13px] font-[600]">{sp.label}</div>
@@ -468,7 +468,7 @@ function PostAssessmentForm({ assessmentData, onSubmit }) {
                     onChange={e => updateScore(pid, sp.id, parseInt(e.target.value))}
                     className="w-full h-1.5 rounded-[3px] outline-none border-none p-0 cursor-pointer appearance-none"
                     style={{
-                      background: `linear-gradient(90deg, ${pillar.color} ${pct}%, rgba(255,255,255,0.1) ${pct}%)`,
+                      background: `linear-gradient(90deg, ${pillar.color} ${pct}%, rgba(10,10,10,0.08) ${pct}%)`,
                     }}
                   />
                   <div className="flex justify-between mt-1">
@@ -554,11 +554,11 @@ function PostSection({ preScores, postScores, rawScores, activeNode, setActiveNo
           <div className="bg-surface-container-low border border-outline-variant rounded-[14px] p-5 mb-4">
             <ResponsiveContainer width="100%" height={240}>
               <BarChart data={comparisonData} barGap={4}>
-                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
-                <XAxis dataKey="name" tick={{ fill: '#94a3b8', fontSize: 12 }} />
-                <YAxis domain={[0, 100]} tick={{ fill: '#64748b', fontSize: 11 }} />
-                <Tooltip contentStyle={{ background: '#1c1b1b', border: '1px solid #4e4638', borderRadius: 8, color: 'white', fontSize: 12 }} />
-                <Legend wrapperStyle={{ fontSize: 12, color: '#d1c5b3' }} />
+                <CartesianGrid strokeDasharray="3 3" stroke="rgba(10,10,10,0.06)" />
+                <XAxis dataKey="name" tick={{ fill: '#4A4A4A', fontSize: 12 }} />
+                <YAxis domain={[0, 100]} tick={{ fill: '#6B6660', fontSize: 11 }} />
+                <Tooltip contentStyle={{ background: '#F9F7F1', border: '1px solid #DBD6CA', borderRadius: 2, color: '#0A0A0A', fontSize: 12 }} />
+                <Legend wrapperStyle={{ fontSize: 12, color: '#4A4A4A' }} />
                 <Bar dataKey="Pre" fill="#6366f1" fillOpacity={0.7} radius={[4, 4, 0, 0]} />
                 <Bar dataKey="Post" fill="#14b8a6" fillOpacity={0.9} radius={[4, 4, 0, 0]} />
               </BarChart>
@@ -631,7 +631,7 @@ function PostSection({ preScores, postScores, rawScores, activeNode, setActiveNo
             {CAREER_PROFILES.map(cp => (
               <div key={cp.id} className="p-3.5 rounded-[10px]" style={{
                 background: cp.id === careerProfile.id ? 'rgba(99,102,241,0.1)' : '#1c1b1b',
-                border: `1px solid ${cp.id === careerProfile.id ? 'rgba(99,102,241,0.4)' : '#4e4638'}`,
+                border: `1px solid ${cp.id === careerProfile.id ? 'rgba(99,102,241,0.4)' : '#DBD6CA'}`,
               }}>
                 <div className="flex gap-2 items-start">
                   <div>

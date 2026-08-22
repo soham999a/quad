@@ -381,7 +381,7 @@ function ModuleCard({ module, color }) {
               </div>
             ))}
           </div>
-          <div className="px-3 py-2 border border-outline-variant rounded-lg" style={{ background: 'rgba(255,255,255,0.03)' }}>
+          <div className="px-3 py-2 border border-outline-variant rounded-lg" style={{ background: 'rgba(10,10,10,0.03)' }}>
             <span className="text-technical-sm font-semibold text-surface-variant">Example: </span>
             <span className="text-label-md text-on-surface-variant italic">{module.example}</span>
           </div>

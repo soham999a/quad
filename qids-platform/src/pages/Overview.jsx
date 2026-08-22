@@ -79,9 +79,9 @@ export default function Overview() {
         <h2 className="text-xl font-bold mb-5">Three-Phase Evaluation Process</h2>
         <div className="grid grid-cols-3 gap-4">
           {PHASE_CARDS.map(({ num, label, desc, color, path, icon: Icon }) => (
-            <div key={num} onClick={() => navigate(path)} className="bg-surface-container-low rounded-2xl p-6 cursor-pointer transition-all relative overflow-hidden" style={{ border: '1px solid rgba(255,255,255,0.07)' }}
+            <div key={num} onClick={() => navigate(path)} className="bg-surface-container-low rounded-2xl p-6 cursor-pointer transition-all relative overflow-hidden" style={{ border: '1px solid rgba(10,10,10,0.07)' }}
               onMouseEnter={e => { e.currentTarget.style.borderColor = color; e.currentTarget.style.transform = 'translateY(-2px)'; }}
-              onMouseLeave={e => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.07)'; e.currentTarget.style.transform = 'translateY(0)'; }}
+              onMouseLeave={e => { e.currentTarget.style.borderColor = 'rgba(10,10,10,0.07)'; e.currentTarget.style.transform = 'translateY(0)'; }}
             >
               <div className="absolute top-0 left-0 right-0 h-[3px]" style={{ background: color }} />
               <div className="w-10 h-10 rounded-xl mb-4 flex items-center justify-center" style={{ background: `${color}20`, border: `1px solid ${color}40` }}>
@@ -121,7 +121,7 @@ export default function Overview() {
         <h2 className="text-lg font-bold mb-5 text-center">Innovative Features</h2>
         <div className="grid grid-cols-3 gap-4">
           {FEATURES.map(f => (
-            <div key={f.label} className="p-5 rounded-xl" style={{ background: 'rgba(255,255,255,0.05)', border: `1px solid ${f.color}20` }}>
+            <div key={f.label} className="p-5 rounded-xl" style={{ background: 'rgba(10,10,10,0.05)', border: `1px solid ${f.color}20` }}>
               <div className="w-2 h-2 rounded-full mb-2.5" style={{ background: f.color }} />
               <h4 className="text-sm font-bold mb-2">{f.label}</h4>
               <p className="text-sm text-on-surface-variant leading-relaxed">{f.desc}</p>

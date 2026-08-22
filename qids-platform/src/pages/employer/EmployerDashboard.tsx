@@ -56,7 +56,7 @@ function RoleCard({ role }: { role: RoleProfile }) {
                   <div key={d} className="flex items-center gap-3">
                     <span className="w-32 flex-shrink-0 text-technical-sm font-technical-sm text-surface-variant">{DIM_WEIGHT_LABELS[d]}</span>
                     <div className="flex-1 h-[5px] rounded-full bg-surface-container-high overflow-hidden">
-                      <div className="h-full rounded-full" style={{ width: `${w}%`, background: `linear-gradient(90deg, ${w >= 20 ? '#ebc073' : w >= 10 ? '#94a3b8' : '#475569'}88, ${w >= 20 ? '#ebc073' : w >= 10 ? '#94a3b8' : '#475569'})` }} />
+                      <div className="h-full rounded-full" style={{ width: `${w}%`, background: `linear-gradient(90deg, ${w >= 20 ? '#B8924A' : w >= 10 ? '#94a3b8' : '#475569'}88, ${w >= 20 ? '#B8924A' : w >= 10 ? '#94a3b8' : '#475569'})` }} />
                     </div>
                     <span className="w-8 text-right text-technical-sm font-technical-sm text-on-surface">{w}%</span>
                   </div>
@@ -175,7 +175,7 @@ function RoleHeatmap() {
                 </td>
                 {ROLE_DIMS.map(d => {
                   const w = r.weights[d] ?? 0;
-                  const color = w >= 20 ? '#ebc073' : w >= 10 ? '#94a3b8' : '#3f3f3f';
+                  const color = w >= 20 ? '#B8924A' : w >= 10 ? '#94a3b8' : '#3f3f3f';
                   return (
                     <td key={d} className="py-3 pr-3 text-center">
                       <span className="px-2.5 py-1 rounded-full text-technical-sm font-technical-sm"

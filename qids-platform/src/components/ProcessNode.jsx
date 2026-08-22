@@ -8,7 +8,7 @@ export default function ProcessNode({ node, color = '#6366f1', index, isLast, on
         onClick={() => onClick && onClick(node)}
         style={{
           background: active ? `rgba(${hexToRgb(color)},0.2)` : 'var(--navy-4)',
-          border: `1px solid ${active ? color : 'rgba(255,255,255,0.08)'}`,
+          border: `1px solid ${active ? color : 'rgba(10,10,10,0.08)'}`,
           borderRadius: 10,
           padding: '10px 14px',
           cursor: 'pointer',
@@ -83,7 +83,7 @@ export function NodeDetailPanel({ node, onClose, color = '#6366f1' }) {
           </div>
           {node.artifacts.map(a => (
             <div key={a} style={{
-              padding: '6px 10px', background: 'rgba(255,255,255,0.04)',
+              padding: '6px 10px', background: 'rgba(10,10,10,0.04)',
               border: '1px solid var(--border-light)', borderRadius: 6,
               fontSize: 12, color: 'var(--text-secondary)', marginBottom: 4,
             }}>{a}</div>

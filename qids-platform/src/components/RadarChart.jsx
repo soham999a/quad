@@ -12,7 +12,7 @@ export default function QIDSRadar({ data, compare = null, size = 300 }) {
   return (
     <ResponsiveContainer width="100%" height={size}>
       <ReRadar data={chartData}>
-        <PolarGrid stroke="rgba(255,255,255,0.1)" />
+        <PolarGrid stroke="rgba(10,10,10,0.1)" />
         <PolarAngleAxis dataKey="subject" tick={{ fill: '#94a3b8', fontSize: 13, fontWeight: 600 }} />
         <PolarRadiusAxis angle={90} domain={[0, 100]} tick={{ fill: '#64748b', fontSize: 10 }} tickCount={5} />
         <Radar name={compare ? 'Pre-Intervention' : 'Score'} dataKey="A" stroke="#6366f1" fill="#6366f1" fillOpacity={0.25} strokeWidth={2} dot={{ fill: '#6366f1', r: 4 }} />

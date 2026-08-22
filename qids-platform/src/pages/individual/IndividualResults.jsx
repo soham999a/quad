@@ -26,7 +26,7 @@ function ScoreGauge({ score, grade }) {
     <div className="relative w-48 h-48 mx-auto">
       <svg viewBox="0 0 100 100" className="w-full h-full -rotate-90">
         <circle cx="50" cy="50" r="42" fill="none" stroke="rgba(148,163,184,0.15)" strokeWidth="8" />
-        <circle cx="50" cy="50" r="42" fill="none" stroke="#ebc073" strokeWidth="8" strokeLinecap="round"
+        <circle cx="50" cy="50" r="42" fill="none" stroke="#B8924A" strokeWidth="8" strokeLinecap="round"
           strokeDasharray={`${(pct / 100) * 264} 264`} className="transition-all duration-1000" />
       </svg>
       <div className="absolute inset-0 flex flex-col items-center justify-center">
@@ -51,9 +51,9 @@ function PillarRadar({ pillarScores }) {
       <ResponsiveContainer width="100%" height={300}>
         <ReRadar data={data} outerRadius="68%">
           <PolarGrid stroke="rgba(235,192,115,0.15)" />
-          <PolarAngleAxis dataKey="subject" tick={{ fill: '#d1c5b3', fontSize: 12, fontWeight: 600 }} />
+          <PolarAngleAxis dataKey="subject" tick={{ fill: '#4A4A4A', fontSize: 12, fontWeight: 600 }} />
           <PolarRadiusAxis angle={90} domain={[0, 100]} tick={false} axisLine={false} />
-          <Radar dataKey="A" stroke="#ebc073" fill="#ebc073" fillOpacity={0.22} strokeWidth={2} dot={{ fill: '#ebc073', r: 3 }} />
+          <Radar dataKey="A" stroke="#B8924A" fill="#B8924A" fillOpacity={0.22} strokeWidth={2} dot={{ fill: '#B8924A', r: 3 }} />
           <Tooltip contentStyle={{ background: '#131313', border: '1px solid rgba(235,192,115,0.25)', borderRadius: 8, color: '#e5e2e1', fontSize: 12 }} />
         </ReRadar>
       </ResponsiveContainer>

@@ -163,7 +163,7 @@ export default function MyEvaluator() {
                 const grade = getGrade(Math.round(score));
 
                 return (
-                  <div key={a.id} className="px-3 py-3 mb-2 rounded-lg cursor-pointer" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid var(--border-light)' }} onClick={() => navigate('/app/report')}>
+                  <div key={a.id} className="px-3 py-3 mb-2 rounded-lg cursor-pointer" style={{ background: 'rgba(10,10,10,0.03)', border: '1px solid var(--border-light)' }} onClick={() => navigate('/app/report')}>
                     <div className="flex justify-between items-center">
                       <div>
                         <div className="text-xs font-semibold">

@@ -309,7 +309,7 @@ export default function EnterpriseRunner({ mode = 'enterprise', initialTier }) {
         </div>
       </div>
       <div className="h-[6px] rounded-full bg-surface-container-high overflow-hidden mb-6">
-        <div className="h-full rounded-full transition-all duration-500" style={{ width: `${progressPct}%`, background: 'linear-gradient(90deg, #c99c4e, #ebc073)' }} />
+        <div className="h-full rounded-full transition-all duration-500" style={{ width: `${progressPct}%`, background: 'linear-gradient(90deg, #c99c4e, #B8924A)' }} />
       </div>
       {/* Step markers */}
       <div className="flex items-center gap-2 mb-7" aria-label="Section progress">
@@ -322,7 +322,7 @@ export default function EnterpriseRunner({ mode = 'enterprise', initialTier }) {
             <button key={step.id} onClick={() => { setPhase('running'); setStepIndex(i); }}
               aria-label={`${step.label}${done ? ' complete' : ''}`} aria-current={current ? 'step' : undefined}
               title={step.label}
-              style={{ background: done ? 'linear-gradient(90deg, #c99c4e, #ebc073)' : undefined }}
+              style={{ background: done ? 'linear-gradient(90deg, #c99c4e, #B8924A)' : undefined }}
               className={`flex items-center justify-center gap-1 h-7 flex-1 rounded-full transition-all duration-300 cursor-pointer border-none p-0 text-technical-sm font-technical-sm ${done ? 'text-on-primary' : current ? 'bg-primary/20 text-primary ring-1 ring-primary/60' : 'bg-surface-container-high text-surface-variant hover:bg-surface-variant/50'}`}>
               {done ? <Check size={11} /> : i + 1}
             </button>

@@ -9,18 +9,17 @@ export default function ProtectedRoute({ children, allowedRoles }) {
     return (
       <div style={{
         minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center',
-        background: 'var(--navy)',
+        background: 'var(--bone)',
       }}>
         <div style={{ textAlign: 'center' }}>
           <div style={{
-            width: 40, height: 40, borderRadius: 10, margin: '0 auto 12px',
-            background: 'linear-gradient(135deg, #6366f1, #a855f7)',
+            width: 40, height: 40, margin: '0 auto 12px',
+            border: '1.5px solid #0A0A0A',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
-            animation: 'pulse 1.5s infinite',
           }}>
-            <span style={{ color: 'white', fontSize: 18 }}>Q</span>
+            <div style={{ width: '50%', height: '50%', background: '#B8924A' }} />
           </div>
-          <div style={{ fontSize: 13, color: 'var(--text-muted)' }}>Loading...</div>
+          <div style={{ fontSize: 11, fontFamily: "'JetBrains Mono', monospace", letterSpacing: '0.18em', textTransform: 'uppercase', color: '#6B6660' }}>Loading</div>
         </div>
       </div>
     );

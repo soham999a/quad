@@ -124,7 +124,7 @@ export default function AdminConfig() {
                   onChange={e => setWeights(prev => ({ ...prev, [k]: parseFloat(e.target.value) }))}
                   className="w-full h-1 border-none p-0 cursor-pointer appearance-none rounded-sm"
                   style={{
-                    background: `linear-gradient(90deg, #6366f1 ${((v - 0.5) / 2.5) * 100}%, rgba(255,255,255,0.1) ${((v - 0.5) / 2.5) * 100}%)`,
+                    background: `linear-gradient(90deg, #6366f1 ${((v - 0.5) / 2.5) * 100}%, rgba(10,10,10,0.1) ${((v - 0.5) / 2.5) * 100}%)`,
                   }}
                 />
               </div>

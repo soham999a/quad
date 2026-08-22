@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate, Link, Navigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { Check } from 'lucide-react';
+import QidsMark from '../../components/QidsMark';
 
 const ROLES = [
   { id: 'individual', label: 'Individual', desc: 'Personal development journey' },
@@ -77,10 +78,13 @@ export default function Login() {
       {/* Login Container */}
       <main className="w-full max-w-[480px] flex flex-col space-y-12 relative z-10">
         {/* Branding */}
-        <header className="flex flex-col space-y-2">
-          <h1 className="text-headline-md font-headline-md text-primary tracking-tight">QIDS</h1>
-          <p className="text-[24px] leading-tight font-medium text-on-surface">
-            Quadrant Intelligence Diagnostic System
+        <header className="flex flex-col space-y-3">
+          <div className="flex items-center gap-3">
+            <QidsMark size={26} className="text-[#B8924A]" />
+            <span className="font-mono text-[12px] tracking-[0.28em] text-on-surface">QIDS</span>
+          </div>
+          <p className="text-[24px] leading-tight font-light text-on-surface tracking-tight">
+            Quadrant Intelligence<br />Diagnostic System
           </p>
         </header>
 
@@ -104,7 +108,7 @@ export default function Login() {
               <div className="flex flex-col space-y-2">
                 <label className="text-technical-sm font-technical-sm text-on-surface-variant uppercase" htmlFor="email">Email Address</label>
                 <input
-                  className="w-full h-12 px-4 bg-background border-[0.5px] border-outline-variant rounded-xl text-on-surface placeholder:text-surface-variant font-technical-sm transition-all outline-none focus:border-primary focus:shadow-[0_0_0_1px_#ebc073]"
+                  className="w-full h-12 px-4 bg-surface border border-outline-variant rounded-sm text-on-surface placeholder:text-surface-variant font-technical-sm transition-all outline-none focus:border-primary"
                   id="email"
                   placeholder="architect@qids.internal"
                   type="email"
@@ -123,7 +127,7 @@ export default function Login() {
                   </button>
                 </div>
                 <input
-                  className="w-full h-12 px-4 bg-background border-[0.5px] border-outline-variant rounded-xl text-on-surface placeholder:text-surface-variant font-technical-sm transition-all outline-none focus:border-primary focus:shadow-[0_0_0_1px_#ebc073]"
+                  className="w-full h-12 px-4 bg-surface border border-outline-variant rounded-sm text-on-surface placeholder:text-surface-variant font-technical-sm transition-all outline-none focus:border-primary"
                   id="password"
                   placeholder="••••••••••••"
                   type="password"
@@ -136,7 +140,7 @@ export default function Login() {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full h-12 bg-primary text-on-primary font-label-md text-label-md rounded-xl hover:opacity-90 active:scale-[0.98] transition-all flex items-center justify-center uppercase tracking-widest cursor-pointer border-none disabled:opacity-50">
+                className="w-full h-12 bg-on-surface text-background font-label-md text-label-md rounded-sm hover:bg-[#B8924A] hover:text-ink active:scale-[0.99] transition-colors flex items-center justify-center uppercase tracking-widest cursor-pointer border-none disabled:opacity-40">
                 {loading ? 'Authenticating...' : 'Sign In'}
               </button>
             </form>
@@ -152,7 +156,7 @@ export default function Login() {
             <button
               onClick={handleGoogle}
               disabled={loading}
-              className="w-full h-12 border-[0.5px] border-outline-variant bg-transparent text-on-surface font-label-md text-label-md rounded-xl hover:bg-surface-container-low transition-all flex items-center justify-center gap-3 uppercase tracking-widest cursor-pointer disabled:opacity-50">
+              className="w-full h-12 border border-outline-variant bg-transparent text-on-surface font-label-md text-label-md rounded-sm hover:bg-surface-container-low transition-colors flex items-center justify-center gap-3 uppercase tracking-widest cursor-pointer disabled:opacity-40">
               <svg className="w-5 h-5" viewBox="0 0 24 24">
                 <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="currentColor"></path>
                 <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="currentColor"></path>

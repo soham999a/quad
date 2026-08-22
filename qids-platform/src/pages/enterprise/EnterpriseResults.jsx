@@ -23,9 +23,9 @@ function WorkStyleRadar({ profile }) {
       <ResponsiveContainer width="100%" height={300}>
         <ReRadar data={data} outerRadius="68%">
           <PolarGrid stroke="rgba(235,192,115,0.15)" />
-          <PolarAngleAxis dataKey="subject" tick={{ fill: '#d1c5b3', fontSize: 12, fontWeight: 600 }} />
+          <PolarAngleAxis dataKey="subject" tick={{ fill: '#4A4A4A', fontSize: 12, fontWeight: 600 }} />
           <PolarRadiusAxis angle={90} domain={[0, 10]} tick={false} axisLine={false} />
-          <Radar dataKey="A" stroke="#ebc073" fill="#ebc073" fillOpacity={0.22} strokeWidth={2} dot={{ fill: '#ebc073', r: 3 }} />
+          <Radar dataKey="A" stroke="#B8924A" fill="#B8924A" fillOpacity={0.22} strokeWidth={2} dot={{ fill: '#B8924A', r: 3 }} />
           <Tooltip contentStyle={{ background: '#131313', border: '1px solid rgba(235,192,115,0.25)', borderRadius: 8, color: '#e5e2e1', fontSize: 12 }} />
         </ReRadar>
       </ResponsiveContainer>
@@ -148,7 +148,7 @@ export default function EnterpriseResults({ result, deployed, answers, onRestart
       {/* PII header */}
       {pii && (
         <section className="relative mb-10 md:mb-14 card overflow-hidden p-6 md:p-10"
-          style={{ background: 'radial-gradient(ellipse at 12% 0%, rgba(235,192,115,0.14), transparent 55%), linear-gradient(180deg, rgba(255,255,255,0.02), transparent 45%), var(--color-surface-container-lowest)' }}>
+          style={{ background: 'radial-gradient(ellipse at 12% 0%, rgba(235,192,115,0.14), transparent 55%), linear-gradient(180deg, rgba(10,10,10,0.02), transparent 45%), var(--color-surface-container-lowest)' }}>
           <div aria-hidden="true" className="absolute right-0 top-0 h-full w-1/3 pointer-events-none"
             style={{ background: 'radial-gradient(circle at 100% 0%, rgba(235,192,115,0.10), transparent 60%)' }} />
           <div className="relative flex flex-col lg:flex-row lg:items-center lg:justify-between gap-8">
@@ -255,7 +255,7 @@ export default function EnterpriseResults({ result, deployed, answers, onRestart
           </div>
           <div className="gradient-rule mb-6" />
           <div className="relative card overflow-hidden p-6 md:p-8"
-            style={{ background: 'radial-gradient(ellipse at 90% 0%, rgba(235,192,115,0.10), transparent 55%), linear-gradient(180deg, rgba(255,255,255,0.02), transparent 45%), var(--color-surface-container-lowest)' }}>
+            style={{ background: 'radial-gradient(ellipse at 90% 0%, rgba(235,192,115,0.10), transparent 55%), linear-gradient(180deg, rgba(10,10,10,0.02), transparent 45%), var(--color-surface-container-lowest)' }}>
             <div className="flex flex-col md:flex-row md:items-center gap-6">
               <div className="flex-1">
                 <div className="text-technical-sm font-technical-sm text-surface-variant mb-1 uppercase tracking-widest">RIQ · {result.riq.track}</div>

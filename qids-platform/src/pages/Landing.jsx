@@ -1,23 +1,21 @@
 import React from 'react';
 import { ArrowRight } from 'lucide-react';
 import { useNavigate, Link } from 'react-router-dom';
+import QidsMark from '../components/QidsMark';
+import { BackgroundGrid } from '../components/frame';
 
 const DIMENSIONS = [
   {
-    num: 'DIMENSION 01', title: 'Cognitive Depth', color: 'text-primary',
-    accent: 'bg-primary', desc: 'The architecture of logic and abstract reasoning. Evaluating the speed, accuracy, and structural integrity of complex problem solving.'
+    num: 'DIMENSION 01', title: 'Cognitive Depth', desc: 'The architecture of logic and abstract reasoning. Evaluating the speed, accuracy, and structural integrity of complex problem solving.'
   },
   {
-    num: 'DIMENSION 02', title: 'Emotional Resonance', color: 'text-secondary',
-    accent: 'bg-secondary', desc: 'Internal regulation and situational empathy. Measuring the capacity to navigate high-stakes stress while maintaining relational clarity.'
+    num: 'DIMENSION 02', title: 'Emotional Resonance', desc: 'Internal regulation and situational empathy. Measuring the capacity to navigate high-stakes stress while maintaining relational clarity.'
   },
   {
-    num: 'DIMENSION 03', title: 'Social Synthesis', color: 'text-surface-variant',
-    accent: 'bg-surface-variant', desc: 'Collaborative intelligence. Assessing the ability to integrate diverse viewpoints into a singular, actionable strategic outcome.'
+    num: 'DIMENSION 03', title: 'Social Synthesis', desc: 'Collaborative intelligence. Assessing the ability to integrate diverse viewpoints into a singular, actionable strategic outcome.'
   },
   {
-    num: 'DIMENSION 04', title: 'Adaptive Fluidity', color: 'text-outline',
-    accent: 'bg-outline', desc: 'Learning agility in volatile environments. Quantifying the speed at which one unlearns obsolete data to adopt new frameworks.'
+    num: 'DIMENSION 04', title: 'Adaptive Fluidity', desc: 'Learning agility in volatile environments. Quantifying the speed at which one unlearns obsolete data to adopt new frameworks.'
   },
 ];
 
@@ -57,214 +55,269 @@ const AUDIENCES = [
   },
 ];
 
+const EASE = { transitionTimingFunction: 'cubic-bezier(0.4, 0, 0.2, 1)' };
+
 export default function Landing() {
   const navigate = useNavigate();
 
   return (
-    <div className="bg-background text-on-surface font-body-md antialiased">
+    <div className="bg-background text-on-surface antialiased" style={{ fontFamily: 'Sora, sans-serif' }}>
       {/* ─── NAV ─── */}
-      <nav className="fixed top-0 left-0 w-full z-50 bg-background/80 backdrop-blur-sm border-b-[0.5px] border-outline-variant h-20 flex justify-between items-center px-margin-mobile md:px-[80px]">
-        <div className="flex items-center gap-12">
-          <span className="text-headline-md font-headline-md font-medium text-primary tracking-tighter">QIDS</span>
-          <div className="hidden md:flex gap-8">
-            <a className="text-label-md font-label-md text-primary font-medium border-b border-primary pb-1" href="#problem">I | ANALYTICS</a>
-            <a className="text-label-md font-label-md text-on-surface-variant font-medium hover:text-primary transition-colors" href="#dimensions">II | ARCHIVE</a>
-            <a className="text-label-md font-label-md text-on-surface-variant font-medium hover:text-primary transition-colors" href="#method">III | METHOD</a>
-            <a className="text-label-md font-label-md text-on-surface-variant font-medium hover:text-primary transition-colors" href="#audiences">IV | AUDIENCES</a>
-          </div>
+      <nav className="fixed top-0 left-0 w-full z-50 bg-surface/85 backdrop-blur-sm border-b border-outline-variant h-16 flex justify-between items-center px-6 md:px-10 lg:px-16">
+        <Link to="/" className="flex items-center gap-3 no-underline">
+          <QidsMark size={22} className="text-[#B8924A]" />
+          <span className="font-mono text-[12px] tracking-[0.28em] text-on-surface">QIDS</span>
+        </Link>
+        <div className="hidden md:flex gap-8">
+          <a className="font-mono text-[11px] tracking-[0.18em] uppercase text-on-surface border-b border-[#B8924A] pb-0.5 no-underline" href="#problem">I · Problem</a>
+          <a className="font-mono text-[11px] tracking-[0.18em] uppercase text-slate hover:text-on-surface transition-colors no-underline" href="#dimensions">II · Dimensions</a>
+          <a className="font-mono text-[11px] tracking-[0.18em] uppercase text-slate hover:text-on-surface transition-colors no-underline" href="#method">III · Method</a>
+          <a className="font-mono text-[11px] tracking-[0.18em] uppercase text-slate hover:text-on-surface transition-colors no-underline" href="#audiences">IV · Audiences</a>
         </div>
-        <div className="flex items-center gap-6">
-          <Link to="/login" className="hidden md:block text-label-md font-label-md text-on-surface-variant hover:text-on-surface transition-colors no-underline">Sign In</Link>
-          <Link to="/signup">
-            <button className="bg-primary text-on-primary px-6 py-3 rounded-xl text-label-md font-label-md font-semibold hover:opacity-90 transition-all active:scale-95 cursor-pointer border-none">
-              BEGIN ASSESSMENT
+        <div className="flex items-center gap-5">
+          <Link to="/login" className="hidden md:block font-mono text-[11px] tracking-[0.14em] uppercase text-slate hover:text-on-surface transition-colors no-underline">Sign In</Link>
+          <Link to="/signup" className="no-underline">
+            <button className="bg-on-surface text-background px-5 py-2.5 rounded-sm font-mono text-[12px] tracking-[0.08em] hover:bg-[#B8924A] hover:text-ink transition-colors cursor-pointer border-none" style={EASE}>
+              BEGIN
             </button>
           </Link>
         </div>
       </nav>
 
       {/* ─── HERO ─── */}
-      <header className="relative min-h-screen flex flex-col justify-center items-center text-center px-margin-mobile overflow-hidden">
-        <div aria-hidden="true" className="absolute inset-0 pointer-events-none"
-          style={{
-            backgroundImage: 'radial-gradient(ellipse at 50% 38%, rgba(99,102,241,0.10), transparent 58%), linear-gradient(rgba(255,255,255,0.025) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.025) 1px, transparent 1px)',
-            backgroundSize: '100% 100%, 64px 64px, 64px 64px',
-          }} />
-        <div aria-hidden="true" className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[760px] h-[760px] rounded-full border-[0.5px] border-primary/20 pointer-events-none" />
-        <div aria-hidden="true" className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[520px] h-[520px] rounded-full border-[0.5px] border-primary/10 pointer-events-none" />
-        <div className="relative z-10 max-w-4xl">
-          <p className="text-technical-sm font-technical-sm text-primary mb-6 tracking-[0.2em] uppercase">Architecture of the Mind</p>
-          <h1 className="text-display-xl font-display-xl text-on-surface mb-8 leading-[1.05]">
-            Intelligence Has Been Measured Wrong.{' '}
-            <span className="text-primary italic">Until Now.</span>
-          </h1>
-          <p className="text-body-lg font-body-lg text-on-surface-variant max-w-2xl mx-auto">
-            Four dimensions. One score. Cognitive, Emotional, Social, Adaptive. A new blueprint for human potential.
-          </p>
-          <div className="mt-12 flex flex-col sm:flex-row gap-4 justify-center items-center">
-            <Link to="/signup" className="no-underline">
-              <button className="bg-primary text-on-primary px-10 py-4 rounded-xl text-label-md font-label-md font-semibold tracking-widest hover:opacity-90 hover:translate-y-[-1px] active:translate-y-0 transition-all duration-150 cursor-pointer border-none w-full sm:w-auto">
-                BEGIN ASSESSMENT
-              </button>
-            </Link>
-            <a href="#method" className="no-underline">
-              <button className="px-10 py-4 rounded-xl text-label-md font-label-md font-semibold tracking-widest border border-outline-variant text-on-surface-variant hover:text-primary hover:border-primary transition-all cursor-pointer bg-transparent w-full sm:w-auto">
-                EXPLORE THE METHOD
-              </button>
-            </a>
+      <header className="relative border-b border-outline-variant overflow-hidden">
+        <BackgroundGrid />
+        <div className="relative max-w-[1200px] mx-auto px-10 lg:px-16 pt-36 lg:pt-44 pb-28">
+          <div className="flex items-center gap-3 mb-10">
+            <span className="font-mono text-[11px] tracking-[0.22em] text-[#B8924A]">QIDS · v1.0</span>
+            <span className="h-px w-12 bg-[#B8924A]" />
+            <span className="kicker !text-[11px]">Quadrant Intelligence Development System</span>
           </div>
-          <div className="mt-16 flex flex-col md:flex-row gap-4 justify-center items-center">
-            <div className="editorial-rule hidden md:block w-32 self-center bg-primary"></div>
-            <span className="text-technical-sm font-technical-sm self-center">SCROLL TO EXPLORE 01 — 04</span>
-            <div className="editorial-rule hidden md:block w-32 self-center"></div>
+
+          <div className="grid grid-cols-12 gap-8 items-start">
+            <div className="col-span-12 lg:col-span-8">
+              <h1 className="text-5xl lg:text-7xl xl:text-[84px] font-extralight tracking-[-0.02em] leading-[0.98]">
+                Intelligence Has Been
+                <br />
+                Measured Wrong.{' '}
+                <span className="italic font-light text-[#B8924A]">Until Now.</span>
+              </h1>
+              <p className="mt-10 max-w-xl text-base lg:text-lg text-slate font-light leading-relaxed">
+                Four dimensions. One score. Cognitive, Emotional, Social, Adaptive.
+                A new blueprint for human potential — measured as an architecture,
+                not a number.
+              </p>
+              <div className="mt-10 flex flex-wrap gap-3">
+                <Link to="/signup" className="no-underline">
+                  <button className="group inline-flex items-center gap-3 bg-on-surface text-background px-5 py-3 rounded-sm text-sm tracking-wide hover:bg-[#B8924A] hover:text-ink transition-colors cursor-pointer border-none w-full sm:w-auto" style={EASE}>
+                    Begin Assessment
+                    <ArrowRight size={15} className="transition-transform group-hover:translate-x-0.5" style={EASE} />
+                  </button>
+                </Link>
+                <a href="#method" className="no-underline">
+                  <button className="inline-flex items-center gap-3 border border-on-surface text-on-surface px-5 py-3 rounded-sm text-sm tracking-wide hover:bg-on-surface hover:text-background transition-colors cursor-pointer bg-transparent w-full sm:w-auto" style={EASE}>
+                    Explore the Method
+                  </button>
+                </a>
+              </div>
+            </div>
+
+            <div className="col-span-12 lg:col-span-4 lg:pl-8">
+              <div className="border border-rule bg-surface p-6">
+                <div className="kicker mb-4">Constitution · 01</div>
+                <p className="text-sm leading-relaxed text-on-surface">
+                  Capabilities before tests. Architecture before scores. Four dimensions
+                  over one number. Evidence over intuition.
+                </p>
+                <div className="mt-6 pt-6 border-t border-rule flex items-center justify-between">
+                  <span className="kicker">Status</span>
+                  <span className="font-mono text-xs flex items-center gap-2 text-on-surface">
+                    <span className="h-1.5 w-1.5 bg-[#B8924A]" />
+                    4 dimensions · stable
+                  </span>
+                </div>
+              </div>
+
+              <div className="mt-4 border border-rule bg-surface p-6">
+                <div className="kicker mb-4">Measured across</div>
+                <ul className="text-sm space-y-2 text-on-surface">
+                  {['Individuals — Intelligence Blueprint', 'Institutions — Team Harmony', 'Researchers — Anonymized Data-Lake'].map((p) => (
+                    <li key={p} className="flex items-center justify-between gap-2 border-b border-rule last:border-0 pb-2 last:pb-0">
+                      <span>{p}</span>
+                      <ArrowRight size={13} className="opacity-40 -rotate-45" />
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
           </div>
         </div>
       </header>
 
-      <main className="space-y-32 md:space-y-64 pb-64">
+      <main className="max-w-[1200px] mx-auto lg:px-16 px-10">
         {/* I | THE PROBLEM */}
-        <section className="px-margin-mobile md:px-[80px] mx-auto" id="problem" style={{ maxWidth: '1440px' }}>
-          <div className="flex flex-col md:flex-row gap-12 md:gap-24">
-            <div className="md:w-1/3">
-              <span className="text-technical-sm font-technical-sm text-primary mb-4 block">01 / 04</span>
-              <h2 className="text-headline-md font-label-md uppercase tracking-widest text-on-surface">I | THE PROBLEM</h2>
+        <section id="problem" className="grid grid-cols-12 gap-8 py-20 border-b border-outline-variant">
+          <div className="col-span-12 lg:col-span-4">
+            <div className="lg:sticky lg:top-24">
+              <div className="font-mono text-[11px] tracking-[0.22em] text-[#B8924A] mb-3">§ 01</div>
+              <h2 className="text-2xl lg:text-3xl font-light tracking-tight leading-tight">The Problem</h2>
             </div>
-            <div className="md:w-2/3 space-y-8">
-              <h3 className="text-headline-lg font-headline-lg text-on-surface leading-tight">The IQ test is a relic of the industrial age. It measures logic in a vacuum, ignoring the fluid complexities of the modern world.</h3>
-              <div className="editorial-rule"></div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
-                <p className="text-body-md font-body-md text-on-surface-variant">Standard assessments prioritize rote pattern recognition over real-world adaptability. They fail to capture the nuances of collaborative intelligence and the emotional resilience required for leadership.</p>
-                <p className="text-body-md font-body-md text-on-surface-variant">In an era of artificial intelligence, human value lies not in calculation, but in the intersection of emotional depth and adaptive reasoning. QIDS maps this new territory.</p>
-              </div>
+          </div>
+          <div className="col-span-12 lg:col-span-8">
+            <h3 className="text-2xl lg:text-4xl font-extralight tracking-tight leading-snug">
+              The IQ test is a relic of the industrial age. It measures logic in a vacuum,
+              ignoring the fluid complexities of the modern world.
+            </h3>
+            <div className="editorial-rule my-10" />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+              <p className="text-sm lg:text-base text-slate leading-relaxed">
+                Standard assessments prioritize rote pattern recognition over real-world adaptability. They fail to capture the nuances of collaborative intelligence and the emotional resilience required for leadership.
+              </p>
+              <p className="text-sm lg:text-base text-slate leading-relaxed">
+                In an era of artificial intelligence, human value lies not in calculation, but in the intersection of emotional depth and adaptive reasoning. QIDS maps this new territory.
+              </p>
             </div>
           </div>
         </section>
 
         {/* II | THE FOUR DIMENSIONS */}
-        <section className="px-margin-mobile md:px-[80px] mx-auto" id="dimensions" style={{ maxWidth: '1440px' }}>
-          <div className="mb-24">
-            <span className="text-technical-sm font-technical-sm text-primary mb-4 block">02 / 04</span>
-            <h2 className="text-headline-md font-label-md uppercase tracking-widest text-on-surface">II | THE FOUR DIMENSIONS</h2>
+        <section id="dimensions" className="py-20 border-b border-outline-variant">
+          <div className="mb-14">
+            <div className="font-mono text-[11px] tracking-[0.22em] text-[#B8924A] mb-3">§ 02</div>
+            <h2 className="text-3xl lg:text-4xl font-light tracking-tight leading-tight max-w-xl">Four dimensions. One architecture.</h2>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 border-l-[0.5px] border-r-[0.5px] border-outline-variant">
-            {DIMENSIONS.map(d => (
-              <div key={d.num} className={`p-12 border-b-[0.5px] border-outline-variant ${d.num === 'DIMENSION 01' || d.num === 'DIMENSION 03' ? 'md:border-r-[0.5px]' : ''} group`}>
-                <div className={`h-[2px] w-12 ${d.accent} mb-8 transition-all duration-500 group-hover:w-full`}></div>
-                <span className={`text-technical-sm font-technical-sm ${d.color} block mb-2`}>{d.num}</span>
-                <h4 className="text-headline-md font-headline-md text-on-surface mb-6">{d.title}</h4>
-                <p className="text-body-md font-body-md text-on-surface-variant max-w-md">{d.desc}</p>
+          <div className="grid grid-cols-1 md:grid-cols-2 border-l border-t border-outline-variant">
+            {DIMENSIONS.map((d) => (
+              <div key={d.num} className="border-r border-b border-outline-variant p-8 lg:p-10 group bg-surface/30 hover:bg-surface transition-colors" style={EASE}>
+                <div className="h-px w-12 bg-[#B8924A] mb-7 transition-all duration-500 group-hover:w-full" style={EASE} />
+                <span className="font-mono text-[11px] tracking-[0.22em] text-[#B8924A] block mb-2">{d.num}</span>
+                <h4 className="text-xl lg:text-2xl font-light tracking-tight mb-4">{d.title}</h4>
+                <p className="text-sm text-slate leading-relaxed max-w-md">{d.desc}</p>
               </div>
             ))}
           </div>
         </section>
 
         {/* III | THE METHOD */}
-        <section className="px-margin-mobile md:px-[80px] mx-auto" id="method" style={{ maxWidth: '1440px' }}>
-          <div className="flex flex-col md:flex-row gap-24">
-            <div className="md:w-1/3">
-              <span className="text-technical-sm font-technical-sm text-primary mb-4 block">03 / 04</span>
-              <h2 className="text-headline-md font-label-md uppercase tracking-widest text-on-surface">III | THE METHOD</h2>
-              <div className="mt-16 sticky top-32">
-                <div className="bg-surface-container-low p-8 border-[0.5px] border-outline-variant">
-                  <div className="w-full h-auto mb-6 bg-surface-variant/30 flex items-center justify-center aspect-[4/3]">
-                    <span className="text-technical-sm font-technical-sm text-on-surface-variant">Neural Mapping Diagram</span>
+        <section id="method" className="grid grid-cols-12 gap-8 py-20 border-b border-outline-variant">
+          <div className="col-span-12 lg:col-span-4">
+            <div className="lg:sticky lg:top-24">
+              <div className="font-mono text-[11px] tracking-[0.22em] text-[#B8924A] mb-3">§ 03</div>
+              <h2 className="text-2xl lg:text-3xl font-light tracking-tight leading-tight">The Method</h2>
+              <div className="mt-12 hidden lg:block">
+                <div className="bg-surface border border-rule p-6">
+                  <div className="w-full aspect-[4/3] mb-5 bg-surface-2/40 border border-rule flex items-center justify-center">
+                    <span className="font-mono text-[10px] tracking-[0.18em] uppercase text-slate">Neural Mapping Diagram</span>
                   </div>
-                  <p className="text-technical-sm font-technical-sm text-on-surface-variant italic">Figure 01 | Neural Mapping Protocol | QIDS Foundation</p>
+                  <p className="font-mono text-[10px] text-slate italic">Figure 01 · Neural Mapping Protocol · QIDS Foundation</p>
                 </div>
               </div>
             </div>
-            <div className="md:w-2/3">
-              <ul className="divide-y-[0.5px] divide-outline-variant">
-                {PHASES.map(p => (
-                  <li key={p.num} className="py-12 group">
-                    <span className="text-technical-sm font-technical-sm text-primary block mb-4">{p.num}</span>
-                    <h3 className="text-headline-md font-headline-md text-on-surface mb-6">{p.title}</h3>
-                    <p className="text-body-md font-body-md text-on-surface-variant mb-8 leading-relaxed">{p.desc}</p>
-                    <div className="text-technical-sm font-technical-sm text-outline uppercase tracking-widest">{p.meta}</div>
-                  </li>
-                ))}
-              </ul>
-            </div>
+          </div>
+          <div className="col-span-12 lg:col-span-8">
+            <ul className="divide-y divide-outline-variant">
+              {PHASES.map((p) => (
+                <li key={p.num} className="py-12 first:pt-0 last:pb-0">
+                  <span className="font-mono text-[11px] tracking-[0.22em] text-[#B8924A] block mb-4">{p.num}</span>
+                  <h3 className="text-2xl lg:text-3xl font-extralight tracking-tight mb-5">{p.title}</h3>
+                  <p className="text-sm lg:text-base text-slate mb-6 leading-relaxed max-w-2xl">{p.desc}</p>
+                  <div className="font-mono text-[11px] tracking-[0.14em] uppercase text-slate">{p.meta}</div>
+                </li>
+              ))}
+            </ul>
           </div>
         </section>
 
         {/* IV | THREE AUDIENCES */}
-        <section className="px-margin-mobile md:px-[80px] mx-auto" id="audiences" style={{ maxWidth: '1440px' }}>
-          <div className="mb-24 text-center">
-            <span className="text-technical-sm font-technical-sm text-primary mb-4 block">04 / 04</span>
-            <h2 className="text-headline-md font-label-md uppercase tracking-widest text-on-surface">IV | THREE AUDIENCES</h2>
+        <section id="audiences" className="py-20">
+          <div className="mb-14 flex items-end justify-between gap-8">
+            <div>
+              <div className="font-mono text-[11px] tracking-[0.22em] text-[#B8924A] mb-3">§ 04</div>
+              <h2 className="text-3xl lg:text-4xl font-light tracking-tight leading-tight max-w-xl">Three audiences. One system.</h2>
+            </div>
+            <p className="hidden lg:block max-w-sm text-sm text-slate leading-relaxed">
+              The same four dimensions serve personal mastery, institutional design, and research — composed, never reinvented.
+            </p>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {AUDIENCES.map(a => (
-              <div key={a.label} className="border-l-4 border-surface-variant p-8 bg-surface-container-lowest h-full flex flex-col">
-                <span className="text-technical-sm font-technical-sm text-primary block mb-4">{a.label}</span>
-                <h4 className="text-headline-md font-headline-md text-on-surface mb-6">{a.title}</h4>
-                <p className="text-body-md font-body-md text-on-surface-variant mb-auto">{a.desc}</p>
-                <Link to="/signup" className="mt-8 text-label-md font-label-md text-primary flex items-center gap-2 group no-underline inline-block">
+          <div className="grid grid-cols-1 md:grid-cols-3 border-l border-t border-outline-variant">
+            {AUDIENCES.map((a) => (
+              <div key={a.label} className="border-r border-b border-outline-variant p-8 lg:p-9 flex flex-col bg-surface/30 hover:bg-surface transition-colors" style={EASE}>
+                <span className="font-mono text-[11px] tracking-[0.22em] text-[#B8924A] block mb-4">{a.label}</span>
+                <h4 className="text-xl lg:text-2xl font-light tracking-tight mb-5">{a.title}</h4>
+                <p className="text-sm text-slate leading-relaxed mb-auto">{a.desc}</p>
+                <Link to="/signup" className="mt-8 inline-flex items-center gap-2 font-mono text-[11px] tracking-[0.14em] uppercase text-on-surface border-b border-[#B8924A] pb-1 w-fit group no-underline hover:gap-3.5 transition-all" style={EASE}>
                   {a.cta}
-                  <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />
+                  <ArrowRight size={14} />
                 </Link>
               </div>
             ))}
           </div>
         </section>
-
-        {/* ─── FINAL CTA ─── */}
-        <section className="px-margin-mobile md:px-[80px] py-32 bg-primary text-on-primary text-center">
-          <h2 className="text-display-xl font-display-xl mb-12">Determine Your Score.</h2>
-          <Link to="/signup" className="no-underline inline-block">
-            <button className="bg-on-primary text-primary px-12 py-6 rounded-xl text-label-md font-label-md font-bold tracking-widest hover:bg-on-primary/90 hover:translate-y-[-1px] active:translate-y-0 transition-all duration-150 uppercase cursor-pointer border-none">
-              START QIDS ASSESSMENT
-            </button>
-          </Link>
-          <div className="mt-8 flex flex-col md:flex-row items-center justify-center gap-4 text-technical-sm font-technical-sm">
-            <span className="opacity-60">Estimated Time: 51 Minutes | No Interruption Required</span>
-            <span className="opacity-40 hidden md:inline">·</span>
-            <Link to="/login" className="text-on-primary underline underline-offset-4 opacity-80 hover:opacity-100 transition-opacity no-underline">Already have an account? Sign in</Link>
-          </div>
-        </section>
       </main>
 
+      {/* ─── CLOSING CTA ─── */}
+      <section className="bg-ink text-bone">
+        <div className="max-w-[1200px] mx-auto px-10 lg:px-16 py-28 flex flex-col items-center text-center">
+          <QidsMark size={44} className="text-[#B8924A] mb-10" />
+          <h2 className="text-3xl lg:text-5xl font-extralight tracking-tight max-w-2xl leading-snug">
+            Determine your score. Understand your architecture.
+          </h2>
+          <Link to="/signup" className="mt-12 no-underline">
+            <button className="bg-bone text-ink px-8 py-4 rounded-sm font-mono text-[12px] tracking-[0.14em] uppercase hover:bg-[#B8924A] hover:text-ink transition-colors cursor-pointer border-none" style={EASE}>
+              Start QIDS Assessment
+            </button>
+          </Link>
+          <div className="mt-8 flex flex-col md:flex-row items-center justify-center gap-4 font-mono text-[11px] tracking-[0.08em] text-bone/50">
+            <span>Estimated time: 51 minutes · No interruption required</span>
+            <span className="hidden md:inline h-1 w-1 bg-[#B8924A]" />
+            <Link to="/login" className="text-[#B8924A] underline-offset-4 hover:underline no-underline">Already have an account? Sign in</Link>
+          </div>
+          <div className="mt-16 font-mono text-[11px] tracking-[0.32em] text-[#B8924A]">
+            BEYOND IQ · BEYOND EQ
+          </div>
+        </div>
+      </section>
+
       {/* ─── FOOTER ─── */}
-      <footer className="bg-background border-t-[0.5px] border-outline-variant pt-24 pb-12 px-margin-mobile md:px-[80px]">
-        <div className="mx-auto grid grid-cols-2 md:grid-cols-4 gap-12 mb-24" style={{ maxWidth: '1440px' }}>
+      <footer className="bg-background border-t border-outline-variant pt-20 pb-10 px-10 lg:px-16">
+        <div className="max-w-[1200px] mx-auto grid grid-cols-2 md:grid-cols-4 gap-12 mb-20">
           <div>
-            <h5 className="text-label-md font-label-md text-primary mb-8">PLATFORM</h5>
-            <ul className="space-y-4 text-technical-sm font-technical-sm text-on-surface-variant">
-              <li><a className="hover:text-primary transition-colors no-underline" href="#method">The Assessment</a></li>
-              <li><a className="hover:text-primary transition-colors no-underline" href="#dimensions">Dimensions</a></li>
-              <li><Link className="hover:text-primary transition-colors no-underline" to="/signup">Enterprise</Link></li>
-              <li><Link className="hover:text-primary transition-colors no-underline" to="/signup">Academic Use</Link></li>
+            <h5 className="kicker mb-6">Platform</h5>
+            <ul className="space-y-3 font-mono text-[12px] text-slate">
+              <li><a className="hover:text-on-surface transition-colors no-underline" href="#method">The Assessment</a></li>
+              <li><a className="hover:text-on-surface transition-colors no-underline" href="#dimensions">Dimensions</a></li>
+              <li><Link className="hover:text-on-surface transition-colors no-underline" to="/signup">Enterprise</Link></li>
+              <li><Link className="hover:text-on-surface transition-colors no-underline" to="/signup">Academic Use</Link></li>
             </ul>
           </div>
           <div>
-            <h5 className="text-label-md font-label-md text-primary mb-8">RESOURCES</h5>
-            <ul className="space-y-4 text-technical-sm font-technical-sm text-on-surface-variant">
-              <li><Link className="hover:text-primary transition-colors no-underline" to="/signup">Methodology Paper</Link></li>
-              <li><Link className="hover:text-primary transition-colors no-underline" to="/signup">Case Studies</Link></li>
-              <li><Link className="hover:text-primary transition-colors no-underline" to="/signup">API Docs</Link></li>
-              <li><Link className="hover:text-primary transition-colors no-underline" to="/signup">Help Center</Link></li>
+            <h5 className="kicker mb-6">Resources</h5>
+            <ul className="space-y-3 font-mono text-[12px] text-slate">
+              <li><Link className="hover:text-on-surface transition-colors no-underline" to="/signup">Methodology Paper</Link></li>
+              <li><Link className="hover:text-on-surface transition-colors no-underline" to="/signup">Case Studies</Link></li>
+              <li><Link className="hover:text-on-surface transition-colors no-underline" to="/signup">API Docs</Link></li>
+              <li><Link className="hover:text-on-surface transition-colors no-underline" to="/signup">Help Center</Link></li>
             </ul>
           </div>
           <div>
-            <h5 className="text-label-md font-label-md text-primary mb-8">COMPANY</h5>
-            <ul className="space-y-4 text-technical-sm font-technical-sm text-on-surface-variant">
-              <li><Link className="hover:text-primary transition-colors no-underline" to="/signup">Our Ethos</Link></li>
-              <li><Link className="hover:text-primary transition-colors no-underline" to="/signup">Privacy Policy</Link></li>
-              <li><Link className="hover:text-primary transition-colors no-underline" to="/signup">Terms of Service</Link></li>
-              <li><Link className="hover:text-primary transition-colors no-underline" to="/signup">Contact</Link></li>
+            <h5 className="kicker mb-6">Company</h5>
+            <ul className="space-y-3 font-mono text-[12px] text-slate">
+              <li><Link className="hover:text-on-surface transition-colors no-underline" to="/signup">Our Ethos</Link></li>
+              <li><Link className="hover:text-on-surface transition-colors no-underline" to="/signup">Privacy Policy</Link></li>
+              <li><Link className="hover:text-on-surface transition-colors no-underline" to="/signup">Terms of Service</Link></li>
+              <li><Link className="hover:text-on-surface transition-colors no-underline" to="/signup">Contact</Link></li>
             </ul>
           </div>
           <div className="col-span-2 md:col-span-1">
-            <h5 className="text-label-md font-label-md text-primary mb-8">MANIFESTO</h5>
-            <p className="text-technical-sm font-technical-sm text-on-surface-variant leading-relaxed">
+            <h5 className="kicker mb-6">Manifesto</h5>
+            <p className="text-sm text-slate leading-relaxed">
               Intelligence is not a static quantity but a dynamic architecture. QIDS exists to map the invisible structures of human excellence.
             </p>
           </div>
         </div>
-        <div className="flex flex-col md:flex-row justify-between items-center border-t-[0.5px] border-outline-variant pt-8 text-technical-sm font-technical-sm text-on-surface-variant opacity-50">
+        <div className="max-w-[1200px] mx-auto flex flex-col md:flex-row justify-between items-center border-t border-outline-variant pt-8 font-mono text-[11px] text-slate/70">
           <span>© 2025 QIDS INTELLECTUAL SYSTEMS</span>
-          <span className="mt-4 md:mt-0 tracking-[0.3em]">BEYOND IQ | BEYOND EQ</span>
+          <span className="mt-4 md:mt-0 tracking-[0.3em]">BEYOND IQ · BEYOND EQ</span>
         </div>
       </footer>
     </div>

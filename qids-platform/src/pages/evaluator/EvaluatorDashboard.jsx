@@ -157,7 +157,7 @@ export default function EvaluatorDashboard() {
                                 <div key={pillar} className="size-[22px] flex items-center justify-center border-[0.5px]"
                                   style={{
                                     borderRadius: '6px',
-                                    borderColor: ev ? '#ebc073' : '#4e4638',
+                                    borderColor: ev ? '#B8924A' : '#DBD6CA',
                                     background: ev ? 'rgba(235,192,115,0.08)' : 'transparent'
                                   }}
                                   title={`${pillar}: ${ev ? 'Scored' : 'Pending'}`}>

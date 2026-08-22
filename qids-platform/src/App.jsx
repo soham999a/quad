@@ -2,9 +2,10 @@ import React, { useState, createContext, useContext, useEffect } from 'react';
 import { BrowserRouter, Routes, Route, NavLink, useNavigate, Navigate, useLocation } from 'react-router-dom';
 import {
   Brain, Map, ClipboardList, TrendingUp, FileText, UserCheck,
-  ChevronRight, Menu, LogOut, Home, BookOpen, ListChecks, X, Shield, Users, Sparkles, BarChart3, Plus, Building2, Target
+  ChevronRight, Menu, LogOut, Home, BookOpen, ListChecks, X, Shield, Users, Sparkles, Building2, Target
 } from 'lucide-react';
 import { PILLARS, CONTEXTS, mergeEvaluationScores } from './data/qidsData';
+import QidsMark from './components/QidsMark';
 import { computePillarScore } from './core/engine/qids';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
@@ -47,7 +48,7 @@ export const useApp = () => useContext(AppContext);
 
 const NAV_GROUPS = [
   {
-    label: 'MAIN',
+    label: 'PLATFORM',
     items: [
       { path: '/app/dashboard', label: 'Dashboard', icon: Home },
       { path: '/app/assessment', label: 'Assessment', icon: ClipboardList },
@@ -56,7 +57,7 @@ const NAV_GROUPS = [
     ]
   },
   {
-    label: 'RESOURCES',
+    label: 'KNOWLEDGE',
     items: [
       { path: '/app/pillars', label: 'Four Pillars', icon: Brain },
       { path: '/app/framework', label: 'Framework Guide', icon: Map },
@@ -111,97 +112,93 @@ function Sidebar({ collapsed, setCollapsed }) {
     roleNavItems.push({ path: '/app/admin', label: 'Admin Panel', icon: Shield });
   }
 
+  const itemClass = ({ isActive }, withCode) =>
+    `group flex items-center gap-3 py-2.5 pr-4 text-[13px] border-l-2 transition-colors ${
+      isActive
+        ? 'border-[#B8924A] bg-[#1C1C1C] text-bone'
+        : 'border-transparent text-[#D1CCC2]/60 hover:text-bone hover:bg-[#1C1C1C]/60'
+    } ${collapsed ? 'justify-center mx-2 pl-0' : 'pl-4'}`;
+
+  let codeCounter = 0;
+  const nextCode = () => String(codeCounter++).padStart(2, '0');
+
   return (
-    <aside className="desktop-sidebar fixed left-0 top-0 h-screen flex-col z-40 bg-background border-r-[0.5px] border-outline-variant"
-      style={{ width: collapsed ? 60 : 228, transition: 'width 0.3s cubic-bezier(0.4,0,0.2,1)' }}>
-      <div className="px-6 mt-8 mb-12" style={{ overflow: 'hidden' }}>
-        {collapsed ? (
-          <div className="flex justify-center">
-            <Brain size={20} className="text-primary" />
+    <aside className="desktop-sidebar fixed left-0 top-0 h-screen flex-col z-40 bg-sidebar text-[#D1CCC2]"
+      style={{ width: collapsed ? 64 : 260, transition: 'width 0.3s cubic-bezier(0.4,0,0.2,1)' }}>
+
+      <div className={`flex items-center gap-3 pt-7 pb-6 mx-5 border-b border-[#262626] ${collapsed ? 'justify-center px-0' : ''}`}>
+        <QidsMark size={collapsed ? 24 : 26} className="text-[#B8924A] flex-shrink-0" />
+        {!collapsed && (
+          <div className="leading-tight overflow-hidden">
+            <div className="text-[11px] tracking-[0.22em] text-[#B8924A] font-mono">QIDS</div>
+            <div className="text-[12px] text-bone font-medium tracking-wide truncate">Intelligence Development</div>
           </div>
-        ) : (
-          <>
-            <div className="text-label-md font-label-md uppercase tracking-widest text-primary mb-1">QIDS Platform</div>
-<div className="text-technical-sm font-technical-sm text-surface-variant">ARCHITECTURE</div>
-          </>
         )}
       </div>
 
-      <nav className="flex-grow overflow-y-auto" aria-label="Sections">
+      <nav className="flex-grow overflow-y-auto px-2 py-3" aria-label="Sections">
         {NAV_GROUPS.map(group => (
-          <div key={group.label} className="mb-2">
+          <div key={group.label} className="mt-5 first:mt-0">
             {!collapsed && (
-              <div className="text-technical-sm font-technical-sm text-surface-variant uppercase tracking-widest px-4 mb-2">{group.label}</div>
+              <div className="px-4 pb-2 text-[10px] tracking-[0.22em] text-[#D1CCC2]/40 font-mono uppercase">{group.label}</div>
             )}
             {group.items.map(({ path, label, icon: Icon }) => (
-              <NavLink key={path} to={path} end={path === '/app/dashboard'}
-                className={({ isActive }) =>
-                  `flex items-center gap-4 py-3 transition-all ${isActive
-                    ? 'text-primary font-bold border-l-2 border-primary bg-surface-container-low'
-                    : 'text-on-surface-variant hover:text-primary hover:bg-surface-container-low'
-                  } ${collapsed ? 'justify-center mx-2 rounded-lg border-l-0' : 'pl-4'}`
-                }>
-                <Icon size={16} strokeWidth={1.5} />
-                {!collapsed && <span className="text-label-md font-label-md">{label}</span>}
+              <NavLink key={path} to={path} end={path === '/app/dashboard'} className={(s) => itemClass(s)} title={label}>
+                <span className={`font-mono text-[10px] opacity-50 ${collapsed ? 'hidden' : ''}`}>{nextCode()}</span>
+                <Icon size={15} strokeWidth={1.5} className="opacity-80" />
+                {!collapsed && <span className="tracking-wide truncate">{label}</span>}
               </NavLink>
             ))}
           </div>
         ))}
 
         {roleNavItems.length > 0 && (
-          <div className="mb-2">
+          <div className="mt-5">
             {!collapsed && (
-              <div className="text-technical-sm font-technical-sm text-surface-variant uppercase tracking-widest px-4 mb-2">
-                {role === 'admin' ? 'ADMIN' : role === 'teacher' ? 'TEACHER' : role === 'evaluator' ? 'EVALUATOR' : 'TOOLS'}
+              <div className="px-4 pb-2 text-[10px] tracking-[0.22em] text-[#D1CCC2]/40 font-mono uppercase">
+                {role === 'admin' ? 'ADMIN' : role === 'teacher' ? 'SCHOOL' : role === 'evaluator' ? 'EVALUATION' : 'PERSONAL'}
               </div>
             )}
             {roleNavItems.map(({ path, label, icon: Icon }) => (
-              <NavLink key={path} to={path} end
-                className={({ isActive }) =>
-                  `flex items-center gap-4 py-3 transition-all ${isActive
-                    ? 'text-primary font-bold border-l-2 border-primary bg-surface-container-low'
-                    : 'text-on-surface-variant hover:text-primary hover:bg-surface-container-low'
-                  } ${collapsed ? 'justify-center mx-2 rounded-lg border-l-0' : 'pl-4'}`
-                }>
-                <Icon size={16} strokeWidth={1.5} />
-                {!collapsed && <span className="text-label-md font-label-md">{label}</span>}
+              <NavLink key={path} to={path} end className={(s) => itemClass(s)} title={label}>
+                <span className={`font-mono text-[10px] ${collapsed ? 'hidden' : ''} opacity-50`}>{nextCode()}</span>
+                <Icon size={15} strokeWidth={1.5} className="opacity-80" />
+                {!collapsed && <span className="tracking-wide truncate">{label}</span>}
               </NavLink>
             ))}
           </div>
         )}
       </nav>
 
-      <div className="px-6 mb-8">
+      <div className="mx-5 mb-4">
         <button onClick={() => navigate('/app/assessment')}
-          className="btn-primary glow w-full">
-          NEW ASSESSMENT
+          className={`btn-primary w-full ${collapsed ? '!px-0' : ''}`}>
+          {collapsed ? '+' : 'NEW ASSESSMENT'}
         </button>
       </div>
 
       <div className="mt-auto">
         {user && (
-          <div className="border-t-[0.5px] border-outline-variant py-4 px-4">
+          <div className="border-t border-[#262626] py-4 px-4">
             {!collapsed && (
               <>
-                <div className="flex items-center gap-3 px-2 mb-2">
-                  <div className="w-8 h-8 rounded-full bg-surface-container-highest flex items-center justify-center text-technical-sm font-technical-sm text-on-surface flex-shrink-0">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="w-8 h-8 rounded-none bg-[#262626] flex items-center justify-center text-[10px] font-mono text-bone flex-shrink-0">
                     {(userProfile?.name || user.displayName || user.email || 'U')[0].toUpperCase()}
                   </div>
                   <div className="overflow-hidden flex-1 min-w-0">
-                    <div className="text-label-md font-label-md text-on-surface truncate">
-                      {userProfile?.name || user.displayName || 'User'}
-                    </div>
-                    <div className="text-technical-sm font-technical-sm text-surface-variant capitalize">{userProfile?.role || 'individual'}</div>
+                    <div className="text-[13px] text-bone truncate">{userProfile?.name || user.displayName || 'User'}</div>
+                    <div className="text-[10px] font-mono text-[#D1CCC2]/50 capitalize">{userProfile?.role || 'individual'}</div>
                   </div>
                 </div>
                 <button
                   onClick={() => setShowRoleSwitcher(!showRoleSwitcher)}
-                  className="w-full text-left px-2 mb-2 text-technical-sm font-technical-sm text-primary hover:underline cursor-pointer bg-transparent border-none p-0 py-1"
+                  className="w-full text-left mb-2 text-[10px] font-mono uppercase tracking-[0.14em] text-[#B8924A]/80 hover:text-[#B8924A] cursor-pointer bg-transparent border-none p-0 py-1"
                 >
-                  {showRoleSwitcher ? 'Hide role switcher' : 'Switch role (dev)'}
+                  {showRoleSwitcher ? '— Hide roles' : '+ Switch role'}
                 </button>
                 {showRoleSwitcher && (
-                  <div className="px-2 mb-3 space-y-1">
+                  <div className="mb-3 space-y-1">
                     {ROLE_OPTIONS.map(r => (
                       <button
                         key={r}
@@ -210,10 +207,10 @@ function Sidebar({ collapsed, setCollapsed }) {
                           setShowRoleSwitcher(false);
                           window.location.reload();
                         }}
-                        className={`w-full text-left px-3 py-1.5 text-technical-sm font-technical-sm border-[0.5px] transition-all cursor-pointer ${
+                        className={`w-full text-left px-3 py-1.5 text-[11px] font-mono border transition-colors cursor-pointer ${
                           role === r
-                            ? 'bg-primary/10 border-primary/30 text-primary'
-                            : 'bg-transparent border-outline-variant text-surface-variant hover:border-primary/20'
+                            ? 'bg-[#1C1C1C] border-[#B8924A]/60 text-[#B8924A]'
+                            : 'bg-transparent border-[#262626] text-[#D1CCC2]/60 hover:border-[#B8924A]/30 hover:text-bone'
                         }`}
                       >
                         {r.charAt(0).toUpperCase() + r.slice(1)}
@@ -224,25 +221,36 @@ function Sidebar({ collapsed, setCollapsed }) {
               </>
             )}
             {collapsed && (
-              <div className="flex justify-center mb-2">
-                <div className="w-8 h-8 rounded-full bg-surface-container-highest flex items-center justify-center text-technical-sm font-technical-sm text-on-surface">
+              <div className="flex justify-center mb-3">
+                <div className="w-8 h-8 bg-[#262626] flex items-center justify-center text-[10px] font-mono text-bone">
                   {(userProfile?.name || user.displayName || user.email || 'U')[0].toUpperCase()}
                 </div>
               </div>
             )}
             <button onClick={handleLogout} aria-label="Sign out"
-              className="w-full flex items-center gap-3 py-3 pl-4 text-on-surface-variant hover:text-error hover:bg-error/10 transition-all cursor-pointer">
-              <LogOut size={16} strokeWidth={1.5} />
-              {!collapsed && <span className="text-label-md font-label-md">Sign Out</span>}
+              className={`w-full flex items-center gap-3 py-2 text-[13px] text-[#D1CCC2]/60 hover:text-bone transition-colors cursor-pointer ${collapsed ? 'justify-center px-0' : 'pl-1'}`}>
+              <LogOut size={15} strokeWidth={1.5} />
+              {!collapsed && <span className="tracking-wide">Sign Out</span>}
             </button>
           </div>
         )}
-      </div>
 
-      <button onClick={() => setCollapsed(!collapsed)} aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-        className="mx-4 mb-4 py-2 flex items-center justify-center border-[0.5px] border-outline-variant text-on-surface-variant hover:text-primary hover:border-primary transition-all cursor-pointer">
-        {collapsed ? <ChevronRight size={13} /> : <Menu size={13} />}
-      </button>
+        <div className={`border-t border-[#262626] px-1 py-4 text-[10px] font-mono leading-relaxed ${collapsed ? 'mx-4 px-0 text-center' : 'text-[#D1CCC2]/45'}`}>
+          {collapsed ? (
+            <span className="inline-block h-1.5 w-1.5 bg-[#B8924A]" />
+          ) : (
+            <div className="flex items-center justify-between">
+              <span>v1.0 · main</span>
+              <span className="h-1.5 w-1.5 bg-[#B8924A]" />
+            </div>
+          )}
+        </div>
+
+        <button onClick={() => setCollapsed(!collapsed)} aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+          className="mx-5 mb-4 py-2 flex items-center justify-center border border-[#262626] text-[#D1CCC2]/60 hover:text-[#B8924A] hover:border-[#B8924A]/50 transition-colors cursor-pointer">
+          {collapsed ? <ChevronRight size={13} /> : <Menu size={13} />}
+        </button>
+      </div>
     </aside>
   );
 }
@@ -256,13 +264,13 @@ function MobileNav({ onMenuOpen }) {
         return (
           <NavLink key={path} to={path} end={path === '/app/dashboard'}
             className={`mobile-nav-item ${isActive ? 'active' : ''}`}>
-            <Icon size={20} strokeWidth={isActive ? 2.5 : 1.5} className="mobile-nav-icon" />
-            <span style={{ fontSize: 10, fontWeight: isActive ? 600 : 400 }}>{label}</span>
+            <Icon size={19} strokeWidth={isActive ? 2 : 1.5} className="mobile-nav-icon" />
+            <span style={{ fontSize: 10, fontWeight: isActive ? 500 : 400 }}>{label}</span>
           </NavLink>
         );
       })}
       <button onClick={onMenuOpen} aria-label="More menu" className="mobile-nav-item">
-        <Menu size={20} strokeWidth={1.5} className="mobile-nav-icon" />
+        <Menu size={19} strokeWidth={1.5} className="mobile-nav-icon" />
         <span style={{ fontSize: 10 }}>More</span>
       </button>
     </nav>
@@ -275,26 +283,29 @@ function MobileMenuDrawer({ onClose }) {
   const handleLogout = async () => { await logout(); onClose(); navigate('/login'); };
 
   return (
-    <div className="fixed inset-0 z-[100] bg-surface overflow-y-auto animate-fade-up">
-      <div className="flex justify-between items-center p-6 border-b-[0.5px] border-outline-variant">
-        <div>
-          <div className="text-label-md font-label-md uppercase tracking-widest text-primary">QIDS Platform</div>
-          <div className="text-technical-sm font-technical-sm text-surface-variant">ARCHITECTURE</div>
+    <div className="fixed inset-0 z-[100] bg-sidebar text-[#D1CCC2] overflow-y-auto animate-fade-up">
+      <div className="flex justify-between items-center p-6 border-b border-[#262626]">
+        <div className="flex items-center gap-3">
+          <QidsMark size={24} className="text-[#B8924A]" />
+          <div>
+            <div className="text-[11px] tracking-[0.22em] text-[#B8924A] font-mono">QIDS</div>
+            <div className="text-[12px] text-bone">Intelligence Development</div>
+          </div>
         </div>
         <button onClick={onClose} aria-label="Close menu"
-          className="p-2 border-[0.5px] border-outline-variant text-on-surface-variant hover:text-primary transition-all cursor-pointer bg-transparent">
+          className="p-2 border border-[#262626] text-[#D1CCC2]/60 hover:text-bone transition-colors cursor-pointer bg-transparent">
           <X size={16} />
         </button>
       </div>
 
       {user && (
-        <div className="flex items-center gap-4 p-6 border-b-[0.5px] border-outline-variant">
-          <div className="w-10 h-10 bg-surface-container-highest flex items-center justify-center text-technical-sm font-technical-sm text-on-surface flex-shrink-0">
+        <div className="flex items-center gap-4 p-6 border-b border-[#262626]">
+          <div className="w-10 h-10 bg-[#262626] flex items-center justify-center text-[11px] font-mono text-bone flex-shrink-0">
             {(userProfile?.name || user.displayName || user.email || 'U')[0].toUpperCase()}
           </div>
           <div>
-            <div className="text-label-md font-label-md text-on-surface">{userProfile?.name || user.displayName || 'User'}</div>
-            <div className="text-technical-sm font-technical-sm text-surface-variant capitalize">{userProfile?.role || 'individual'}</div>
+            <div className="text-[13px] text-bone">{userProfile?.name || user.displayName || 'User'}</div>
+            <div className="text-[10px] font-mono text-[#D1CCC2]/50 capitalize">{userProfile?.role || 'individual'}</div>
           </div>
         </div>
       )}
@@ -302,15 +313,15 @@ function MobileMenuDrawer({ onClose }) {
       <div className="p-6 space-y-8">
         {NAV_GROUPS.map(group => (
           <div key={group.label}>
-            <div className="text-technical-sm font-technical-sm text-surface-variant uppercase tracking-widest mb-3">{group.label}</div>
+            <div className="text-[10px] tracking-[0.22em] text-[#D1CCC2]/40 font-mono uppercase mb-3">{group.label}</div>
             {group.items.map(({ path, label, icon: Icon }) => (
               <NavLink key={path} to={path} end={path === '/app/dashboard'} onClick={onClose}
                 className={({ isActive }) =>
-                  `flex items-center gap-4 py-3 transition-all ${isActive ? 'text-primary font-bold border-l-2 border-primary pl-3' : 'text-on-surface-variant hover:text-primary pl-3'
+                  `flex items-center gap-4 py-3 transition-colors ${isActive ? 'text-[#B8924A] border-l-2 border-[#B8924A] pl-3' : 'text-[#D1CCC2]/70 hover:text-bone pl-3'
                   }`
                 }>
-                <Icon size={16} strokeWidth={1.5} />
-                <span className="text-label-md font-label-md">{label}</span>
+                <Icon size={15} strokeWidth={1.5} />
+                <span className="text-[13px] tracking-wide">{label}</span>
               </NavLink>
             ))}
           </div>
@@ -318,46 +329,46 @@ function MobileMenuDrawer({ onClose }) {
 
         {(userProfile?.role === 'individual' || userProfile?.role === 'student') && (
           <div>
-            <div className="text-technical-sm font-technical-sm text-surface-variant uppercase tracking-widest mb-3">ASSESSMENT</div>
+            <div className="text-[10px] tracking-[0.22em] text-[#D1CCC2]/40 font-mono uppercase mb-3">PERSONAL</div>
             <NavLink to="/app/my-evaluator" onClick={onClose}
               className={({ isActive }) =>
-                `flex items-center gap-4 py-3 transition-all ${isActive ? 'text-primary font-bold border-l-2 border-primary pl-3' : 'text-on-surface-variant hover:text-primary pl-3'
+                `flex items-center gap-4 py-3 transition-colors ${isActive ? 'text-[#B8924A] border-l-2 border-[#B8924A] pl-3' : 'text-[#D1CCC2]/70 hover:text-bone pl-3'
                 }`}>
-              <UserCheck size={16} strokeWidth={1.5} />
-              <span className="text-label-md font-label-md">My Evaluator</span>
+              <UserCheck size={15} strokeWidth={1.5} />
+              <span className="text-[13px] tracking-wide">My Evaluator</span>
             </NavLink>
           </div>
         )}
 
         {(userProfile?.role === 'evaluator' || userProfile?.role === 'admin') && (
           <div>
-            <div className="text-technical-sm font-technical-sm text-surface-variant uppercase tracking-widest mb-3">
+            <div className="text-[10px] tracking-[0.22em] text-[#D1CCC2]/40 font-mono uppercase mb-3">
               {userProfile?.role === 'admin' ? 'ADMIN' : 'EVALUATION'}
             </div>
             <NavLink to="/app/evaluator" onClick={onClose}
               className={({ isActive }) =>
-                `flex items-center gap-4 py-3 transition-all ${isActive ? 'text-primary font-bold border-l-2 border-primary pl-3' : 'text-on-surface-variant hover:text-primary pl-3'
+                `flex items-center gap-4 py-3 transition-colors ${isActive ? 'text-[#B8924A] border-l-2 border-[#B8924A] pl-3' : 'text-[#D1CCC2]/70 hover:text-bone pl-3'
                 }`}>
-              <Users size={16} strokeWidth={1.5} />
-              <span className="text-label-md font-label-md">Evaluator Dashboard</span>
+              <Users size={15} strokeWidth={1.5} />
+              <span className="text-[13px] tracking-wide">Evaluator Dashboard</span>
             </NavLink>
             {userProfile?.role === 'admin' && (
               <NavLink to="/app/admin" onClick={onClose}
                 className={({ isActive }) =>
-                  `flex items-center gap-4 py-3 transition-all ${isActive ? 'text-primary font-bold border-l-2 border-primary pl-3' : 'text-on-surface-variant hover:text-primary pl-3'
+                  `flex items-center gap-4 py-3 transition-colors ${isActive ? 'text-[#B8924A] border-l-2 border-[#B8924A] pl-3' : 'text-[#D1CCC2]/70 hover:text-bone pl-3'
                   }`}>
-                <Shield size={16} strokeWidth={1.5} />
-                <span className="text-label-md font-label-md">Admin Panel</span>
+                <Shield size={15} strokeWidth={1.5} />
+                <span className="text-[13px] tracking-wide">Admin Panel</span>
               </NavLink>
             )}
           </div>
         )}
       </div>
 
-      <div className="p-6 border-t-[0.5px] border-outline-variant" style={{ paddingBottom: 'calc(24px + env(safe-area-inset-bottom, 0px))' }}>
+      <div className="p-6 border-t border-[#262626]" style={{ paddingBottom: 'calc(24px + env(safe-area-inset-bottom, 0px))' }}>
         <button onClick={handleLogout}
-          className="w-full flex items-center justify-center gap-3 py-4 border-[0.5px] border-error/30 text-error text-label-md font-label-md hover:bg-error/10 transition-all cursor-pointer bg-transparent">
-          <LogOut size={16} strokeWidth={1.5} />
+          className="w-full flex items-center justify-center gap-3 py-4 border border-[#262626] text-[#D1CCC2]/70 text-[13px] tracking-wide hover:text-bone hover:border-[#B8924A]/50 transition-colors cursor-pointer bg-transparent">
+          <LogOut size={15} strokeWidth={1.5} />
           Sign Out
         </button>
       </div>
@@ -369,33 +380,39 @@ function TopBar({ context, setContext, onMenuOpen }) {
   const navigate = useNavigate();
   return (
     <header className="topbar">
-      <div className="flex items-center gap-12 topbar-nav">
-        <div className="text-headline-md font-headline-md font-medium text-primary uppercase tracking-tight">QIDS</div>
-        <nav className="hidden md:flex gap-8" aria-label="Primary">
-          <NavLink to="/app/dashboard" className="text-label-md font-label-md text-primary border-b-[0.5px] border-primary pb-1 transition-opacity">
-            I | ANALYTICS
+      <div className="flex items-center gap-10 topbar-nav">
+        <div className="flex items-center gap-3">
+          <QidsMark size={20} className="text-[#B8924A]" />
+          <div className="font-mono text-[11px] tracking-[0.22em] uppercase text-slate">
+            QIDS · Platform
+          </div>
+        </div>
+        <nav className="hidden md:flex items-center gap-3" aria-label="Primary">
+          <NavLink to="/app/dashboard" className="flex items-center gap-2 font-mono text-[11px] tracking-[0.18em] uppercase text-ink border-b border-[#B8924A] pb-1 transition-colors no-underline">
+            Analytics
           </NavLink>
-          <NavLink to="/app/report" className="text-label-md font-label-md text-on-surface-variant hover:text-primary transition-colors">
-            II | ARCHIVE
+          <span className="h-px w-8 bg-[#B8924A]" />
+          <NavLink to="/app/report" className="font-mono text-[11px] tracking-[0.18em] uppercase text-slate hover:text-ink transition-colors no-underline">
+            Archive
           </NavLink>
         </nav>
       </div>
       <div className="flex items-center gap-6 topbar-actions">
         <label className="flex items-center gap-2 cursor-pointer">
-          <span className="text-technical-sm font-technical-sm text-surface-variant uppercase tracking-widest">Context</span>
+          <span className="font-mono text-[10px] tracking-[0.22em] uppercase text-slate/70">Context</span>
           <select value={context} onChange={e => setContext(e.target.value)}
-            className="bg-transparent text-technical-sm font-technical-sm text-on-surface-variant border-[0.5px] border-outline-variant px-3 py-2 rounded-md cursor-pointer hover:border-primary/50 transition-colors">
+            className="bg-transparent font-mono text-[12px] text-slate border border-rule px-3 py-1.5 rounded-sm cursor-pointer hover:border-[#B8924A]/60 transition-colors">
             {CONTEXTS.map(c => <option key={c.id} value={c.id}>{c.label}</option>)}
           </select>
         </label>
         <button onClick={() => navigate('/app/report')}
-          className="btn-primary">
+          className="btn-primary !py-2 !px-5 !text-[13px]">
           NEW REPORT
         </button>
       </div>
       <div className="topbar-mobile-actions hide-desktop">
         <button onClick={onMenuOpen} aria-label="Open menu"
-          className="p-2 text-on-surface-variant hover:text-primary transition-colors cursor-pointer bg-transparent border-none">
+          className="p-2 text-slate hover:text-ink transition-colors cursor-pointer bg-transparent border-none">
           <Menu size={20} />
         </button>
       </div>

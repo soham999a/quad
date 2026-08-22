@@ -87,7 +87,7 @@ export default function InterviewReport() {
         <div className="flex justify-center mb-6">
           <div className="relative w-32 h-32">
             <svg viewBox="0 0 120 120" className="w-full h-full -rotate-90">
-              <circle cx="60" cy="60" r="50" fill="none" stroke="rgba(255,255,255,0.1)" strokeWidth="8" />
+              <circle cx="60" cy="60" r="50" fill="none" stroke="rgba(10,10,10,0.1)" strokeWidth="8" />
               <circle
                 cx="60" cy="60" r="50" fill="none"
                 stroke={grade?.color || 'var(--color-primary)'}
@@ -160,14 +160,14 @@ export default function InterviewReport() {
               <svg viewBox="-110 -110 220 220" className="w-full max-w-[280px]">
                 {/* Grid circles */}
                 {[25, 50, 75, 100].map(r => (
-                  <circle key={r} cx="0" cy="0" r={r} fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth="0.5" />
+                  <circle key={r} cx="0" cy="0" r={r} fill="none" stroke="rgba(10,10,10,0.08)" strokeWidth="0.5" />
                 ))}
                 {/* Axis lines */}
                 {PILLARS.map((p, i) => {
                   const angle = (i / PILLARS.length) * 2 * Math.PI - Math.PI / 2;
                   const x = Math.cos(angle) * 100;
                   const y = Math.sin(angle) * 100;
-                  return <line key={p.id} x1="0" y1="0" x2={x} y2={y} stroke="rgba(255,255,255,0.08)" strokeWidth="0.5" />;
+                  return <line key={p.id} x1="0" y1="0" x2={x} y2={y} stroke="rgba(10,10,10,0.08)" strokeWidth="0.5" />;
                 })}
                 {/* Data polygon */}
                 <polygon
