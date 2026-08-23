@@ -1,66 +1,79 @@
+@import url('https://fonts.googleapis.com/css2?family=Sora:wght@200;300;400;500;600&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap');
 @import "tailwindcss";
-@import url('https://fonts.googleapis.com/css2?family=Sora:wght@200;300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap');
 
 /*
- * QIDS — Quadrant Intelligence Development System
- * Design Constitution (ported from matrix-core):
- * Four colors. One workhorse typeface (Sora). One easing curve.
- * Severe whitespace. Quiet by default, precise when it speaks.
+ * QiDS — Quadrant Intelligence Development System
+ * Design language: editorial, Swiss, institutional, restrained.
+ * (Source of truth: quotient-compass-core)
+ * Dark premium base. Gold accent used semantically, never decoratively.
  *
- * Legacy token NAMES are preserved and remapped onto constitution
- * values so the whole platform re-themes without logic changes.
+ * Legacy token NAMES are preserved and remapped onto this system so the
+ * whole platform re-themes without logic changes.
  */
 
 @theme {
-  /* ── Constitution primaries ── */
-  --color-ink: #0A0A0A;
-  --color-bone: #F2EFE9;
-  --color-gold: #B8924A;
-  --color-slate: #4A4A4A;
+  /* ── Legacy semantic names → quotient-compass values ── */
+  --color-background: oklch(0.14 0.005 250);
+  --color-foreground: oklch(0.96 0.005 90);
+  --color-surface: oklch(0.17 0.005 250);
+  --color-surface-2: oklch(0.2 0.006 250);
 
-  /* ── Operational surfaces (bone-derived) ── */
-  --color-background: #F2EFE9;
-  --color-foreground: #0A0A0A;
-  --color-surface: #F9F7F1;
-  --color-surface-2: #EAE6DD;
-  --color-rule: #DBD6CA;
+  --color-surface-dim: oklch(0.17 0.005 250);
+  --color-surface-bright: oklch(0.2 0.006 250);
+  --color-surface-container-lowest: oklch(0.15 0.005 250);
+  --color-surface-container-low: oklch(0.17 0.005 250);
+  --color-surface-container: oklch(0.19 0.006 250);
+  --color-surface-container-high: oklch(0.22 0.006 250);
+  --color-surface-container-highest: oklch(0.26 0.007 250);
 
-  /* ── Legacy semantic names → constitution values ── */
-  --color-surface-dim: #EAE6DD;
-  --color-surface-bright: #F9F7F1;
-  --color-surface-container-lowest: #FCFAF5;
-  --color-surface-container-low: #F9F7F1;
-  --color-surface-container: #F1EDE4;
-  --color-surface-container-high: #E5E0D4;
-  --color-surface-container-highest: #DBD6CA;
-  --color-on-surface: #0A0A0A;
-  --color-on-surface-variant: #4A4A4A;
-  --color-outline: #4A4A4A;
-  --color-outline-variant: #DBD6CA;
-  --color-primary: #B8924A;
-  --color-on-primary: #0A0A0A;
-  --color-primary-container: #B8924A;
-  --color-on-primary-container: #0A0A0A;
-  --color-secondary: #EAE6DD;
-  --color-on-secondary: #0A0A0A;
+  --color-on-surface: oklch(0.96 0.005 90);
+  --color-on-surface-variant: oklch(0.62 0.01 90);
+  --color-outline: oklch(0.62 0.01 90);
+  --color-outline-variant: oklch(0.26 0.006 250);
+  --color-border: oklch(0.26 0.006 250);
+  --color-muted-foreground: oklch(0.62 0.01 90);
+  --color-border-strong: oklch(0.36 0.008 250);
+
+  --color-primary: oklch(0.78 0.12 82);
+  --color-on-primary: oklch(0.14 0.005 250);
+  --color-primary-container: oklch(0.78 0.12 82 / 14%);
+  --color-on-primary-container: oklch(0.96 0.005 90);
+
+  --color-secondary: oklch(0.22 0.006 250);
+  --color-on-secondary: oklch(0.92 0.005 90);
   --color-error: oklch(0.55 0.18 28);
-  --color-on-error: #F2EFE9;
-  --color-error-container: oklch(0.55 0.18 28);
-  --color-surface-variant: #4A4A4A;
+  --color-on-error: oklch(0.98 0.003 90);
+  --color-error-container: oklch(0.55 0.18 28 / 20%);
+  --color-surface-variant: oklch(0.36 0.008 250);
 
-  /* ── Sidebar (always ink) ── */
-  --color-sidebar: #0A0A0A;
-  --color-sidebar-foreground: #D1CCC2;
-  --color-sidebar-accent: #1C1C1C;
-  --color-sidebar-border: #262626;
+  /* ── Sidebar ── */
+  --color-sidebar: oklch(0.13 0.005 250);
+  --color-sidebar-foreground: oklch(0.78 0.01 90);
+  --color-sidebar-border: oklch(0.22 0.005 250);
+  --color-sidebar-accent: oklch(0.2 0.006 250);
+  --color-sidebar-accent-foreground: oklch(0.96 0.005 90);
+
+  /* ── Gold + bands ── */
+  --color-gold: oklch(0.78 0.12 82);
+  --color-gold-soft: oklch(0.78 0.12 82 / 14%);
+  --color-band-red: oklch(0.62 0.16 25);
+  --color-band-yellow: oklch(0.8 0.13 80);
+  --color-band-green: oklch(0.68 0.13 155);
+
+  /* ── Quotients ── */
+  --color-iq: oklch(0.78 0.12 82);
+  --color-eq: oklch(0.72 0.11 195);
+  --color-sq: oklch(0.72 0.1 280);
+  --color-aq: oklch(0.74 0.13 25);
 
   /* ── Type ── */
+  --font-display: 'Sora', ui-sans-serif, system-ui, sans-serif;
   --font-display-xl: 'Sora', ui-sans-serif, system-ui, sans-serif;
   --font-headline-lg: 'Sora', ui-sans-serif, system-ui, sans-serif;
   --font-headline-md: 'Sora', ui-sans-serif, system-ui, sans-serif;
-  --font-body-lg: 'Sora', ui-sans-serif, system-ui, sans-serif;
-  --font-body-md: 'Sora', ui-sans-serif, system-ui, sans-serif;
-  --font-label-md: 'Sora', ui-sans-serif, system-ui, sans-serif;
+  --font-body-lg: 'Inter', ui-sans-serif, system-ui, sans-serif;
+  --font-body-md: 'Inter', ui-sans-serif, system-ui, sans-serif;
+  --font-label-md: 'Inter', ui-sans-serif, system-ui, sans-serif;
   --font-technical-sm: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
   --text-display-xl: 72px;
   --text-headline-lg: 48px;
@@ -73,11 +86,11 @@
   /* ── Radii — severe, tiny ── */
   --radius-xs: 2px;
   --radius-sm: 2px;
-  --radius-md: 4px;
-  --radius-lg: 6px;
-  --radius-xl: 10px;
-  --radius-2xl: 10px;
-  --radius-3xl: 12px;
+  --radius-md: 3px;
+  --radius-lg: 4px;
+  --radius-xl: 6px;
+  --radius-2xl: 8px;
+  --radius-3xl: 10px;
   --radius-full: 9999px;
 
   --spacing-unit: 8px;
@@ -85,7 +98,7 @@
   --spacing-hairline: 1px;
   --spacing-margin-mobile: 24px;
   --spacing-margin-desktop: 80px;
-  --spacing-max-width: 1200px;
+  --spacing-max-width: 1440px;
 
   /* ── The one easing curve ── */
   --ease-matrix: cubic-bezier(0.4, 0, 0.2, 1);
@@ -93,43 +106,83 @@
 
 /* ── CSS variables for non-Tailwind usage ── */
 :root {
-  --ink: #0A0A0A;
-  --bone: #F2EFE9;
-  --gold: #B8924A;
-  --slate: #4A4A4A;
-  --surface: #F9F7F1;
-  --surface-2: #EAE6DD;
-  --rule: #DBD6CA;
+  --background: oklch(0.14 0.005 250);
+  --foreground: oklch(0.96 0.005 90);
+  --surface: oklch(0.17 0.005 250);
+  --surface-2: oklch(0.2 0.006 250);
+  --border: oklch(0.26 0.006 250);
+  --border-strong: oklch(0.36 0.008 250);
+  --muted-foreground: oklch(0.62 0.01 90);
+  --gold: oklch(0.78 0.12 82);
+  --gold-soft: oklch(0.78 0.12 82 / 14%);
+  --font-display: 'Sora', ui-sans-serif, system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
 
-  --navy: #0A0A0A;
-  --navy-2: #1C1C1C;
-  --navy-4: #141414;
-  --text-primary: #0A0A0A;
-  --text-secondary: #4A4A4A;
-  --text-muted: #6B6660;
-  --border: #DBD6CA;
-  --border-light: rgba(10, 10, 10, 0.08);
-  --border-outline-variant: #DBD6CA;
+  --iq: oklch(0.78 0.12 82);
+  --eq: oklch(0.72 0.11 195);
+  --sq: oklch(0.72 0.1 280);
+  --aq: oklch(0.74 0.13 25);
+
+  --navy: #0A0A0F;
+  --navy-2: #16161C;
+  --navy-4: #101015;
+  --text-primary: oklch(0.78 0.12 82);
+  --text-secondary: oklch(0.62 0.01 90);
+  --text-muted: oklch(0.62 0.01 90);
+  --border-light: oklch(0.26 0.006 250 / 60%);
+  --border-outline-variant: oklch(0.26 0.006 250);
   --safe-bottom: env(safe-area-inset-bottom, 0px);
   --safe-top: env(safe-area-inset-top, 0px);
 }
 
+/* Light surface scope (bone sections inside the dark app) */
+.surface-bone {
+  --background: oklch(0.965 0.01 82);
+  --foreground: oklch(0.17 0.01 250);
+  --surface: oklch(0.985 0.006 82);
+  --surface-2: oklch(0.94 0.012 82);
+  --card: oklch(0.985 0.006 82);
+  --card-foreground: oklch(0.17 0.01 250);
+  --muted: oklch(0.93 0.01 82);
+  --muted-foreground: oklch(0.42 0.015 250);
+  --border: oklch(0.8 0.012 82);
+  --border-strong: oklch(0.65 0.014 82);
+  --primary: oklch(0.17 0.01 250);
+  --primary-foreground: oklch(0.965 0.01 82);
+  background: var(--background);
+  color: var(--foreground);
+}
+.surface-bone .text-muted-foreground,
+.surface-bone .label-eyebrow {
+  color: var(--muted-foreground);
+}
+.surface-bone .label-eyebrow-gold {
+  color: oklch(0.5 0.11 74);
+}
+
 /* ── Base Styles ── */
 body {
-  background-color: var(--color-background);
-  color: var(--color-on-surface);
-  font-family: var(--font-body-md);
+  background-color: var(--background);
+  color: var(--foreground);
+  font-family: 'Inter', ui-sans-serif, system-ui, sans-serif;
   font-feature-settings: "ss01", "cv11";
   -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
   margin: 0;
   padding: 0;
   overflow-x: hidden;
 }
 
-/* ── Text selection: gold on ink ── */
+h1, h2, h3, h4, h5, h6 {
+  font-family: 'Sora', ui-sans-serif, system-ui, sans-serif;
+  letter-spacing: -0.012em;
+  font-weight: 400;
+}
+
+/* ── Text selection ── */
 ::selection {
-  background: var(--gold);
-  color: var(--ink);
+  background: var(--gold-soft);
+  color: var(--foreground);
 }
 
 /* ── Focus visibility (a11y) ── */
@@ -165,24 +218,24 @@ textarea:focus-visible {
 }
 
 .skeleton {
-  background: linear-gradient(90deg, var(--surface-2) 25%, var(--surface) 50%, var(--surface-2) 75%);
+  background: linear-gradient(90deg, var(--surface) 25%, var(--surface-2) 50%, var(--surface) 75%);
   background-size: 800px 100%;
   animation: shimmer 1.4s ease infinite;
   border-radius: 2px;
 }
 
 /* ── Hairline Utilities ── */
-.hairline-b { border-bottom: 1px solid var(--rule); }
-.hairline-t { border-top: 1px solid var(--rule); }
-.hairline-l { border-left: 1px solid var(--rule); }
-.hairline-r { border-right: 1px solid var(--rule); }
-.hairline-all { border: 1px solid var(--rule); }
+.hairline-b { border-bottom: 1px solid var(--border); }
+.hairline-t { border-top: 1px solid var(--border); }
+.hairline-l { border-left: 1px solid var(--border); }
+.hairline-r { border-right: 1px solid var(--border); }
+.hairline-all { border: 1px solid var(--border); }
 
 /* ── Card surface — flat, hairline, quiet ── */
 .card {
-  border: 1px solid var(--rule);
+  border: 1px solid var(--border);
   background: var(--surface);
-  border-radius: 2px;
+  border-radius: 4px;
   box-shadow: none;
 }
 
@@ -190,7 +243,7 @@ textarea:focus-visible {
   transition: border-color 0.18s cubic-bezier(0.4, 0, 0.2, 1), background 0.18s cubic-bezier(0.4, 0, 0.2, 1);
 }
 .card-hover:hover {
-  border-color: rgba(184, 146, 74, 0.6);
+  border-color: var(--gold);
 }
 
 .card-gold {
@@ -208,13 +261,13 @@ textarea:focus-visible {
   font-size: 11px;
   line-height: 1.4;
   letter-spacing: 0.06em;
-  border: 1px solid var(--rule);
-  color: var(--text-secondary);
+  border: 1px solid var(--border);
+  color: var(--on-surface-variant, var(--text-secondary));
   background: transparent;
   white-space: nowrap;
 }
 
-/* ── Kicker — mono, uppercase, wide tracking ── */
+/* ── Editorial labels ── */
 .kicker {
   display: flex;
   align-items: center;
@@ -223,7 +276,72 @@ textarea:focus-visible {
   font-size: 11px;
   letter-spacing: 0.18em;
   text-transform: uppercase;
-  color: var(--text-muted);
+  color: var(--muted-foreground);
+}
+
+.label-eyebrow {
+  font-family: var(--font-technical-sm);
+  font-size: 11px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--muted-foreground);
+}
+
+.label-eyebrow-gold {
+  font-family: var(--font-technical-sm);
+  font-size: 11px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--gold);
+}
+
+.section-index {
+  font-family: var(--font-technical-sm);
+  font-size: 10px;
+  letter-spacing: 0.16em;
+  color: var(--muted-foreground);
+}
+
+.num {
+  font-family: 'Sora', ui-sans-serif, system-ui, sans-serif;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+}
+
+.grid-bg {
+  background-image:
+    linear-gradient(to right, color-mix(in oklab, var(--border) 60%, transparent) 1px, transparent 1px),
+    linear-gradient(to bottom, color-mix(in oklab, var(--border) 60%, transparent) 1px, transparent 1px);
+  background-size: 80px 80px;
+}
+
+/* ── Status dots ── */
+.status-current,
+.status-proposed,
+.status-future {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-family: var(--font-technical-sm);
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+.status-current::before,
+.status-proposed::before,
+.status-future::before {
+  content: "";
+  display: inline-block;
+  width: 5px;
+  height: 5px;
+  border-radius: 999px;
+  background: var(--gold);
+}
+.status-proposed::before {
+  background: oklch(0.8 0.13 80);
+}
+.status-future::before {
+  background: var(--muted-foreground);
 }
 
 .gold-rule {
@@ -232,14 +350,14 @@ textarea:focus-visible {
   background: linear-gradient(90deg, var(--gold) 0 24px, transparent 24px);
 }
 
-/* ── Kept name; constitution look: short gold dash then hairline ── */
+/* ── Kept name; short gold dash then hairline ── */
 .gradient-rule {
   height: 1px;
   border: none;
-  background: linear-gradient(90deg, var(--gold) 0 24px, var(--rule) 24px);
+  background: linear-gradient(90deg, var(--gold) 0 24px, var(--border) 24px);
 }
 
-/* ── Kept name; solid gold text on light ground ── */
+/* ── Kept name; gold text ── */
 .text-gradient {
   background: none;
   -webkit-background-clip: initial;
@@ -247,30 +365,29 @@ textarea:focus-visible {
   color: var(--gold);
 }
 
-/* ── No glow in the constitution — quiet by default ── */
+/* ── No glow — quiet by default ── */
 .glow { box-shadow: none; }
 
-/* ── Buttons — ink on bone, gold when it speaks ── */
+/* ── Buttons ── */
 .btn-primary {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
-  padding: 12px 28px;
-  border-radius: 2px;
-  background: var(--ink);
-  color: var(--bone);
-  font-family: var(--font-label-md);
+  padding: 12px 24px;
+  border-radius: 4px;
+  background: var(--gold);
+  color: var(--navy);
+  font-family: 'Inter', ui-sans-serif, system-ui, sans-serif;
   font-size: 14px;
   font-weight: 500;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.02em;
   cursor: pointer;
   border: none;
-  transition: background 0.15s cubic-bezier(0.4, 0, 0.2, 1), color 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: filter 0.15s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.15s cubic-bezier(0.4, 0, 0.2, 1);
 }
 .btn-primary:hover:not(:disabled) {
-  background: var(--gold);
-  color: var(--ink);
+  filter: brightness(1.08);
 }
 .btn-primary:active:not(:disabled) { transform: translateY(0); }
 .btn-primary:disabled { opacity: 0.35; cursor: not-allowed; }
@@ -280,20 +397,20 @@ textarea:focus-visible {
   align-items: center;
   justify-content: center;
   gap: 8px;
-  padding: 12px 28px;
-  border-radius: 2px;
-  border: 1px solid var(--ink);
+  padding: 12px 24px;
+  border-radius: 4px;
+  border: 1px solid var(--border-strong);
   background: transparent;
-  color: var(--ink);
-  font-family: var(--font-label-md);
+  color: var(--foreground);
+  font-family: 'Inter', ui-sans-serif, system-ui, sans-serif;
   font-size: 14px;
   font-weight: 500;
   cursor: pointer;
-  transition: color 0.15s cubic-bezier(0.4, 0, 0.2, 1), background 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: color 0.15s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.15s cubic-bezier(0.4, 0, 0.2, 1);
 }
 .btn-outline:hover:not(:disabled) {
-  background: var(--ink);
-  color: var(--bone);
+  border-color: var(--gold);
+  color: var(--gold);
 }
 .btn-outline:disabled { opacity: 0.3; cursor: not-allowed; }
 
@@ -304,14 +421,14 @@ textarea:focus-visible {
 }
 .fade-up { animation: fadeUp 0.5s cubic-bezier(0.4, 0, 0.2, 1) both; }
 
-/* ── Range sliders — square gold thumb on rule track ── */
+/* ── Range sliders ── */
 input[type="range"] {
   -webkit-appearance: none;
   appearance: none;
   width: 100%;
   height: 2px;
   border-radius: 0;
-  background: var(--rule);
+  background: var(--border-strong);
   outline: none;
 }
 input[type="range"]::-webkit-slider-thumb {
@@ -338,14 +455,14 @@ input[type="range"]::-moz-range-thumb {
 /* ── Editorial Rule ── */
 .editorial-rule {
   height: 1px;
-  background-color: var(--rule);
+  background-color: var(--border);
   width: 100%;
 }
 
 /* ── Scrollbar ── */
 ::-webkit-scrollbar { width: 4px; }
 ::-webkit-scrollbar-track { background: var(--surface); }
-::-webkit-scrollbar-thumb { background: var(--rule); }
+::-webkit-scrollbar-thumb { background: var(--border-strong); }
 
 /* ── Utility Animations ── */
 @keyframes fadeIn {
@@ -360,9 +477,50 @@ input[type="range"]::-moz-range-thumb {
   from { transform: translateY(100%); opacity: 0; }
   to { transform: translateY(0); opacity: 1; }
 }
+  .animate-fade { animation: fadeIn 0.35s ease; }
 
-.animate-fade { animation: fadeIn 0.35s ease; }
-.animate-fade-up { animation: fadeInUp 0.4s cubic-bezier(0.4,0,0.2,1); }
+  .animate-fade-up { animation: fadeInUp 0.4s cubic-bezier(0.4,0,0.2,1); }
+
+  .status-dot-pulse { animation: statusPulse 2.4s ease-in-out infinite; }
+
+  @keyframes statusPulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.35; }
+  }
+
+  .field-trajectories {
+    transform: translate(var(--field-x, 0px), var(--field-y, 0px));
+    transition: transform 900ms cubic-bezier(0.77, 0, 0.175, 1);
+  }
+  .field-line-1 { animation: field-drift-a 13s ease-in-out infinite alternate; }
+  .field-line-2 { animation: field-drift-b 17s ease-in-out infinite alternate; }
+  .field-line-3 { animation: field-drift-c 19s ease-in-out infinite alternate; }
+  .field-line-4 { animation: field-drift-d 15s ease-in-out infinite alternate; }
+  .field-node {
+    animation: field-node 7s ease-in-out infinite alternate;
+    transform-origin: center;
+  }
+
+  @keyframes field-drift-a {
+    from { transform: translate(-3px, 4px) rotate(-0.4deg); }
+    to { transform: translate(7px, -5px) rotate(0.6deg); }
+  }
+  @keyframes field-drift-b {
+    from { transform: translate(5px, -3px) rotate(0.5deg); }
+    to { transform: translate(-6px, 6px) rotate(-0.5deg); }
+  }
+  @keyframes field-drift-c {
+    from { transform: translate(-4px, -6px) rotate(0.35deg); }
+    to { transform: translate(5px, 4px) rotate(-0.4deg); }
+  }
+  @keyframes field-drift-d {
+    from { transform: translate(6px, 4px) rotate(-0.3deg); }
+    to { transform: translate(-4px, -7px) rotate(0.55deg); }
+  }
+  @keyframes field-node {
+    from { opacity: 0.35; transform: scale(0.85); }
+    to { opacity: 0.9; transform: scale(1.15); }
+  }
 
 /* ── Responsive page padding ── */
 .page-pad { padding: 40px; }
@@ -391,15 +549,15 @@ input[type="range"]::-moz-range-thumb {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  height: 72px;
+  height: 64px;
   padding: 0 40px;
   position: sticky;
   top: 0;
-  z-index: 30;
-  background: rgba(249, 247, 241, 0.88);
+  z-index: 20;
+  background: color-mix(in oklab, var(--background) 85%, transparent);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
-  border-bottom: 1px solid var(--rule);
+  border-bottom: 1px solid var(--border);
 }
 
 .mobile-nav {
@@ -451,10 +609,10 @@ input[type="range"]::-moz-range-thumb {
     z-index: 50;
     height: calc(64px + var(--safe-bottom));
     padding-bottom: var(--safe-bottom);
-    background: rgba(249, 247, 241, 0.92);
+    background: color-mix(in oklab, var(--background) 92%, transparent);
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
-    border-top: 1px solid var(--rule);
+    border-top: 1px solid var(--border);
     align-items: stretch;
     justify-content: space-around;
     box-shadow: none;
@@ -496,7 +654,7 @@ input[type="range"]::-moz-range-thumb {
   padding: 6px 4px;
   font-size: 10px;
   font-family: var(--font-technical-sm);
-  color: var(--slate);
+  color: var(--muted-foreground);
   text-decoration: none;
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   position: relative;
@@ -511,7 +669,7 @@ input[type="range"]::-moz-range-thumb {
 }
 
 .mobile-nav-item.active {
-  color: var(--ink);
+  color: var(--foreground);
 }
 
 .mobile-nav-item.active::before {
@@ -609,7 +767,7 @@ input[type="range"]::-moz-range-thumb {
 
 /* print CSS */
 @media print {
-  body { background: #ffffff !important; color: #000 !important; }
+  body { background: white !important; color: black !important; }
   #root { padding: 0 !important; }
   nav, header, footer, .print-hidden, .no-print, .desktop-sidebar, .mobile-nav { display: none !important; }
   .pip-report { margin: 0 auto; max-width: 794px; }

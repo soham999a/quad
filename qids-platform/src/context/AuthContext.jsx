@@ -6,6 +6,9 @@ import {
   signOut,
   onAuthStateChanged,
   updateProfile,
+  updatePassword,
+  EmailAuthProvider,
+  reauthenticateWithCredential,
   GoogleAuthProvider,
   signInWithPopup,
 } from 'firebase/auth';
@@ -56,18 +59,19 @@ export function AuthProvider({ children }) {
       console.warn('Could not save user profile:', e.message);
     }
     setUserProfile(profile);
-    return cred.user;
+    return { user: cred.user, profile };
   };
 
   const login = async (email, password) => {
     const cred = await signInWithEmailAndPassword(auth, email, password);
+    let profile = null;
     try {
       const snap = await getDoc(doc(db, 'users', cred.user.uid));
-      if (snap.exists()) setUserProfile(snap.data());
+      if (snap.exists()) { profile = snap.data(); setUserProfile(profile); }
     } catch (e) {
       console.warn('Could not load user profile:', e.message);
     }
-    return cred.user;
+    return { user: cred.user, profile };
   };
 
   const loginWithGoogle = async (role = 'individual', context = 'individual') => {
@@ -110,6 +114,28 @@ export function AuthProvider({ children }) {
     }
   };
 
+  const updateUserFields = async (uid, fields) => {
+    const clean = {};
+    Object.entries(fields || {}).forEach(([k, v]) => { if (v != null && v !== '') clean[k] = v; });
+    try {
+      await updateDoc(doc(db, 'users', uid), { ...clean, updatedAt: serverTimestamp() });
+      if (typeof clean.name === 'string' && auth.currentUser) {
+        await updateProfile(auth.currentUser, { displayName: clean.name });
+      }
+      setUserProfile(prev => prev ? { ...prev, ...clean } : prev);
+    } catch (e) {
+      console.warn('Could not update profile:', e.message);
+      throw e;
+    }
+  };
+
+  const changePassword = async (currentPassword, newPassword) => {
+    if (!user) throw new Error('Not signed in.');
+    const cred = EmailAuthProvider.credential(user.email, currentPassword);
+    await reauthenticateWithCredential(user, cred);
+    await updatePassword(user, newPassword);
+  };
+
   const refreshProfile = async () => {
     if (user) {
       try {
@@ -124,7 +150,7 @@ export function AuthProvider({ children }) {
   const logout = () => signOut(auth);
 
   return (
-    <AuthContext.Provider value={{ user, userProfile, loading, signup, login, loginWithGoogle, logout, resetPassword, updateUserRole, refreshProfile }}>
+    <AuthContext.Provider value={{ user, userProfile, loading, signup, login, loginWithGoogle, logout, resetPassword, updateUserRole, updateUserFields, changePassword, refreshProfile }}>
       {!loading && children}
     </AuthContext.Provider>
   );

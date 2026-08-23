@@ -1,18 +1,24 @@
 import React, { useState } from 'react';
-import { useNavigate, Link, Navigate } from 'react-router-dom';
+import { useNavigate, Link, Navigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import { destinationFor, sanitizeNext } from '../../lib/flow';
 import { Check } from 'lucide-react';
 import QidsMark from '../../components/QidsMark';
 
 const ROLES = [
   { id: 'individual', label: 'Individual', desc: 'Personal development journey' },
+  { id: 'student', label: 'Student', desc: 'School or institutional learner' },
+  { id: 'teacher', label: 'Teacher', desc: 'Manage classes and assessments' },
   { id: 'evaluator', label: 'Evaluator / Counselor', desc: 'Assess and guide others' },
   { id: 'admin', label: 'Institution Admin', desc: 'Manage an organization' },
+  { id: 'employer', label: 'Employer', desc: 'Hiring and talent intelligence' },
 ];
 
 export default function Login() {
-  const { login, loginWithGoogle, resetPassword, updateUserRole, refreshProfile, user } = useAuth();
+  const { login, loginWithGoogle, resetPassword, updateUserRole, refreshProfile, user, userProfile } = useAuth();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const next = sanitizeNext(searchParams.get('next'));
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -23,12 +29,15 @@ export default function Login() {
   const [resetSent, setResetSent] = useState(false);
   const [pendingGoogleFlow, setPendingGoogleFlow] = useState(false);
 
-  if (user && !pendingGoogleFlow) return <Navigate to="/app/dashboard" replace />;
+  if (user && !pendingGoogleFlow) return <Navigate to={next || destinationFor(userProfile?.role)} replace />;
 
   const handleLogin = async (e) => {
     e.preventDefault();
     setError(''); setLoading(true);
-    try { await login(email, password); navigate('/app/dashboard'); }
+    try {
+      const { profile } = await login(email, password);
+      navigate(next || destinationFor(profile?.role));
+    }
     catch (err) { setError(err.message || 'Login failed.'); }
     finally { setLoading(false); }
   };
@@ -42,7 +51,7 @@ export default function Login() {
         setShowRolePicker(true);
       } else {
         setPendingGoogleFlow(false);
-        navigate('/app/dashboard');
+        navigate(next || '/app/dashboard');
       }
     }
     catch (err) { setError(err.message || 'Google sign-in failed.'); setPendingGoogleFlow(false); }
@@ -55,7 +64,7 @@ export default function Login() {
       await updateUserRole(pendingGoogleUser.uid, selectedRole);
       await refreshProfile();
       setPendingGoogleFlow(false);
-      navigate('/app/dashboard');
+      navigate(next || destinationFor(selectedRole));
     } catch (err) {
       setError(err.message || 'Failed to set role.');
     }
@@ -172,7 +181,7 @@ export default function Login() {
         <footer className="pt-12 text-center">
           <p className="text-technical-sm font-technical-sm text-on-surface-variant">
             NEW PERSONNEL?
-            <Link to="/signup" className="text-primary ml-2 hover:underline tracking-widest font-medium no-underline">REQUEST ACCESS</Link>
+            <Link to={next ? `/signup?next=${encodeURIComponent(next)}` : '/signup'} className="text-primary ml-2 hover:underline tracking-widest font-medium no-underline">REQUEST ACCESS</Link>
           </p>
         </footer>
       </main>

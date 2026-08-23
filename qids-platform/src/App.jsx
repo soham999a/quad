@@ -2,9 +2,10 @@ import React, { useState, createContext, useContext, useEffect } from 'react';
 import { BrowserRouter, Routes, Route, NavLink, useNavigate, Navigate, useLocation } from 'react-router-dom';
 import {
   Brain, Map, ClipboardList, TrendingUp, FileText, UserCheck,
-  ChevronRight, Menu, LogOut, Home, BookOpen, ListChecks, X, Shield, Users, Sparkles, Building2, Target
+  ChevronRight, Menu, LogOut, Home, BookOpen, ListChecks, X, Shield, Users, Sparkles, Building2, Target,
+  Settings as SettingsIcon
 } from 'lucide-react';
-import { PILLARS, CONTEXTS, mergeEvaluationScores } from './data/qidsData';
+import { PILLARS, mergeEvaluationScores } from './data/qidsData';
 import QidsMark from './components/QidsMark';
 import { computePillarScore } from './core/engine/qids';
 import { AuthProvider, useAuth } from './context/AuthContext';
@@ -13,6 +14,9 @@ import { ToastProvider } from './components/Toast';
 import { getLatestAssessment, getLatestPostAssessment, getAllEvaluations } from './services/firestoreService';
 
 import Landing from './pages/Landing';
+import Mode from './pages/Mode';
+import NotFound from './pages/NotFound';
+import Settings from './pages/account/Settings';
 import Login from './pages/auth/Login';
 import Signup from './pages/auth/Signup';
 import Dashboard from './pages/Dashboard';
@@ -54,6 +58,7 @@ const NAV_GROUPS = [
       { path: '/app/assessment', label: 'Assessment', icon: ClipboardList },
       { path: '/app/progress', label: 'Progress', icon: TrendingUp },
       { path: '/app/report', label: 'Reports', icon: FileText },
+      { path: '/app/settings', label: 'Settings', icon: SettingsIcon },
     ]
   },
   {
@@ -112,88 +117,83 @@ function Sidebar({ collapsed, setCollapsed }) {
     roleNavItems.push({ path: '/app/admin', label: 'Admin Panel', icon: Shield });
   }
 
-  const itemClass = ({ isActive }, withCode) =>
-    `group flex items-center gap-3 py-2.5 pr-4 text-[13px] border-l-2 transition-colors ${
+  const navItemClass = ({ isActive }) =>
+    `flex items-center gap-3 px-3 py-2.5 mx-1 text-[13px] border-l-2 transition-colors ${
       isActive
-        ? 'border-[#B8924A] bg-[#1C1C1C] text-bone'
-        : 'border-transparent text-[#D1CCC2]/60 hover:text-bone hover:bg-[#1C1C1C]/60'
-    } ${collapsed ? 'justify-center mx-2 pl-0' : 'pl-4'}`;
-
-  let codeCounter = 0;
-  const nextCode = () => String(codeCounter++).padStart(2, '0');
+        ? 'bg-sidebar-accent text-on-surface border-[var(--gold)]'
+        : 'border-transparent text-muted-foreground hover:text-on-surface hover:bg-sidebar-accent/60'
+    }`;
 
   return (
-    <aside className="desktop-sidebar fixed left-0 top-0 h-screen flex-col z-40 bg-sidebar text-[#D1CCC2]"
+    <aside className="desktop-sidebar fixed left-0 top-0 h-screen flex-col z-40 bg-sidebar text-sidebar-foreground"
       style={{ width: collapsed ? 64 : 260, transition: 'width 0.3s cubic-bezier(0.4,0,0.2,1)' }}>
 
-      <div className={`flex items-center gap-3 pt-7 pb-6 mx-5 border-b border-[#262626] ${collapsed ? 'justify-center px-0' : ''}`}>
-        <QidsMark size={collapsed ? 24 : 26} className="text-[#B8924A] flex-shrink-0" />
+      <div className={`flex items-center gap-3 px-6 py-7 border-b border-sidebar-border ${collapsed ? 'justify-center px-0' : ''}`}>
+        <QidsMark size={collapsed ? 24 : 26} className="text-gold flex-shrink-0" />
         {!collapsed && (
-          <div className="leading-tight overflow-hidden">
-            <div className="text-[11px] tracking-[0.22em] text-[#B8924A] font-mono">QIDS</div>
-            <div className="text-[12px] text-bone font-medium tracking-wide truncate">Intelligence Development</div>
+          <div className="flex flex-col leading-none overflow-hidden">
+            <span className="tracking-[0.32em] text-[13px] text-on-surface">QiDS</span>
+            <span className="font-mono text-[9px] tracking-[0.22em] text-muted-foreground mt-1.5">INTELLIGENCE · DEVELOPMENT · SYSTEM</span>
           </div>
         )}
       </div>
 
-      <nav className="flex-grow overflow-y-auto px-2 py-3" aria-label="Sections">
+      <nav className="flex-grow overflow-y-auto py-6" aria-label="Sections">
         {NAV_GROUPS.map(group => (
-          <div key={group.label} className="mt-5 first:mt-0">
+          <div key={group.label} className="mb-6">
             {!collapsed && (
-              <div className="px-4 pb-2 text-[10px] tracking-[0.22em] text-[#D1CCC2]/40 font-mono uppercase">{group.label}</div>
+              <div className="label-eyebrow px-4 mb-3">{group.label}</div>
             )}
             {group.items.map(({ path, label, icon: Icon }) => (
-              <NavLink key={path} to={path} end={path === '/app/dashboard'} className={(s) => itemClass(s)} title={label}>
-                <span className={`font-mono text-[10px] opacity-50 ${collapsed ? 'hidden' : ''}`}>{nextCode()}</span>
-                <Icon size={15} strokeWidth={1.5} className="opacity-80" />
-                {!collapsed && <span className="tracking-wide truncate">{label}</span>}
+              <NavLink key={path} to={path} end={path === '/app/dashboard'} className={navItemClass} title={label}>
+                <Icon size={16} strokeWidth={1.5} />
+                {!collapsed && <span className="truncate">{label}</span>}
               </NavLink>
             ))}
           </div>
         ))}
 
         {roleNavItems.length > 0 && (
-          <div className="mt-5">
+          <div className="mb-6">
             {!collapsed && (
-              <div className="px-4 pb-2 text-[10px] tracking-[0.22em] text-[#D1CCC2]/40 font-mono uppercase">
+              <div className="label-eyebrow px-4 mb-3">
                 {role === 'admin' ? 'ADMIN' : role === 'teacher' ? 'SCHOOL' : role === 'evaluator' ? 'EVALUATION' : 'PERSONAL'}
               </div>
             )}
             {roleNavItems.map(({ path, label, icon: Icon }) => (
-              <NavLink key={path} to={path} end className={(s) => itemClass(s)} title={label}>
-                <span className={`font-mono text-[10px] ${collapsed ? 'hidden' : ''} opacity-50`}>{nextCode()}</span>
-                <Icon size={15} strokeWidth={1.5} className="opacity-80" />
-                {!collapsed && <span className="tracking-wide truncate">{label}</span>}
+              <NavLink key={path} to={path} end className={navItemClass} title={label}>
+                <Icon size={16} strokeWidth={1.5} />
+                {!collapsed && <span className="truncate">{label}</span>}
               </NavLink>
             ))}
           </div>
         )}
       </nav>
 
-      <div className="mx-5 mb-4">
+      <div className={`px-6 mb-4 ${collapsed ? '!px-2' : ''}`}>
         <button onClick={() => navigate('/app/assessment')}
-          className={`btn-primary w-full ${collapsed ? '!px-0' : ''}`}>
-          {collapsed ? '+' : 'NEW ASSESSMENT'}
+          className="btn-primary w-full !py-2.5 !text-[13px]">
+          {collapsed ? '+' : 'New Assessment'}
         </button>
       </div>
 
       <div className="mt-auto">
         {user && (
-          <div className="border-t border-[#262626] py-4 px-4">
+          <div className="border-t border-sidebar-border py-4 px-4">
             {!collapsed && (
               <>
                 <div className="flex items-center gap-3 mb-3">
-                  <div className="w-8 h-8 rounded-none bg-[#262626] flex items-center justify-center text-[10px] font-mono text-bone flex-shrink-0">
+                  <div className="w-8 h-8 rounded-full border border-[var(--border-strong)] flex items-center justify-center text-[11px] font-mono text-on-surface flex-shrink-0 bg-transparent">
                     {(userProfile?.name || user.displayName || user.email || 'U')[0].toUpperCase()}
                   </div>
                   <div className="overflow-hidden flex-1 min-w-0">
-                    <div className="text-[13px] text-bone truncate">{userProfile?.name || user.displayName || 'User'}</div>
-                    <div className="text-[10px] font-mono text-[#D1CCC2]/50 capitalize">{userProfile?.role || 'individual'}</div>
+                    <div className="text-[12px] text-on-surface truncate">{userProfile?.name || user.displayName || 'User'}</div>
+                    <div className="text-[10px] font-mono tracking-wider text-muted-foreground capitalize">{userProfile?.role || 'individual'}</div>
                   </div>
                 </div>
                 <button
                   onClick={() => setShowRoleSwitcher(!showRoleSwitcher)}
-                  className="w-full text-left mb-2 text-[10px] font-mono uppercase tracking-[0.14em] text-[#B8924A]/80 hover:text-[#B8924A] cursor-pointer bg-transparent border-none p-0 py-1"
+                  className="w-full text-left mb-2 text-[10px] font-mono uppercase tracking-[0.14em] text-gold/80 hover:text-gold cursor-pointer bg-transparent border-none p-0 py-1"
                 >
                   {showRoleSwitcher ? '— Hide roles' : '+ Switch role'}
                 </button>
@@ -209,8 +209,8 @@ function Sidebar({ collapsed, setCollapsed }) {
                         }}
                         className={`w-full text-left px-3 py-1.5 text-[11px] font-mono border transition-colors cursor-pointer ${
                           role === r
-                            ? 'bg-[#1C1C1C] border-[#B8924A]/60 text-[#B8924A]'
-                            : 'bg-transparent border-[#262626] text-[#D1CCC2]/60 hover:border-[#B8924A]/30 hover:text-bone'
+                            ? 'bg-surface-container-low border-gold/60 text-gold'
+                            : 'bg-transparent border-sidebar-border text-muted-foreground hover:border-gold/30 hover:text-on-surface'
                         }`}
                       >
                         {r.charAt(0).toUpperCase() + r.slice(1)}
@@ -222,32 +222,32 @@ function Sidebar({ collapsed, setCollapsed }) {
             )}
             {collapsed && (
               <div className="flex justify-center mb-3">
-                <div className="w-8 h-8 bg-[#262626] flex items-center justify-center text-[10px] font-mono text-bone">
+                <div className="w-8 h-8 rounded-full border border-[var(--border-strong)] flex items-center justify-center text-[11px] font-mono text-on-surface bg-transparent">
                   {(userProfile?.name || user.displayName || user.email || 'U')[0].toUpperCase()}
                 </div>
               </div>
             )}
             <button onClick={handleLogout} aria-label="Sign out"
-              className={`w-full flex items-center gap-3 py-2 text-[13px] text-[#D1CCC2]/60 hover:text-bone transition-colors cursor-pointer ${collapsed ? 'justify-center px-0' : 'pl-1'}`}>
+              className={`w-full flex items-center gap-3 py-2 text-[13px] text-muted-foreground hover:text-on-surface transition-colors cursor-pointer ${collapsed ? 'justify-center px-0' : 'pl-1'}`}>
               <LogOut size={15} strokeWidth={1.5} />
               {!collapsed && <span className="tracking-wide">Sign Out</span>}
             </button>
           </div>
         )}
 
-        <div className={`border-t border-[#262626] px-1 py-4 text-[10px] font-mono leading-relaxed ${collapsed ? 'mx-4 px-0 text-center' : 'text-[#D1CCC2]/45'}`}>
+        <div className={`border-t border-sidebar-border px-1 py-4 font-mono text-[11px] leading-relaxed ${collapsed ? 'mx-4 px-0 text-center' : 'text-muted-foreground'}`}>
           {collapsed ? (
-            <span className="inline-block h-1.5 w-1.5 bg-[#B8924A]" />
+            <span className="inline-block h-1.5 w-1.5 rounded-full bg-gold" />
           ) : (
-            <div className="flex items-center justify-between">
-              <span>v1.0 · main</span>
-              <span className="h-1.5 w-1.5 bg-[#B8924A]" />
-            </div>
+            <>
+              <div className="label-eyebrow mb-1">Build</div>
+              <div>QiDS · v1.0 · main</div>
+            </>
           )}
         </div>
 
         <button onClick={() => setCollapsed(!collapsed)} aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-          className="mx-5 mb-4 py-2 flex items-center justify-center border border-[#262626] text-[#D1CCC2]/60 hover:text-[#B8924A] hover:border-[#B8924A]/50 transition-colors cursor-pointer">
+          className="mx-5 mb-4 py-2 flex items-center justify-center border border-sidebar-border text-muted-foreground hover:text-gold hover:border-gold/50 transition-colors cursor-pointer">
           {collapsed ? <ChevronRight size={13} /> : <Menu size={13} />}
         </button>
       </div>
@@ -283,29 +283,29 @@ function MobileMenuDrawer({ onClose }) {
   const handleLogout = async () => { await logout(); onClose(); navigate('/login'); };
 
   return (
-    <div className="fixed inset-0 z-[100] bg-sidebar text-[#D1CCC2] overflow-y-auto animate-fade-up">
-      <div className="flex justify-between items-center p-6 border-b border-[#262626]">
+    <div className="fixed inset-0 z-[100] bg-sidebar text-sidebar-foreground overflow-y-auto animate-fade-up">
+      <div className="flex justify-between items-center p-6 border-b border-sidebar-border">
         <div className="flex items-center gap-3">
-          <QidsMark size={24} className="text-[#B8924A]" />
-          <div>
-            <div className="text-[11px] tracking-[0.22em] text-[#B8924A] font-mono">QIDS</div>
-            <div className="text-[12px] text-bone">Intelligence Development</div>
+          <QidsMark size={24} className="text-gold" />
+          <div className="flex flex-col leading-none">
+            <span className="tracking-[0.32em] text-[13px] text-on-surface">QiDS</span>
+            <span className="font-mono text-[9px] tracking-[0.22em] text-muted-foreground mt-1.5">INTELLIGENCE · DEVELOPMENT · SYSTEM</span>
           </div>
         </div>
         <button onClick={onClose} aria-label="Close menu"
-          className="p-2 border border-[#262626] text-[#D1CCC2]/60 hover:text-bone transition-colors cursor-pointer bg-transparent">
+          className="p-2 border border-sidebar-border text-muted-foreground hover:text-on-surface transition-colors cursor-pointer bg-transparent">
           <X size={16} />
         </button>
       </div>
 
       {user && (
-        <div className="flex items-center gap-4 p-6 border-b border-[#262626]">
-          <div className="w-10 h-10 bg-[#262626] flex items-center justify-center text-[11px] font-mono text-bone flex-shrink-0">
+        <div className="flex items-center gap-4 p-6 border-b border-sidebar-border">
+          <div className="w-10 h-10 rounded-full border border-[var(--border-strong)] flex items-center justify-center text-[12px] font-mono text-on-surface flex-shrink-0 bg-transparent">
             {(userProfile?.name || user.displayName || user.email || 'U')[0].toUpperCase()}
           </div>
           <div>
-            <div className="text-[13px] text-bone">{userProfile?.name || user.displayName || 'User'}</div>
-            <div className="text-[10px] font-mono text-[#D1CCC2]/50 capitalize">{userProfile?.role || 'individual'}</div>
+            <div className="text-[13px] text-on-surface">{userProfile?.name || user.displayName || 'User'}</div>
+            <div className="text-[10px] font-mono tracking-wider text-muted-foreground capitalize">{userProfile?.role || 'individual'}</div>
           </div>
         </div>
       )}
@@ -313,11 +313,11 @@ function MobileMenuDrawer({ onClose }) {
       <div className="p-6 space-y-8">
         {NAV_GROUPS.map(group => (
           <div key={group.label}>
-            <div className="text-[10px] tracking-[0.22em] text-[#D1CCC2]/40 font-mono uppercase mb-3">{group.label}</div>
+            <div className="label-eyebrow mb-3">{group.label}</div>
             {group.items.map(({ path, label, icon: Icon }) => (
               <NavLink key={path} to={path} end={path === '/app/dashboard'} onClick={onClose}
                 className={({ isActive }) =>
-                  `flex items-center gap-4 py-3 transition-colors ${isActive ? 'text-[#B8924A] border-l-2 border-[#B8924A] pl-3' : 'text-[#D1CCC2]/70 hover:text-bone pl-3'
+                  `flex items-center gap-4 py-3 transition-colors ${isActive ? 'text-gold border-l-2 border-gold pl-3' : 'text-muted-foreground hover:text-on-surface pl-3'
                   }`
                 }>
                 <Icon size={15} strokeWidth={1.5} />
@@ -329,10 +329,10 @@ function MobileMenuDrawer({ onClose }) {
 
         {(userProfile?.role === 'individual' || userProfile?.role === 'student') && (
           <div>
-            <div className="text-[10px] tracking-[0.22em] text-[#D1CCC2]/40 font-mono uppercase mb-3">PERSONAL</div>
+            <div className="label-eyebrow mb-3">Personal</div>
             <NavLink to="/app/my-evaluator" onClick={onClose}
               className={({ isActive }) =>
-                `flex items-center gap-4 py-3 transition-colors ${isActive ? 'text-[#B8924A] border-l-2 border-[#B8924A] pl-3' : 'text-[#D1CCC2]/70 hover:text-bone pl-3'
+                `flex items-center gap-4 py-3 transition-colors ${isActive ? 'text-gold border-l-2 border-gold pl-3' : 'text-muted-foreground hover:text-on-surface pl-3'
                 }`}>
               <UserCheck size={15} strokeWidth={1.5} />
               <span className="text-[13px] tracking-wide">My Evaluator</span>
@@ -342,12 +342,12 @@ function MobileMenuDrawer({ onClose }) {
 
         {(userProfile?.role === 'evaluator' || userProfile?.role === 'admin') && (
           <div>
-            <div className="text-[10px] tracking-[0.22em] text-[#D1CCC2]/40 font-mono uppercase mb-3">
-              {userProfile?.role === 'admin' ? 'ADMIN' : 'EVALUATION'}
+            <div className="label-eyebrow mb-3">
+              {userProfile?.role === 'admin' ? 'Admin' : 'Evaluation'}
             </div>
             <NavLink to="/app/evaluator" onClick={onClose}
               className={({ isActive }) =>
-                `flex items-center gap-4 py-3 transition-colors ${isActive ? 'text-[#B8924A] border-l-2 border-[#B8924A] pl-3' : 'text-[#D1CCC2]/70 hover:text-bone pl-3'
+                `flex items-center gap-4 py-3 transition-colors ${isActive ? 'text-gold border-l-2 border-gold pl-3' : 'text-muted-foreground hover:text-on-surface pl-3'
                 }`}>
               <Users size={15} strokeWidth={1.5} />
               <span className="text-[13px] tracking-wide">Evaluator Dashboard</span>
@@ -355,7 +355,7 @@ function MobileMenuDrawer({ onClose }) {
             {userProfile?.role === 'admin' && (
               <NavLink to="/app/admin" onClick={onClose}
                 className={({ isActive }) =>
-                  `flex items-center gap-4 py-3 transition-colors ${isActive ? 'text-[#B8924A] border-l-2 border-[#B8924A] pl-3' : 'text-[#D1CCC2]/70 hover:text-bone pl-3'
+                  `flex items-center gap-4 py-3 transition-colors ${isActive ? 'text-gold border-l-2 border-gold pl-3' : 'text-muted-foreground hover:text-on-surface pl-3'
                   }`}>
                 <Shield size={15} strokeWidth={1.5} />
                 <span className="text-[13px] tracking-wide">Admin Panel</span>
@@ -365,9 +365,9 @@ function MobileMenuDrawer({ onClose }) {
         )}
       </div>
 
-      <div className="p-6 border-t border-[#262626]" style={{ paddingBottom: 'calc(24px + env(safe-area-inset-bottom, 0px))' }}>
+      <div className="p-6 border-t border-sidebar-border" style={{ paddingBottom: 'calc(24px + env(safe-area-inset-bottom, 0px))' }}>
         <button onClick={handleLogout}
-          className="w-full flex items-center justify-center gap-3 py-4 border border-[#262626] text-[#D1CCC2]/70 text-[13px] tracking-wide hover:text-bone hover:border-[#B8924A]/50 transition-colors cursor-pointer bg-transparent">
+          className="w-full flex items-center justify-center gap-3 py-4 border border-sidebar-border text-muted-foreground text-[13px] tracking-wide hover:text-on-surface hover:border-gold/50 transition-colors cursor-pointer bg-transparent">
           <LogOut size={15} strokeWidth={1.5} />
           Sign Out
         </button>
@@ -376,43 +376,41 @@ function MobileMenuDrawer({ onClose }) {
   );
 }
 
-function TopBar({ context, setContext, onMenuOpen }) {
+function TopBar({ onMenuOpen }) {
   const navigate = useNavigate();
+  const { user, userProfile } = useAuth();
+  const mode = userProfile?.role || 'individual';
+  const name = userProfile?.name || user?.displayName || user?.email || 'User';
+  const initials = (name[0] || 'U').toUpperCase();
+
   return (
     <header className="topbar">
-      <div className="flex items-center gap-10 topbar-nav">
+      <div className="flex items-center gap-6 topbar-nav min-w-0">
+        <div className="flex items-center gap-2 font-mono text-[12px] tracking-wider min-w-0">
+          <span className="text-gold status-dot-pulse">●</span>
+          <span className="text-muted-foreground">MODE</span>
+          <span className="text-on-surface truncate capitalize">{mode}</span>
+        </div>
+      </div>
+      <div className="flex items-center gap-5 topbar-actions">
+        <button onClick={() => navigate('/mode')}
+          className="hidden md:inline-flex items-center gap-2 bg-transparent border-none p-0 font-mono text-[11px] tracking-[0.18em] uppercase text-muted-foreground hover:text-gold transition-colors cursor-pointer">
+          Switch mode <ChevronRight size={12} />
+        </button>
+        <span className="hidden md:block h-4 w-px bg-sidebar-border" />
         <div className="flex items-center gap-3">
-          <QidsMark size={20} className="text-[#B8924A]" />
-          <div className="font-mono text-[11px] tracking-[0.22em] uppercase text-slate">
-            QIDS · Platform
+          <div className="w-8 h-8 rounded-full border border-[var(--border-strong)] flex items-center justify-center text-[11px] font-mono text-on-surface flex-shrink-0 bg-transparent">
+            {initials}
+          </div>
+          <div className="hidden xl:flex flex-col leading-none min-w-0">
+            <span className="text-[12px] text-on-surface truncate max-w-48">{name}</span>
+            <span className="text-[10px] font-mono tracking-wider text-muted-foreground capitalize">{mode}</span>
           </div>
         </div>
-        <nav className="hidden md:flex items-center gap-3" aria-label="Primary">
-          <NavLink to="/app/dashboard" className="flex items-center gap-2 font-mono text-[11px] tracking-[0.18em] uppercase text-ink border-b border-[#B8924A] pb-1 transition-colors no-underline">
-            Analytics
-          </NavLink>
-          <span className="h-px w-8 bg-[#B8924A]" />
-          <NavLink to="/app/report" className="font-mono text-[11px] tracking-[0.18em] uppercase text-slate hover:text-ink transition-colors no-underline">
-            Archive
-          </NavLink>
-        </nav>
-      </div>
-      <div className="flex items-center gap-6 topbar-actions">
-        <label className="flex items-center gap-2 cursor-pointer">
-          <span className="font-mono text-[10px] tracking-[0.22em] uppercase text-slate/70">Context</span>
-          <select value={context} onChange={e => setContext(e.target.value)}
-            className="bg-transparent font-mono text-[12px] text-slate border border-rule px-3 py-1.5 rounded-sm cursor-pointer hover:border-[#B8924A]/60 transition-colors">
-            {CONTEXTS.map(c => <option key={c.id} value={c.id}>{c.label}</option>)}
-          </select>
-        </label>
-        <button onClick={() => navigate('/app/report')}
-          className="btn-primary !py-2 !px-5 !text-[13px]">
-          NEW REPORT
-        </button>
       </div>
       <div className="topbar-mobile-actions hide-desktop">
         <button onClick={onMenuOpen} aria-label="Open menu"
-          className="p-2 text-slate hover:text-ink transition-colors cursor-pointer bg-transparent border-none">
+          className="p-2 text-muted-foreground hover:text-on-surface transition-colors cursor-pointer bg-transparent border-none">
           <Menu size={20} />
         </button>
       </div>
@@ -462,7 +460,7 @@ function AppShell() {
       <div className="flex min-h-screen bg-background">
         <Sidebar collapsed={collapsed} setCollapsed={setCollapsed} />
         <div className={`app-content ${collapsed ? 'sidebar-collapsed' : ''}`}>
-          <TopBar context={context} setContext={setContext} onMenuOpen={() => setMobileMenuOpen(true)} />
+          <TopBar onMenuOpen={() => setMobileMenuOpen(true)} />
           <main className="flex-1 overflow-auto">
             <Routes>
               <Route index element={<Navigate to="/app/dashboard" replace />} />
@@ -473,6 +471,7 @@ function AppShell() {
               <Route path="assessment" element={<Assessment />} />
               <Route path="progress" element={<Progress />} />
               <Route path="report" element={<ReportGenerator />} />
+              <Route path="settings" element={<Settings />} />
               <Route path="admin" element={<AdminPanel />} />
               <Route path="evaluator" element={<EvaluatorDashboard />} />
               <Route path="evaluator/assess/:assessmentId" element={<EvaluatorScoring />} />
@@ -501,6 +500,10 @@ function AppShell() {
               <Route path="*" element={<Navigate to="/app/dashboard" replace />} />
             </Routes>
           </main>
+          <footer className="hidden md:flex items-center justify-between border-t border-border py-4 px-10">
+            <span className="font-mono text-[10px] tracking-[0.22em] text-muted-foreground">QiDS · QUADRANT INTELLIGENCE DEVELOPMENT SYSTEM</span>
+            <span className="font-mono text-[10px] tracking-[0.28em] text-muted-foreground">STRUCTURE · CLARITY · DEPTH</span>
+          </footer>
         </div>
         <MobileNav onMenuOpen={() => setMobileMenuOpen(true)} />
         {mobileMenuOpen && <MobileMenuDrawer onClose={() => setMobileMenuOpen(false)} />}
@@ -516,6 +519,7 @@ export default function App() {
         <ToastProvider>
           <Routes>
             <Route path="/" element={<Landing />} />
+            <Route path="/mode" element={<Mode />} />
             <Route path="/login" element={<Login />} />
             <Route path="/signup" element={<Signup />} />
             <Route path="/app/*" element={
@@ -523,6 +527,7 @@ export default function App() {
                 <AppShell />
               </ProtectedRoute>
             } />
+            <Route path="*" element={<NotFound />} />
           </Routes>
         </ToastProvider>
       </BrowserRouter>

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { useNavigate, Link, Navigate } from 'react-router-dom';
+import { useNavigate, Link, Navigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import { destinationFor, sanitizeNext } from '../../lib/flow';
 import { CONTEXTS } from '../../data/qidsData';
 
 const ROLES = [
@@ -9,28 +10,40 @@ const ROLES = [
   { id: 'teacher', label: 'Teacher', desc: 'Manage classes and assessments' },
   { id: 'evaluator', label: 'Evaluator / Counselor', desc: 'Assess and guide others' },
   { id: 'admin', label: 'Institution Admin', desc: 'Manage an organization' },
+  { id: 'employer', label: 'Employer', desc: 'Hiring and talent intelligence' },
 ];
 
+const CONTEXT_IDS = new Set(CONTEXTS.map(c => c.id));
+
 export default function Signup() {
-  const { signup, loginWithGoogle, user } = useAuth();
+  const { signup, loginWithGoogle, user, userProfile } = useAuth();
   const navigate = useNavigate();
-  const [form, setForm] = useState({ name: '', email: '', password: '', confirm: '', role: 'individual', context: 'individual' });
+  const [searchParams] = useSearchParams();
+  const next = sanitizeNext(searchParams.get('next'));
+  const ctxParam = searchParams.get('context');
+  const initialRole = ctxParam === 'corporate' ? 'employer' : 'individual';
+  const [form, setForm] = useState({
+    name: '', email: '', password: '', confirm: '',
+    role: ROLES.some(r => r.id === initialRole) ? initialRole : 'individual',
+    context: CONTEXT_IDS.has(ctxParam) ? ctxParam : 'individual',
+  });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
-  if (user) return <Navigate to="/app/dashboard" replace />;
+  if (user) return <Navigate to={next || destinationFor(userProfile?.role)} replace />;
 
   const set = (k, v) => setForm(prev => ({ ...prev, [k]: v }));
 
   const handleSignup = async (e) => {
     e.preventDefault();
     setError('');
+    if (!form.name.trim()) return setError('Please enter your full name.');
     if (form.password !== form.confirm) return setError('Passwords do not match.');
     if (form.password.length < 6) return setError('Password must be at least 6 characters.');
     setLoading(true);
     try {
-      await signup(form.email, form.password, form.name, form.role, form.context);
-      navigate('/app/dashboard');
+      await signup(form.email, form.password, form.name.trim(), form.role, form.context);
+      navigate(next || destinationFor(form.role));
     } catch (err) {
       setError(err.message || 'Signup failed. Please try again.');
     } finally {
@@ -42,10 +55,8 @@ export default function Signup() {
     setError('');
     setLoading(true);
     try {
-      const result = await loginWithGoogle();
-      if (result?.isNew) {
-        setError('Account created. You can now sign in with Google.');
-      }
+      await loginWithGoogle(form.role, form.context);
+      navigate('/mode');
     } catch (err) {
       setError(err.message || 'Google sign-in failed.');
     } finally {
@@ -108,12 +119,13 @@ export default function Signup() {
 
             <div className="flex flex-col space-y-2">
               <label className="text-technical-sm font-technical-sm text-on-surface-variant uppercase">Classification</label>
-              <div className="flex gap-3">
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                 {ROLES.map(r => (
                   <button key={r.id} type="button" onClick={() => set('role', r.id)}
-                    className={`flex-1 py-3 px-2 border-[0.5px] text-center text-technical-sm font-technical-sm transition-all cursor-pointer bg-transparent ${form.role === r.id ? 'border-primary text-primary' : 'border-outline-variant text-on-surface-variant hover:text-primary hover:border-primary'
+                    className={`py-3 px-3 border-[0.5px] text-left transition-all cursor-pointer bg-transparent ${form.role === r.id ? 'border-primary text-primary' : 'border-outline-variant text-on-surface-variant hover:text-primary hover:border-primary'
                       }`}>
-                    {r.label}
+                    <div className="text-technical-sm font-technical-sm">{r.label}</div>
+                    <div className="text-[10px] font-technical-sm opacity-70 mt-1 leading-snug">{r.desc}</div>
                   </button>
                 ))}
               </div>
@@ -154,7 +166,7 @@ export default function Signup() {
         <footer className="pt-4 text-center">
           <p className="text-technical-sm font-technical-sm text-on-surface-variant">
             EXISTING PERSONNEL?
-            <Link to="/login" className="text-primary ml-2 hover:underline tracking-widest font-medium no-underline">SIGN IN</Link>
+            <Link to={next ? `/login?next=${encodeURIComponent(next)}` : '/login'} className="text-primary ml-2 hover:underline tracking-widest font-medium no-underline">SIGN IN</Link>
           </p>
         </footer>
       </main>

@@ -53,6 +53,24 @@ export default function Dashboard() {
         <div className="gradient-rule mt-6" />
       </section>
 
+      {!loading && assessments.length === 0 && (
+        <section className="card card-gold p-6 md:p-8 mb-10 flex flex-wrap items-center justify-between gap-6 animate-fade-up">
+          <div>
+            <div className="label-eyebrow-gold mb-3">STEP 01 — BEGIN</div>
+            <h2 className="font-display text-[22px] md:text-[26px] leading-snug">
+              No assessment on record yet.
+            </h2>
+            <p className="mt-2 text-[13px] text-muted-foreground max-w-xl leading-relaxed">
+              Your first assessment establishes the baseline every report, plan, and growth
+              trajectory is built on.
+            </p>
+          </div>
+          <button onClick={() => navigate('/app/assessment')} className="btn-primary">
+            Begin Assessment <ArrowRight size={15} />
+          </button>
+        </section>
+      )}
+
       {/* Stats Row */}
       <section className="responsive-grid-4 gap-3 md:gap-4 w-full mb-10 md:mb-16">
         {loading ? (
