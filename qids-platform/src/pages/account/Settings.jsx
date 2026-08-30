@@ -2,32 +2,9 @@ import { useState } from 'react';
 import { Check } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { CONTEXTS } from '../../data/qidsData';
+import { PLANS, PLAN_ORDER, getPlan } from '../../core/plans';
 
 const ROLE_OPTIONS = ['individual', 'student', 'teacher', 'evaluator', 'employer', 'admin'];
-
-const PLANS = [
-  {
-    id: 'free',
-    name: 'Free',
-    status: 'CURRENT',
-    price: '$0',
-    features: ['One assessment cycle', 'Individual context', 'IQP summary report'],
-  },
-  {
-    id: 'pro',
-    name: 'Pro',
-    status: 'IN DEVELOPMENT',
-    price: 'TBA',
-    features: ['Unlimited cycles', 'All contexts', 'Full evidence portfolio', 'Credential export'],
-  },
-  {
-    id: 'institution',
-    name: 'Institution',
-    status: 'IN DEVELOPMENT',
-    price: 'TBA',
-    features: ['Cohorts & classes', 'Evaluator console', 'School analytics', 'Priority support'],
-  },
-];
 
 const inputClass = "w-full h-11 px-3 bg-transparent border border-border text-on-surface font-technical-sm outline-none focus:border-gold transition-colors";
 
@@ -41,6 +18,8 @@ export default function Settings() {
   const [pwState, setPwState] = useState({ saved: false, error: '', saving: false });
 
   const isEmailProvider = (user?.providerData || []).some(p => p.providerId === 'password');
+
+  const currentPlanId = getPlan(userProfile?.plan).id;
 
   const saveProfile = async (e) => {
     e.preventDefault();
@@ -179,18 +158,21 @@ export default function Settings() {
         <section className="card card-gold p-6">
           <div className="flex items-center justify-between mb-5">
             <div className="label-eyebrow-gold">PLAN</div>
-            <span className="chip">FREE · MVP</span>
+            <span className="chip capitalize">{getPlan(userProfile?.plan).name} · {getPlan(userProfile?.plan).status === 'current' ? 'active' : 'pending'}</span>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-px bg-border border border-border">
-            {PLANS.map(plan => {
-              const isCurrent = plan.id === 'free';
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-px bg-border border border-border">
+            {PLAN_ORDER.map(id => {
+              const plan = PLANS[id];
+              const isCurrent = id === currentPlanId;
               return (
                 <div key={plan.id} className={`p-4 flex flex-col ${isCurrent ? 'bg-surface-2' : 'bg-background'}`}>
                   <div className="flex items-center justify-between">
                     <span className="font-display text-[17px]">{plan.name}</span>
-                    <span className={plan.status === 'CURRENT' ? 'status-current text-gold' : 'status-proposed'}>{plan.status}</span>
+                    <span className={plan.status === 'current' ? 'status-current text-gold' : 'status-proposed'}>
+                      {plan.status.toUpperCase()}
+                    </span>
                   </div>
-                  <div className="num text-[22px] mt-2">{plan.price}</div>
+                  <div className="num text-[22px] mt-2">{plan.priceLabel}</div>
                   <ul className="mt-3 space-y-1.5 flex-1">
                     {plan.features.map(f => (
                       <li key={f} className="text-[11px] text-muted-foreground flex items-start gap-1.5">
@@ -202,7 +184,7 @@ export default function Settings() {
                     <span className="chip mt-4 justify-center">Active plan</span>
                   ) : (
                     <button type="button" disabled className="btn-outline mt-4 !py-2 !text-[11px] w-full cursor-not-allowed">
-                      Coming soon
+                      {plan.status === 'proposed' ? 'Coming soon' : 'Not subscribed'}
                     </button>
                   )}
                 </div>

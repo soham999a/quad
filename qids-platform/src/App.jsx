@@ -2,18 +2,22 @@ import React, { useState, createContext, useContext, useEffect } from 'react';
 import { BrowserRouter, Routes, Route, NavLink, useNavigate, Navigate, useLocation } from 'react-router-dom';
 import {
   Brain, Map, ClipboardList, TrendingUp, FileText, UserCheck,
-  ChevronRight, Menu, LogOut, Home, BookOpen, ListChecks, X, Shield, Users, Sparkles, Building2, Target,
+  ChevronRight, Menu, LogOut, Home, BookOpen, X, Shield, Users, Sparkles, Building2, Target, Lock,
   Settings as SettingsIcon
 } from 'lucide-react';
 import { PILLARS, mergeEvaluationScores } from './data/qidsData';
 import QidsMark from './components/QidsMark';
 import { computePillarScore } from './core/engine/qids';
+import { getPlan, can } from './core/plans';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
+import OnboardingGate from './components/OnboardingGate';
+import ThemeToggle from './components/ThemeToggle';
 import { ToastProvider } from './components/Toast';
 import { getLatestAssessment, getLatestPostAssessment, getAllEvaluations } from './services/firestoreService';
 
 import Landing from './pages/Landing';
+import Onboarding from './pages/onboarding/Onboarding';
 import Mode from './pages/Mode';
 import NotFound from './pages/NotFound';
 import Settings from './pages/account/Settings';
@@ -50,35 +54,128 @@ import SchoolReports from './pages/school/SchoolReports';
 export const AppContext = createContext(null);
 export const useApp = () => useContext(AppContext);
 
-const NAV_GROUPS = [
-  {
-    label: 'PLATFORM',
-    items: [
-      { path: '/app/dashboard', label: 'Dashboard', icon: Home },
-      { path: '/app/assessment', label: 'Assessment', icon: ClipboardList },
-      { path: '/app/progress', label: 'Progress', icon: TrendingUp },
-      { path: '/app/report', label: 'Reports', icon: FileText },
-      { path: '/app/settings', label: 'Settings', icon: SettingsIcon },
-    ]
-  },
-  {
-    label: 'KNOWLEDGE',
-    items: [
-      { path: '/app/pillars', label: 'Four Pillars', icon: Brain },
-      { path: '/app/framework', label: 'Framework Guide', icon: Map },
-      { path: '/app/questionnaires', label: 'Questionnaires', icon: ListChecks },
-      { path: '/app/intervention-plan', label: 'Intervention Plan', icon: BookOpen },
-    ]
-  },
-  {
-    label: 'INTELLIGENCE',
-    items: [
-      { path: '/app/enterprise', label: 'Enterprise (QGRA+)', icon: Building2 },
-      { path: '/app/role-fit', label: 'Role Fit', icon: Target },
-      { path: '/app/talent', label: 'Talent Console', icon: Users },
-    ]
-  },
-];
+// ─── Persona-aware navigation ────────────────────────────────────────────────
+// Each audience sees its own information architecture under one shared shell.
+// Routes unchanged; how they're surfaced adapts to persona. (Blueprint §5.1)
+
+export function personaFor(role) {
+  if (role === 'teacher') return 'teacher';
+  if (role === 'evaluator') return 'evaluator';
+  if (role === 'employer') return 'employer';
+  if (role === 'admin') return 'admin';
+  return 'individual';
+}
+
+function nav(id, groups) {
+  return { id, groups };
+}
+
+const PERSONA_NAV = {
+  individual: nav('individual', [
+    {
+      label: 'PLATFORM',
+      items: [
+        { path: '/app/dashboard', label: 'Home', icon: Home },
+        { path: '/app/individual', label: 'My Assessment', icon: Sparkles },
+        { path: '/app/progress', label: 'Progress', icon: TrendingUp },
+        { path: '/app/report', label: 'Reports', icon: FileText },
+      ],
+    },
+    {
+      label: 'KNOWLEDGE',
+      items: [
+        { path: '/app/pillars', label: 'Four Pillars', icon: Brain },
+        { path: '/app/framework', label: 'Framework Guide', icon: Map },
+        { path: '/app/intervention-plan', label: 'Intervention Plan', icon: BookOpen, entitlement: 'interventionPlans' },
+        { path: '/app/my-evaluator', label: 'My Evaluator', icon: UserCheck },
+      ],
+    },
+    {
+      label: 'ACCOUNT',
+      items: [
+        { path: '/app/settings', label: 'Settings', icon: SettingsIcon },
+      ],
+    },
+  ]),
+  student: nav('student', [
+    {
+      label: 'PLATFORM',
+      items: [
+        { path: '/app/dashboard', label: 'Home', icon: Home },
+        { path: '/app/individual', label: 'My Assessment', icon: Sparkles },
+        { path: '/app/progress', label: 'Progress', icon: TrendingUp },
+        { path: '/app/report', label: 'Reports', icon: FileText },
+      ],
+    },
+    {
+      label: 'SCHOOL',
+      items: [
+        { path: '/app/school/join', label: 'Join Class', icon: BookOpen },
+      ],
+    },
+    {
+      label: 'ACCOUNT',
+      items: [{ path: '/app/settings', label: 'Settings', icon: SettingsIcon }],
+    },
+  ]),
+  teacher: nav('teacher', [
+    {
+      label: 'SCHOOL',
+      items: [
+        { path: '/app/dashboard', label: 'Dashboard', icon: Home },
+        { path: '/app/school', label: 'Classes', icon: BookOpen },
+        { path: '/app/school/reports', label: 'Reports', icon: FileText },
+      ],
+    },
+    {
+      label: 'ACCOUNT',
+      items: [{ path: '/app/settings', label: 'Settings', icon: SettingsIcon }],
+    },
+  ]),
+  evaluator: nav('evaluator', [
+    {
+      label: 'EVALUATION',
+      items: [
+        { path: '/app/dashboard', label: 'Dashboard', icon: Home },
+        { path: '/app/evaluator', label: 'Evaluator Dashboard', icon: Users },
+        { path: '/app/interview', label: 'Interview Studio', icon: UserCheck },
+      ],
+    },
+    {
+      label: 'ACCOUNT',
+      items: [{ path: '/app/settings', label: 'Settings', icon: SettingsIcon }],
+    },
+  ]),
+  employer: nav('employer', [
+    {
+      label: 'TALENT',
+      items: [
+        { path: '/app/talent', label: 'Talent Console', icon: Users },
+        { path: '/app/enterprise', label: 'Deploy (QGRA+)', icon: Building2, entitlement: 'deployedBatteries' },
+        { path: '/app/role-fit', label: 'Role Fit', icon: Target, entitlement: 'roleFit' },
+      ],
+    },
+    {
+      label: 'ACCOUNT',
+      items: [{ path: '/app/settings', label: 'Settings', icon: SettingsIcon }],
+    },
+  ]),
+  admin: nav('admin', [
+    {
+      label: 'ADMIN',
+      items: [
+        { path: '/app/dashboard', label: 'Dashboard', icon: Home },
+        { path: '/app/admin', label: 'Admin Panel', icon: Shield },
+        { path: '/app/school', label: 'School', icon: BookOpen },
+        { path: '/app/evaluator', label: 'Evaluator', icon: Users },
+      ],
+    },
+    {
+      label: 'ACCOUNT',
+      items: [{ path: '/app/settings', label: 'Settings', icon: SettingsIcon }],
+    },
+  ]),
+};
 
 const MOBILE_NAV = [
   { path: '/app/dashboard', label: 'Home', icon: Home },
@@ -87,6 +184,22 @@ const MOBILE_NAV = [
   { path: '/app/report', label: 'Report', icon: FileText },
   { path: '/app/pillars', label: 'Pillars', icon: Brain },
 ];
+
+// Where each persona lands when they enter the shell (Blueprint §5.1).
+const PERSONA_HOME = {
+  individual: '/app/individual',
+  student: '/app/individual',
+  teacher: '/app/school',
+  evaluator: '/app/evaluator',
+  employer: '/app/talent',
+  admin: '/app/admin',
+};
+
+function PersonaHome() {
+  const { userProfile } = useAuth();
+  const role = userProfile?.role || 'individual';
+  return <Navigate to={PERSONA_HOME[personaFor(role)] || '/app/dashboard'} replace />;
+}
 
 function Sidebar({ collapsed, setCollapsed }) {
   const { user, userProfile, logout, updateUserRole } = useAuth();
@@ -97,25 +210,9 @@ function Sidebar({ collapsed, setCollapsed }) {
 
   const ROLE_OPTIONS = ['student', 'individual', 'teacher', 'evaluator', 'admin', 'employer'];
 
-  const roleNavItems = [];
-  if (role === 'individual' || role === 'student') {
-    roleNavItems.push({ path: '/app/individual', label: 'My Assessment', icon: Sparkles });
-    roleNavItems.push({ path: '/app/my-evaluator', label: 'My Evaluator', icon: UserCheck });
-  }
-  if (role === 'evaluator' || role === 'admin') {
-    roleNavItems.push({ path: '/app/evaluator', label: 'Evaluator Dashboard', icon: Users });
-    roleNavItems.push({ path: '/app/interview', label: 'Interview Studio', icon: Users });
-  }
-  if (role === 'teacher' || role === 'admin') {
-    roleNavItems.push({ path: '/app/school', label: 'School Dashboard', icon: BookOpen });
-    roleNavItems.push({ path: '/app/school/reports', label: 'School Reports', icon: FileText });
-  }
-  if (role === 'student') {
-    roleNavItems.push({ path: '/app/school/join', label: 'Join Class', icon: BookOpen });
-  }
-  if (role === 'admin') {
-    roleNavItems.push({ path: '/app/admin', label: 'Admin Panel', icon: Shield });
-  }
+  const persona = personaFor(role);
+  const navConfig = PERSONA_NAV[persona] || PERSONA_NAV.individual;
+  const plan = getPlan(userProfile?.plan);
 
   const navItemClass = ({ isActive }) =>
     `flex items-center gap-3 px-3 py-2.5 mx-1 text-[13px] border-l-2 transition-colors ${
@@ -139,35 +236,25 @@ function Sidebar({ collapsed, setCollapsed }) {
       </div>
 
       <nav className="flex-grow overflow-y-auto py-6" aria-label="Sections">
-        {NAV_GROUPS.map(group => (
+        {navConfig.groups.map(group => (
           <div key={group.label} className="mb-6">
             {!collapsed && (
               <div className="label-eyebrow px-4 mb-3">{group.label}</div>
             )}
-            {group.items.map(({ path, label, icon: Icon }) => (
-              <NavLink key={path} to={path} end={path === '/app/dashboard'} className={navItemClass} title={label}>
-                <Icon size={16} strokeWidth={1.5} />
-                {!collapsed && <span className="truncate">{label}</span>}
-              </NavLink>
-            ))}
+            {group.items.map(({ path, label, icon: Icon, entitlement }) => {
+              const locked = entitlement ? !can(plan, entitlement) : false;
+              return (
+                <NavLink key={path} to={path} end={path === '/app/dashboard'} className={navItemClass} title={locked ? `${label} · ${plan.name} plan` : label}>
+                  <Icon size={16} strokeWidth={1.5} className={locked ? 'opacity-50' : ''} />
+                  {!collapsed && (
+                    <span className={`truncate ${locked ? 'opacity-50' : ''}`}>{label}</span>
+                  )}
+                  {locked && !collapsed && <Lock size={11} className="ml-auto text-gold/60" />}
+                </NavLink>
+              );
+            })}
           </div>
         ))}
-
-        {roleNavItems.length > 0 && (
-          <div className="mb-6">
-            {!collapsed && (
-              <div className="label-eyebrow px-4 mb-3">
-                {role === 'admin' ? 'ADMIN' : role === 'teacher' ? 'SCHOOL' : role === 'evaluator' ? 'EVALUATION' : 'PERSONAL'}
-              </div>
-            )}
-            {roleNavItems.map(({ path, label, icon: Icon }) => (
-              <NavLink key={path} to={path} end className={navItemClass} title={label}>
-                <Icon size={16} strokeWidth={1.5} />
-                {!collapsed && <span className="truncate">{label}</span>}
-              </NavLink>
-            ))}
-          </div>
-        )}
       </nav>
 
       <div className={`px-6 mb-4 ${collapsed ? '!px-2' : ''}`}>
@@ -311,58 +398,24 @@ function MobileMenuDrawer({ onClose }) {
       )}
 
       <div className="p-6 space-y-8">
-        {NAV_GROUPS.map(group => (
+        {(PERSONA_NAV[personaFor(userProfile?.role)] || PERSONA_NAV.individual).groups.map(group => (
           <div key={group.label}>
             <div className="label-eyebrow mb-3">{group.label}</div>
-            {group.items.map(({ path, label, icon: Icon }) => (
-              <NavLink key={path} to={path} end={path === '/app/dashboard'} onClick={onClose}
-                className={({ isActive }) =>
-                  `flex items-center gap-4 py-3 transition-colors ${isActive ? 'text-gold border-l-2 border-gold pl-3' : 'text-muted-foreground hover:text-on-surface pl-3'
-                  }`
-                }>
-                <Icon size={15} strokeWidth={1.5} />
-                <span className="text-[13px] tracking-wide">{label}</span>
-              </NavLink>
-            ))}
+            {group.items.map(({ path, label, icon: Icon, entitlement }) => {
+              const locked = entitlement ? !can(getPlan(userProfile?.plan), entitlement) : false;
+              return (
+                <NavLink key={path} to={path} end={path === '/app/dashboard'} onClick={onClose}
+                  className={({ isActive }) =>
+                    `flex items-center gap-4 py-3 transition-colors ${isActive ? 'text-gold border-l-2 border-gold pl-3' : 'text-muted-foreground hover:text-on-surface pl-3'
+                    }`}>
+                  <Icon size={15} strokeWidth={1.5} className={locked ? 'opacity-50' : ''} />
+                  <span className={`text-[13px] tracking-wide ${locked ? 'opacity-50' : ''}`}>{label}</span>
+                  {locked && <Lock size={11} className="ml-auto text-gold/60" />}
+                </NavLink>
+              );
+            })}
           </div>
         ))}
-
-        {(userProfile?.role === 'individual' || userProfile?.role === 'student') && (
-          <div>
-            <div className="label-eyebrow mb-3">Personal</div>
-            <NavLink to="/app/my-evaluator" onClick={onClose}
-              className={({ isActive }) =>
-                `flex items-center gap-4 py-3 transition-colors ${isActive ? 'text-gold border-l-2 border-gold pl-3' : 'text-muted-foreground hover:text-on-surface pl-3'
-                }`}>
-              <UserCheck size={15} strokeWidth={1.5} />
-              <span className="text-[13px] tracking-wide">My Evaluator</span>
-            </NavLink>
-          </div>
-        )}
-
-        {(userProfile?.role === 'evaluator' || userProfile?.role === 'admin') && (
-          <div>
-            <div className="label-eyebrow mb-3">
-              {userProfile?.role === 'admin' ? 'Admin' : 'Evaluation'}
-            </div>
-            <NavLink to="/app/evaluator" onClick={onClose}
-              className={({ isActive }) =>
-                `flex items-center gap-4 py-3 transition-colors ${isActive ? 'text-gold border-l-2 border-gold pl-3' : 'text-muted-foreground hover:text-on-surface pl-3'
-                }`}>
-              <Users size={15} strokeWidth={1.5} />
-              <span className="text-[13px] tracking-wide">Evaluator Dashboard</span>
-            </NavLink>
-            {userProfile?.role === 'admin' && (
-              <NavLink to="/app/admin" onClick={onClose}
-                className={({ isActive }) =>
-                  `flex items-center gap-4 py-3 transition-colors ${isActive ? 'text-gold border-l-2 border-gold pl-3' : 'text-muted-foreground hover:text-on-surface pl-3'
-                  }`}>
-                <Shield size={15} strokeWidth={1.5} />
-                <span className="text-[13px] tracking-wide">Admin Panel</span>
-              </NavLink>
-            )}
-          </div>
-        )}
       </div>
 
       <div className="p-6 border-t border-sidebar-border" style={{ paddingBottom: 'calc(24px + env(safe-area-inset-bottom, 0px))' }}>
@@ -393,6 +446,7 @@ function TopBar({ onMenuOpen }) {
         </div>
       </div>
       <div className="flex items-center gap-5 topbar-actions">
+        <span className="hidden md:inline-flex items-center"><ThemeToggle /></span>
         <button onClick={() => navigate('/mode')}
           className="hidden md:inline-flex items-center gap-2 bg-transparent border-none p-0 font-mono text-[11px] tracking-[0.18em] uppercase text-muted-foreground hover:text-gold transition-colors cursor-pointer">
           Switch mode <ChevronRight size={12} />
@@ -409,6 +463,7 @@ function TopBar({ onMenuOpen }) {
         </div>
       </div>
       <div className="topbar-mobile-actions hide-desktop">
+        <ThemeToggle />
         <button onClick={onMenuOpen} aria-label="Open menu"
           className="p-2 text-muted-foreground hover:text-on-surface transition-colors cursor-pointer bg-transparent border-none">
           <Menu size={20} />
@@ -463,7 +518,7 @@ function AppShell() {
           <TopBar onMenuOpen={() => setMobileMenuOpen(true)} />
           <main className="flex-1 overflow-auto">
             <Routes>
-              <Route index element={<Navigate to="/app/dashboard" replace />} />
+              <Route index element={<PersonaHome />} />
               <Route path="dashboard" element={<Dashboard />} />
               <Route path="framework" element={<FrameworkMap />} />
               <Route path="pillars" element={<FourPillars />} />
@@ -497,7 +552,7 @@ function AppShell() {
               <Route path="school/class/:classId/analytics" element={<ClassAnalytics />} />
               <Route path="school/join" element={<StudentJoin />} />
               <Route path="school/reports" element={<SchoolReports />} />
-              <Route path="*" element={<Navigate to="/app/dashboard" replace />} />
+              <Route path="*" element={<PersonaHome />} />
             </Routes>
           </main>
           <footer className="hidden md:flex items-center justify-between border-t border-border py-4 px-10">
@@ -522,9 +577,16 @@ export default function App() {
             <Route path="/mode" element={<Mode />} />
             <Route path="/login" element={<Login />} />
             <Route path="/signup" element={<Signup />} />
+            <Route path="/onboarding" element={
+              <ProtectedRoute>
+                <Onboarding />
+              </ProtectedRoute>
+            } />
             <Route path="/app/*" element={
               <ProtectedRoute>
-                <AppShell />
+                <OnboardingGate>
+                  <AppShell />
+                </OnboardingGate>
               </ProtectedRoute>
             } />
             <Route path="*" element={<NotFound />} />

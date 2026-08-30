@@ -5,7 +5,7 @@ import { db } from '../../firebase';
 import { useAuth } from '../../context/AuthContext';
 import { getEvaluatorAssignments, getUserAssessments, getAllEvaluations } from '../../services/firestoreService';
 import { PILLARS } from '../../data/qidsData';
-import { Users, ClipboardList, CheckCircle, Clock, ChevronRight, RefreshCw } from 'lucide-react';
+import { Users, ClipboardList, CheckCircle, Clock, ChevronRight, RefreshCw, UserCheck } from 'lucide-react';
 
 export default function EvaluatorDashboard() {
   const { user, userProfile } = useAuth();
@@ -83,11 +83,19 @@ export default function EvaluatorDashboard() {
               : 'No students assigned to you yet'}
           </p>
         </div>
-        <button onClick={loadData}
-          className="inline-flex items-center gap-1.5 px-3.5 py-2 text-technical-sm font-technical-sm border-[0.5px] border-outline-variant text-on-surface-variant hover:text-primary hover:border-primary transition-all cursor-pointer bg-transparent uppercase tracking-widest flex-shrink-0"
-          style={{ borderRadius: '8px' }}>
-          <RefreshCw size={12} /> Refresh
-        </button>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => navigate('/app/interview')}
+            className="inline-flex items-center gap-1.5 px-3.5 py-2 text-technical-sm font-technical-sm bg-primary/10 border-[0.5px] border-primary/30 text-primary hover:bg-primary/15 transition-all cursor-pointer uppercase tracking-widest flex-shrink-0"
+            style={{ borderRadius: '8px' }}>
+            <UserCheck size={12} /> Interview Studio
+          </button>
+          <button onClick={loadData}
+            className="inline-flex items-center gap-1.5 px-3.5 py-2 text-technical-sm font-technical-sm border-[0.5px] border-outline-variant text-on-surface-variant hover:text-primary hover:border-primary transition-all cursor-pointer bg-transparent uppercase tracking-widest flex-shrink-0"
+            style={{ borderRadius: '8px' }}>
+            <RefreshCw size={12} /> Refresh
+          </button>
+        </div>
       </section>
 
       {assignments.length === 0 ? (

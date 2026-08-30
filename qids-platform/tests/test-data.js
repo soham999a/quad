@@ -162,3 +162,10 @@ export const TEST_AUTH_STUDENT = {
   user: { uid: student1Uid, email: 'alice@test.com', displayName: 'Alice Johnson' },
   profile: { uid: student1Uid, name: 'Alice Johnson', email: 'alice@test.com', role: 'student' },
 };
+
+// Brand-new user: no onboarding doc AND no assessment activity in the stub, so
+// the OnboardingGate must route them into the onboarding wizard.
+export const TEST_AUTH_NEW = {
+  user: { uid: 'new-001', email: 'new@test.com', displayName: 'New User' },
+  profile: { uid: 'new-001', name: 'New User', email: 'new@test.com', role: 'individual', context: 'individual' },
+};

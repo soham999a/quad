@@ -791,3 +791,82 @@ input[type="range"]::-moz-range-thumb {
   .text-gradient, .gradient-rule { background: none !important; color: #111 !important; }
   .animate-fade { animation: none !important; }
 }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+ * LIGHT THEME — bone / matrix base
+ * The platform is navy-premium by default. When `data-theme="light"` is set on
+ * <html>, every token below re-resolves to the bone matrix palette so the whole
+ * app (including Tailwind utilities that compile to var(--color-*)) re-themes
+ * without any JSX changes. Gold stays the semantic accent in both modes.
+ * ═══════════════════════════════════════════════════════════════════════════ */
+[data-theme="light"] {
+  color-scheme: light;
+
+  /* Tailwind theme tokens */
+  --color-background: oklch(0.965 0.01 82);
+  --color-foreground: oklch(0.2 0.02 255);
+  --color-surface: oklch(0.99 0.006 82);
+  --color-surface-2: oklch(0.94 0.012 82);
+
+  --color-surface-dim: oklch(0.955 0.012 82);
+  --color-surface-bright: oklch(0.99 0.006 82);
+  --color-surface-container-lowest: oklch(1 0 0);
+  --color-surface-container-low: oklch(0.985 0.008 82);
+  --color-surface-container: oklch(0.96 0.012 82);
+  --color-surface-container-high: oklch(0.92 0.014 82);
+  --color-surface-container-highest: oklch(0.88 0.016 82);
+
+  --color-on-surface: oklch(0.2 0.02 255);
+  --color-on-surface-variant: oklch(0.45 0.02 255);
+  --color-outline: oklch(0.45 0.02 255);
+  --color-outline-variant: oklch(0.84 0.015 82);
+  --color-border: oklch(0.84 0.015 82);
+  --color-border-strong: oklch(0.72 0.02 82);
+  --color-muted-foreground: oklch(0.45 0.02 255);
+
+  --color-primary: oklch(0.78 0.12 82);
+  --color-on-primary: oklch(0.14 0.005 250);
+  --color-primary-container: oklch(0.78 0.12 82 / 14%);
+  --color-on-primary-container: oklch(0.2 0.02 255);
+
+  --color-secondary: oklch(0.9 0.015 82);
+  --color-on-secondary: oklch(0.2 0.02 255);
+  --color-surface-variant: oklch(0.72 0.02 82);
+
+  /* Sidebar */
+  --color-sidebar: oklch(0.98 0.008 82);
+  --color-sidebar-foreground: oklch(0.32 0.02 255);
+  --color-sidebar-border: oklch(0.86 0.015 82);
+  --color-sidebar-accent: oklch(0.93 0.013 82);
+  --color-sidebar-accent-foreground: oklch(0.2 0.02 255);
+
+  /* Legacy raw variables used by hand-written CSS */
+  --background: oklch(0.965 0.01 82);
+  --foreground: oklch(0.2 0.02 255);
+  --surface: oklch(0.99 0.006 82);
+  --surface-2: oklch(0.94 0.012 82);
+  --border: oklch(0.84 0.015 82);
+  --border-strong: oklch(0.72 0.02 82);
+  --muted-foreground: oklch(0.45 0.02 255);
+  --text-primary: oklch(0.78 0.12 82);
+  --text-secondary: oklch(0.45 0.02 255);
+  --text-muted: oklch(0.45 0.02 255);
+  --border-light: oklch(0.84 0.015 82 / 60%);
+  --border-outline-variant: oklch(0.84 0.015 82);
+  --navy-2: oklch(0.9 0.015 82);
+  --navy-4: oklch(0.97 0.01 82);
+
+  /* Selection */
+  --gold-soft: oklch(0.78 0.12 82 / 22%);
+}
+
+/* Improve contrast of the current/* darker ink labels inside light bone sections */
+[data-theme="light"] body {
+  background-color: var(--background);
+  color: var(--foreground);
+}
+
+[data-theme="light"] ::selection {
+  background: var(--gold-soft);
+  color: var(--foreground);
+}

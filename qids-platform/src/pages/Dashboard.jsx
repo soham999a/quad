@@ -258,6 +258,7 @@ export default function Dashboard() {
               { label: 'Generate Report', path: '/app/report' },
               { label: 'View My Evaluator', path: '/app/my-evaluator' },
               { label: 'Intervention Plan', path: '/app/intervention-plan' },
+              { label: 'Interview Studio', path: '/app/interview' },
             ].map(({ label, path }) => (
               <button key={label} onClick={() => navigate(path)}
                 className="card card-hover group flex items-center justify-between w-full p-4 text-body-md text-on-surface-variant hover:text-primary transition-colors cursor-pointer bg-transparent touch-target text-left">
