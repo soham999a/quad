@@ -46,12 +46,12 @@
   --color-error-container: oklch(0.55 0.18 28 / 20%);
   --color-surface-variant: oklch(0.36 0.008 250);
 
-  /* ── Sidebar ── */
-  --color-sidebar: oklch(0.13 0.005 250);
-  --color-sidebar-foreground: oklch(0.78 0.01 90);
-  --color-sidebar-border: oklch(0.22 0.005 250);
-  --color-sidebar-accent: oklch(0.2 0.006 250);
-  --color-sidebar-accent-foreground: oklch(0.96 0.005 90);
+  /* ── Sidebar (inverted: contrasts the dark canvas with a light bone rail) ── */
+  --color-sidebar: oklch(0.98 0.008 82);
+  --color-sidebar-foreground: oklch(0.32 0.02 255);
+  --color-sidebar-border: oklch(0.86 0.015 82);
+  --color-sidebar-accent: oklch(0.93 0.013 82);
+  --color-sidebar-accent-foreground: oklch(0.2 0.02 255);
 
   /* ── Gold + bands ── */
   --color-gold: oklch(0.78 0.12 82);
@@ -158,6 +158,29 @@
 }
 .surface-bone .label-eyebrow-gold {
   color: oklch(0.5 0.11 74);
+}
+
+/* ── Sidebar self-contained scope ──
+ * The sidebar rail intentionally inverts against the canvas: a light bone rail
+ * sits over the dark canvas, and a dark navy rail sits over the light bone
+ * canvas. Its inner content must resolve its own text / border / tint tokens
+ * from the sidebar palette (never the canvas palette) so nav labels stay
+ * legible whichever theme the canvas is on. */
+.sidebar-shell {
+  /* Tailwind theme tokens */
+  --color-on-surface: var(--color-sidebar-foreground);
+  --color-muted-foreground: color-mix(in oklab, var(--color-sidebar-foreground) 55%, transparent);
+  --color-surface-container-low: var(--color-sidebar-accent);
+  --color-tint: var(--color-sidebar-accent);
+  --color-muted: var(--color-sidebar-accent);
+  --color-surface-2: var(--color-sidebar-accent);
+  /* Legacy hand-written vars */
+  --on-surface: var(--color-sidebar-foreground);
+  --muted-foreground: color-mix(in oklab, var(--color-sidebar-foreground) 55%, transparent);
+  --text-secondary: color-mix(in oklab, var(--color-sidebar-foreground) 55%, transparent);
+  --border-strong: var(--color-sidebar-border);
+  --border-light: var(--color-sidebar-border);
+  --surface-2: var(--color-sidebar-accent);
 }
 
 /* ── Base Styles ── */
@@ -833,12 +856,12 @@ input[type="range"]::-moz-range-thumb {
   --color-on-secondary: oklch(0.2 0.02 255);
   --color-surface-variant: oklch(0.72 0.02 82);
 
-  /* Sidebar */
-  --color-sidebar: oklch(0.98 0.008 82);
-  --color-sidebar-foreground: oklch(0.32 0.02 255);
-  --color-sidebar-border: oklch(0.86 0.015 82);
-  --color-sidebar-accent: oklch(0.93 0.013 82);
-  --color-sidebar-accent-foreground: oklch(0.2 0.02 255);
+  /* Sidebar (inverted: dark navy rail against the light bone canvas) */
+  --color-sidebar: oklch(0.13 0.005 250);
+  --color-sidebar-foreground: oklch(0.78 0.01 90);
+  --color-sidebar-border: oklch(0.22 0.005 250);
+  --color-sidebar-accent: oklch(0.2 0.006 250);
+  --color-sidebar-accent-foreground: oklch(0.96 0.005 90);
 
   /* Legacy raw variables used by hand-written CSS */
   --background: oklch(0.965 0.01 82);

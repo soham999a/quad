@@ -222,7 +222,7 @@ function Sidebar({ collapsed, setCollapsed }) {
     }`;
 
   return (
-    <aside className="desktop-sidebar fixed left-0 top-0 h-screen flex-col z-40 bg-sidebar text-sidebar-foreground"
+    <aside className="desktop-sidebar sidebar-shell fixed left-0 top-0 h-screen flex-col z-40 bg-sidebar text-sidebar-foreground"
       style={{ width: collapsed ? 64 : 260, transition: 'width 0.3s cubic-bezier(0.4,0,0.2,1)' }}>
 
       <div className={`flex items-center gap-3 px-6 py-7 border-b border-sidebar-border ${collapsed ? 'justify-center px-0' : ''}`}>
