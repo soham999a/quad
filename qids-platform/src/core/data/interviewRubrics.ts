@@ -121,6 +121,21 @@ export const RUBRIC_DIMENSIONS: RubricDimension[] = [
       5: 'Exceptional critical thinker; evaluates biases; integrates multiple perspectives with precision.',
     },
   },
+  {
+    id: 'Resilience',
+    label: 'Resilience & Stress Tolerance',
+    shortLabel: 'RES',
+    description: 'Composure under pressure, recovery from setbacks, and sustained effort despite difficulty.',
+    pillar: 'AQ',
+    weight: 1,
+    descriptors: {
+      1: 'Easily overwhelmed; gives up quickly under pressure; struggles to recover from setbacks.',
+      2: 'Some composure; limited recovery; performance dips noticeably under stress.',
+      3: 'Maintains composure in moderate pressure; recovers reasonably; persists on tough tasks.',
+      4: 'Stays composed under significant pressure; recovers quickly; sustains effort through difficulty.',
+      5: 'Thrives under high pressure; models calm confidence; turns setbacks into learning and momentum.',
+    },
+  },
 ];
 
 export const RUBRIC_MAP: Record<RubricDimensionId, RubricDimension> =
@@ -190,6 +205,12 @@ export const LIVE_QUESTIONS: InterviewQuestion[] = [
     text: 'What is a belief or opinion you held strongly in the past that you later changed? What caused the shift?',
     dimension: 'CriticalThinking',
     context: 'Additional probe — intellectual humility and open-mindedness.',
+  },
+  {
+    id: 'LQ-11',
+    text: 'Tell me about a time you were under intense pressure or faced a setback. What did you do to stay productive and how did you recover?',
+    dimension: 'Resilience',
+    context: 'Assesses composure under pressure, recovery, and sustained effort.',
   },
 ];
 

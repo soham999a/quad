@@ -4,8 +4,9 @@ import { useAuth } from '../../context/AuthContext';
 import { getEvaluatorSessions } from '../../services/interviewService';
 import {
   ClipboardList, Users, Clock, CheckCircle, Plus, ChevronRight,
-  Play, FileText, Filter,
+  Play, FileText, Filter, Trash2,
 } from 'lucide-react';
+import { deleteInterviewSession } from '../../services/interviewService';
 import SeedInterviewData from '../../components/SeedInterviewData';
 
 const STATUS_STYLES = {
@@ -42,6 +43,18 @@ export default function InterviewerDashboard() {
   const formatDate = (ts) => {
     if (!ts?.toDate) return '—';
     return ts.toDate().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  };
+
+  const handleDelete = async (e, session) => {
+    e.stopPropagation();
+    e.preventDefault();
+    if (!window.confirm(`Delete session for "${session.candidateName || 'Candidate'}"? This cannot be undone.`)) return;
+    try {
+      await deleteInterviewSession(session.id);
+      setSessions(prev => prev.filter(s => s.id !== session.id));
+    } catch {
+      // silent failure on delete
+    }
   };
 
   return (
@@ -171,6 +184,14 @@ export default function InterviewerDashboard() {
                   >
                     {session.status === 'in_progress' ? 'LIVE' : session.status.toUpperCase()}
                   </span>
+                  <button
+                    onClick={(e) => handleDelete(e, session)}
+                    aria-label={`Delete ${session.candidateName || 'session'}`}
+                    title="Delete session"
+                    className="p-1.5 text-surface-variant hover:text-red-500 transition-colors cursor-pointer bg-transparent border-none"
+                  >
+                    <Trash2 size={13} />
+                  </button>
                   <ChevronRight size={14} className="text-surface-variant flex-shrink-0" />
                 </div>
               </div>

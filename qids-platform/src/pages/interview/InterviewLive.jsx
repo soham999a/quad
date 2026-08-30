@@ -19,6 +19,7 @@ export default function InterviewLive() {
   const [scores, setScores] = useState({});
   const [notes, setNotes] = useState({});
   const [elapsed, setElapsed] = useState(0);
+  const [paused, setPaused] = useState(false);
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
@@ -37,10 +38,10 @@ export default function InterviewLive() {
 
   // Timer
   useEffect(() => {
-    if (!session || session.status === 'completed') return;
+    if (!session || session.status === 'completed' || paused) return;
     const interval = setInterval(() => setElapsed(e => e + 1), 1000);
     return () => clearInterval(interval);
-  }, [session?.status]);
+  }, [session?.status, paused]);
 
   const currentQuestion = LIVE_QUESTIONS[questionIdx];
   const currentDim = currentQuestion ? RUBRIC_MAP[currentQuestion.dimension] : null;
@@ -118,6 +119,7 @@ export default function InterviewLive() {
         unifiedScore: result.unifiedScore,
         grade: result.grade,
         skillShape: result.skillShape,
+        careerProfile: result.careerProfile,
         status: 'completed',
         completedAt: new Date().toISOString(),
       });
@@ -171,6 +173,15 @@ export default function InterviewLive() {
           <div className="text-technical-sm font-technical-sm text-surface-variant">
             {answeredCount}/{totalQuestions}
           </div>
+          <button
+            onClick={() => setPaused(p => !p)}
+            aria-label={paused ? 'Resume timer' : 'Pause timer'}
+            title={paused ? 'Resume' : 'Pause'}
+            className="flex items-center gap-2 px-3 py-2 bg-surface-container-high border-[0.5px] border-outline-variant text-body-sm font-body-sm text-on-surface cursor-pointer hover:bg-surface-container transition-colors"
+          >
+            {paused ? <Play size={13} /> : <Pause size={13} />}
+            {paused ? 'RESUME' : 'PAUSE'}
+          </button>
         </div>
       </div>
 

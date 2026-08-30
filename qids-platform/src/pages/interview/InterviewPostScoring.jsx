@@ -61,11 +61,13 @@ export default function InterviewPostScoring() {
     if (!session || !user) return;
     setSaving(true);
     try {
-      const evaluatorAssessment = RUBRIC_DIMENSIONS.map(d => ({
-        dimensionId: d.id,
-        score: scores[d.id] || 3,
-        notes: notes[d.id] || '',
-      }));
+      const evaluatorAssessment = RUBRIC_DIMENSIONS
+        .filter(d => scores[d.id] != null && scores[d.id] > 0)
+        .map(d => ({
+          dimensionId: d.id,
+          score: scores[d.id],
+          notes: notes[d.id] || '',
+        }));
 
       const updates = { evaluatorAssessment };
 
@@ -81,6 +83,7 @@ export default function InterviewPostScoring() {
           unifiedScore: result.unifiedScore,
           grade: result.grade,
           skillShape: result.skillShape,
+          careerProfile: result.careerProfile,
           status: 'completed',
           completedAt: new Date().toISOString(),
         });
@@ -240,16 +243,19 @@ export default function InterviewPostScoring() {
             <Save size={14} />
             SAVE DRAFT
           </button>
-          {allScored && (
-            <button
-              onClick={() => handleSave(true)}
-              disabled={saving}
-              className="btn-primary glow flex items-center gap-2"
-            >
-              COMPLETE SCORING
-              <ChevronRight size={14} />
-            </button>
-          )}
+          <button
+            onClick={() => {
+              if (!allScored && !window.confirm(`${RUBRIC_DIMENSIONS.length - completedCount} dimension(s) not scored. Submit anyway (unscored dimensions will be excluded)?`)) {
+                return;
+              }
+              handleSave(true);
+            }}
+            disabled={saving || completedCount === 0}
+            className="btn-primary glow flex items-center gap-2"
+          >
+            {allScored ? 'COMPLETE SCORING' : 'SUBMIT & GENERATE REPORT'}
+            <ChevronRight size={14} />
+          </button>
         </div>
         <button
           onClick={() => setCurrentDimIdx(Math.min(RUBRIC_DIMENSIONS.length - 1, currentDimIdx + 1))}

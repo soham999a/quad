@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { saveInterviewSession } from '../../services/interviewService';
+import { RUBRIC_DIMENSIONS } from '../../core/data/interviewRubrics';
 import { useToast } from '../../components/Toast';
 import { FileText, Play, ChevronRight, Brain } from 'lucide-react';
 
@@ -146,15 +147,15 @@ export default function InterviewSetup() {
               </div>
               <div>
                 <div className="text-label-md font-label-md text-on-background">Assessment Brief</div>
-                <div className="text-technical-sm font-technical-sm text-surface-variant">8 Rubric Dimensions</div>
+                <div className="text-technical-sm font-technical-sm text-surface-variant">{RUBRIC_DIMENSIONS.length} Rubric Dimensions</div>
               </div>
             </div>
 
             <div className="space-y-3 mb-6">
-              {['Communication', 'Problem-Solving', 'Leadership', 'Emotional Intelligence', 'Adaptability', 'Teamwork', 'Integrity', 'Critical Thinking'].map(d => (
-                <div key={d} className="flex items-center gap-3">
+              {RUBRIC_DIMENSIONS.map(d => (
+                <div key={d.id} className="flex items-center gap-3">
                   <div className="w-1.5 h-1.5 rounded-full bg-primary flex-shrink-0" />
-                  <div className="text-body-sm font-body-sm text-on-surface-variant">{d}</div>
+                  <div className="text-body-sm font-body-sm text-on-surface-variant">{d.label}</div>
                 </div>
               ))}
             </div>

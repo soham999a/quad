@@ -57,8 +57,9 @@ export default function InterviewReport() {
     );
   }
 
-  const { mergedScores, pillarScores, unifiedScore, grade, skillShape, evaluatorAssessment, mode } = session;
+  const { mergedScores, pillarScores, unifiedScore, grade, skillShape, careerProfile, evaluatorAssessment, mode } = session;
   const shape = skillShape ? SHAPES[skillShape] : null;
+  const career = careerProfile || null;
 
   // Compute radar dimensions for the 8 rubric dimensions
   const maxScore = 5;
@@ -216,6 +217,32 @@ export default function InterviewReport() {
                     <div className="h-full" style={{ width: `${pillarScores[p.id] || 0}%`, background: p.color }} />
                   </div>
                 </div>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* Career Profile */}
+      {career && (
+        <section className="mb-8">
+          <div className="kicker mb-4">Career Alignment Profile</div>
+          <div className="gradient-rule mb-6" />
+          <div className="card p-6 md:p-8">
+            <div className="flex flex-wrap items-start justify-between gap-4 mb-4">
+              <div>
+                <div className="text-label-lg font-label-lg text-on-background mb-1">{career.label}</div>
+                <div className="text-body-sm font-body-sm text-surface-variant">{career.condition}</div>
+              </div>
+              <span className="chip text-[10px]" style={{ background: 'rgba(235,192,115,0.12)', color: 'var(--color-primary)', borderColor: 'rgba(235,192,115,0.35)' }}>
+                RECOMMENDED PATH
+              </span>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {career.roles?.map(role => (
+                <span key={role} className="px-3 py-1.5 border-[0.5px] border-outline-variant text-technical-sm font-technical-sm text-on-surface">
+                  {role}
+                </span>
               ))}
             </div>
           </div>

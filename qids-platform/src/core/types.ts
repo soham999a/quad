@@ -226,11 +226,11 @@ export interface RunnerStep {
 export type InterviewMode = 'post' | 'live';
 export type InterviewSessionStatus = 'scheduled' | 'in_progress' | 'completed' | 'cancelled';
 
-/** The 8 rubric dimensions, each scored 1–5. */
+/** The rubric dimensions, each scored 1–5. */
 export type RubricDimensionId =
   | 'Communication' | 'ProblemSolving' | 'Leadership'
   | 'EmotionalIntelligence' | 'Adaptability' | 'Teamwork'
-  | 'Integrity' | 'CriticalThinking';
+  | 'Integrity' | 'CriticalThinking' | 'Resilience';
 
 export interface RubricDimension {
   id: RubricDimensionId;
@@ -270,6 +270,7 @@ export interface InterviewSession {
   unifiedScore?: number;
   grade?: { grade: string; label: string; color: string };
   skillShape?: 'T' | 'I' | 'X' | 'M';
+  careerProfile?: { id: string; label: string; condition: string; roles: string[] };
   notes?: string;
   createdAt?: unknown;
   completedAt?: unknown;
