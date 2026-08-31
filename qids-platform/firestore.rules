@@ -31,6 +31,14 @@ service cloud.firestore {
       allow delete: if isAdmin();
     }
 
+    // ── Onboarding ──────────────────────────────────────────────────────────
+    // Progress + completion marker. The wizard writes and the gate reads this
+    // doc; without this rule every onboarding write/read is denied, which bounces
+    // freshly-onboarded users straight back to /onboarding instead of the shell.
+    match /onboarding/{uid} {
+      allow read, write: if isOwner(uid);
+    }
+
     // ── Assessments ─────────────────────────────────────────────────────────
     match /assessments/{assessmentId} {
       allow read: if isOwner(resource.data.uid) || isAdmin();
