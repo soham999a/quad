@@ -24,7 +24,7 @@ export default function InterviewSetup() {
     if (!canSubmit || !user) return;
     setSaving(true);
     try {
-      const sessionId = await saveInterviewSession({
+      const payload = {
         mode,
         candidateName: candidateName.trim(),
         candidateEmail: candidateEmail.trim(),
@@ -33,9 +33,12 @@ export default function InterviewSetup() {
         evaluatorUid: user.uid,
         status: mode === 'live' ? 'in_progress' : 'scheduled',
         notes: notes.trim(),
-        liveQuestionIndex: mode === 'live' ? 0 : undefined,
-        liveResponses: mode === 'live' ? [] : undefined,
-      });
+      };
+      if (mode === 'live') {
+        payload.liveQuestionIndex = 0;
+        payload.liveResponses = [];
+      }
+      const sessionId = await saveInterviewSession(payload);
 
       toast('Session created', 'success');
       if (mode === 'live') {
