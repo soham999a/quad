@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
 
-export default function DiagramQuestion({ question, index, selected, onSelect, color = '#6366f1' }) {
+const alpha = (color, pct) => `color-mix(in srgb, ${color} ${pct}%, transparent)`;
+
+export default function DiagramQuestion({ question, index, selected, onSelect, color = 'var(--phase-pre)' }) {
   return (
-    <div style={{ marginBottom: 20, background: 'var(--navy-4)', border: `1px solid ${color}30`, borderRadius: 14, overflow: 'hidden' }}>
+    <div style={{ marginBottom: 20, background: 'var(--navy-4)', border: `1px solid ${alpha(color, 30)}`, borderRadius: 14, overflow: 'hidden' }}>
       {/* Header */}
-      <div style={{ padding: '10px 16px', background: `${color}10`, borderBottom: '1px solid var(--border-light)', display: 'flex', alignItems: 'center', gap: 8 }}>
-        <div style={{ padding: '2px 8px', borderRadius: 6, background: `${color}20`, border: `1px solid ${color}40`, fontSize: 10, fontWeight: 700, color, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+      <div style={{ padding: '10px 16px', background: alpha(color, 10), borderBottom: '1px solid var(--border-light)', display: 'flex', alignItems: 'center', gap: 8 }}>
+        <div style={{ padding: '2px 8px', borderRadius: 6, background: alpha(color, 20), border: `1px solid ${alpha(color, 40)}`, fontSize: 10, fontWeight: 700, color, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
           Visual / Diagram
         </div>
         <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>{question.subParam}</span>
@@ -36,7 +38,7 @@ export default function DiagramQuestion({ question, index, selected, onSelect, c
               <button key={i} onClick={() => onSelect(i)} style={{
                 padding: '10px 14px', borderRadius: 9, textAlign: 'left', cursor: 'pointer',
                 fontSize: 13, border: `1px solid ${isSelected ? color : 'var(--border-light)'}`,
-                background: isSelected ? `${color}18` : 'rgba(10,10,10,0.02)',
+                background: isSelected ? alpha(color, 18) : 'rgba(10,10,10,0.02)',
                 color: isSelected ? 'white' : 'var(--text-secondary)',
                 transition: 'all 0.15s', display: 'flex', alignItems: 'center', gap: 10,
               }}>

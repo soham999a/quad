@@ -8,8 +8,8 @@ export function PageFrame({ part, kicker, title, lede, children, actions }) {
           <div className="flex items-center gap-3 mb-8">
             {part && (
               <>
-                <span className="font-mono text-[11px] tracking-[0.22em] text-[#B8924A]">PART {part}</span>
-                <span className="h-px w-12 bg-[#B8924A]" />
+                <span className="font-mono text-[11px] tracking-[0.22em] text-gold">PART {part}</span>
+                <span className="h-px w-12 bg-gold" />
               </>
             )}
             <span className="kicker !text-[11px]">{kicker}</span>
@@ -39,7 +39,7 @@ export function Section({ number, title, description, children }) {
       <div className="col-span-12 lg:col-span-4">
         <div className="lg:sticky lg:top-24">
           {number && (
-            <div className="font-mono text-[11px] tracking-[0.22em] text-[#B8924A] mb-3">§ {number}</div>
+            <div className="font-mono text-[11px] tracking-[0.22em] text-gold mb-3">§ {number}</div>
           )}
           <h2 className="text-2xl font-light tracking-tight leading-tight text-ink">{title}</h2>
           {description && (
@@ -56,7 +56,7 @@ export function Card({ title, meta, children, onClick, active }) {
   return (
     <div
       onClick={onClick}
-      className={`bg-surface border p-6 transition-colors ${active ? 'border-[#B8924A]' : 'border-rule'} ${onClick ? 'cursor-pointer hover:border-[#B8924A]/60' : ''}`}
+      className={`bg-surface border p-6 transition-colors ${active ? 'border-gold' : 'border-rule'} ${onClick ? 'cursor-pointer hover:border-gold/60' : ''}`}
       style={{ transitionTimingFunction: 'cubic-bezier(0.4, 0, 0.2, 1)' }}
     >
       {(title || meta) && (

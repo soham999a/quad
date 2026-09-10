@@ -4,6 +4,8 @@ import { ClipboardList, ChevronDown, ChevronUp, BookOpen, Download, ExternalLink
 const PILLAR_ICONS = { Brain: <Brain size={20} />, Heart: <Heart size={20} />, Users: <Users size={20} />, Zap: <Zap size={20} /> };
 import { PILLARS, EQ_QUESTIONS, SQ_QUESTIONS, IQ_QUESTIONS, AQ_QUESTIONS, mapAQLikert } from '../data/qidsData';
 
+const alpha = (color, pct) => `color-mix(in srgb, ${color} ${pct}%, transparent)`;
+
 
 // ─── EQ Questionnaire View ────────────────────────────────────────────────────
 function ScaleInput() {
@@ -14,9 +16,9 @@ function ScaleInput() {
       {[1, 2, 3, 4, 5].map(n => (
         <button key={n} onClick={() => setVal(n)} className="flex-1 px-1 py-1.5 rounded-lg cursor-pointer flex flex-col items-center gap-0.5 text-xs font-bold"
           style={{
-            border: `2px solid ${val === n ? '#10b981' : 'var(--border-outline-variant)'}`,
-            background: val === n ? 'rgba(16,185,129,0.15)' : 'transparent',
-            color: val === n ? '#10b981' : 'var(--text-surface-variant)',
+            border: `2px solid ${val === n ? 'var(--status-ok)' : 'var(--border-outline-variant)'}`,
+            background: val === n ? alpha('var(--status-ok)', 15) : 'transparent',
+            color: val === n ? 'var(--status-ok)' : 'var(--text-surface-variant)',
             transition: 'all 0.15s',
           }}>
           <span>{n}</span>
@@ -141,11 +143,11 @@ function SQQuestionnaire({ color }) {
               <div className="text-xs text-on-surface-variant leading-relaxed mb-2 px-2.5 py-2 rounded-md" style={{ background: 'rgba(10,10,10,0.03)', borderLeft: `3px solid ${color}40` }}><strong>Scenario:</strong> {q.scenario}</div>
               <div className="text-[13px] font-semibold mb-2">{q.question}</div>
               {q.options.map((opt, oi) => {
-                const markColor = opt.marks === 2 ? '#10b981' : opt.marks === 1 ? '#f59e0b' : '#ef4444';
+                const markColor = opt.marks === 2 ? 'var(--status-ok)' : opt.marks === 1 ? 'var(--status-warn)' : 'var(--status-err)';
                 return (
                   <div key={oi} className="px-3 py-[7px] mb-1 rounded-lg border border-outline-variant text-xs flex justify-between items-center" style={{ background: 'rgba(10,10,10,0.02)' }}>
                     <span><strong>{String.fromCharCode(65 + oi)}.</strong> {opt.text}</span>
-                    <span className="text-[10px] px-2 py-0.5 rounded-xl font-bold shrink-0 ml-2" style={{ background: `${markColor}15`, color: markColor }}>{opt.marks}M</span>
+                    <span className="text-[10px] px-2 py-0.5 rounded-xl font-bold shrink-0 ml-2" style={{ background: alpha(markColor, 15), color: markColor }}>{opt.marks}M</span>
                   </div>
                 );
               })}
@@ -226,9 +228,9 @@ function MCQInput({ options, answer, question, index }) {
           return (
             <button key={i} onClick={() => setSelected(i)} className="px-3 py-[7px] rounded-lg text-left cursor-pointer text-xs"
               style={{
-                border: `1px solid ${isCorrect ? '#10b981' : isWrong ? '#ef4444' : isSelected ? '#6366f1' : 'var(--border-outline-variant)'}`,
-                background: isCorrect ? 'rgba(16,185,129,0.1)' : isWrong ? 'rgba(239,68,68,0.08)' : isSelected ? 'rgba(99,102,241,0.1)' : 'transparent',
-                color: isCorrect ? '#10b981' : isWrong ? '#ef4444' : 'var(--text-on-surface-variant)',
+                border: `1px solid ${isCorrect ? 'var(--status-ok)' : isWrong ? 'var(--status-err)' : isSelected ? 'var(--phase-pre)' : 'var(--border-outline-variant)'}`,
+                background: isCorrect ? alpha('var(--status-ok)', 10) : isWrong ? alpha('var(--status-err)', 8) : isSelected ? alpha('var(--phase-pre)', 10) : 'transparent',
+                color: isCorrect ? 'var(--status-ok)' : isWrong ? 'var(--status-err)' : 'var(--text-on-surface-variant)',
                 transition: 'all 0.15s',
               }}>
               <span className="font-semibold mr-1.5">{String.fromCharCode(65 + i)}.</span>{opt}
@@ -271,7 +273,7 @@ function AQQuestionnaire({ color }) {
             }}>{ag.label}</button>
         ))}
         <div className="ml-auto px-3 py-1.5 rounded-lg text-[11px]"
-          style={{ background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.2)', color: '#f59e0b' }}>
+          style={{ background: alpha('var(--status-warn)', 8), border: `1px solid ${alpha('var(--status-warn)', 20)}`, color: 'var(--status-warn)' }}>
           Scoring: 1–2 = 0pt | 3 = 1pt | 4 = 2pts | 5 = 3pts
         </div>
       </div>
@@ -328,8 +330,8 @@ function AQQuestionnaire({ color }) {
       </div>
 
       {/* Scoring summary */}
-      <div className="mt-5 px-4 py-[14px] rounded-xl" style={{ background: 'rgba(245,158,11,0.06)', border: '1px solid rgba(245,158,11,0.2)' }}>
-        <div className="text-xs font-semibold mb-2" style={{ color: '#f59e0b' }}>RDF Weighted Scoring Formula</div>
+      <div className="mt-5 px-4 py-[14px] rounded-xl" style={{ background: alpha('var(--status-warn)', 6), border: `1px solid ${alpha('var(--status-warn)', 20)}` }}>
+        <div className="text-xs font-semibold mb-2" style={{ color: 'var(--status-warn)' }}>RDF Weighted Scoring Formula</div>
         <div className="text-xs text-on-surface-variant leading-[1.8]" style={{ fontFamily: 'JetBrains Mono, monospace' }}>
           RD Score = (SA×1.5) + (PM×1.0) + (RR×1.0) + (RC×1.5)<br />
           Max = 95 | Converted = RD Score ÷ 95 × 100
@@ -362,7 +364,7 @@ export default function Questionnaires() {
       {/* Sidebar - hidden on mobile */}
       <div className="w-[230px] border-r border-outline-variant bg-surface-container-lowest p-5 overflow-y-auto shrink-0 hide-mobile">
         <div className="flex items-center gap-2 mb-4">
-          <ClipboardList size={16} color="#6366f1" />
+          <ClipboardList size={16} color="var(--phase-pre)" />
           <span className="text-sm font-bold">Questionnaires</span>
         </div>
         <p className="text-xs text-surface-variant leading-normal mb-4">
@@ -389,12 +391,12 @@ export default function Questionnaires() {
         <div className="divider" />
         {pdfLinks[activePillar] && (
           <a href={pdfLinks[activePillar]} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium no-underline mb-2.5"
-            style={{ background: 'rgba(99,102,241,0.1)', border: '1px solid rgba(99,102,241,0.25)', color: '#818cf8' }}>
+            style={{ background: alpha('var(--phase-pre)', 10), border: `1px solid ${alpha('var(--phase-pre)', 25)}`, color: 'var(--phase-pre)' }}>
             <Download size={12} /> Download PDF
           </a>
         )}
         {activePillar === 'AQ' && (
-          <div className="p-2.5 rounded-lg text-[11px]" style={{ background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.2)', color: '#f59e0b' }}>
+          <div className="p-2.5 rounded-lg text-[11px]" style={{ background: alpha('var(--status-warn)', 8), border: `1px solid ${alpha('var(--status-warn)', 20)}`, color: 'var(--status-warn)' }}>
             AQ PDF questionnaire coming soon.
           </div>
         )}

@@ -46,7 +46,7 @@ export default function EQStep({ scores, onChange, ageGroup }) {
 
       {activeTab === 'partA' && (
         <div>
-          <div className="p-3 border-[0.5px] border-[#10b981]/30 bg-[#10b981]/5 text-technical-sm font-technical-sm text-on-surface-variant leading-relaxed mb-4">
+          <div className="p-3 border-[0.5px] border-(--status-ok)/30 bg-(--status-ok)/5 text-technical-sm font-technical-sm text-on-surface-variant leading-relaxed mb-4">
             Rate each statement from 1 (Never) to 5 (Always). There are no right or wrong answers — be honest.
           </div>
 

@@ -26,7 +26,7 @@ function RubricScorer({ criterion, marks, desc, value, onChange, color }) {
             style={{
               borderRadius: '8px',
               borderColor: value === i ? color : 'var(--color-outline-variant)',
-              background: value === i ? `${color}20` : 'transparent',
+              background: value === i ? `color-mix(in srgb, ${color} 20%, transparent)` : 'transparent',
               color: value === i ? color : 'var(--color-outline)',
             }}
           >{i}</button>
@@ -37,7 +37,7 @@ function RubricScorer({ criterion, marks, desc, value, onChange, color }) {
 }
 
 function PillarScoringSection({ pillar, scores, onScoreChange, completed }) {
-  const pillarColor = PILLARS[pillar]?.color || '#6366f1';
+  const pillarColor = PILLARS[pillar]?.color || 'var(--phase-pre)';
   const Icon = PILLAR_ICONS[pillar] || Brain;
 
   const getEqContent = () => {
@@ -286,7 +286,7 @@ export default function EvaluatorScoring() {
       <div className="flex gap-0 mb-6 border-b-[0.5px] border-outline-variant">
         {PILLARS_WITH_RUBRICS.map(p => {
           const Icon = PILLAR_ICONS[p] || Brain;
-          const color = PILLARS[p]?.color || '#6366f1';
+          const color = PILLARS[p]?.color || 'var(--phase-pre)';
           const isDone = existingEvals[p];
           const isActive = activePillar === p;
           return (

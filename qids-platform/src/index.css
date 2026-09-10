@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Sora:wght@200;300;400;500;600&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Sora:wght@200;300;400;500;600&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&family=Space+Grotesk:wght@400;500;600;700&display=swap');
 @import "tailwindcss";
 
 /*
@@ -27,12 +27,15 @@
   --color-surface-container-highest: oklch(0.26 0.007 250);
 
   --color-on-surface: oklch(0.96 0.005 90);
-  --color-on-surface-variant: oklch(0.62 0.01 90);
+  --color-on-surface-variant: oklch(0.7 0.01 90);
   --color-outline: oklch(0.62 0.01 90);
   --color-outline-variant: oklch(0.26 0.006 250);
   --color-border: oklch(0.26 0.006 250);
-  --color-muted-foreground: oklch(0.62 0.01 90);
+  --color-muted-foreground: oklch(0.7 0.01 90);
   --color-border-strong: oklch(0.36 0.008 250);
+
+  --color-on-background: oklch(0.96 0.005 90);
+  --color-ink: oklch(0.18 0.015 255);
 
   --color-primary: oklch(0.78 0.12 82);
   --color-on-primary: oklch(0.14 0.005 250);
@@ -73,14 +76,22 @@
   --font-headline-md: 'Sora', ui-sans-serif, system-ui, sans-serif;
   --font-body-lg: 'Inter', ui-sans-serif, system-ui, sans-serif;
   --font-body-md: 'Inter', ui-sans-serif, system-ui, sans-serif;
+  --font-body-sm: 'Inter', ui-sans-serif, system-ui, sans-serif;
+  --font-headline-sm: 'Sora', ui-sans-serif, system-ui, sans-serif;
   --font-label-md: 'Inter', ui-sans-serif, system-ui, sans-serif;
+  --font-label-sm: 'Inter', ui-sans-serif, system-ui, sans-serif;
+  --font-label-lg: 'Inter', ui-sans-serif, system-ui, sans-serif;
   --font-technical-sm: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
   --text-display-xl: 72px;
   --text-headline-lg: 48px;
   --text-headline-md: 32px;
+  --text-headline-sm: 24px;
   --text-body-lg: 20px;
   --text-body-md: 16px;
+  --text-body-sm: 14px;
   --text-label-md: 14px;
+  --text-label-sm: 12px;
+  --text-label-lg: 18px;
   --text-technical-sm: 12px;
 
   /* ── Radii — severe, tiny ── */
@@ -115,6 +126,9 @@
   --muted-foreground: oklch(0.62 0.01 90);
   --gold: oklch(0.78 0.12 82);
   --gold-soft: oklch(0.78 0.12 82 / 14%);
+  --gold-bright: #c99c4e;
+  --slate-muted: #94a3b8;
+  --slate-deep: #475569;
   --font-display: 'Sora', ui-sans-serif, system-ui, sans-serif;
   --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
 
@@ -126,13 +140,43 @@
   --navy: #0A0A0F;
   --navy-2: #16161C;
   --navy-4: #101015;
+  --bone: oklch(0.965 0.01 82);
   --text-primary: oklch(0.78 0.12 82);
-  --text-secondary: oklch(0.62 0.01 90);
-  --text-muted: oklch(0.62 0.01 90);
+  --text-secondary: oklch(0.7 0.01 90);
+  --text-muted: oklch(0.7 0.01 90);
+  --on-background: oklch(0.96 0.005 90);
+  --ink: oklch(0.18 0.015 255);
   --border-light: oklch(0.26 0.006 250 / 60%);
   --border-outline-variant: oklch(0.26 0.006 250);
   --safe-bottom: env(safe-area-inset-bottom, 0px);
   --safe-top: env(safe-area-inset-top, 0px);
+
+  /* ── Legacy chart/status palette — single source of truth for raw hex ── */
+  --phase-pre: #6366f1;
+  --phase-pre-soft: #818cf8;
+  --phase-pre-pale: #a5b4fc;
+  --phase-int: #a855f7;
+  --phase-int-soft: #a78bfa;
+  --violet-strong: #8b5cf6;
+  --violet-soft: #c084fc;
+  --phase-post: #14b8a6;
+  --phase-post-soft: #2dd4bf;
+  --status-ok: #10b981;
+  --status-ok-soft: #34d399;
+  --status-warn: #f59e0b;
+  --status-err: #ef4444;
+  --status-err-soft: #fca5a5;
+  --cyan-mid: #06b6d4;
+  --orange-mid: #f97316;
+  --neutral-warm: #e5e2e1;
+  --neutral-dim: #6B6660;
+  --neutral-mid: #4A4A4A;
+  --neutral-dark: #0A0A0A;
+  --neutral-carbon: #1c1b1b;
+  --neutral-carbon-deep: #131313;
+  --neutral-ink-500: #353534;
+  --bone-line: #DBD6CA;
+  --bone-panel: #F9F7F1;
 }
 
 /* Light surface scope (bone sections inside the dark app) */
@@ -253,6 +297,28 @@ textarea:focus-visible {
 .hairline-l { border-left: 1px solid var(--border); }
 .hairline-r { border-right: 1px solid var(--border); }
 .hairline-all { border: 1px solid var(--border); }
+
+/* ── Divider ── */
+.divider {
+  height: 1px;
+  border: none;
+  background: var(--border);
+  margin: 24px 0;
+  width: 100%;
+}
+
+/* ── Progress bars ── */
+.progress-bar {
+  height: 6px;
+  border-radius: 999px;
+  background: color-mix(in oklab, var(--border) 62%, transparent);
+  overflow: hidden;
+}
+.progress-fill {
+  height: 100%;
+  border-radius: 999px;
+  transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
 
 /* ── Card surface — flat, hairline, quiet ── */
 .card {
@@ -842,6 +908,8 @@ input[type="range"]::-moz-range-thumb {
   --color-on-surface: oklch(0.2 0.02 255);
   --color-on-surface-variant: oklch(0.45 0.02 255);
   --color-outline: oklch(0.45 0.02 255);
+  --color-on-background: oklch(0.2 0.02 255);
+  --color-ink: oklch(0.18 0.015 255);
   --color-outline-variant: oklch(0.84 0.015 82);
   --color-border: oklch(0.84 0.015 82);
   --color-border-strong: oklch(0.72 0.02 82);
@@ -874,6 +942,8 @@ input[type="range"]::-moz-range-thumb {
   --text-primary: oklch(0.78 0.12 82);
   --text-secondary: oklch(0.45 0.02 255);
   --text-muted: oklch(0.45 0.02 255);
+  --on-background: oklch(0.2 0.02 255);
+  --ink: oklch(0.18 0.015 255);
   --border-light: oklch(0.84 0.015 82 / 60%);
   --border-outline-variant: oklch(0.84 0.015 82);
   --navy-2: oklch(0.9 0.015 82);

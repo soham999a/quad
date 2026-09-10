@@ -7,17 +7,17 @@ import { getAssessment } from '../../services/firestoreService';
 import { computeQidsPillarScores, getGrade, computeWeightedScore, getSkillShape, getCareerProfile } from '../../core/engine/qids';
 
 const PILLAR_META = {
-  IQ: { label: 'Intelligence Quotient', color: '#6366f1', desc: 'Verbal, quantitative, psychometric and performance reasoning.' },
-  EQ: { label: 'Emotional Quotient', color: '#10b981', desc: 'Self-awareness, emotional regulation, empathy, and social skills.' },
-  SQ: { label: 'Social Quotient', color: '#f59e0b', desc: 'Active listening, collaboration, communication, and leadership.' },
-  AQ: { label: 'Adaptability Quotient', color: '#ef4444', desc: 'Resilience, situational agility, proactive momentum, and recovery.' },
+  IQ: { label: 'Intelligence Quotient', color: 'var(--phase-pre)', desc: 'Verbal, quantitative, psychometric and performance reasoning.' },
+  EQ: { label: 'Emotional Quotient', color: 'var(--status-ok)', desc: 'Self-awareness, emotional regulation, empathy, and social skills.' },
+  SQ: { label: 'Social Quotient', color: 'var(--status-warn)', desc: 'Active listening, collaboration, communication, and leadership.' },
+  AQ: { label: 'Adaptability Quotient', color: 'var(--status-err)', desc: 'Resilience, situational agility, proactive momentum, and recovery.' },
 };
 
 const SKILL_SHAPE_DESC = {
-  T: { label: 'T-Shaped Generalist', desc: 'Broad foundational intelligence with deep expertise in one area.', color: '#6366f1' },
-  I: { label: 'I-Shaped Specialist', desc: 'Deep expertise in one dimension with room to broaden.', color: '#10b981' },
-  X: { label: 'X-Shaped Cross-Functional', desc: 'Balanced capabilities across all dimensions with strong averages.', color: '#f59e0b' },
-  M: { label: 'M-Shaped Multidisciplinary', desc: 'Exceptional performance across three or more dimensions.', color: '#ef4444' },
+  T: { label: 'T-Shaped Generalist', desc: 'Broad foundational intelligence with deep expertise in one area.', color: 'var(--phase-pre)' },
+  I: { label: 'I-Shaped Specialist', desc: 'Deep expertise in one dimension with room to broaden.', color: 'var(--status-ok)' },
+  X: { label: 'X-Shaped Cross-Functional', desc: 'Balanced capabilities across all dimensions with strong averages.', color: 'var(--status-warn)' },
+  M: { label: 'M-Shaped Multidisciplinary', desc: 'Exceptional performance across three or more dimensions.', color: 'var(--status-err)' },
 };
 
 function ScoreGauge({ score, grade }) {
@@ -25,15 +25,15 @@ function ScoreGauge({ score, grade }) {
   return (
     <div className="relative w-48 h-48 mx-auto">
       <svg viewBox="0 0 100 100" className="w-full h-full -rotate-90">
-        <circle cx="50" cy="50" r="42" fill="none" stroke="rgba(148,163,184,0.15)" strokeWidth="8" />
-        <circle cx="50" cy="50" r="42" fill="none" stroke="#B8924A" strokeWidth="8" strokeLinecap="round"
+        <circle cx="50" cy="50" r="42" fill="none" stroke="color-mix(in srgb, var(--slate-muted) 15%, transparent)" strokeWidth="8" />
+        <circle cx="50" cy="50" r="42" fill="none" stroke="var(--gold)" strokeWidth="8" strokeLinecap="round"
           strokeDasharray={`${(pct / 100) * 264} 264`} className="transition-all duration-1000" />
       </svg>
       <div className="absolute inset-0 flex flex-col items-center justify-center">
         <span className="text-[40px] leading-none font-headline-md text-gradient">{score}</span>
         <span className="text-technical-sm font-technical-sm text-surface-variant mt-1">/ 100</span>
         {grade && (
-          <span className="mt-2 chip" style={{ background: `${grade.color}20`, color: grade.color, border: `1px solid ${grade.color}40` }}>
+          <span className="mt-2 chip" style={{ background: `color-mix(in srgb, ${grade.color} 20%, transparent)`, color: grade.color, border: `1px solid color-mix(in srgb, ${grade.color} 40%, transparent)` }}>
             {grade.grade} · {grade.label}
           </span>
         )}
@@ -50,11 +50,11 @@ function PillarRadar({ pillarScores }) {
     <div className="card p-5 md:p-6">
       <ResponsiveContainer width="100%" height={300}>
         <ReRadar data={data} outerRadius="68%">
-          <PolarGrid stroke="rgba(235,192,115,0.15)" />
-          <PolarAngleAxis dataKey="subject" tick={{ fill: '#4A4A4A', fontSize: 12, fontWeight: 600 }} />
+          <PolarGrid stroke="color-mix(in srgb, var(--gold) 15%, transparent)" />
+          <PolarAngleAxis dataKey="subject" tick={{ fill: 'var(--neutral-mid)', fontSize: 12, fontWeight: 600 }} />
           <PolarRadiusAxis angle={90} domain={[0, 100]} tick={false} axisLine={false} />
-          <Radar dataKey="A" stroke="#B8924A" fill="#B8924A" fillOpacity={0.22} strokeWidth={2} dot={{ fill: '#B8924A', r: 3 }} />
-          <Tooltip contentStyle={{ background: '#131313', border: '1px solid rgba(235,192,115,0.25)', borderRadius: 8, color: '#e5e2e1', fontSize: 12 }} />
+          <Radar dataKey="A" stroke="var(--gold)" fill="var(--gold)" fillOpacity={0.22} strokeWidth={2} dot={{ fill: 'var(--gold)', r: 3 }} />
+          <Tooltip contentStyle={{ background: 'var(--neutral-carbon-deep)', border: '1px solid color-mix(in srgb, var(--gold) 25%, transparent)', borderRadius: 8, color: 'var(--neutral-warm)', fontSize: 12 }} />
         </ReRadar>
       </ResponsiveContainer>
     </div>
@@ -77,7 +77,7 @@ function PillarBars({ pillarScores }) {
               <span className="text-label-md font-label-md text-on-background">{Math.round(score)}</span>
             </div>
             <div className="h-[6px] rounded-full bg-surface-container-high overflow-hidden">
-              <div className="h-full rounded-full transition-all duration-700" style={{ width: `${Math.max(score, 2)}%`, background: `linear-gradient(90deg, ${meta.color}88, ${meta.color})` }} />
+              <div className="h-full rounded-full transition-all duration-700" style={{ width: `${Math.max(score, 2)}%`, background: `linear-gradient(90deg, color-mix(in srgb, ${meta.color} 53%, transparent), ${meta.color})` }} />
             </div>
             <p className="text-technical-sm font-technical-sm text-surface-variant mt-1.5">{meta.desc}</p>
           </div>

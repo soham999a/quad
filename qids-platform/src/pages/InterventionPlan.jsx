@@ -5,9 +5,9 @@ const PILLAR_ICONS = { Brain: <Brain size={20} />, Heart: <Heart size={20} />, U
 import { PILLARS } from '../data/qidsData';
 
 const BANDS = {
-  RED: { label: 'Red Band', color: '#ef4444', desc: 'Foundational support — critical intervention needed' },
-  YELLOW: { label: 'Yellow Band', color: '#f59e0b', desc: 'Strengthening skills — moderate support required' },
-  GREEN: { label: 'Green Band', color: '#10b981', desc: 'Advanced development — enrichment focus' },
+  RED: { label: 'Red Band', color: 'var(--status-err)', desc: 'Foundational support — critical intervention needed' },
+  YELLOW: { label: 'Yellow Band', color: 'var(--status-warn)', desc: 'Strengthening skills — moderate support required' },
+  GREEN: { label: 'Green Band', color: 'var(--status-ok)', desc: 'Advanced development — enrichment focus' },
 };
 
 const PLAN = {
@@ -349,7 +349,7 @@ const PLAN = {
 function ModuleCard({ module, color }) {
   const [open, setOpen] = useState(false);
   return (
-    <div className="mb-2.5 bg-surface-container-low overflow-hidden rounded-xl" style={{ border: `1px solid ${color}20` }}>
+    <div className="mb-2.5 bg-surface-container-low overflow-hidden rounded-xl" style={{ border: `1px solid color-mix(in srgb, ${color} 20%, transparent)` }}>
       <button onClick={() => setOpen(!open)} className="w-full flex justify-between items-center px-4 py-3 bg-transparent border-none cursor-pointer text-on-surface">
         <div className="flex items-center gap-2.5 text-left">
           <div className="size-2 rounded-full shrink-0" style={{ background: color }} />
@@ -365,7 +365,7 @@ function ModuleCard({ module, color }) {
       </button>
       {open && (
         <div className="px-4 pb-4 border-t border-outline-variant">
-          <div className="mt-3 px-3 py-2 mb-3 rounded-lg" style={{ background: `${color}08`, border: `1px solid ${color}20` }}>
+          <div className="mt-3 px-3 py-2 mb-3 rounded-lg" style={{ background: `color-mix(in srgb, ${color} 8%, transparent)`, border: `1px solid color-mix(in srgb, ${color} 20%, transparent)` }}>
             <div className="flex items-center gap-1.5 mb-1">
               <Target size={11} style={{ color }} />
               <span className="text-technical-sm font-semibold" style={{ color }}>Objective</span>
@@ -430,8 +430,8 @@ export default function InterventionPlan() {
         <div className="text-technical-sm text-surface-variant uppercase tracking-[0.5px] mb-2.5">Band</div>
         {Object.entries(BANDS).map(([id, b]) => (
           <button key={id} onClick={() => setActiveBand(id)} className="w-full px-3 py-2 rounded-lg mb-1 cursor-pointer text-left text-label-md" style={{
-            background: activeBand === id ? `${b.color}15` : 'transparent',
-            border: `1px solid ${activeBand === id ? b.color + '40' : 'transparent'}`,
+            background: activeBand === id ? `color-mix(in srgb, ${b.color} 15%, transparent)` : 'transparent',
+            border: `1px solid ${activeBand === id ? `color-mix(in srgb, ${b.color} 40%, transparent)` : 'transparent'}`,
             color: activeBand === id ? b.color : undefined,
             fontWeight: activeBand === id ? 600 : 400,
             transition: 'all 0.15s',
@@ -475,13 +475,13 @@ export default function InterventionPlan() {
         </div>
 
         {/* Band info */}
-        <div className="px-4 py-2.5 rounded-lg mb-5 flex items-center gap-2.5" style={{ background: `${band.color}10`, border: `1px solid ${band.color}30` }}>
+        <div className="px-4 py-2.5 rounded-lg mb-5 flex items-center gap-2.5" style={{ background: `color-mix(in srgb, ${band.color} 10%, transparent)`, border: `1px solid color-mix(in srgb, ${band.color} 30%, transparent)` }}>
           <div className="size-[10px] rounded-full shrink-0" style={{ background: band.color }} />
           <div className="min-w-0 flex-1">
             <span className="text-[13px] font-bold" style={{ color: band.color }}>{band.label}</span>
             <span className="text-label-md text-surface-variant ml-2">{band.desc}</span>
           </div>
-          <div className="ml-auto px-2.5 py-[3px] rounded-full text-technical-sm font-semibold shrink-0" style={{ background: `${band.color}15`, border: `1px solid ${band.color}30`, color: band.color }}>
+          <div className="ml-auto px-2.5 py-[3px] rounded-full text-technical-sm font-semibold shrink-0" style={{ background: `color-mix(in srgb, ${band.color} 15%, transparent)`, border: `1px solid color-mix(in srgb, ${band.color} 30%, transparent)`, color: band.color }}>
             {modules.length} Module{modules.length !== 1 ? 's' : ''}
           </div>
         </div>
@@ -495,7 +495,7 @@ export default function InterventionPlan() {
         )}
 
         {/* 6-month roadmap summary */}
-        <div className="mt-6 p-4 md:p-5 rounded-xl" style={{ background: 'rgba(99,102,241,0.06)', border: '1px solid rgba(99,102,241,0.15)' }}>
+        <div className="mt-6 p-4 md:p-5 rounded-xl" style={{ background: 'color-mix(in srgb, var(--phase-pre) 6%, transparent)', border: '1px solid color-mix(in srgb, var(--phase-pre) 15%, transparent)' }}>
           <div className="flex items-center gap-2 mb-3">
             <Calendar size={14} className="text-indigo-400" />
             <span className="text-[13px] font-bold text-indigo-400">6-Month Roadmap Overview</span>
@@ -509,7 +509,7 @@ export default function InterventionPlan() {
               { month: 'Month 5–6', focus: 'Integration Sessions, Peer Mentoring' },
               { month: 'Month 6', focus: 'Post-Intervention Assessment & Review' },
             ].map(({ month, focus }) => (
-              <div key={month} className="px-3 py-2.5 rounded-lg" style={{ background: 'rgba(99,102,241,0.06)', border: '1px solid rgba(99,102,241,0.12)' }}>
+              <div key={month} className="px-3 py-2.5 rounded-lg" style={{ background: 'color-mix(in srgb, var(--phase-pre) 6%, transparent)', border: '1px solid color-mix(in srgb, var(--phase-pre) 12%, transparent)' }}>
                 <div className="text-technical-sm font-bold text-indigo-400 mb-1">{month}</div>
                 <div className="text-technical-sm text-on-surface-variant leading-[1.4]">{focus}</div>
               </div>

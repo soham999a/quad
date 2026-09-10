@@ -13,9 +13,9 @@ function MiniRadar({ pillarScores }) {
     <ResponsiveContainer width="100%" height={220}>
       <ReRadar data={data} outerRadius="72%">
         <PolarGrid stroke="rgba(235,192,115,0.15)" />
-        <PolarAngleAxis dataKey="subject" tick={{ fill: '#4A4A4A', fontSize: 11, fontWeight: 600 }} />
+        <PolarAngleAxis dataKey="subject" tick={{ fill: 'var(--neutral-mid)', fontSize: 11, fontWeight: 600 }} />
         <PolarRadiusAxis angle={90} domain={[0, 100]} tick={false} axisLine={false} />
-        <Radar dataKey="A" stroke="#B8924A" fill="#B8924A" fillOpacity={0.2} strokeWidth={2} dot={{ fill: '#B8924A', r: 2 }} />
+        <Radar dataKey="A" stroke="var(--gold)" fill="var(--gold)" fillOpacity={0.2} strokeWidth={2} dot={{ fill: 'var(--gold)', r: 2 }} />
       </ReRadar>
     </ResponsiveContainer>
   );

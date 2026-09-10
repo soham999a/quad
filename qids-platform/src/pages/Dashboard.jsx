@@ -207,7 +207,11 @@ export default function Dashboard() {
                 return (
                   <div key={a.id}
                     onClick={() => isIndividual ? navigate(`/app/individual/results/${a.id}`) : navigate('/app/assessment', { state: { assessment: a, postAssessment: getLinkedPost(a.id) } })}
-                    className="h-14 md:h-16 flex items-center justify-between border-b-[0.5px] border-outline-variant group hover:bg-surface-container-low transition-colors px-2 cursor-pointer touch-target">
+                    onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); isIndividual ? navigate(`/app/individual/results/${a.id}`) : navigate('/app/assessment', { state: { assessment: a, postAssessment: getLinkedPost(a.id) } }); } }}
+                    role="button"
+                    tabIndex={0}
+                    aria-label={`Open ${a.intake?.name || 'assessment'} results`}
+                    className="h-14 md:h-16 flex items-center justify-between border-b-[0.5px] border-outline-variant group hover:bg-surface-container-low transition-colors px-2 cursor-pointer touch-target focus-visible:outline focus-visible:outline-gold">
                     <div className="flex items-center gap-4 md:gap-8 min-w-0 flex-1">
                       <span className="text-technical-sm font-technical-sm text-surface-variant flex-shrink-0">{String(idx + 1).padStart(2, '0')}</span>
                       <div className="min-w-0 flex-1">

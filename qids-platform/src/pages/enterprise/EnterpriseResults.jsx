@@ -23,10 +23,10 @@ function WorkStyleRadar({ profile }) {
       <ResponsiveContainer width="100%" height={300}>
         <ReRadar data={data} outerRadius="68%">
           <PolarGrid stroke="rgba(235,192,115,0.15)" />
-          <PolarAngleAxis dataKey="subject" tick={{ fill: '#4A4A4A', fontSize: 12, fontWeight: 600 }} />
+          <PolarAngleAxis dataKey="subject" tick={{ fill: 'var(--neutral-mid)', fontSize: 12, fontWeight: 600 }} />
           <PolarRadiusAxis angle={90} domain={[0, 10]} tick={false} axisLine={false} />
-          <Radar dataKey="A" stroke="#B8924A" fill="#B8924A" fillOpacity={0.22} strokeWidth={2} dot={{ fill: '#B8924A', r: 3 }} />
-          <Tooltip contentStyle={{ background: '#131313', border: '1px solid rgba(235,192,115,0.25)', borderRadius: 8, color: '#e5e2e1', fontSize: 12 }} />
+          <Radar dataKey="A" stroke="var(--gold)" fill="var(--gold)" fillOpacity={0.22} strokeWidth={2} dot={{ fill: 'var(--gold)', r: 3 }} />
+          <Tooltip contentStyle={{ background: 'var(--neutral-carbon-deep)', border: '1px solid rgba(235,192,115,0.25)', borderRadius: 8, color: 'var(--neutral-warm)', fontSize: 12 }} />
         </ReRadar>
       </ResponsiveContainer>
     </div>
@@ -51,14 +51,14 @@ function ModuleBars({ moduleScores }) {
               <span className="text-technical-sm font-technical-sm text-surface-variant truncate">{MODULE_LABELS[id] || id}</span>
             </div>
             <div className="flex items-center gap-3 flex-shrink-0">
-              <span className="text-technical-sm font-technical-sm" style={{ color: BAND_COLOR[s.band] || '#94a3b8' }}>
+              <span className="text-technical-sm font-technical-sm" style={{ color: BAND_COLOR[s.band] || 'var(--slate-muted)' }}>
                 {s.band} · P{String(s.percentile).padStart(2, '0')}
               </span>
               <span className="text-label-md font-label-md text-on-background w-8 text-right">{s.tScore}</span>
             </div>
           </div>
           <div className="h-[6px] rounded-full bg-surface-container-high overflow-hidden">
-            <div className="h-full rounded-full transition-all duration-500" style={{ width: `${Math.max(s.tScore, 2)}%`, background: `linear-gradient(90deg, ${BAND_COLOR[s.band] || '#6366f1'}88, ${BAND_COLOR[s.band] || '#6366f1'})` }} />
+            <div className="h-full rounded-full transition-all duration-500" style={{ width: `${Math.max(s.tScore, 2)}%`, background: `linear-gradient(90deg, ${BAND_COLOR[s.band] || 'var(--phase-pre)'}88, ${BAND_COLOR[s.band] || 'var(--phase-pre)'})` }} />
           </div>
         </div>
       ))}
@@ -93,7 +93,7 @@ function RfiList({ rfi }) {
                 <div key={d} className="text-center">
                   <div className="text-technical-sm font-technical-sm text-surface-variant mb-1">{d}</div>
                   <div className="h-[4px] rounded-full bg-surface-container-high overflow-hidden">
-                    <div className="h-full rounded-full" style={{ width: `${v}%`, background: v >= 70 ? '#10b981' : v >= 40 ? '#f59e0b' : '#ef4444' }} />
+                    <div className="h-full rounded-full" style={{ width: `${v}%`, background: v >= 70 ? 'var(--status-ok)' : v >= 40 ? 'var(--status-warn)' : 'var(--status-err)' }} />
                   </div>
                 </div>
               ))}
@@ -184,12 +184,12 @@ export default function EnterpriseResults({ result, deployed, answers, onRestart
               {result?.riq && (
                 <div className="card p-4">
                   <div className="flex items-center gap-2 mb-2">
-                    <span className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ background: `${BAND_COLOR[result.riq.band] || '#6366f1'}22` }}>
-                      <Target size={14} style={{ color: BAND_COLOR[result.riq.band] || '#6366f1' }} />
+                    <span className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ background: `${BAND_COLOR[result.riq.band] || 'var(--phase-pre)'}22` }}>
+                      <Target size={14} style={{ color: BAND_COLOR[result.riq.band] || 'var(--phase-pre)' }} />
                     </span>
                     <span className="text-technical-sm font-technical-sm text-surface-variant">RIQ</span>
                   </div>
-                  <div className="text-label-md font-label-md" style={{ color: BAND_COLOR[result.riq.band] || '#6366f1' }}>{result.riq.score} · {result.riq.band}</div>
+                  <div className="text-label-md font-label-md" style={{ color: BAND_COLOR[result.riq.band] || 'var(--phase-pre)' }}>{result.riq.score} · {result.riq.band}</div>
                   <div className="text-technical-sm font-technical-sm text-surface-variant truncate">{result.riq.track}</div>
                 </div>
               )}
@@ -270,7 +270,7 @@ export default function EnterpriseResults({ result, deployed, answers, onRestart
                   <div className="text-technical-sm font-technical-sm text-surface-variant mt-1">T-score</div>
                 </div>
                 <div className="text-center">
-                  <div className="chip text-label-md font-label-md" style={{ background: `${BAND_COLOR[result.riq.band]}22`, color: BAND_COLOR[result.riq.band] || '#6366f1', borderColor: `${BAND_COLOR[result.riq.band] || '#6366f1'}44` }}>
+                  <div className="chip text-label-md font-label-md" style={{ background: `${BAND_COLOR[result.riq.band]}22`, color: BAND_COLOR[result.riq.band] || 'var(--phase-pre)', borderColor: `${BAND_COLOR[result.riq.band] || 'var(--phase-pre)'}44` }}>
                     {result.riq.band}
                   </div>
                   <div className="text-technical-sm font-technical-sm text-surface-variant mt-1">P{String(result.riq.percentile).padStart(2, '0')}</div>
@@ -278,7 +278,7 @@ export default function EnterpriseResults({ result, deployed, answers, onRestart
               </div>
             </div>
             <div className="mt-5 h-[6px] rounded-full bg-surface-container-high overflow-hidden">
-              <div className="h-full rounded-full transition-all" style={{ width: `${Math.max(result.riq.score, 2)}%`, background: `linear-gradient(90deg, ${BAND_COLOR[result.riq.band] || '#6366f1'}88, ${BAND_COLOR[result.riq.band] || '#6366f1'})` }} />
+              <div className="h-full rounded-full transition-all" style={{ width: `${Math.max(result.riq.score, 2)}%`, background: `linear-gradient(90deg, ${BAND_COLOR[result.riq.band] || 'var(--phase-pre)'}88, ${BAND_COLOR[result.riq.band] || 'var(--phase-pre)'})` }} />
             </div>
           </div>
         </section>

@@ -89,7 +89,7 @@ export default function Login() {
         {/* Branding */}
         <header className="flex flex-col space-y-3">
           <div className="flex items-center gap-3">
-            <QidsMark size={26} className="text-[#B8924A]" />
+            <QidsMark size={26} className="text-gold" />
             <span className="font-mono text-[12px] tracking-[0.28em] text-on-surface">QIDS</span>
           </div>
           <p className="text-[24px] leading-tight font-light text-on-surface tracking-tight">
@@ -149,7 +149,7 @@ export default function Login() {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full h-12 bg-on-surface text-background font-label-md text-label-md rounded-sm hover:bg-[#B8924A] hover:text-ink active:scale-[0.99] transition-colors flex items-center justify-center uppercase tracking-widest cursor-pointer border-none disabled:opacity-40">
+                className="w-full h-12 bg-on-surface text-background font-label-md text-label-md rounded-sm hover:bg-gold hover:text-ink active:scale-[0.99] transition-colors flex items-center justify-center uppercase tracking-widest cursor-pointer border-none disabled:opacity-40">
                 {loading ? 'Authenticating...' : 'Sign In'}
               </button>
             </form>

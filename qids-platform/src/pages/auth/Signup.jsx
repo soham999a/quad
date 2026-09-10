@@ -64,7 +64,7 @@ export default function Signup() {
     }
   };
 
-  const inputClass = "w-full h-12 px-4 bg-background border-[0.5px] border-outline-variant rounded-xl text-on-surface placeholder:text-surface-variant font-technical-sm transition-all outline-none focus:border-primary focus:shadow-[0_0_0_1px_#B8924A]";
+  const inputClass = "w-full h-12 px-4 bg-background border-[0.5px] border-outline-variant rounded-xl text-on-surface placeholder:text-surface-variant font-technical-sm transition-all outline-none focus:border-primary focus:shadow-[0_0_0_1px_var(--gold)]";
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background p-margin-mobile md:p-0 relative">

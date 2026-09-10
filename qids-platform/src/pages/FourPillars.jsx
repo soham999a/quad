@@ -3,9 +3,14 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { PILLARS } from '../data/qidsData';
 import { ChevronRight, BookOpen, Target, Briefcase, BarChart2 } from 'lucide-react';
 
+const alpha = (color, pct) => `color-mix(in srgb, ${color} ${pct}%, transparent)`;
+
 function PillarCard({ pillar, onClick, active }) {
+  const handleKey = (e) => {
+    if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onClick(); }
+  };
   return (
-    <div onClick={onClick} className={`relative overflow-hidden rounded-[14px] p-5 cursor-pointer transition-all duration-200 ${active ? '' : 'bg-surface-container-low border border-outline-variant'}`} style={{
+    <div onClick={onClick} onKeyDown={handleKey} role="button" tabIndex={0} aria-pressed={active} className={`relative overflow-hidden rounded-[14px] p-5 cursor-pointer transition-all duration-200 focus-visible:outline focus-visible:outline-gold ${active ? '' : 'bg-surface-container-low border border-outline-variant'}`} style={{
       background: active ? `${pillar.color}15` : undefined,
       border: active ? `1px solid ${pillar.color}` : undefined,
     }}>
@@ -141,11 +146,11 @@ function PillarDetail({ pillar }) {
           <div className="card">
             <h4 className="text-label-md font-semibold mb-3">Interpretation Guide</h4>
             {[
-              { range: '90–100', label: 'Exceptional strength — leverage as core asset', color: '#10b981' },
-              { range: '75–89', label: 'Strong capability — maintain and refine', color: '#06b6d4' },
-              { range: '60–74', label: 'Adequate — targeted enhancement recommended', color: '#f59e0b' },
-              { range: '45–59', label: 'Below average — structured intervention needed', color: '#f97316' },
-              { range: '<45', label: 'Critical gap — priority intervention required', color: '#ef4444' },
+{ range: '90–100', label: 'Exceptional strength — leverage as core asset', color: 'var(--status-ok)' },
+  { range: '75–89', label: 'Strong capability — maintain and refine', color: 'var(--cyan-mid)' },
+  { range: '60–74', label: 'Adequate — targeted enhancement recommended', color: 'var(--status-warn)' },
+  { range: '45–59', label: 'Below average — structured intervention needed', color: 'var(--orange-mid)' },
+  { range: '<45', label: 'Critical gap — priority intervention required', color: 'var(--status-err)' },
             ].map(({ range, label, color }) => (
               <div key={range} className="flex gap-2.5 mb-2 items-start">
                 <span className="text-[11px] font-bold min-w-[50px]" style={{ color }}>{range}</span>
@@ -214,7 +219,7 @@ export default function FourPillars() {
       <p className="text-label-md text-surface-variant mb-7">Each pillar represents a core dimension of human intelligence and capability within the QIDS framework.</p>
 
       {/* Pillar selector */}
-      <div className="grid grid-cols-4 gap-3 mb-7">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-7">
         {Object.values(PILLARS).map(p => (
           <PillarCard key={p.id} pillar={p} active={active === p.id} onClick={() => { setActive(p.id); navigate(`/app/pillars/${p.id}`); }} />
         ))}
@@ -226,13 +231,13 @@ export default function FourPillars() {
       {/* Innovative Features */}
       <div className="mt-8 p-6 bg-surface-container-low border border-outline-variant rounded-[16px]">
         <h3 className="text-[16px] font-bold mb-4 text-center">Innovative Features</h3>
-        <div className="grid grid-cols-3 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           {[
-            { label: 'Dynamic Emotional Integration', desc: 'Real-time emotional adaptability using hybrid digital-physical simulations and dynamic weightage algorithms.', color: '#10b981' },
-            { label: 'Resilience Dynamics Framework', desc: 'A revolutionary approach to understanding and developing adversity quotient as a dynamic, interconnected system.', color: '#f59e0b' },
-            { label: 'Integrated Assessment', desc: 'Multi-method assessment capturing interactions between domains for a holistic view of individual capabilities.', color: '#6366f1' },
+            { label: 'Dynamic Emotional Integration', desc: 'Real-time emotional adaptability using hybrid digital-physical simulations and dynamic weightage algorithms.', color: 'var(--status-ok)' },
+            { label: 'Resilience Dynamics Framework', desc: 'A revolutionary approach to understanding and developing adversity quotient as a dynamic, interconnected system.', color: 'var(--status-warn)' },
+            { label: 'Integrated Assessment', desc: 'Multi-method assessment capturing interactions between domains for a holistic view of individual capabilities.', color: 'var(--phase-pre)' },
           ].map(f => (
-            <div key={f.label} className="p-4 bg-white/5 rounded-[10px]" style={{ border: `1px solid ${f.color}20` }}>
+            <div key={f.label} className="p-4 bg-white/5 rounded-[10px]" style={{ border: `1px solid ${alpha(f.color, 20)}` }}>
               <div className="size-2 rounded-full mb-2" style={{ background: f.color }} />
               <div className="text-label-md font-bold mb-1.5">{f.label}</div>
               <div className="text-technical-sm text-on-surface-variant leading-relaxed">{f.desc}</div>

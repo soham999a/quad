@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from 'react';
+import { useParams } from 'react-router-dom';
 import { ArrowLeft, ArrowRight, Check, ClipboardList, Building2, Target } from 'lucide-react';
 import { buildModeSteps, ENTERPRISE_TIERS, modulesForTier, ENTERPRISE_MODULES } from '../../core/modes';
 import { ROLE_PROFILES } from '../../core/data/enterprise';
@@ -6,6 +7,8 @@ import { deployTier, deployedCount, deployRoleTrack } from '../../core/runner/de
 import { getTrackForProfile } from '../../core/data/roleTracks';
 import { moduleComplete, moduleAnsweredCount, assessmentComplete } from '../../core/runner/validate';
 import { evaluateEnterpriseAssessment } from '../../core/engine/moduleScoring';
+import { useAuth } from '../../context/AuthContext';
+import { saveEnterpriseResult } from '../../services/firestoreService';
 import RunnerItems from './RunnerItems';
 import EnterpriseResults from './EnterpriseResults';
 
@@ -20,8 +23,10 @@ function riqModuleDef() {
 }
 
 export default function EnterpriseRunner({ mode = 'enterprise', initialTier }) {
+  const { tier: tierParam } = useParams();
+  const { user } = useAuth();
   const [phase, setPhase] = useState('setup');
-  const [tier, setTier] = useState(initialTier || 'QGRA');
+  const [tier, setTier] = useState(initialTier || tierParam || 'QGRA');
   const [intake, setIntake] = useState({ name: '', email: '', org: '' });
   const [targetRole, setTargetRole] = useState('');
   const [seed] = useState(() => Math.floor(Math.random() * 1e9));
@@ -72,15 +77,25 @@ export default function EnterpriseRunner({ mode = 'enterprise', initialTier }) {
     ? Object.entries(deployed).reduce((s, [id, items]) => s + moduleAnsweredCount(items, answers), 0)
     : 0;
 
-  const submit = () => {
+  const submit = async () => {
     const roleIds = mode === 'role' && targetRole ? [targetRole] : undefined;
     const res = evaluateEnterpriseAssessment(mode, tier, deployed, answers, intake, roleIds, roleTrack?.meta.id);
     setResult(res);
     setPhase('done');
+    if (!user?.uid) return;
+    try {
+      await saveEnterpriseResult(user.uid, {
+        tier, mode, intake, targetRole, roleIds,
+        deployed, answers, seed, result: res,
+      });
+    } catch (e) {
+      console.error('Failed to persist enterprise result:', e);
+    }
   };
 
   const restart = () => {
     setResult(null);
+    setDeployed(null);
     setPhase('setup');
     setAnswers({});
   };
@@ -309,7 +324,7 @@ export default function EnterpriseRunner({ mode = 'enterprise', initialTier }) {
         </div>
       </div>
       <div className="h-[6px] rounded-full bg-surface-container-high overflow-hidden mb-6">
-        <div className="h-full rounded-full transition-all duration-500" style={{ width: `${progressPct}%`, background: 'linear-gradient(90deg, #c99c4e, #B8924A)' }} />
+        <div className="h-full rounded-full transition-all duration-500" style={{ width: `${progressPct}%`, background: 'linear-gradient(90deg, var(--gold-bright), var(--gold))' }} />
       </div>
       {/* Step markers */}
       <div className="flex items-center gap-2 mb-7" aria-label="Section progress">
@@ -322,7 +337,7 @@ export default function EnterpriseRunner({ mode = 'enterprise', initialTier }) {
             <button key={step.id} onClick={() => { setPhase('running'); setStepIndex(i); }}
               aria-label={`${step.label}${done ? ' complete' : ''}`} aria-current={current ? 'step' : undefined}
               title={step.label}
-              style={{ background: done ? 'linear-gradient(90deg, #c99c4e, #B8924A)' : undefined }}
+              style={{ background: done ? 'linear-gradient(90deg, var(--gold-bright), var(--gold))' : undefined }}
               className={`flex items-center justify-center gap-1 h-7 flex-1 rounded-full transition-all duration-300 cursor-pointer border-none p-0 text-technical-sm font-technical-sm ${done ? 'text-on-primary' : current ? 'bg-primary/20 text-primary ring-1 ring-primary/60' : 'bg-surface-container-high text-surface-variant hover:bg-surface-variant/50'}`}>
               {done ? <Check size={11} /> : i + 1}
             </button>
@@ -374,7 +389,7 @@ export default function EnterpriseRunner({ mode = 'enterprise', initialTier }) {
                   </div>
                 </div>
                 <div className="flex items-center gap-3 flex-shrink-0">
-                  <span className={`chip ${done ? '' : ''}`} style={done ? { background: 'rgba(16,185,129,0.12)', color: '#34d399', borderColor: 'rgba(52,211,153,0.4)' } : undefined}>
+                  <span className={`chip ${done ? '' : ''}`} style={done ? { background: 'rgba(16,185,129,0.12)', color: 'var(--status-ok-soft)', borderColor: 'rgba(52,211,153,0.4)' } : undefined}>
                     {done ? 'COMPLETE' : 'IN PROGRESS'}
                   </span>
                   <ArrowRight size={14} className="text-surface-variant flex-shrink-0" />

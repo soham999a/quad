@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { PILLARS, SKILL_SHAPES, CONTEXTS, mergeEvaluationScores } from '../data/qidsData';
 import { computePillarScore, computeWeightedScore, getGrade, getCareerProfile, getSkillShape, WEIGHTS, GRADE_BANDS, IQ_MAX_SCORE } from '../core/engine/qids';
 import { useApp } from '../App';
@@ -7,13 +8,28 @@ import { Download, Printer, AlertTriangle, UserCheck } from 'lucide-react';
 
 export default function ReportGenerator() {
   const { assessmentData, postData, context, demoMode, evaluations, mergedPillarScores } = useApp();
+  const navigate = useNavigate();
   const [reportType, setReportType] = useState('full');
 
   const preRaw = assessmentData?.rawScores || {};
   const postRaw = postData?.rawScores || {};
-  const intake = assessmentData?.intake || { name: 'Alex Johnson', age: '28', institution: 'Demo Organization', evaluator: 'Dr. Smith' };
+  const intake = assessmentData?.intake || {};
 
   const hasEvalScores = mergedPillarScores !== null && evaluations?.length > 0;
+
+  if (!assessmentData && !hasEvalScores) {
+    return (
+      <div className="page-pad max-w-[1000px] mx-auto animate-fade flex flex-col items-center justify-center min-h-[60vh] text-center">
+        <h1 className="text-headline-md font-headline-md text-on-background mb-3">Report Generator</h1>
+        <AlertTriangle size={28} className="text-primary mb-4 opacity-60" />
+        <p className="text-label-md font-label-md text-on-surface-variant mb-6">No assessment data found. Complete an assessment to generate your development report.</p>
+        <button onClick={() => navigate('/app/assessment')}
+          className="px-5 py-2.5 bg-primary text-on-primary text-label-md font-label-md hover:opacity-90 transition-all cursor-pointer border-none uppercase tracking-widest">
+          Start Assessment
+        </button>
+      </div>
+    );
+  }
 
   const preScores = {};
   const postScores = {};

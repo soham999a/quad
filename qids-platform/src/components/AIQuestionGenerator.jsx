@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { Sparkles, RefreshCw, AlertCircle, ChevronDown, ChevronUp } from 'lucide-react';
 
+const alpha = (color, pct) => `color-mix(in srgb, ${color} ${pct}%, transparent)`;
+
 // ─── Likert scale for AI-generated EQ/AQ questions ───────────────────────────
 function LikertInput({ value, onChange, color }) {
   const labels = ['Never', 'Rarely', 'Sometimes', 'Often', 'Always'];
@@ -10,7 +12,7 @@ function LikertInput({ value, onChange, color }) {
         <button key={n} onClick={() => onChange(n)} style={{
           flex: 1, padding: '7px 4px', borderRadius: 8, cursor: 'pointer',
           border: `2px solid ${value === n ? color : 'var(--border-light)'}`,
-          background: value === n ? `${color}20` : 'transparent',
+          background: value === n ? alpha(color, 20) : 'transparent',
           color: value === n ? color : 'var(--text-muted)',
           fontSize: 12, fontWeight: 700, transition: 'all 0.15s',
           display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2,
@@ -34,7 +36,7 @@ function MCQInput({ options, selected, onSelect, color }) {
           <button key={i} onClick={() => onSelect(i)} style={{
             padding: '9px 14px', borderRadius: 8, textAlign: 'left', cursor: 'pointer',
             fontSize: 13, border: `1px solid ${isSelected ? color : 'var(--border-light)'}`,
-            background: isSelected ? `${color}18` : 'rgba(10,10,10,0.02)',
+            background: isSelected ? alpha(color, 18) : 'rgba(10,10,10,0.02)',
             color: isSelected ? 'white' : 'var(--text-secondary)',
             transition: 'all 0.15s', display: 'flex', alignItems: 'center', gap: 10,
           }}>
@@ -77,9 +79,9 @@ function AIQuestionCard({ question, index, answers, onAnswer, color, questionTyp
   const val = answers[index];
 
   return (
-    <div style={{ marginBottom: 14, background: 'var(--navy-4)', border: `1px solid ${color}20`, borderRadius: 12, padding: 16, position: 'relative' }}>
+    <div style={{ marginBottom: 14, background: 'var(--navy-4)', border: `1px solid ${alpha(color, 20)}`, borderRadius: 12, padding: 16, position: 'relative' }}>
       <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8, marginBottom: 10 }}>
-        <div style={{ padding: '2px 8px', borderRadius: 6, background: `${color}15`, border: `1px solid ${color}30`, fontSize: 10, fontWeight: 700, color, flexShrink: 0, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+        <div style={{ padding: '2px 8px', borderRadius: 6, background: alpha(color, 15), border: `1px solid ${alpha(color, 30)}`, fontSize: 10, fontWeight: 700, color, flexShrink: 0, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
           AI | {question.subParam || question.subparam || 'Generated'}
         </div>
         <div style={{ position: 'absolute', top: 12, right: 12, fontSize: 10, color: 'var(--text-muted)' }}>
@@ -88,7 +90,7 @@ function AIQuestionCard({ question, index, answers, onAnswer, color, questionTyp
       </div>
 
       {question.scenario && (
-        <div style={{ fontSize: 12, color: 'var(--text-secondary)', lineHeight: 1.6, marginBottom: 8, padding: '8px 10px', background: 'rgba(10,10,10,0.03)', borderRadius: 6, borderLeft: `3px solid ${color}40` }}>
+        <div style={{ fontSize: 12, color: 'var(--text-secondary)', lineHeight: 1.6, marginBottom: 8, padding: '8px 10px', background: 'rgba(10,10,10,0.03)', borderRadius: 6, borderLeft: `3px solid ${alpha(color, 40)}` }}>
           {question.scenario}
         </div>
       )}
@@ -153,10 +155,10 @@ export default function AIQuestionGenerator({
   };
 
   return (
-    <div style={{ marginTop: 16, border: `1px solid ${color}25`, borderRadius: 14, overflow: 'hidden' }}>
+    <div style={{ marginTop: 16, border: `1px solid ${alpha(color, 25)}`, borderRadius: 14, overflow: 'hidden' }}>
       {/* Header */}
       <div style={{
-        padding: '12px 16px', background: `${color}08`,
+        padding: '12px 16px', background: alpha(color, 8),
         display: 'flex', alignItems: 'center', gap: 10,
         borderBottom: generated && expanded ? '1px solid var(--border-light)' : 'none',
       }}>
@@ -179,8 +181,8 @@ export default function AIQuestionGenerator({
           )}
           <button onClick={handleGenerate} disabled={loading} style={{
             padding: '6px 14px', borderRadius: 8, cursor: 'pointer', fontSize: 12, fontWeight: 600,
-            background: loading ? 'rgba(10,10,10,0.05)' : `${color}20`,
-            border: `1px solid ${color}40`, color,
+            background: loading ? 'rgba(10,10,10,0.05)' : alpha(color, 20),
+            border: `1px solid ${alpha(color, 40)}`, color,
             display: 'flex', alignItems: 'center', gap: 6,
           }}>
             {loading ? (
@@ -199,9 +201,9 @@ export default function AIQuestionGenerator({
 
       {/* Error */}
       {error && (
-        <div style={{ padding: '10px 16px', background: 'rgba(239,68,68,0.08)', borderBottom: '1px solid rgba(239,68,68,0.2)', display: 'flex', gap: 8, alignItems: 'flex-start' }}>
-          <AlertCircle size={13} color="#ef4444" style={{ flexShrink: 0, marginTop: 1 }} />
-          <span style={{ fontSize: 12, color: '#fca5a5' }}>{error}</span>
+        <div style={{ padding: '10px 16px', background: alpha('var(--status-err)', 8), borderBottom: `1px solid ${alpha('var(--status-err)', 20)}`, display: 'flex', gap: 8, alignItems: 'flex-start' }}>
+          <AlertCircle size={13} color="var(--status-err)" style={{ flexShrink: 0, marginTop: 1 }} />
+          <span style={{ fontSize: 12, color: 'var(--status-err-soft)' }}>{error}</span>
         </div>
       )}
 

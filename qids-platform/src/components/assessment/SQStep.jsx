@@ -7,6 +7,8 @@ import { generateSQQuestions } from '../../services/groqService';
 import AIQuestionGenerator from '../AIQuestionGenerator';
 import { SectionHeader, RubricScorer } from './shared';
 
+const alpha = (color, pct) => `color-mix(in srgb, ${color} ${pct}%, transparent)`;
+
 export default function SQStep({ scores, onChange }) {
   const pillar = PILLARS.SQ;
   const [activeComponent, setActiveComponent] = useState('ACE');
@@ -68,7 +70,7 @@ export default function SQStep({ scores, onChange }) {
       {/* ACE */}
       {activeComponent === 'ACE' && (
         <div>
-          <div className="p-3 border-[0.5px] border-[#a855f7]/30 bg-[#a855f7]/5 text-technical-sm font-technical-sm text-on-surface-variant leading-relaxed mb-5">
+          <div className="p-3 border-[0.5px] border-(--phase-int)/30 bg-(--phase-int)/5 text-technical-sm font-technical-sm text-on-surface-variant leading-relaxed mb-5">
             <strong style={{ color: pillar.color }}>Assessment Centre Exercise.</strong> {SQ_QUESTIONS.component1_ACE.instructions}
           </div>
           {SQ_QUESTIONS.component1_ACE.exercises.map(ex => {
@@ -105,7 +107,7 @@ export default function SQStep({ scores, onChange }) {
       {/* CSI */}
       {activeComponent === 'CSI' && (
         <div>
-          <div className="p-3 border-[0.5px] border-[#a855f7]/30 bg-[#a855f7]/5 text-technical-sm font-technical-sm text-on-surface-variant leading-relaxed mb-5">
+          <div className="p-3 border-[0.5px] border-(--phase-int)/30 bg-(--phase-int)/5 text-technical-sm font-technical-sm text-on-surface-variant leading-relaxed mb-5">
             <strong style={{ color: pillar.color }}>Cognitive Social Intelligence Test.</strong> {SQ_QUESTIONS.component2_CSI.instructions}
           </div>
           {SQ_QUESTIONS.component2_CSI.questions.map((q, qi) => {
@@ -113,26 +115,26 @@ export default function SQStep({ scores, onChange }) {
             return (
               <div key={q.id} className="mb-5 p-4 bg-surface-container-low border-[0.5px] border-outline-variant">
                 <div className="text-technical-sm font-technical-sm mb-2 uppercase tracking-widest" style={{ color: pillar.color }}>Q{qi + 1} — {q.subParam}</div>
-                <div className="text-technical-sm font-technical-sm text-on-surface-variant leading-relaxed mb-3 p-3 bg-surface-container-low border-l-2 border-[#a855f7]/40">
+                <div className="text-technical-sm font-technical-sm text-on-surface-variant leading-relaxed mb-3 p-3 bg-surface-container-low border-l-2 border-(--phase-int)/40">
                   <strong>Scenario:</strong> {q.scenario}
                 </div>
                 <div className="text-technical-sm font-technical-sm text-on-surface mb-3">{q.question}</div>
                 <div className="flex flex-col gap-2">
                   {q.options.map((opt, oi) => {
                     const isSelected = selected === oi;
-                    const markColor = opt.marks === 2 ? '#10b981' : opt.marks === 1 ? '#f59e0b' : '#ef4444';
+                    const markColor = opt.marks === 2 ? 'var(--status-ok)' : opt.marks === 1 ? 'var(--status-warn)' : 'var(--status-err)';
                     return (
                       <button key={oi} onClick={() => onChange('CSI', q.id, oi)}
-                        className={`flex items-center gap-3 px-3 py-2.5 text-left text-technical-sm font-technical-sm transition-all cursor-pointer border-[0.5px] ${isSelected ? 'border-[#a855f7] bg-[#a855f7]/10' : 'border-outline-variant bg-transparent text-on-surface-variant hover:border-[#a855f7]'
+                        className={`flex items-center gap-3 px-3 py-2.5 text-left text-technical-sm font-technical-sm transition-all cursor-pointer border-[0.5px] ${isSelected ? 'border-(--phase-int) bg-(--phase-int)/10' : 'border-outline-variant bg-transparent text-on-surface-variant hover:border-(--phase-int)'
                           }`}>
-                        <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${isSelected ? 'border-[#a855f7] bg-[#a855f7]' : 'border-outline-variant'
+                        <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${isSelected ? 'border-(--phase-int) bg-(--phase-int)' : 'border-outline-variant'
                           }`}>
                           {isSelected && <div className="w-2 h-2 rounded-full bg-white" />}
                         </div>
                         <span className="flex-1"><strong>{String.fromCharCode(65 + oi)}.</strong> {opt.text}</span>
                         {isSelected && (
                           <span className="text-[11px] px-2 py-0.5 font-bold flex-shrink-0"
-                            style={{ backgroundColor: markColor + '20', color: markColor }}>
+                            style={{ backgroundColor: alpha(markColor, 20), color: markColor }}>
                             {opt.marks} mark{opt.marks !== 1 ? 's' : ''}
                           </span>
                         )}
@@ -141,8 +143,8 @@ export default function SQStep({ scores, onChange }) {
                   })}
                 </div>
                 {selected !== undefined && (
-                  <div className="mt-3 p-3 border-[0.5px] border-[#a855f7]/20 bg-[#a855f7]/5 text-technical-sm font-technical-sm text-surface-variant italic">
-                    <strong className="text-[#a855f7]">Assessor Note:</strong> {q.assessorNote}
+                  <div className="mt-3 p-3 border-[0.5px] border-(--phase-int)/20 bg-(--phase-int)/5 text-technical-sm font-technical-sm text-surface-variant italic">
+                    <strong className="text-(--phase-int)">Assessor Note:</strong> {q.assessorNote}
                   </div>
                 )}
               </div>
@@ -161,7 +163,7 @@ export default function SQStep({ scores, onChange }) {
       {/* PBA */}
       {activeComponent === 'PBA' && (
         <div>
-          <div className="p-3 border-[0.5px] border-[#a855f7]/30 bg-[#a855f7]/5 text-technical-sm font-technical-sm text-on-surface-variant leading-relaxed mb-5">
+          <div className="p-3 border-[0.5px] border-(--phase-int)/30 bg-(--phase-int)/5 text-technical-sm font-technical-sm text-on-surface-variant leading-relaxed mb-5">
             <strong style={{ color: pillar.color }}>Performance-Based Activities.</strong> {SQ_QUESTIONS.component3_PBA.instructions}
           </div>
 
@@ -173,7 +175,7 @@ export default function SQStep({ scores, onChange }) {
                 const isDisabled = !isSelected && selectedPBAs.length >= 2;
                 return (
                   <button key={act.id} onClick={() => !isDisabled && togglePBA(act.id)}
-                    className={`px-3 py-2.5 text-left border-[0.5px] transition-all cursor-pointer ${isDisabled ? 'opacity-40 cursor-not-allowed' : ''} ${isSelected ? 'border-[#a855f7] bg-[#a855f7]/10' : 'border-outline-variant bg-surface-container-low hover:border-[#a855f7]'
+                    className={`px-3 py-2.5 text-left border-[0.5px] transition-all cursor-pointer ${isDisabled ? 'opacity-40 cursor-not-allowed' : ''} ${isSelected ? 'border-(--phase-int) bg-(--phase-int)/10' : 'border-outline-variant bg-surface-container-low hover:border-(--phase-int)'
                       }`}>
                     <div className="text-technical-sm font-technical-sm" style={{ color: isSelected ? pillar.color : undefined }}>{act.id}: {act.label}</div>
                     <div className="text-[10px] text-surface-variant mt-0.5">{act.time} | {act.bestFor}</div>

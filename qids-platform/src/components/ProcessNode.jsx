@@ -1,13 +1,15 @@
 import React, { useState } from 'react';
 import { ChevronRight, X, User, Package, Target } from 'lucide-react';
 
-export default function ProcessNode({ node, color = '#6366f1', index, isLast, onClick, active }) {
+const alpha = (color, pct) => `color-mix(in srgb, ${color} ${pct}%, transparent)`;
+
+export default function ProcessNode({ node, color = 'var(--phase-pre)', index, isLast, onClick, active }) {
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: 0 }}>
       <div
         onClick={() => onClick && onClick(node)}
         style={{
-          background: active ? `rgba(${hexToRgb(color)},0.2)` : 'var(--navy-4)',
+          background: active ? alpha(color, 20) : 'var(--navy-4)',
           border: `1px solid ${active ? color : 'rgba(10,10,10,0.08)'}`,
           borderRadius: 10,
           padding: '10px 14px',
@@ -15,7 +17,7 @@ export default function ProcessNode({ node, color = '#6366f1', index, isLast, on
           minWidth: 140,
           maxWidth: 160,
           transition: 'all 0.2s',
-          boxShadow: active ? `0 0 12px ${color}40` : 'none',
+          boxShadow: active ? `0 0 12px ${alpha(color, 40)}` : 'none',
         }}
       >
         <div style={{
@@ -28,7 +30,7 @@ export default function ProcessNode({ node, color = '#6366f1', index, isLast, on
       </div>
       {!isLast && (
         <div style={{ display: 'flex', alignItems: 'center', padding: '0 4px' }}>
-          <div style={{ width: 20, height: 2, background: `linear-gradient(90deg, ${color}80, ${color}20)` }} />
+          <div style={{ width: 20, height: 2, background: `linear-gradient(90deg, ${alpha(color, 80)}, ${alpha(color, 20)})` }} />
           <ChevronRight size={10} color={color} style={{ opacity: 0.6 }} />
         </div>
       )}
@@ -36,7 +38,7 @@ export default function ProcessNode({ node, color = '#6366f1', index, isLast, on
   );
 }
 
-export function NodeDetailPanel({ node, onClose, color = '#6366f1' }) {
+export function NodeDetailPanel({ node, onClose, color = 'var(--phase-pre)' }) {
   if (!node) return null;
   return (
     <div style={{
@@ -71,7 +73,7 @@ export function NodeDetailPanel({ node, onClose, color = '#6366f1' }) {
             <Target size={12} color="var(--text-muted)" />
             <span style={{ fontSize: 11, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>KPI</span>
           </div>
-          <span style={{ fontSize: 13, color: '#10b981' }}>{node.kpi}</span>
+          <span style={{ fontSize: 13, color: 'var(--status-ok)' }}>{node.kpi}</span>
         </div>
       )}
 
@@ -92,11 +94,4 @@ export function NodeDetailPanel({ node, onClose, color = '#6366f1' }) {
       )}
     </div>
   );
-}
-
-function hexToRgb(hex) {
-  const r = parseInt(hex.slice(1, 3), 16);
-  const g = parseInt(hex.slice(3, 5), 16);
-  const b = parseInt(hex.slice(5, 7), 16);
-  return `${r},${g},${b}`;
 }

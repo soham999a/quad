@@ -39,14 +39,14 @@ function SectionTitle({ children, kicker }: { children: React.ReactNode; kicker?
 
 function Pill({ children, color }: { children: React.ReactNode; color: string }) {
   return (
-    <span className="px-2 py-1 text-technical-sm font-technical-sm rounded-full" style={{ background: `${color}20`, color, border: `1px solid ${color}40` }}>
+    <span className="px-2 py-1 text-technical-sm font-technical-sm rounded-full" style={{ background: `color-mix(in srgb, ${color} 20%, transparent)`, color, border: `1px solid color-mix(in srgb, ${color} 40%, transparent)` }}>
       {children}
     </span>
   );
 }
 
 function InsightRow({ icon, item, tone }: { icon: React.ComponentType<{ size?: number; className?: string; style?: React.CSSProperties }>; item: Insight; tone: 'good' | 'bad' }) {
-  const color = tone === 'good' ? '#10b981' : '#ef4444';
+  const color = tone === 'good' ? 'var(--status-ok)' : 'var(--status-err)';
   const Icon = icon;
   return (
     <div className="flex items-start gap-3 py-3 border-b-[0.5px] border-outline-variant last:border-b-0">
@@ -69,7 +69,7 @@ function PiiGauge({ score, max, color }: { score: number; max: number; color: st
   return (
     <div className="relative w-44 h-44 mx-auto">
       <svg viewBox="0 0 100 100" className="w-full h-full -rotate-90">
-        <circle cx="50" cy="50" r="42" fill="none" stroke="rgba(148,163,184,0.15)" strokeWidth="8" />
+        <circle cx="50" cy="50" r="42" fill="none" stroke="color-mix(in srgb, var(--slate-muted) 15%, transparent)" strokeWidth="8" />
         <circle cx="50" cy="50" r="42" fill="none" stroke={color} strokeWidth="8" strokeLinecap="round"
           strokeDasharray={`${(pct / 100) * 264} 264`} />
       </svg>
@@ -98,7 +98,7 @@ function Page1({ p }: { p: PipReportData['page1'] }) {
               <div className="text-label-md font-label-md text-on-background">{AGILITY_META[p.learningAgility.label]?.label || p.learningAgility.label} · {p.learningAgility.score}/10</div>
             </div>
             <div className="h-[6px] bg-surface-variant/20 overflow-hidden">
-              <div className="h-full" style={{ width: `${p.learningAgility.score * 10}%`, background: '#6366f1' }} />
+              <div className="h-full" style={{ width: `${p.learningAgility.score * 10}%`, background: 'var(--phase-pre)' }} />
             </div>
           </div>
         </div>
@@ -172,12 +172,12 @@ function DimensionalRadar({ points, norm }: { points: RadarPoint[]; norm: Record
   return (
     <ResponsiveContainer width="100%" height={360}>
       <ReRadar data={data} outerRadius="70%">
-        <PolarGrid stroke="rgba(148,163,184,0.2)" />
-        <PolarAngleAxis dataKey="subject" tick={{ fill: '#94a3b8', fontSize: 11, fontWeight: 600 }} />
+        <PolarGrid stroke="color-mix(in srgb, var(--slate-muted) 20%, transparent)" />
+        <PolarAngleAxis dataKey="subject" tick={{ fill: 'var(--slate-muted)', fontSize: 11, fontWeight: 600 }} />
         <PolarRadiusAxis angle={90} domain={[0, 100]} tick={false} axisLine={false} />
-        <Radar dataKey="Candidate" stroke="#B8924A" fill="#B8924A" fillOpacity={0.28} strokeWidth={2} dot={{ fill: '#B8924A', r: 3 }} />
-        <Radar dataKey="Peer Norm" stroke="#64748b" fill="#64748b" fillOpacity={0.06} strokeWidth={1.5} strokeDasharray="4 4" />
-        <Tooltip contentStyle={{ background: '#0f172a', border: '1px solid rgba(148,163,184,0.2)', borderRadius: 8, color: '#e2e8f0', fontSize: 12 }} />
+        <Radar dataKey="Candidate" stroke="var(--gold)" fill="var(--gold)" fillOpacity={0.28} strokeWidth={2} dot={{ fill: 'var(--gold)', r: 3 }} />
+        <Radar dataKey="Peer Norm" stroke="var(--slate-deep)" fill="var(--slate-deep)" fillOpacity={0.06} strokeWidth={1.5} strokeDasharray="4 4" />
+        <Tooltip contentStyle={{ background: 'var(--ink)', border: '1px solid color-mix(in srgb, var(--slate-muted) 20%, transparent)', borderRadius: 8, color: 'var(--neutral-warm)', fontSize: 12 }} />
       </ReRadar>
     </ResponsiveContainer>
   );
@@ -198,14 +198,14 @@ function Page2({ p }: { p: PipReportData['page2'] }) {
                   <div className="text-technical-sm font-technical-sm text-surface-variant">{DIM_LABELS[pt.dimension]}</div>
                 </div>
                 <div className="flex-1 h-[5px] bg-surface-container-high overflow-hidden mx-3">
-                  <div className="h-full" style={{ width: `${Math.max(pt.score, 2)}%`, background: BAND_COLOR[pt.band] || '#B8924A' }} />
+                  <div className="h-full" style={{ width: `${Math.max(pt.score, 2)}%`, background: BAND_COLOR[pt.band] || 'var(--gold)' }} />
                 </div>
                 <div className="w-24 flex-shrink-0 text-right">
                   <span className="text-label-md font-label-md text-on-background">{pt.tScore}</span>
                   <span className="text-technical-sm font-technical-sm text-surface-variant ml-2">T·P{String(pt.percentile).padStart(2, '0')}</span>
                 </div>
                 <div className="w-20 flex-shrink-0 text-right">
-                  <Pill color={BAND_COLOR[pt.band] || '#B8924A'}>{pt.band}</Pill>
+                  <Pill color={BAND_COLOR[pt.band] || 'var(--gold)'}>{pt.band}</Pill>
                 </div>
               </div>
             ))}
@@ -239,11 +239,11 @@ function Page3({ p }: { p: PipReportData['page3'] }) {
           <tbody>
             {p.rows.map((r, i) => (
               <tr key={i} className="border-b-[0.5px] border-outline-variant"
-                style={r.roleRelevant ? { background: 'rgba(235,192,115,0.06)' } : undefined}>
+                style={r.roleRelevant ? { background: 'color-mix(in srgb, var(--gold) 6%, transparent)' } : undefined}>
                 <td className="py-3 pr-4 text-label-md font-label-md text-on-background">{r.module}</td>
                 <td className="py-3 pr-4">
                   <span className="text-body-md text-on-surface-variant">{r.name}</span>
-                  {r.roleRelevant && <Pill color="#B8924A">role-fit</Pill>}
+                  {r.roleRelevant && <Pill color="var(--gold)">role-fit</Pill>}
                 </td>
                 <td className="py-3 pr-4 text-right text-technical-sm font-technical-sm text-surface-variant">{r.raw}/{r.max}</td>
                 <td className="py-3 pr-4 text-right text-label-md font-label-md text-on-background">{r.tScore}</td>
@@ -251,12 +251,12 @@ function Page3({ p }: { p: PipReportData['page3'] }) {
                   <div className="flex items-center justify-end gap-2">
                     <span className="text-technical-sm font-technical-sm text-surface-variant">{r.pct}%</span>
                     <div className="w-20 h-[5px] bg-surface-container-high overflow-hidden">
-                      <div className="h-full" style={{ width: `${Math.max(r.pct, 2)}%`, background: r.pct >= 75 ? '#10b981' : r.pct >= 60 ? '#f59e0b' : '#ef4444' }} />
+                      <div className="h-full" style={{ width: `${Math.max(r.pct, 2)}%`, background: r.pct >= 75 ? 'var(--status-ok)' : r.pct >= 60 ? 'var(--status-warn)' : 'var(--status-err)' }} />
                     </div>
                   </div>
                 </td>
                 <td className="py-3 text-right">
-                  <Pill color={BAND_COLOR[r.band] || '#94a3b8'}>{r.band}</Pill>
+                  <Pill color={BAND_COLOR[r.band] || 'var(--slate-muted)'}>{r.band}</Pill>
                 </td>
               </tr>
             ))}

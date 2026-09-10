@@ -111,8 +111,14 @@ export default function EvaluatorDashboard() {
           {assignments.map(assignment => {
             const student = students[assignment.studentUid];
             const studentAssessments = assessments[assignment.studentUid] || [];
-            const preCount = studentAssessments.filter(a => a.phase === 'pre').length;
-            const postCount = studentAssessments.filter(a => a.phase === 'post').length;
+            const preAssessments = studentAssessments.filter(a => a.phase === 'pre');
+            const postAssessments = studentAssessments.filter(a => a.phase === 'post');
+            const preCount = preAssessments.length;
+            const postCount = postAssessments.length;
+            const phases = [
+              { id: 'pre', label: 'Pre-Intervention', list: preAssessments },
+              { id: 'post', label: 'Post-Intervention', list: postAssessments },
+            ];
 
             return (
               <div key={assignment.id} className="border-b-[0.5px] border-outline-variant group hover:bg-surface-container-low transition-colors">
@@ -137,50 +143,60 @@ export default function EvaluatorDashboard() {
                   </div>
                 </div>
 
-                {/* Assessment list */}
-                {studentAssessments.length > 0 && (
+                {/* Assessment list, grouped by phase */}
+                {preAssessments.length + postAssessments.length > 0 && (
                   <div className="pb-2">
-                    {studentAssessments.slice(0, 3).map(asm => (
-                      <div
-                        key={asm.id}
-                        onClick={() => navigate(`/app/evaluator/assess/${asm.id}`, { state: { student, assessment: asm } })}
-                        className="h-12 md:h-14 flex items-center justify-between border-b-[0.5px] border-outline-variant/50 hover:bg-surface-container-low transition-colors px-2 md:px-8 cursor-pointer touch-target"
-                      >
-                        <div className="flex items-center gap-4 md:gap-8 min-w-0 flex-1">
-                          <ClipboardList size={13} className="text-surface-variant flex-shrink-0" />
-                          <div className="min-w-0 flex-1">
-                            <div className="text-label-md font-label-md text-on-background truncate capitalize">
-                              {asm.phase === 'pre' ? 'Pre-Intervention' : 'Post-Intervention'} Assessment
-                            </div>
-                            <div className="text-technical-sm font-technical-sm text-surface-variant truncate">
-                              {asm.createdAt?.toDate?.()?.toLocaleDateString() || asm.timestamp ? new Date(asm.timestamp).toLocaleDateString() : 'No date'}
-                            </div>
+                    {phases.map(ph => {
+                      if (ph.list.length === 0) return null;
+                      return (
+                        <div key={ph.id}>
+                          <div className="px-2 md:px-8 py-2 text-technical-sm font-technical-sm text-primary uppercase tracking-[0.2em]">
+                            {ph.label}
                           </div>
-                        </div>
-                        <div className="flex items-center gap-3 md:gap-8 flex-shrink-0">
-                          <div className="flex gap-1">
-                            {['EQ', 'SQ', 'AQ'].map(pillar => {
-                              const ev = getPillarStatus(asm.id, pillar);
-                              return (
-                                <div key={pillar} className="size-[22px] flex items-center justify-center border-[0.5px]"
-                                  style={{
-                                    borderRadius: '6px',
-                                    borderColor: ev ? '#B8924A' : '#DBD6CA',
-                                    background: ev ? 'rgba(235,192,115,0.08)' : 'transparent'
-                                  }}
-                                  title={`${pillar}: ${ev ? 'Scored' : 'Pending'}`}>
-                                  {ev
-                                    ? <CheckCircle size={9} className="text-primary" />
-                                    : <Clock size={9} className="text-outline" />
-                                  }
+                          {ph.list.map(asm => (
+                            <div
+                              key={asm.id}
+                              onClick={() => navigate(`/app/evaluator/assess/${asm.id}`, { state: { student, assessment: asm } })}
+                              className="h-12 md:h-14 flex items-center justify-between border-b-[0.5px] border-outline-variant/50 hover:bg-surface-container-low transition-colors px-2 md:px-8 cursor-pointer touch-target"
+                            >
+                              <div className="flex items-center gap-4 md:gap-8 min-w-0 flex-1">
+                                <ClipboardList size={13} className="text-surface-variant flex-shrink-0" />
+                                <div className="min-w-0 flex-1">
+                                  <div className="text-label-md font-label-md text-on-background truncate">
+                                    Assessment
+                                  </div>
+                                  <div className="text-technical-sm font-technical-sm text-surface-variant truncate">
+                                    {asm.createdAt?.toDate?.()?.toLocaleDateString() || asm.timestamp ? new Date(asm.timestamp).toLocaleDateString() : 'No date'}
+                                  </div>
                                 </div>
-                              );
-                            })}
-                          </div>
-                          <ChevronRight size={14} className="text-surface-variant flex-shrink-0" />
+                              </div>
+                              <div className="flex items-center gap-3 md:gap-8 flex-shrink-0">
+                                <div className="flex gap-1">
+                                  {['EQ', 'SQ', 'AQ'].map(pillar => {
+                                    const ev = getPillarStatus(asm.id, pillar);
+                                    return (
+                                      <div key={pillar} className="size-[22px] flex items-center justify-center border-[0.5px]"
+                                        style={{
+                                          borderRadius: '6px',
+                                          borderColor: ev ? 'var(--gold)' : 'var(--bone-line)',
+                                          background: ev ? 'rgba(235,192,115,0.08)' : 'transparent'
+                                        }}
+                                        title={`${pillar}: ${ev ? 'Scored' : 'Pending'}`}>
+                                        {ev
+                                          ? <CheckCircle size={9} className="text-primary" />
+                                          : <Clock size={9} className="text-outline" />
+                                        }
+                                      </div>
+                                    );
+                                  })}
+                                </div>
+                                <ChevronRight size={14} className="text-surface-variant flex-shrink-0" />
+                              </div>
+                            </div>
+                          ))}
                         </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 )}
 

@@ -9,8 +9,10 @@ import DiagramQuestion from '../DiagramQuestion';
 import AIQuestionGenerator from '../AIQuestionGenerator';
 import { SectionHeader, MCQQuestion, OpenQuestion } from './shared';
 
+const alpha = (color, pct) => `color-mix(in srgb, ${color} ${pct}%, transparent)`;
+
 export default function IQStep({ scores, onChange, ageGroup, context }) {
-  const pillar = { id: 'IQ', color: '#B8924A' };
+  const pillar = { id: 'IQ', color: 'var(--gold)' };
   const [activeSection, setActiveSection] = useState('verbal');
   const [diagramQs] = useState(() => getRandomDiagramQuestions(9));
   const [diagramAnswers, setDiagramAnswers] = useState(scores._diagramAnswers || {});
@@ -26,12 +28,12 @@ export default function IQStep({ scores, onChange, ageGroup, context }) {
   };
 
   const sections = [
-    { id: 'verbal',       label: 'Verbal',       color: '#6366f1' },
-    { id: 'quantitative', label: 'Quantitative', color: '#8b5cf6' },
-    { id: 'psychometric', label: 'Psychometric', color: '#a855f7' },
-    { id: 'performance',  label: 'Performance',  color: '#c084fc' },
-    { id: 'diagrams',     label: 'Visual',       color: '#06b6d4' },
-    { id: 'ai',           label: 'AI',           color: '#10b981' },
+    { id: 'verbal',       label: 'Verbal',       color: 'var(--phase-pre)' },
+    { id: 'quantitative', label: 'Quantitative', color: 'var(--violet-strong)' },
+    { id: 'psychometric', label: 'Psychometric', color: 'var(--phase-int)' },
+    { id: 'performance',  label: 'Performance',  color: 'var(--violet-soft)' },
+    { id: 'diagrams',     label: 'Visual',       color: 'var(--cyan-mid)' },
+    { id: 'ai',           label: 'AI',           color: 'var(--status-ok)' },
   ];
 
   const sectionData = ['verbal', 'quantitative', 'psychometric', 'performance'].includes(activeSection)
@@ -86,7 +88,7 @@ export default function IQStep({ scores, onChange, ageGroup, context }) {
             <button key={s.id} onClick={() => setActiveSection(s.id)}
               className={`px-4 py-2 text-technical-sm font-technical-sm cursor-pointer transition-all border-none flex items-center gap-1.5 ${isActive ? 'text-on-surface' : 'text-surface-variant hover:text-on-surface-variant'
                 }`}
-              style={{ backgroundColor: isActive ? s.color + '20' : 'transparent', color: isActive ? s.color : undefined }}>
+              style={{ backgroundColor: isActive ? alpha(s.color, 20) : 'transparent', color: isActive ? s.color : undefined }}>
               {s.label}
               <span className="text-[10px] px-1.5 py-0.5 opacity-60">{answered} ans</span>
             </button>
@@ -109,7 +111,7 @@ export default function IQStep({ scores, onChange, ageGroup, context }) {
                   const qType = sec.type === 'mixed' ? (q.type || 'open') : sec.type;
                   const val = scores[activeSection]?.[globalIdx];
                   if (qType === 'mcq') {
-                    return <MCQQuestion key={qi} q={q} index={qi} selected={val} onSelect={v => handleAnswer(activeSection, globalIdx, v)} color={sections.find(s => s.id === activeSection)?.color || '#6366f1'} />;
+                    return <MCQQuestion key={qi} q={q} index={qi} selected={val} onSelect={v => handleAnswer(activeSection, globalIdx, v)} color={sections.find(s => s.id === activeSection)?.color || 'var(--phase-pre)'} />;
                   }
                   return <OpenQuestion key={qi} q={q} index={qi} value={val} onChange={v => handleAnswer(activeSection, globalIdx, v)} />;
                 })}
@@ -122,20 +124,20 @@ export default function IQStep({ scores, onChange, ageGroup, context }) {
       {/* Diagrams */}
       {activeSection === 'diagrams' && (
         <div>
-          <div className="p-3 border-[0.5px] border-[#06b6d4]/30 bg-[#06b6d4]/5 text-technical-sm font-technical-sm text-on-surface-variant leading-relaxed mb-5">
-            <strong className="text-[#06b6d4]">Visual & Diagram Questions.</strong> 9 questions randomly selected from a pool of 20. Each correct answer = 1 mark. Max: 9 bonus marks.
+          <div className="p-3 border-[0.5px] border-(--cyan-mid)/30 bg-(--cyan-mid)/5 text-technical-sm font-technical-sm text-on-surface-variant leading-relaxed mb-5">
+            <strong className="text-(--cyan-mid)">Visual & Diagram Questions.</strong> 9 questions randomly selected from a pool of 20. Each correct answer = 1 mark. Max: 9 bonus marks.
           </div>
           {diagramQs.map((q, i) => (
             <DiagramQuestion
               key={q.id} question={q} index={i}
               selected={diagramAnswers[q.id]}
               onSelect={v => handleDiagramAnswer(q.id, v)}
-              color="#06b6d4"
+              color="var(--cyan-mid)"
             />
           ))}
           <div className="p-3 bg-surface-container-low border-[0.5px] border-outline-variant flex justify-between items-center mt-2">
             <span className="text-technical-sm font-technical-sm text-on-surface-variant">Visual Bonus Score</span>
-            <span className="text-label-md font-label-md text-[#06b6d4]">{diagramQs.filter(q => diagramAnswers[q.id] === q.answer).length} / 9</span>
+            <span className="text-label-md font-label-md text-(--cyan-mid)">{diagramQs.filter(q => diagramAnswers[q.id] === q.answer).length} / 9</span>
           </div>
         </div>
       )}
@@ -143,15 +145,15 @@ export default function IQStep({ scores, onChange, ageGroup, context }) {
       {/* AI-generated questions */}
       {activeSection === 'ai' && (
         <div>
-          <div className="p-3 border-[0.5px] border-[#10b981]/30 bg-[#10b981]/5 text-technical-sm font-technical-sm text-on-surface-variant leading-relaxed mb-5">
-            <strong className="text-[#10b981]">AI-Generated Questions.</strong> Fresh questions generated by Groq (llama-3.3-70b) based on the QIDS knowledge base. Each assessment gets a unique set.
+          <div className="p-3 border-[0.5px] border-(--status-ok)/30 bg-(--status-ok)/5 text-technical-sm font-technical-sm text-on-surface-variant leading-relaxed mb-5">
+            <strong className="text-(--status-ok)">AI-Generated Questions.</strong> Fresh questions generated by Groq (llama-3.3-70b) based on the QIDS knowledge base. Each assessment gets a unique set.
           </div>
           {['verbal', 'quantitative', 'psychometric', 'performance'].map(sec => (
             <AIQuestionGenerator
               key={sec}
               pillar="IQ" component={sec} ageGroup={ageGroup} context={context}
               questionType={sec === 'verbal' || sec === 'performance' ? 'open' : 'mcq'}
-              color="#10b981"
+              color="var(--status-ok)"
               label={`${sec.charAt(0).toUpperCase() + sec.slice(1)} IQ`}
               generateFn={(params) => generateIQQuestions({ ...params, section: sec })}
               onAnswersChange={(ans, qs) => onChange('ai_' + sec, 0, { answers: ans, questions: qs })}

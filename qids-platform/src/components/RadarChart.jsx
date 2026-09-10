@@ -12,11 +12,11 @@ export default function QIDSRadar({ data, compare = null, size = 300 }) {
   return (
     <ResponsiveContainer width="100%" height={size}>
       <ReRadar data={chartData}>
-        <PolarGrid stroke="rgba(10,10,10,0.1)" />
-        <PolarAngleAxis dataKey="subject" tick={{ fill: '#94a3b8', fontSize: 13, fontWeight: 600 }} />
-        <PolarRadiusAxis angle={90} domain={[0, 100]} tick={{ fill: '#64748b', fontSize: 10 }} tickCount={5} />
-        <Radar name={compare ? 'Pre-Intervention' : 'Score'} dataKey="A" stroke="#6366f1" fill="#6366f1" fillOpacity={0.25} strokeWidth={2} dot={{ fill: '#6366f1', r: 4 }} />
-        {compare && <Radar name="Post-Intervention" dataKey="B" stroke="#10b981" fill="#10b981" fillOpacity={0.2} strokeWidth={2} dot={{ fill: '#10b981', r: 4 }} />}
+        <PolarGrid stroke="color-mix(in srgb, var(--neutral-dark) 10%, transparent)" />
+        <PolarAngleAxis dataKey="subject" tick={{ fill: 'var(--slate-muted)', fontSize: 13, fontWeight: 600 }} />
+        <PolarRadiusAxis angle={90} domain={[0, 100]} tick={{ fill: 'var(--slate-deep)', fontSize: 10 }} tickCount={5} />
+        <Radar name={compare ? 'Pre-Intervention' : 'Score'} dataKey="A" stroke="var(--phase-pre)" fill="var(--phase-pre)" fillOpacity={0.25} strokeWidth={2} dot={{ fill: 'var(--phase-pre)', r: 4 }} />
+        {compare && <Radar name="Post-Intervention" dataKey="B" stroke="var(--status-ok)" fill="var(--status-ok)" fillOpacity={0.2} strokeWidth={2} dot={{ fill: 'var(--status-ok)', r: 4 }} />}
         <Tooltip contentStyle={{ background: 'var(--navy-4)', border: '1px solid var(--border)', borderRadius: 8, color: 'var(--text-primary)', fontSize: 12 }} />
         {compare && <Legend wrapperStyle={{ fontSize: 12, color: 'var(--text-secondary)' }} />}
       </ReRadar>

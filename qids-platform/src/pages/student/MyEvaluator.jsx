@@ -106,7 +106,7 @@ export default function MyEvaluator() {
         <div className="bg-surface-container-low border border-outline-variant rounded-2xl p-6 mb-7">
           <div className="flex items-center justify-between flex-wrap gap-3">
             <div className="flex items-center gap-3.5">
-              <div className="w-11 h-11 rounded-full bg-[#6366f1] flex items-center justify-center shrink-0">
+              <div className="w-11 h-11 rounded-full bg-(--phase-pre) flex items-center justify-center shrink-0">
                 <span className="text-lg font-extrabold text-white">
                   {(currentEvaluator.name || 'E')[0].toUpperCase()}
                 </span>
@@ -118,13 +118,13 @@ export default function MyEvaluator() {
                 </div>
               </div>
             </div>
-            <button onClick={handleRemove} disabled={assigning} className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg cursor-pointer text-xs font-medium" style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.2)', color: '#f87171' }}>
+            <button onClick={handleRemove} disabled={assigning} className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg cursor-pointer text-xs font-medium" style={{ background: 'color-mix(in srgb, var(--status-err) 10%, transparent)', border: '1px solid color-mix(in srgb, var(--status-err) 20%, transparent)', color: 'var(--status-err-soft)' }}>
               <UserX size={13} /> Remove
             </button>
           </div>
-          <div className="flex items-center gap-1.5 mt-3 px-3 py-2 rounded-lg border" style={{ background: 'rgba(16,185,129,0.08)', borderColor: 'rgba(16,185,129,0.15)' }}>
-            <UserCheck size={13} color="#34d399" />
-            <span className="text-xs" style={{ color: '#6ee7b7' }}>You are assigned to this evaluator</span>
+          <div className="flex items-center gap-1.5 mt-3 px-3 py-2 rounded-lg border" style={{ background: 'color-mix(in srgb, var(--status-ok) 8%, transparent)', borderColor: 'color-mix(in srgb, var(--status-ok) 15%, transparent)' }}>
+            <UserCheck size={13} color="var(--status-ok-soft)" />
+            <span className="text-xs" style={{ color: 'var(--status-ok-soft)' }}>You are assigned to this evaluator</span>
           </div>
 
           {/* Evaluator Scores */}
@@ -163,7 +163,7 @@ export default function MyEvaluator() {
                 const grade = getGrade(Math.round(score));
 
                 return (
-                  <div key={a.id} className="px-3 py-3 mb-2 rounded-lg cursor-pointer" style={{ background: 'rgba(10,10,10,0.03)', border: '1px solid var(--border-light)' }} onClick={() => navigate('/app/report')}>
+                  <div key={a.id} className="px-3 py-3 mb-2 rounded-lg cursor-pointer" style={{ background: 'color-mix(in srgb, var(--neutral-dark) 3%, transparent)', border: '1px solid var(--border-light)' }} onClick={() => navigate('/app/report')}>
                     <div className="flex justify-between items-center">
                       <div>
                         <div className="text-xs font-semibold">
@@ -218,7 +218,7 @@ export default function MyEvaluator() {
           {filtered.map(ev => (
             <div key={ev.uid} className={`flex items-center justify-between px-4 py-3.5 bg-surface-container-low border border-outline-variant rounded-xl transition-all ${currentEvaluator?.uid === ev.uid ? 'opacity-60' : ''}`}>
               <div className="flex items-center gap-3">
-                <div className="w-[38px] h-[38px] rounded-full bg-[#6366f1] flex items-center justify-center shrink-0">
+                <div className="w-[38px] h-[38px] rounded-full bg-(--phase-pre) flex items-center justify-center shrink-0">
                   <span className="text-sm font-extrabold text-white">{(ev.name || 'E')[0].toUpperCase()}</span>
                 </div>
                 <div>
@@ -227,13 +227,13 @@ export default function MyEvaluator() {
                 </div>
               </div>
               {currentEvaluator?.uid === ev.uid ? (
-                <div className="text-xs flex items-center gap-1" style={{ color: '#34d399' }}>
+                <div className="text-xs flex items-center gap-1" style={{ color: 'var(--status-ok-soft)' }}>
                   <UserCheck size={13} /> Assigned
                 </div>
               ) : (
                 <button onClick={() => handleAssign(ev.uid)} disabled={assigning || !!currentEvaluator} className="px-3.5 py-1.5 rounded-lg text-xs font-medium" style={{
-                  background: 'rgba(99,102,241,0.15)', border: '1px solid rgba(99,102,241,0.3)',
-                  color: assigning ? 'var(--text-muted)' : '#a5b4fc',
+                  background: 'color-mix(in srgb, var(--phase-pre) 15%, transparent)', border: '1px solid color-mix(in srgb, var(--phase-pre) 30%, transparent)',
+                  color: assigning ? 'var(--text-muted)' : 'var(--phase-pre-pale)',
                   cursor: assigning || currentEvaluator ? 'not-allowed' : 'pointer',
                   opacity: currentEvaluator ? 0.4 : 1,
                 }}>

@@ -15,7 +15,7 @@ const SHAPES = {
   M: { label: 'M-Shaped', desc: 'Multi-disciplinary strength across 3+ areas', color: 'var(--color-warning)' },
 };
 
-const SCORE_COLORS = ['#EB7C5E', '#EBC073', '#6EA9F5', '#72D9A0'];
+const SCORE_COLORS = ['var(--status-err)', 'var(--gold-bright)', 'var(--phase-pre)', 'var(--status-ok)'];
 
 export default function InterviewReport() {
   const { sessionId } = useParams();

@@ -56,7 +56,7 @@ function RoleCard({ role }: { role: RoleProfile }) {
                   <div key={d} className="flex items-center gap-3">
                     <span className="w-32 flex-shrink-0 text-technical-sm font-technical-sm text-surface-variant">{DIM_WEIGHT_LABELS[d]}</span>
                     <div className="flex-1 h-[5px] rounded-full bg-surface-container-high overflow-hidden">
-                      <div className="h-full rounded-full" style={{ width: `${w}%`, background: `linear-gradient(90deg, ${w >= 20 ? '#B8924A' : w >= 10 ? '#94a3b8' : '#475569'}88, ${w >= 20 ? '#B8924A' : w >= 10 ? '#94a3b8' : '#475569'})` }} />
+                      <div className="h-full rounded-full" style={{ width: `${w}%`, background: `linear-gradient(90deg, ${w >= 20 ? 'var(--gold)' : w >= 10 ? 'var(--slate-muted)' : 'var(--slate-deep)'}88, ${w >= 20 ? 'var(--gold)' : w >= 10 ? 'var(--slate-muted)' : 'var(--slate-deep)'})` }} />
                     </div>
                     <span className="w-8 text-right text-technical-sm font-technical-sm text-on-surface">{w}%</span>
                   </div>
@@ -136,7 +136,7 @@ function RfiExplorer() {
                       <div key={d} className="text-center">
                         <div className="text-technical-sm font-technical-sm text-surface-variant mb-1">{d}</div>
                         <div className="h-[4px] rounded-full bg-surface-container-high overflow-hidden">
-                          <div className="h-full rounded-full" style={{ width: `${v}%`, background: v >= 70 ? '#10b981' : v >= 40 ? '#f59e0b' : '#ef4444' }} />
+                          <div className="h-full rounded-full" style={{ width: `${v}%`, background: v >= 70 ? 'var(--status-ok)' : v >= 40 ? 'var(--status-warn)' : 'var(--status-err)' }} />
                         </div>
                       </div>
                     ))}
@@ -175,11 +175,11 @@ function RoleHeatmap() {
                 </td>
                 {ROLE_DIMS.map(d => {
                   const w = r.weights[d] ?? 0;
-                  const color = w >= 20 ? '#B8924A' : w >= 10 ? '#94a3b8' : '#3f3f3f';
+                  const color = w >= 20 ? 'var(--gold)' : w >= 10 ? 'var(--slate-muted)' : 'var(--neutral-mid)';
                   return (
                     <td key={d} className="py-3 pr-3 text-center">
                       <span className="px-2.5 py-1 rounded-full text-technical-sm font-technical-sm"
-                        style={{ color, background: `${color}15` }}>{w}%</span>
+                        style={{ color, background: `color-mix(in srgb, ${color} 15%, transparent)` }}>{w}%</span>
                     </td>
                   );
                 })}

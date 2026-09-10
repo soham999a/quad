@@ -40,9 +40,9 @@ export function ToastProvider({ children }) {
       }}>
         {toasts.map(t => {
           const colors = {
-            success: { bg: 'rgba(16,185,129,0.12)', border: 'rgba(16,185,129,0.3)', icon: '#10b981', text: '#34d399' },
-            error:   { bg: 'rgba(239,68,68,0.12)',  border: 'rgba(239,68,68,0.3)',  icon: '#ef4444', text: '#fca5a5' },
-            info:    { bg: 'rgba(99,102,241,0.12)',  border: 'rgba(99,102,241,0.3)',  icon: '#6366f1', text: '#a5b4fc' },
+            success: { bg: 'color-mix(in srgb, var(--status-ok) 12%, transparent)', border: 'color-mix(in srgb, var(--status-ok) 30%, transparent)', icon: 'var(--status-ok)', text: 'var(--status-ok-soft)' },
+            error:   { bg: 'color-mix(in srgb, var(--status-err) 12%, transparent)', border: 'color-mix(in srgb, var(--status-err) 30%, transparent)', icon: 'var(--status-err)', text: 'var(--status-err-soft)' },
+            info:    { bg: 'color-mix(in srgb, var(--phase-pre) 12%, transparent)', border: 'color-mix(in srgb, var(--phase-pre) 30%, transparent)', icon: 'var(--phase-pre)', text: 'var(--phase-pre-pale)' },
           }[t.type] || {};
           const Icon = t.type === 'success' ? CheckCircle : t.type === 'error' ? AlertCircle : Info;
           return (
@@ -56,7 +56,7 @@ export function ToastProvider({ children }) {
             }}>
               <Icon size={15} color={colors.icon} style={{ flexShrink: 0 }} />
               <span style={{ fontSize: 13, color: colors.text, flex: 1 }}>{t.message}</span>
-              <button onClick={() => remove(t.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: colors.text, padding: 2, opacity: 0.6 }}>
+              <button onClick={() => remove(t.id)} aria-label="Dismiss notification" style={{ background: 'none', border: 'none', cursor: 'pointer', color: colors.text, padding: 2, opacity: 0.6 }}>
                 <X size={12} />
               </button>
             </div>

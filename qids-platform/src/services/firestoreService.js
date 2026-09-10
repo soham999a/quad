@@ -204,3 +204,30 @@ export async function updateUserRole(uid, role) {
     return true;
   } catch (e) { console.warn('updateUserRole failed:', e.message); return false; }
 }
+
+// ── Enterprise Results ─────────────────────────────────────────────────────────
+
+export async function saveEnterpriseResult(uid, data) {
+  try {
+    const ref = await addDoc(collection(db, 'enterpriseResults'), {
+      uid, ...data, createdAt: serverTimestamp(),
+    });
+    return ref.id;
+  } catch (e) { console.warn('saveEnterpriseResult failed:', e.message); return null; }
+}
+
+export async function getEnterpriseResult(resultId) {
+  try {
+    const snap = await getDoc(doc(db, 'enterpriseResults', resultId));
+    if (!snap.exists()) return null;
+    return { id: snap.id, ...snap.data() };
+  } catch (e) { console.warn('getEnterpriseResult failed:', e.message); return null; }
+}
+
+export async function getUserEnterpriseResults(uid) {
+  try {
+    const q = query(collection(db, 'enterpriseResults'), where('uid', '==', uid));
+    const snap = await getDocs(q);
+    return sortByCreatedAt(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+  } catch (e) { console.warn('getUserEnterpriseResults failed:', e.message); return []; }
+}

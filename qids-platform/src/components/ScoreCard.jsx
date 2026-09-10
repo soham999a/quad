@@ -55,8 +55,8 @@ export default function ScoreCard({ pillar, score, showWeight = false }) {
 
       {critical && (
         <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginTop: 8, padding: '4px 8px', background: 'rgba(239,68,68,0.1)', borderRadius: 6, border: '1px solid rgba(239,68,68,0.2)' }}>
-          <AlertTriangle size={11} color="#ef4444" />
-          <span style={{ fontSize: 10, color: '#fca5a5', fontWeight: 600 }}>CRITICAL PRIORITY</span>
+          <AlertTriangle size={11} color="var(--status-err)" />
+          <span style={{ fontSize: 10, color: 'var(--status-err-soft)', fontWeight: 600 }}>CRITICAL PRIORITY</span>
         </div>
       )}
     </div>
