@@ -181,7 +181,7 @@ export default function Login() {
         <footer className="pt-12 text-center">
           <p className="text-technical-sm font-technical-sm text-on-surface-variant">
             NEW PERSONNEL?
-            <Link to={next ? `/signup?next=${encodeURIComponent(next)}` : '/signup'} className="text-primary ml-2 hover:underline tracking-widest font-medium no-underline">REQUEST ACCESS</Link>
+            <Link to={next ? `/signup?next=${encodeURIComponent(next)}` : '/signup'} className="text-primary ml-2 inline-block -my-2 py-2 hover:underline tracking-widest font-medium no-underline">REQUEST ACCESS</Link>
           </p>
         </footer>
       </main>

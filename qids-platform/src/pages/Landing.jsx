@@ -170,7 +170,7 @@ export default function Landing() {
                 Assessment is the entry point.
               </div>
             </div>
-            <div className="col-span-12 lg:col-span-9">
+            <div className="col-span-12 min-w-0 lg:col-span-9">
               <p className="max-w-3xl font-display text-[30px] leading-[1.2] text-muted-foreground lg:text-[42px]">
                 Outputs become development inputs. Evidence accumulates. The system returns to the
                 person with a clearer next action.
@@ -289,16 +289,16 @@ export default function Landing() {
             <div className="col-span-12 lg:col-span-8">
               <div className="divide-y divide-border border-y border-border">
                 {CONTEXTS.map(([name, desc, status, to], index) => (
-                  <div key={name} className="grid grid-cols-12 items-center gap-4 py-5">
-                    <div className="col-span-1 section-index">0{index + 1}</div>
-                    <div className="col-span-4 font-display text-[19px]">
+                  <div key={name} className="flex flex-col gap-2 py-5 md:grid md:grid-cols-12 md:items-center md:gap-4">
+                    <div className="section-index md:col-span-1">0{index + 1}</div>
+                    <div className="font-display text-[19px] md:col-span-4">
                       {to ? (
                         <Link to={to} className="hover:text-gold no-underline transition-colors">{name}</Link>
                       ) : (
                         <span>{name}</span>
                       )}
                     </div>
-                    <div className="col-span-7 flex flex-wrap items-center justify-between gap-3 text-[12px] text-muted-foreground">
+                    <div className="flex flex-wrap items-center justify-between gap-3 text-[12px] text-muted-foreground md:col-span-7">
                       <span>{desc}</span>
                       <span className={status === 'CURRENT' ? 'status-current text-gold' : 'status-proposed'}>
                         {status}
