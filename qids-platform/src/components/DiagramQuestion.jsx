@@ -38,7 +38,7 @@ export default function DiagramQuestion({ question, index, selected, onSelect, c
               <button key={i} onClick={() => onSelect(i)} style={{
                 padding: '10px 14px', borderRadius: 9, textAlign: 'left', cursor: 'pointer',
                 fontSize: 13, border: `1px solid ${isSelected ? color : 'var(--border-light)'}`,
-                background: isSelected ? alpha(color, 18) : 'rgba(10,10,10,0.02)',
+                background: isSelected ? alpha(color, 18) : 'var(--tint-hairline)',
                 color: isSelected ? 'white' : 'var(--text-secondary)',
                 transition: 'all 0.15s', display: 'flex', alignItems: 'center', gap: 10,
               }}>

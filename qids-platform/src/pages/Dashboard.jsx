@@ -8,6 +8,28 @@ import { ClipboardList, TrendingUp, FileText, Activity, ChevronRight, ArrowRight
 import SeedExampleData from '../components/SeedExampleData';
 import { getSkillShape } from '../core/engine/scoring';
 
+function StatCard({ icon: Icon, label, value, index, onClick }) {
+  return (
+    <button type="button" disabled={!onClick} onClick={onClick}
+      className={`card card-hover group relative overflow-hidden p-5 md:p-6 text-left transition-all duration-200 ${onClick ? 'cursor-pointer' : 'cursor-default'}`}>
+      <div className="flex items-center gap-2 mb-3 md:mb-4">
+        <span className="w-6 h-6 rounded-lg bg-primary/15 flex items-center justify-center group-hover:bg-primary/25 transition-colors">
+          <Icon size={13} className="text-primary" />
+        </span>
+        <div className="text-technical-sm font-technical-sm text-surface-variant uppercase tracking-widest">{label}</div>
+        <span className="section-index ml-auto tabular-nums">{index}</span>
+      </div>
+      <div className="flex items-baseline gap-2">
+        <div className="num text-[24px] md:text-[28px] text-on-background">{value}</div>
+        {onClick && (
+          <ChevronRight size={13} className="text-primary opacity-0 -translate-x-1.5 group-hover:translate-x-0 group-hover:opacity-100 transition-all self-center flex-shrink-0" />
+        )}
+      </div>
+      <div aria-hidden="true" className="absolute inset-x-0 bottom-0 h-px bg-[linear-gradient(90deg,transparent,var(--gold-line),transparent)] opacity-0 group-hover:opacity-100 transition-opacity" />
+    </button>
+  );
+}
+
 export default function Dashboard() {
   const { user, userProfile } = useAuth();
   const navigate = useNavigate();
@@ -54,18 +76,23 @@ export default function Dashboard() {
       </section>
 
       {!loading && assessments.length === 0 && (
-        <section className="card card-gold p-6 md:p-8 mb-10 flex flex-wrap items-center justify-between gap-6 animate-fade-up">
-          <div>
+        <section className="card card-gold p-6 md:p-8 mb-10 flex flex-wrap items-center justify-between gap-6 animate-fade-up relative overflow-hidden">
+          <div
+            aria-hidden="true"
+            className="absolute inset-0 pointer-events-none opacity-60"
+            style={{ background: 'radial-gradient(ellipse at 0% 0%, var(--gold-soft), transparent 55%)' }}
+          />
+          <div className="relative">
             <div className="label-eyebrow-gold mb-3">STEP 01 — BEGIN</div>
             <h2 className="font-display text-[22px] md:text-[26px] leading-snug">
               No assessment on record yet.
             </h2>
             <p className="mt-2 text-[13px] text-muted-foreground max-w-xl leading-relaxed">
               Your first assessment establishes the baseline every report, plan, and growth
-              trajectory is built on.
+              trajectory is built on. It takes roughly twenty minutes.
             </p>
           </div>
-          <button onClick={() => navigate('/app/assessment')} className="btn-primary">
+          <button onClick={() => navigate('/app/assessment')} className="btn-primary relative">
             Begin Assessment <ArrowRight size={15} />
           </button>
         </section>
@@ -94,34 +121,10 @@ export default function Dashboard() {
           </>
         ) : (
           <>
-            <div className="card p-5 md:p-6">
-              <div className="flex items-center gap-2 mb-3 md:mb-4">
-                <span className="w-6 h-6 rounded-lg bg-primary/15 flex items-center justify-center"><ClipboardList size={13} className="text-primary" /></span>
-                <div className="text-technical-sm font-technical-sm text-surface-variant uppercase tracking-widest">Assessments</div>
-              </div>
-              <div className="text-[24px] md:text-[28px] font-technical-sm text-on-background">{totalAssessments}</div>
-            </div>
-            <div className="card p-5 md:p-6">
-              <div className="flex items-center gap-2 mb-3 md:mb-4">
-                <span className="w-6 h-6 rounded-lg bg-primary/15 flex items-center justify-center"><FileText size={13} className="text-primary" /></span>
-                <div className="text-technical-sm font-technical-sm text-surface-variant uppercase tracking-widest">Reports</div>
-              </div>
-              <div className="text-[24px] md:text-[28px] font-technical-sm text-on-background">{totalReports}</div>
-            </div>
-            <div className="card p-5 md:p-6">
-              <div className="flex items-center gap-2 mb-3 md:mb-4">
-                <span className="w-6 h-6 rounded-lg bg-primary/15 flex items-center justify-center"><Activity size={13} className="text-primary" /></span>
-                <div className="text-technical-sm font-technical-sm text-surface-variant uppercase tracking-widest">Avg Score</div>
-              </div>
-              <div className="text-[24px] md:text-[28px] font-technical-sm text-on-background">{avgScore}</div>
-            </div>
-            <div className="card p-5 md:p-6">
-              <div className="flex items-center gap-2 mb-3 md:mb-4">
-                <span className="w-6 h-6 rounded-lg bg-primary/15 flex items-center justify-center"><TrendingUp size={13} className="text-primary" /></span>
-                <div className="text-technical-sm font-technical-sm text-surface-variant uppercase tracking-widest">Since Last</div>
-              </div>
-              <div className="text-[24px] md:text-[28px] font-technical-sm text-on-background">{preAssessments.length ? 'Active' : '--'}</div>
-            </div>
+            <StatCard icon={ClipboardList} label="Assessments" value={totalAssessments} index="01" onClick={() => navigate('/app/assessment')} />
+            <StatCard icon={FileText} label="Reports" value={totalReports} index="02" onClick={() => navigate('/app/report')} />
+            <StatCard icon={Activity} label="Avg Score" value={avgScore} index="03" onClick={() => navigate('/app/progress')} />
+            <StatCard icon={TrendingUp} label="Since Last" value={preAssessments.length ? 'Active' : '--'} index="04" onClick={preAssessments.length ? () => navigate('/app/progress') : undefined} />
             {preAssessments.length > 0 && (() => {
               const latest = preAssessments[0];
               const latestMode = latest.mode || 'qids';
@@ -130,21 +133,22 @@ export default function Dashboard() {
               const shape = getSkillShape(pillarScores);
               const shapeLabel = { T: 'T-Shaped', I: 'I-Shaped', X: 'X-Shaped', M: 'M-Shaped' }[shape] || shape;
               return (
-                <div className="card p-5 md:p-6">
+                <div className="card card-hover group relative overflow-hidden p-5 md:p-6 cursor-pointer transition-all duration-200"
+                  onClick={() => navigate(`/app/individual/results/${latest.id}`)} role="button" tabIndex={0}
+                  onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); navigate(`/app/individual/results/${latest.id}`); } }}>
                   <div className="flex items-center gap-2 mb-3 md:mb-4">
-                    <span className="w-6 h-6 rounded-lg bg-primary/15 flex items-center justify-center"><Sparkles size={13} className="text-primary" /></span>
+                    <span className="w-6 h-6 rounded-lg bg-primary/15 flex items-center justify-center group-hover:bg-primary/25 transition-colors"><Sparkles size={13} className="text-primary" /></span>
                     <div className="text-technical-sm font-technical-sm text-surface-variant uppercase tracking-widest">Skill Shape</div>
+                    <span className="section-index ml-auto tabular-nums">05</span>
                   </div>
-                  <div className="flex items-end gap-3">
-                    <div className="text-[24px] md:text-[28px] font-technical-sm text-on-background">{shape}</div>
-                    <button
-                      onClick={() => navigate(`/app/individual/results/${latest.id}`)}
-                      className="text-technical-sm font-technical-sm text-primary hover:underline cursor-pointer bg-transparent border-none p-0 mb-1"
-                    >
-                      View Results →
-                    </button>
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="num text-[24px] md:text-[28px] text-on-background">
+                      {shape}
+                      <span className="ml-2 text-[12px] font-medium text-surface-variant">{shapeLabel}</span>
+                    </div>
+                    <ChevronRight size={14} className="text-primary opacity-0 -translate-x-1.5 group-hover:translate-x-0 group-hover:opacity-100 transition-all flex-shrink-0" />
                   </div>
-                  <div className="text-body-sm font-body-sm text-surface-variant mt-1">{shapeLabel}</div>
+                  <div aria-hidden="true" className="absolute inset-x-0 bottom-0 h-px bg-[linear-gradient(90deg,transparent,var(--gold-line),transparent)] opacity-0 group-hover:opacity-100 transition-opacity" />
                 </div>
               );
             })()}
@@ -211,13 +215,14 @@ export default function Dashboard() {
                     role="button"
                     tabIndex={0}
                     aria-label={`Open ${a.intake?.name || 'assessment'} results`}
-                    className="h-14 md:h-16 flex items-center justify-between border-b-[0.5px] border-outline-variant group hover:bg-surface-container-low transition-colors px-2 cursor-pointer touch-target focus-visible:outline focus-visible:outline-gold">
+                    className="h-14 md:h-16 flex items-center justify-between relative border-b-[0.5px] border-outline-variant group hover:bg-surface-container-low transition-colors px-2 pl-3 cursor-pointer touch-target focus-visible:outline focus-visible:outline-gold">
+                    <span aria-hidden="true" className="absolute left-0 top-0 bottom-0 w-0.5 bg-gold opacity-0 group-hover:opacity-100 transition-opacity" />
                     <div className="flex items-center gap-4 md:gap-8 min-w-0 flex-1">
                       <span className="text-technical-sm font-technical-sm text-surface-variant flex-shrink-0">{String(idx + 1).padStart(2, '0')}</span>
                       <div className="min-w-0 flex-1">
                         <div className="text-label-md font-label-md text-on-background truncate">
                           {a.intake?.name || 'Assessment'}
-                          {isIndividual && <span className="chip ml-2 text-[10px] py-0 px-2" style={{ background: 'rgba(235,192,115,0.12)', color: 'var(--color-primary)', borderColor: 'rgba(235,192,115,0.35)' }}>INDIVIDUAL</span>}
+                          {isIndividual && <span className="chip ml-2 text-[10px] py-0 px-2" style={{ background: 'var(--gold-tint)', color: 'var(--color-primary)', borderColor: 'var(--gold-line)' }}>INDIVIDUAL</span>}
                         </div>
                         <div className="text-technical-sm font-technical-sm text-surface-variant truncate">
                           {a.createdAt?.toDate ? a.createdAt.toDate().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'Recent'}
@@ -227,7 +232,7 @@ export default function Dashboard() {
                     </div>
                     <div className="flex items-center gap-3 md:gap-8 flex-shrink-0">
                       {unified && grade ? (
-                        <span className="chip" style={{ background: 'rgba(235,192,115,0.12)', color: 'var(--color-primary)', borderColor: 'rgba(235,192,115,0.35)' }}>
+                        <span className="chip" style={{ background: 'var(--gold-tint)', color: 'var(--color-primary)', borderColor: 'var(--gold-line)' }}>
                           GRADE {grade.grade}
                         </span>
                       ) : (
@@ -263,11 +268,12 @@ export default function Dashboard() {
               { label: 'View My Evaluator', path: '/app/my-evaluator' },
               { label: 'Intervention Plan', path: '/app/intervention-plan' },
               { label: 'Interview Studio', path: '/app/interview' },
-            ].map(({ label, path }) => (
+            ].map(({ label, path }, i) => (
               <button key={label} onClick={() => navigate(path)}
-                className="card card-hover group flex items-center justify-between w-full p-4 text-body-md text-on-surface-variant hover:text-primary transition-colors cursor-pointer bg-transparent touch-target text-left">
-                <span>{label}</span>
-                <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform text-surface-variant" />
+                className="card card-hover group flex items-center gap-4 w-full p-4 text-body-md text-on-surface-variant hover:text-primary transition-colors cursor-pointer bg-transparent touch-target text-left">
+                <span className="section-index tabular-nums">{String(i + 1).padStart(2, '0')}</span>
+                <span className="flex-1">{label}</span>
+                <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform text-surface-variant flex-shrink-0" />
               </button>
             ))}
           </div>

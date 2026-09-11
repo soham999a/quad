@@ -381,7 +381,7 @@ function ModuleCard({ module, color }) {
               </div>
             ))}
           </div>
-          <div className="px-3 py-2 border border-outline-variant rounded-lg" style={{ background: 'rgba(10,10,10,0.03)' }}>
+          <div className="px-3 py-2 border border-outline-variant rounded-lg" style={{ background: 'var(--tint-subtle)' }}>
             <span className="text-technical-sm font-semibold text-surface-variant">Example: </span>
             <span className="text-label-md text-on-surface-variant italic">{module.example}</span>
           </div>
@@ -399,7 +399,7 @@ export default function InterventionPlan() {
   const modules = PLAN[activePillar]?.[activeBand] || [];
 
   return (
-    <div className="flex h-[calc(100vh-56px)] animate-fade">
+    <div className="flex h-full animate-fade">
       {/* Sidebar - hidden on mobile */}
       <div className="w-[220px] border-r border-outline-variant bg-surface-container p-5 overflow-y-auto shrink-0 hide-mobile">
         <div className="flex items-center gap-2 mb-4">

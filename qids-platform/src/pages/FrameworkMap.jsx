@@ -92,7 +92,7 @@ function TreeNode({ node, depth = 0, expanded, onToggle, onSelect, selected }) {
         ) : (
           <div style={{ width: 8, height: 8, borderRadius: '50%', background: node.color, flexShrink: 0 }} />
         )}
-        <span className={`text-sm ${hasChildren ? 'font-semibold' : 'font-normal'} ${isSelected ? 'text-white' : 'text-on-surface-variant'}`}>
+        <span className={`text-sm ${hasChildren ? 'font-semibold' : 'font-normal'} ${isSelected ? 'text-on-background' : 'text-on-surface-variant'}`}>
           {node.label}
         </span>
         {NODE_DETAILS[node.id] && <Info size={11} className="text-surface-variant ml-auto" />}
@@ -130,15 +130,15 @@ export default function FrameworkMap() {
   };
 
   return (
-    <div className="flex flex-col lg:flex-row lg:h-[calc(100vh-56px)] animate-fade">
+    <div className="flex flex-col lg:flex-row lg:h-full animate-fade">
       {/* Left: Tree */}
       <div className="w-full lg:w-[340px] lg:border-r border-outline-variant p-6 overflow-y-auto bg-surface-container-low">
         <h2 className="text-base font-bold mb-1">Framework Architecture</h2>
         <p className="text-xs text-surface-variant mb-5">Click any node to explore details</p>
 
         {/* Root */}
-        <div className="px-4 py-3 rounded-lg mb-4 border" style={{ background: 'rgba(99,102,241,0.2)', borderColor: 'rgba(99,102,241,0.4)' }}>
-          <div className="text-sm font-bold text-white">Quadrant Intelligence Development System</div>
+        <div className="px-4 py-3 rounded-lg mb-4 border" style={{ background: 'var(--phase-pre-strong)', borderColor: 'color-mix(in srgb, var(--phase-pre) 40%, transparent)' }}>
+          <div className="text-sm font-bold text-on-background">Quadrant Intelligence Development System</div>
           <div className="text-xs mt-0.5" style={{ color: 'var(--phase-pre-soft)' }}>QIDS — Holistic Development Platform</div>
         </div>
 
@@ -169,7 +169,7 @@ export default function FrameworkMap() {
               <div className={`flex items-center justify-between ${expanded[branch.id] ? 'mb-3' : ''}`}>
                 <div className="flex items-center gap-2.5">
                   <div style={{ width: 10, height: 10, borderRadius: '50%', background: branch.color }} />
-                  <span className="text-sm font-bold text-white">{branch.label}</span>
+                  <span className="text-sm font-bold text-on-background">{branch.label}</span>
                 </div>
                 {expanded[branch.id] ? <ChevronDown size={14} color={branch.color} /> : <ChevronRight size={14} color={branch.color} />}
               </div>
@@ -216,9 +216,9 @@ export default function FrameworkMap() {
         </div>
 
         {/* Standardization formula */}
-        <div className="mt-6 p-5 rounded-xl" style={{ background: 'rgba(99,102,241,0.08)', border: '1px solid rgba(99,102,241,0.2)' }}>
+        <div className="mt-6 p-5 rounded-xl" style={{ background: 'var(--phase-pre-panel)', border: '1px solid var(--phase-pre-line)' }}>
           <h4 className="text-sm font-semibold mb-2" style={{ color: 'var(--phase-pre-soft)' }}>Standardization Algorithm</h4>
-          <div className="font-mono text-sm text-on-surface bg-black/30 px-4 py-2.5 rounded-lg">
+          <div className="font-mono text-sm text-on-surface bg-[var(--tint-scrim)] px-4 py-2.5 rounded-lg">
             Standardized Score (%) = (Raw Score / Maximum Possible Score) × 100
           </div>
           <div className="mt-3 flex gap-4 flex-wrap">
@@ -246,7 +246,7 @@ export default function FrameworkMap() {
             <div className="mt-4">
               <div className="text-xs text-surface-variant uppercase tracking-widest mb-2">Components</div>
               {detail.children.map(c => (
-                <div key={typeof c === 'string' ? c : c.id} className="px-2.5 py-1.5 mb-1 rounded-[2px] text-xs text-on-surface-variant" style={{ background: 'rgba(10,10,10,0.03)', border: '1px solid var(--border-light)' }}>
+                <div key={typeof c === 'string' ? c : c.id} className="px-2.5 py-1.5 mb-1 rounded-[2px] text-xs text-on-surface-variant" style={{ background: 'var(--tint-subtle)', border: '1px solid var(--border-light)' }}>
                   {typeof c === 'string' ? c : c.label}
                 </div>
               ))}

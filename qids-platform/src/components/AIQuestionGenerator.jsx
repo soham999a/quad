@@ -36,7 +36,7 @@ function MCQInput({ options, selected, onSelect, color }) {
           <button key={i} onClick={() => onSelect(i)} style={{
             padding: '9px 14px', borderRadius: 8, textAlign: 'left', cursor: 'pointer',
             fontSize: 13, border: `1px solid ${isSelected ? color : 'var(--border-light)'}`,
-            background: isSelected ? alpha(color, 18) : 'rgba(10,10,10,0.02)',
+            background: isSelected ? alpha(color, 18) : 'var(--tint-hairline)',
             color: isSelected ? 'white' : 'var(--text-secondary)',
             transition: 'all 0.15s', display: 'flex', alignItems: 'center', gap: 10,
           }}>
@@ -66,7 +66,7 @@ function OpenInput({ value, onChange }) {
       rows={3}
       style={{
         width: '100%', marginTop: 8, padding: '10px 12px', borderRadius: 8, resize: 'vertical',
-        background: 'rgba(10,10,10,0.03)', border: '1px solid var(--border-light)',
+        background: 'var(--tint-subtle)', border: '1px solid var(--border-light)',
         color: 'var(--text-primary)', fontSize: 13, fontFamily: 'Inter', lineHeight: 1.5,
         boxSizing: 'border-box',
       }}
@@ -90,7 +90,7 @@ function AIQuestionCard({ question, index, answers, onAnswer, color, questionTyp
       </div>
 
       {question.scenario && (
-        <div style={{ fontSize: 12, color: 'var(--text-secondary)', lineHeight: 1.6, marginBottom: 8, padding: '8px 10px', background: 'rgba(10,10,10,0.03)', borderRadius: 6, borderLeft: `3px solid ${alpha(color, 40)}` }}>
+        <div style={{ fontSize: 12, color: 'var(--text-secondary)', lineHeight: 1.6, marginBottom: 8, padding: '8px 10px', background: 'var(--tint-subtle)', borderRadius: 6, borderLeft: `3px solid ${alpha(color, 40)}` }}>
           {question.scenario}
         </div>
       )}
@@ -173,7 +173,7 @@ export default function AIQuestionGenerator({
           {generated && (
             <button onClick={handleGenerate} disabled={loading} style={{
               padding: '5px 10px', borderRadius: 7, cursor: 'pointer', fontSize: 11, fontWeight: 500,
-              background: 'rgba(10,10,10,0.06)', border: '1px solid var(--border-light)',
+              background: 'var(--tint-soft)', border: '1px solid var(--border-light)',
               color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: 4,
             }}>
               <RefreshCw size={11} className={loading ? 'animate-spin' : ''} /> Regenerate
@@ -181,7 +181,7 @@ export default function AIQuestionGenerator({
           )}
           <button onClick={handleGenerate} disabled={loading} style={{
             padding: '6px 14px', borderRadius: 8, cursor: 'pointer', fontSize: 12, fontWeight: 600,
-            background: loading ? 'rgba(10,10,10,0.05)' : alpha(color, 20),
+            background: loading ? 'var(--tint-soft)' : alpha(color, 20),
             border: `1px solid ${alpha(color, 40)}`, color,
             display: 'flex', alignItems: 'center', gap: 6,
           }}>

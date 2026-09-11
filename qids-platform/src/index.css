@@ -59,6 +59,9 @@
   /* ── Gold + bands ── */
   --color-gold: oklch(0.78 0.12 82);
   --color-gold-soft: oklch(0.78 0.12 82 / 14%);
+  --color-info: oklch(0.65 0.12 240);
+  --color-success: oklch(0.68 0.13 155);
+  --color-warning: oklch(0.8 0.13 80);
   --color-band-red: oklch(0.62 0.16 25);
   --color-band-yellow: oklch(0.8 0.13 80);
   --color-band-green: oklch(0.68 0.13 155);
@@ -177,6 +180,49 @@
   --neutral-ink-500: #353534;
   --bone-line: #DBD6CA;
   --bone-panel: #F9F7F1;
+
+  /* ── Legacy raw-color → theme token maps (zero-raw-hex goal) ──
+   * Neutral hint tints derive from the foreground so they invert correctly
+   * between the dark navy canvas and the light bone canvas. Colored tints
+   * derive from the phase/status tokens (single source of truth). */
+  --tint-hairline: color-mix(in srgb, var(--foreground) 2%, transparent);
+  --tint-subtle: color-mix(in srgb, var(--foreground) 3%, transparent);
+  --tint-soft: color-mix(in srgb, var(--foreground) 6%, transparent);
+  --tint-mid: color-mix(in srgb, var(--foreground) 8%, transparent);
+  --tint-strong: color-mix(in srgb, var(--foreground) 12%, transparent);
+  --tint-scrim: color-mix(in srgb, var(--foreground) 20%, transparent);
+
+  --gold-tint: color-mix(in srgb, var(--gold) 12%, transparent);
+  --gold-line: color-mix(in srgb, var(--gold) 35%, transparent);
+  --gold-line-strong: color-mix(in srgb, var(--gold) 45%, transparent);
+  --gold-grid: color-mix(in srgb, var(--gold) 15%, transparent);
+  --gold-strong: color-mix(in srgb, var(--gold) 80%, transparent);
+
+  --phase-pre-tint: color-mix(in srgb, var(--phase-pre) 15%, transparent);
+  --phase-pre-line: color-mix(in srgb, var(--phase-pre) 30%, transparent);
+  --phase-pre-fill: color-mix(in srgb, var(--phase-pre) 4%, transparent);
+  --phase-pre-panel: color-mix(in srgb, var(--phase-pre) 8%, transparent);
+  --phase-pre-strong: color-mix(in srgb, var(--phase-pre) 20%, transparent);
+
+  --phase-int-tint: color-mix(in srgb, var(--phase-int) 15%, transparent);
+  --phase-int-line: color-mix(in srgb, var(--phase-int) 30%, transparent);
+  --phase-int-fill: color-mix(in srgb, var(--phase-int) 4%, transparent);
+  --phase-int-panel: color-mix(in srgb, var(--phase-int) 8%, transparent);
+
+  --phase-post-tint: color-mix(in srgb, var(--phase-post) 15%, transparent);
+  --phase-post-line: color-mix(in srgb, var(--phase-post) 30%, transparent);
+  --phase-post-fill: color-mix(in srgb, var(--phase-post) 4%, transparent);
+  --phase-post-panel: color-mix(in srgb, var(--phase-post) 8%, transparent);
+
+  --status-err-tint: color-mix(in srgb, var(--status-err) 15%, transparent);
+  --status-err-line: color-mix(in srgb, var(--status-err) 30%, transparent);
+  --status-err-panel: color-mix(in srgb, var(--status-err) 8%, transparent);
+  --status-err-panel-strong: color-mix(in srgb, var(--status-err) 12%, transparent);
+
+  --status-ok-tint: color-mix(in srgb, var(--status-ok) 15%, transparent);
+  --status-ok-line: color-mix(in srgb, var(--status-ok) 30%, transparent);
+  --status-ok-fill: color-mix(in srgb, var(--status-ok) 4%, transparent);
+  --status-ok-panel: color-mix(in srgb, var(--status-ok) 8%, transparent);
 }
 
 /* Light surface scope (bone sections inside the dark app) */
@@ -618,20 +664,26 @@ input[type="range"]::-moz-range-thumb {
 
 .desktop-sidebar {
   display: flex;
+  width: 260px;
+  transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.shell-collapsed .desktop-sidebar {
+  width: 64px;
 }
 
 .app-content {
   margin-left: 260px;
-  width: calc(100vw - 260px);
-  transition: margin-left 0.3s cubic-bezier(0.4,0,0.2,1);
-  min-height: 100vh;
+  transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  height: 100vh;
+  height: 100dvh;
   display: flex;
   flex-direction: column;
+  min-width: 0;
 }
 
-.app-content.sidebar-collapsed {
+.shell-collapsed .app-content {
   margin-left: 64px;
-  width: calc(100vw - 64px);
 }
 
 .topbar {
@@ -659,15 +711,11 @@ input[type="range"]::-moz-range-thumb {
     display: none !important;
   }
 
-  .app-content {
+  .app-content,
+  .shell-collapsed .app-content {
     margin-left: 0 !important;
     width: 100% !important;
     padding-bottom: calc(64px + var(--safe-bottom));
-  }
-
-  .app-content.sidebar-collapsed {
-    margin-left: 0 !important;
-    width: 100% !important;
   }
 
   .topbar {
@@ -721,11 +769,16 @@ input[type="range"]::-moz-range-thumb {
 /* Tablet breakpoint */
 @media (min-width: 769px) and (max-width: 1024px) {
   .desktop-sidebar {
-    width: 64px !important;
+    max-width: 220px;
+  }
+  .shell-collapsed .desktop-sidebar {
+    max-width: 64px;
   }
   .app-content {
+    margin-left: 220px;
+  }
+  .shell-collapsed .app-content {
     margin-left: 64px !important;
-    width: calc(100vw - 64px) !important;
   }
   .sidebar-expanded-content {
     display: none;

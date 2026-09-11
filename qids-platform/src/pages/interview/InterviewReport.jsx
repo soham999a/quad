@@ -177,8 +177,8 @@ export default function InterviewReport() {
                     const r = (pillarScores[p.id] || 0);
                     return `${Math.cos(angle) * r},${Math.sin(angle) * r}`;
                   }).join(' ')}
-                  fill="rgba(235,192,115,0.15)"
-                  stroke="rgba(235,192,115,0.8)"
+                  fill="var(--gold-grid)"
+                  stroke="var(--gold-strong)"
                   strokeWidth="1.5"
                 />
                 {/* Data points + labels */}
@@ -234,7 +234,7 @@ export default function InterviewReport() {
                 <div className="text-label-lg font-label-lg text-on-background mb-1">{career.label}</div>
                 <div className="text-body-sm font-body-sm text-surface-variant">{career.condition}</div>
               </div>
-              <span className="chip text-[10px]" style={{ background: 'rgba(235,192,115,0.12)', color: 'var(--color-primary)', borderColor: 'rgba(235,192,115,0.35)' }}>
+              <span className="chip text-[10px]" style={{ background: 'var(--gold-tint)', color: 'var(--color-primary)', borderColor: 'var(--gold-line)' }}>
                 RECOMMENDED PATH
               </span>
             </div>

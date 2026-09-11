@@ -79,8 +79,8 @@ export default function SeedExampleData({ onDone }) {
   return (
     <div style={{
       padding: '16px 20px',
-      background: 'linear-gradient(135deg, rgba(99,102,241,0.1), rgba(168,85,247,0.07))',
-      border: '1px solid rgba(99,102,241,0.3)',
+      background: 'linear-gradient(135deg, color-mix(in srgb, var(--phase-pre) 10%, transparent), color-mix(in srgb, var(--phase-int) 7%, transparent))',
+      border: '1px solid var(--phase-pre-line)',
       borderRadius: 14,
     }}>
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16 }}>

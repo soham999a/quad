@@ -9,7 +9,7 @@ export default function ScoreCard({ pillar, score, showWeight = false }) {
   return (
     <div style={{
       background: 'var(--navy-4)',
-      border: `1px solid ${critical ? 'rgba(239,68,68,0.3)' : 'var(--border-light)'}`,
+      border: `1px solid ${critical ? 'var(--status-err-line)' : 'var(--border-light)'}`,
       borderRadius: 12,
       padding: 16,
       position: 'relative',
@@ -54,7 +54,7 @@ export default function ScoreCard({ pillar, score, showWeight = false }) {
       )}
 
       {critical && (
-        <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginTop: 8, padding: '4px 8px', background: 'rgba(239,68,68,0.1)', borderRadius: 6, border: '1px solid rgba(239,68,68,0.2)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginTop: 8, padding: '4px 8px', background: 'var(--status-err-panel)', borderRadius: 6, border: '1px solid var(--status-err-line)' }}>
           <AlertTriangle size={11} color="var(--status-err)" />
           <span style={{ fontSize: 10, color: 'var(--status-err-soft)', fontWeight: 600 }}>CRITICAL PRIORITY</span>
         </div>

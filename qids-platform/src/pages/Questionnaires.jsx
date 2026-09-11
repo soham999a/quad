@@ -72,7 +72,7 @@ function EQQuestionnaire({ color }) {
       </div>
       <div className="mt-3.5">
         {compData[activeComp].questions[ageGroup].map((q, i) => (
-          <div key={i} className="mb-3 px-3.5 py-3 rounded-xl border border-outline-variant" style={{ background: 'rgba(10,10,10,0.02)' }}>
+          <div key={i} className="mb-3 px-3.5 py-3 rounded-xl border border-outline-variant" style={{ background: 'var(--tint-hairline)' }}>
             <div className="text-[13px] mb-2.5 leading-normal">
               <span className="text-surface-variant mr-1.5">{i + 1}.</span>{q}
             </div>
@@ -125,7 +125,7 @@ function SQQuestionnaire({ color }) {
               <div className="text-xs text-on-surface-variant leading-relaxed mb-2.5">{ex.desc}</div>
               <div className="text-[11px] font-semibold text-surface-variant uppercase tracking-[0.5px] mb-2">Rubric</div>
               {ex.rubric.map(r => (
-                <div key={r.criterion} className="px-2.5 py-2 mb-1 rounded-md border border-outline-variant text-xs" style={{ background: 'rgba(10,10,10,0.03)' }}>
+                <div key={r.criterion} className="px-2.5 py-2 mb-1 rounded-md border border-outline-variant text-xs" style={{ background: 'var(--tint-subtle)' }}>
                   <span className="font-semibold" style={{ color }}>{r.criterion}</span> <span className="text-surface-variant">({r.marks} marks)</span> — {r.desc}
                 </div>
               ))}
@@ -140,12 +140,12 @@ function SQQuestionnaire({ color }) {
           {SQ_QUESTIONS.component2_CSI.questions.map((q, qi) => (
             <div key={q.id} className="mb-4 bg-surface-container-low border border-outline-variant rounded-xl p-4">
               <div className="text-[11px] font-semibold mb-1.5 uppercase tracking-[0.5px]" style={{ color }}>Q{qi + 1} — {q.subParam}</div>
-              <div className="text-xs text-on-surface-variant leading-relaxed mb-2 px-2.5 py-2 rounded-md" style={{ background: 'rgba(10,10,10,0.03)', borderLeft: `3px solid ${color}40` }}><strong>Scenario:</strong> {q.scenario}</div>
+              <div className="text-xs text-on-surface-variant leading-relaxed mb-2 px-2.5 py-2 rounded-md" style={{ background: 'var(--tint-subtle)', borderLeft: `3px solid ${color}40` }}><strong>Scenario:</strong> {q.scenario}</div>
               <div className="text-[13px] font-semibold mb-2">{q.question}</div>
               {q.options.map((opt, oi) => {
                 const markColor = opt.marks === 2 ? 'var(--status-ok)' : opt.marks === 1 ? 'var(--status-warn)' : 'var(--status-err)';
                 return (
-                  <div key={oi} className="px-3 py-[7px] mb-1 rounded-lg border border-outline-variant text-xs flex justify-between items-center" style={{ background: 'rgba(10,10,10,0.02)' }}>
+                  <div key={oi} className="px-3 py-[7px] mb-1 rounded-lg border border-outline-variant text-xs flex justify-between items-center" style={{ background: 'var(--tint-hairline)' }}>
                     <span><strong>{String.fromCharCode(65 + oi)}.</strong> {opt.text}</span>
                     <span className="text-[10px] px-2 py-0.5 rounded-xl font-bold shrink-0 ml-2" style={{ background: alpha(markColor, 15), color: markColor }}>{opt.marks}M</span>
                   </div>
@@ -218,7 +218,7 @@ function IQQuestionnaire({ color }) {
 function MCQInput({ options, answer, question, index }) {
   const [selected, setSelected] = useState(null);
   return (
-    <div className="mb-3.5 px-3.5 py-3 rounded-xl border border-outline-variant" style={{ background: 'rgba(10,10,10,0.02)' }}>
+    <div className="mb-3.5 px-3.5 py-3 rounded-xl border border-outline-variant" style={{ background: 'var(--tint-hairline)' }}>
       {question && <div className="text-[13px] font-medium mb-2 leading-normal"><span className="text-surface-variant mr-1.5">{(index ?? 0) + 1}.</span>{question}</div>}
       <div className="flex flex-col gap-1">
         {options.map((opt, i) => {
@@ -244,10 +244,10 @@ function MCQInput({ options, answer, question, index }) {
 
 function OpenInput({ question, index }) {
   return (
-    <div className="mb-3 px-3.5 py-3 rounded-xl border border-outline-variant" style={{ background: 'rgba(10,10,10,0.02)' }}>
+    <div className="mb-3 px-3.5 py-3 rounded-xl border border-outline-variant" style={{ background: 'var(--tint-hairline)' }}>
       {question && <div className="text-[13px] font-medium mb-2 leading-normal"><span className="text-surface-variant mr-1.5">{(index ?? 0) + 1}.</span>{question}</div>}
       <textarea placeholder="Write your answer here..." className="w-full px-2.5 py-2 rounded-lg text-xs text-on-surface leading-normal resize-y min-h-[56px] box-border"
-        style={{ background: 'rgba(10,10,10,0.03)', border: '1px solid var(--border-outline-variant)', fontFamily: 'Sora' }} />
+        style={{ background: 'var(--tint-subtle)', border: '1px solid var(--border-outline-variant)', fontFamily: 'Sora' }} />
     </div>
   );
 }
@@ -302,7 +302,7 @@ function AQQuestionnaire({ color }) {
       <div className="mb-5">
         <div className="text-[13px] font-bold mb-2.5" style={{ color }}>Part A — Scenario Questions (12 marks)</div>
         {compData[activeComp].questions[ageGroup].map((q, i) => (
-          <div key={i} className="mb-3 px-3.5 py-3 rounded-xl border border-outline-variant" style={{ background: 'rgba(10,10,10,0.02)' }}>
+          <div key={i} className="mb-3 px-3.5 py-3 rounded-xl border border-outline-variant" style={{ background: 'var(--tint-hairline)' }}>
             <div className="text-[10px] font-semibold uppercase tracking-[0.5px] mb-1" style={{ color }}>{q.subParam}</div>
             <div className="text-[13px] mb-2.5 leading-relaxed">
               <span className="text-surface-variant mr-1.5">{i + 1}.</span>{q.q}
@@ -322,7 +322,7 @@ function AQQuestionnaire({ color }) {
           </div>
           <div className="text-[11px] font-semibold text-surface-variant uppercase tracking-[0.5px] mb-2">Rubric</div>
           {compData[activeComp].activity.rubric.map(r => (
-            <div key={r.criterion} className="px-2.5 py-2 mb-1 rounded-md border border-outline-variant text-xs" style={{ background: 'rgba(10,10,10,0.03)' }}>
+            <div key={r.criterion} className="px-2.5 py-2 mb-1 rounded-md border border-outline-variant text-xs" style={{ background: 'var(--tint-subtle)' }}>
               <span className="font-semibold" style={{ color }}>{r.criterion}</span> <span className="text-surface-variant">({r.marks} marks)</span> — {r.desc}
             </div>
           ))}
@@ -360,7 +360,7 @@ export default function Questionnaires() {
   };
 
   return (
-    <div className="flex h-[calc(100vh-56px)] animate-fade">
+    <div className="flex h-full animate-fade">
       {/* Sidebar - hidden on mobile */}
       <div className="w-[230px] border-r border-outline-variant bg-surface-container-lowest p-5 overflow-y-auto shrink-0 hide-mobile">
         <div className="flex items-center gap-2 mb-4">

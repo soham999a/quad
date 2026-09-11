@@ -10,10 +10,10 @@ import { deleteInterviewSession } from '../../services/interviewService';
 import SeedInterviewData from '../../components/SeedInterviewData';
 
 const STATUS_STYLES = {
-  scheduled: { bg: 'rgba(235,192,115,0.12)', color: 'var(--color-primary)', border: 'rgba(235,192,115,0.35)' },
-  in_progress: { bg: 'rgba(110,169,245,0.12)', color: 'var(--color-info)', border: 'rgba(110,169,245,0.35)' },
-  completed: { bg: 'rgba(76,175,80,0.12)', color: 'var(--color-success)', border: 'rgba(76,175,80,0.35)' },
-  cancelled: { bg: 'rgba(158,158,158,0.12)', color: 'var(--color-surface-variant)', border: 'rgba(158,158,158,0.35)' },
+  scheduled: { bg: 'var(--gold-tint)', color: 'var(--color-primary)', border: 'var(--gold-line)' },
+  in_progress: { bg: 'color-mix(in srgb, var(--color-info) 12%, transparent)', color: 'var(--color-info)', border: 'color-mix(in srgb, var(--color-info) 35%, transparent)' },
+  completed: { bg: 'color-mix(in srgb, var(--color-success) 12%, transparent)', color: 'var(--color-success)', border: 'color-mix(in srgb, var(--color-success) 35%, transparent)' },
+  cancelled: { bg: 'color-mix(in srgb, var(--muted-foreground) 12%, transparent)', color: 'var(--muted-foreground)', border: 'color-mix(in srgb, var(--muted-foreground) 35%, transparent)' },
 };
 
 export default function InterviewerDashboard() {

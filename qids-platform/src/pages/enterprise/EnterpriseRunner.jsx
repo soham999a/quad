@@ -145,7 +145,7 @@ export default function EnterpriseRunner({ mode = 'enterprise', initialTier }) {
                   <div className="flex items-center justify-between mb-2">
                     <div className={`text-label-md font-label-md tracking-widest ${selected ? 'text-primary' : 'text-on-background'}`}>{t.id}</div>
                     {selected && (
-                      <span className="chip" style={{ background: 'rgba(235,192,115,0.14)', color: 'var(--color-primary)', borderColor: 'rgba(235,192,115,0.45)' }}>
+                      <span className="chip" style={{ background: 'var(--gold-soft)', color: 'var(--color-primary)', borderColor: 'var(--gold-line-strong)' }}>
                         <Check size={12} /> Selected
                       </span>
                     )}
@@ -389,7 +389,7 @@ export default function EnterpriseRunner({ mode = 'enterprise', initialTier }) {
                   </div>
                 </div>
                 <div className="flex items-center gap-3 flex-shrink-0">
-                  <span className={`chip ${done ? '' : ''}`} style={done ? { background: 'rgba(16,185,129,0.12)', color: 'var(--status-ok-soft)', borderColor: 'rgba(52,211,153,0.4)' } : undefined}>
+                  <span className={`chip ${done ? '' : ''}`} style={done ? { background: 'var(--status-ok-tint)', color: 'var(--status-ok-soft)', borderColor: 'var(--status-ok-line)' } : undefined}>
                     {done ? 'COMPLETE' : 'IN PROGRESS'}
                   </span>
                   <ArrowRight size={14} className="text-surface-variant flex-shrink-0" />

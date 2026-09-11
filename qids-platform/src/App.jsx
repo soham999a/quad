@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, NavLink, useNavigate, Navigate, useLocati
 import {
   Brain, Map, ClipboardList, TrendingUp, FileText, UserCheck,
   ChevronRight, Menu, LogOut, Home, BookOpen, X, Shield, Users, Sparkles, Building2, Target, Lock,
+  PanelLeftClose, PanelLeftOpen,
   Settings as SettingsIcon
 } from 'lucide-react';
 import { PILLARS, mergeEvaluationScores } from './data/qidsData';
@@ -201,7 +202,7 @@ function PersonaHome() {
   return <Navigate to={PERSONA_HOME[personaFor(role)] || '/app/dashboard'} replace />;
 }
 
-function Sidebar({ collapsed, setCollapsed }) {
+function Sidebar({ collapsed }) {
   const { user, userProfile, logout, updateUserRole } = useAuth();
   const navigate = useNavigate();
   const handleLogout = async () => { await logout(); navigate('/login'); };
@@ -222,8 +223,7 @@ function Sidebar({ collapsed, setCollapsed }) {
     }`;
 
   return (
-    <aside className="desktop-sidebar sidebar-shell fixed left-0 top-0 h-screen flex-col z-40 bg-sidebar text-sidebar-foreground"
-      style={{ width: collapsed ? 64 : 260, transition: 'width 0.3s cubic-bezier(0.4,0,0.2,1)' }}>
+    <aside className="desktop-sidebar sidebar-shell fixed left-0 top-0 h-screen flex-col z-40 bg-sidebar text-sidebar-foreground">
 
       <div className={`flex items-center gap-3 px-6 py-7 border-b border-sidebar-border ${collapsed ? 'justify-center px-0' : ''}`}>
         <QidsMark size={collapsed ? 24 : 26} className="text-gold flex-shrink-0" />
@@ -322,21 +322,13 @@ function Sidebar({ collapsed, setCollapsed }) {
           </div>
         )}
 
-        <div className={`border-t border-sidebar-border px-1 py-4 font-mono text-[11px] leading-relaxed ${collapsed ? 'mx-4 px-0 text-center' : 'text-muted-foreground'}`}>
+        <div className={`border-t border-sidebar-border px-4 py-3 font-mono text-[10px] tracking-[0.18em] uppercase overflow-hidden whitespace-nowrap ${collapsed ? 'mx-4 px-0 text-center border-x-0' : 'text-muted-foreground'}`}>
           {collapsed ? (
-            <span className="inline-block h-1.5 w-1.5 rounded-full bg-gold" />
+            <span className="inline-block h-1.5 w-1.5 rounded-full bg-gold align-middle" />
           ) : (
-            <>
-              <div className="label-eyebrow mb-1">Build</div>
-              <div>QiDS · v1.0 · main</div>
-            </>
+            <span>QiDS · v1.0 · main</span>
           )}
         </div>
-
-        <button onClick={() => setCollapsed(!collapsed)} aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-          className="mx-5 mb-4 py-2 flex items-center justify-center border border-sidebar-border text-muted-foreground hover:text-gold hover:border-gold/50 transition-colors cursor-pointer">
-          {collapsed ? <ChevronRight size={13} /> : <Menu size={13} />}
-        </button>
       </div>
     </aside>
   );
@@ -429,7 +421,7 @@ function MobileMenuDrawer({ onClose }) {
   );
 }
 
-function TopBar({ onMenuOpen }) {
+function TopBar({ onMenuOpen, collapsed, onToggleSidebar }) {
   const navigate = useNavigate();
   const { user, userProfile } = useAuth();
   const mode = userProfile?.role || 'individual';
@@ -438,7 +430,16 @@ function TopBar({ onMenuOpen }) {
 
   return (
     <header className="topbar">
-      <div className="flex items-center gap-6 topbar-nav min-w-0">
+      <div className="flex items-center gap-4 topbar-nav min-w-0">
+        <button
+          onClick={onToggleSidebar}
+          aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+          title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+          className="w-9 h-9 flex-shrink-0 flex items-center justify-center border border-sidebar-border text-muted-foreground hover:text-on-surface hover:border-gold/60 transition-colors cursor-pointer bg-transparent">
+          {collapsed
+            ? <PanelLeftOpen size={16} strokeWidth={1.5} />
+            : <PanelLeftClose size={16} strokeWidth={1.5} />}
+        </button>
         <div className="flex items-center gap-2 font-mono text-[12px] tracking-wider min-w-0">
           <span className="text-gold status-dot-pulse">●</span>
           <span className="text-muted-foreground">MODE</span>
@@ -512,11 +513,11 @@ function AppShell() {
 
   return (
     <AppContext.Provider value={{ context, setContext, assessmentData, setAssessmentData, postData, setPostData, evaluations, mergedPillarScores, evalStatus, demoMode: false }}>
-      <div className="flex min-h-screen bg-background">
-        <Sidebar collapsed={collapsed} setCollapsed={setCollapsed} />
+      <div className={`flex min-h-screen bg-background ${collapsed ? 'shell-collapsed' : ''}`}>
+        <Sidebar collapsed={collapsed} />
         <div className={`app-content ${collapsed ? 'sidebar-collapsed' : ''}`}>
-          <TopBar onMenuOpen={() => setMobileMenuOpen(true)} />
-          <main className="flex-1 overflow-auto">
+          <TopBar onMenuOpen={() => setMobileMenuOpen(true)} collapsed={collapsed} onToggleSidebar={() => setCollapsed(c => !c)} />
+          <main className="flex-1 min-h-0 overflow-y-auto overflow-x-clip">
             <Routes>
               <Route index element={<PersonaHome />} />
               <Route path="dashboard" element={<Dashboard />} />

@@ -12,11 +12,11 @@ export const WEIGHTS = { IQ: 1.00, EQ: 2.00, SQ: 2.00, AQ: 1.28 };
 export const MAX_WEIGHT_SUM = Object.values(WEIGHTS).reduce((a, b) => a + b, 0); // 6.28
 
 export const GRADE_BANDS = [
-  { grade: 'A', label: 'Excellent',          min: 90, max: 100, color: '#10b981', bg: 'rgba(16,185,129,0.15)' },
-  { grade: 'B', label: 'Very Good',          min: 75, max: 89,  color: '#06b6d4', bg: 'rgba(6,182,212,0.15)'  },
-  { grade: 'C', label: 'Good',               min: 60, max: 74,  color: '#f59e0b', bg: 'rgba(245,158,11,0.15)' },
-  { grade: 'D', label: 'Satisfactory',       min: 45, max: 59,  color: '#f97316', bg: 'rgba(249,115,22,0.15)' },
-  { grade: 'E', label: 'Needs Improvement',  min: 0,  max: 44,  color: '#ef4444', bg: 'rgba(239,68,68,0.15)'  },
+  { grade: 'A', label: 'Excellent',          min: 90, max: 100, color: '#10b981', bg: 'color-mix(in srgb, #10b981 15%, transparent)' },
+  { grade: 'B', label: 'Very Good',          min: 75, max: 89,  color: '#06b6d4', bg: 'color-mix(in srgb, #06b6d4 15%, transparent)'  },
+  { grade: 'C', label: 'Good',               min: 60, max: 74,  color: '#f59e0b', bg: 'color-mix(in srgb, #f59e0b 15%, transparent)' },
+  { grade: 'D', label: 'Satisfactory',       min: 45, max: 59,  color: '#f97316', bg: 'color-mix(in srgb, #f97316 15%, transparent)' },
+  { grade: 'E', label: 'Needs Improvement',  min: 0,  max: 44,  color: '#ef4444', bg: 'color-mix(in srgb, #ef4444 15%, transparent)'  },
 ];
 
 // ─── PILLAR DEFINITIONS ───────────────────────────────────────────────────────

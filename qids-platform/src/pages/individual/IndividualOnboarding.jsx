@@ -60,7 +60,7 @@ export default function IndividualOnboarding() {
                 <div className="flex items-center justify-between mb-3">
                   <div className={`text-label-md font-label-md tracking-widest ${selected ? 'text-primary' : 'text-on-background'}`}>{ag.label}</div>
                   {selected && (
-                    <span className="chip" style={{ background: 'rgba(235,192,115,0.14)', color: 'var(--color-primary)', borderColor: 'rgba(235,192,115,0.45)' }}>
+                    <span className="chip" style={{ background: 'var(--gold-soft)', color: 'var(--color-primary)', borderColor: 'var(--gold-line-strong)' }}>
                       <ChevronRight size={12} /> Selected
                     </span>
                   )}
@@ -95,7 +95,7 @@ export default function IndividualOnboarding() {
                 <div className="flex items-center justify-between mb-3">
                   <div className={`text-label-md font-label-md tracking-widest ${selected ? 'text-primary' : 'text-on-background'}`}>{p.label}</div>
                   {selected && (
-                    <span className="chip" style={{ background: 'rgba(235,192,115,0.14)', color: 'var(--color-primary)', borderColor: 'rgba(235,192,115,0.45)' }}>
+                    <span className="chip" style={{ background: 'var(--gold-soft)', color: 'var(--color-primary)', borderColor: 'var(--gold-line-strong)' }}>
                       <ChevronRight size={12} /> Selected
                     </span>
                   )}

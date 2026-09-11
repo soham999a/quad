@@ -199,7 +199,7 @@ export default function InterviewLive() {
       {currentQuestion && (
         <div className="card p-6 md:p-8 mb-8">
           <div className="flex items-center gap-3 mb-4">
-            <span className="chip text-[10px]" style={{ background: 'rgba(235,192,115,0.12)', color: 'var(--color-primary)', borderColor: 'rgba(235,192,115,0.35)' }}>
+            <span className="chip text-[10px]" style={{ background: 'var(--gold-tint)', color: 'var(--color-primary)', borderColor: 'var(--gold-line)' }}>
               Q{questionIdx + 1}/{totalQuestions}
             </span>
             {currentDim && (

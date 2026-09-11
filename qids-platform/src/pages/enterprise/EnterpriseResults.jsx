@@ -22,11 +22,11 @@ function WorkStyleRadar({ profile }) {
     <div className="card p-5 md:p-6">
       <ResponsiveContainer width="100%" height={300}>
         <ReRadar data={data} outerRadius="68%">
-          <PolarGrid stroke="rgba(235,192,115,0.15)" />
+          <PolarGrid stroke="var(--gold-grid)" />
           <PolarAngleAxis dataKey="subject" tick={{ fill: 'var(--neutral-mid)', fontSize: 12, fontWeight: 600 }} />
           <PolarRadiusAxis angle={90} domain={[0, 10]} tick={false} axisLine={false} />
           <Radar dataKey="A" stroke="var(--gold)" fill="var(--gold)" fillOpacity={0.22} strokeWidth={2} dot={{ fill: 'var(--gold)', r: 3 }} />
-          <Tooltip contentStyle={{ background: 'var(--neutral-carbon-deep)', border: '1px solid rgba(235,192,115,0.25)', borderRadius: 8, color: 'var(--neutral-warm)', fontSize: 12 }} />
+          <Tooltip contentStyle={{ background: 'var(--neutral-carbon-deep)', border: '1px solid var(--gold-line)', borderRadius: 8, color: 'var(--neutral-warm)', fontSize: 12 }} />
         </ReRadar>
       </ResponsiveContainer>
     </div>
@@ -148,9 +148,9 @@ export default function EnterpriseResults({ result, deployed, answers, onRestart
       {/* PII header */}
       {pii && (
         <section className="relative mb-10 md:mb-14 card overflow-hidden p-6 md:p-10"
-          style={{ background: 'radial-gradient(ellipse at 12% 0%, rgba(235,192,115,0.14), transparent 55%), linear-gradient(180deg, rgba(10,10,10,0.02), transparent 45%), var(--color-surface-container-lowest)' }}>
+          style={{ background: 'radial-gradient(ellipse at 12% 0%, var(--gold-soft), transparent 55%), linear-gradient(180deg, var(--tint-hairline), transparent 45%), var(--color-surface-container-lowest)' }}>
           <div aria-hidden="true" className="absolute right-0 top-0 h-full w-1/3 pointer-events-none"
-            style={{ background: 'radial-gradient(circle at 100% 0%, rgba(235,192,115,0.10), transparent 60%)' }} />
+            style={{ background: 'radial-gradient(circle at 100% 0%, var(--gold-tint), transparent 60%)' }} />
           <div className="relative flex flex-col lg:flex-row lg:items-center lg:justify-between gap-8">
             <div>
               <div className="kicker mb-3">Professional Intelligence Index</div>
@@ -255,7 +255,7 @@ export default function EnterpriseResults({ result, deployed, answers, onRestart
           </div>
           <div className="gradient-rule mb-6" />
           <div className="relative card overflow-hidden p-6 md:p-8"
-            style={{ background: 'radial-gradient(ellipse at 90% 0%, rgba(235,192,115,0.10), transparent 55%), linear-gradient(180deg, rgba(10,10,10,0.02), transparent 45%), var(--color-surface-container-lowest)' }}>
+            style={{ background: 'radial-gradient(ellipse at 90% 0%, var(--gold-tint), transparent 55%), linear-gradient(180deg, var(--tint-hairline), transparent 45%), var(--color-surface-container-lowest)' }}>
             <div className="flex flex-col md:flex-row md:items-center gap-6">
               <div className="flex-1">
                 <div className="text-technical-sm font-technical-sm text-surface-variant mb-1 uppercase tracking-widest">RIQ · {result.riq.track}</div>

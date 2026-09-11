@@ -179,7 +179,7 @@ export default function EvaluatorDashboard() {
                                         style={{
                                           borderRadius: '6px',
                                           borderColor: ev ? 'var(--gold)' : 'var(--bone-line)',
-                                          background: ev ? 'rgba(235,192,115,0.08)' : 'transparent'
+                                          background: ev ? 'var(--gold-tint)' : 'transparent'
                                         }}
                                         title={`${pillar}: ${ev ? 'Scored' : 'Pending'}`}>
                                         {ev

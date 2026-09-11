@@ -63,10 +63,10 @@ function PreSection({ pillarScores, rawScores, activeNode, setActiveNode }) {
     <div className="flex-1 overflow-y-auto p-4 md:p-6">
       <div className="mb-6">
         <div className="flex items-center gap-2.5 mb-3">
-          <div className="px-2.5 py-0.5 text-[11px] font-[600] rounded-full" style={{ background: 'rgba(99,102,241,0.15)', border: '1px solid rgba(99,102,241,0.3)', color: 'var(--phase-pre-soft)' }}>Phase 1</div>
+          <div className="px-2.5 py-0.5 text-[11px] font-[600] rounded-full" style={{ background: 'var(--phase-pre-tint)', border: '1px solid var(--phase-pre-line)', color: 'var(--phase-pre-soft)' }}>Phase 1</div>
           <span className="text-[14px] font-bold">Standardize & Score</span>
         </div>
-        <div className="rounded-[14px] p-4 overflow-x-auto" style={{ background: 'rgba(99,102,241,0.04)', border: '1px solid rgba(99,102,241,0.15)' }}>
+        <div className="rounded-2xl p-4 overflow-x-auto" style={{ background: 'var(--phase-pre-fill)', border: '1px solid var(--phase-pre-line)' }}>
           <div className="flex items-center gap-0 min-w-max">
             {PRE_INTERVENTION_NODES.map((node, i) => (
               <ProcessNode key={node.id} node={node} color="var(--phase-pre)" index={i}
@@ -84,7 +84,7 @@ function PreSection({ pillarScores, rawScores, activeNode, setActiveNode }) {
       </div>
 
       <div className="responsive-grid-2 gap-4 mb-5">
-        <div className="bg-surface-container-low border border-outline-variant rounded-[14px] p-5" style={{ background: overallGrade.bg }}>
+        <div className="bg-surface-container-low border border-outline-variant rounded-2xl p-5" style={{ background: overallGrade.bg }}>
           <div className="text-technical-sm text-surface-variant mb-1">Unified QIDS Score</div>
           <div className="text-[48px] font-[800] leading-none" style={{ color: overallGrade.color }}>{unifiedScore}</div>
           <div className="text-[13px] text-on-surface-variant mt-1">/ 100 — Grade {overallGrade.grade}: {overallGrade.label}</div>
@@ -96,7 +96,7 @@ function PreSection({ pillarScores, rawScores, activeNode, setActiveNode }) {
           </div>
         </div>
 
-        <div className="bg-surface-container-low border border-outline-variant rounded-[14px] p-5">
+        <div className="bg-surface-container-low border border-outline-variant rounded-2xl p-5">
           <div className="text-technical-sm text-surface-variant mb-3">Dynamic Weightage</div>
           {Object.entries(WEIGHTS).map(([k, w]) => (
             <div key={k} className="flex justify-between items-center mb-2">
@@ -114,14 +114,14 @@ function PreSection({ pillarScores, rawScores, activeNode, setActiveNode }) {
       </div>
 
       {criticalPillars.length > 0 && (
-        <div className="mb-5 p-4 rounded-[12px]" style={{ background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.25)' }}>
+        <div className="mb-5 p-4 rounded-2xl" style={{ background: 'var(--status-err-panel)', border: '1px solid var(--status-err-line)' }}>
           <div className="flex items-center gap-2 mb-2.5">
             <AlertTriangle size={14} color="var(--status-err)" />
             <span className="text-[13px] font-bold text-[var(--status-err-soft)]">Critical Priority Flags</span>
           </div>
           <div className="flex gap-2 flex-wrap">
             {criticalPillars.map(([id, score]) => (
-              <div key={id} className="px-3 py-1.5 text-technical-sm text-[var(--status-err-soft)] rounded-lg" style={{ background: 'rgba(239,68,68,0.12)', border: '1px solid rgba(239,68,68,0.3)' }}>
+              <div key={id} className="px-3 py-1.5 text-technical-sm text-[var(--status-err-soft)] rounded-lg" style={{ background: 'var(--status-err-panel-strong)', border: '1px solid var(--status-err-line)' }}>
                 {PILLARS[id].label}: {score}/100 — Intervention Required
               </div>
             ))}
@@ -170,7 +170,7 @@ function PreRightPanel({ pillarScores }) {
 
       <div className="mb-4">
         <div className="text-technical-sm font-[600] text-[var(--phase-pre-soft)] mb-2">Standardization Algorithm</div>
-        <div className="font-technical-sm text-[11px] p-2.5 rounded-[6px] text-on-surface leading-relaxed" style={{ background: 'rgba(0,0,0,0.3)' }}>
+        <div className="font-technical-sm text-[11px] p-2.5 rounded-md text-on-surface leading-relaxed" style={{ background: 'var(--tint-scrim)' }}>
           Standardized Score (%) =<br />(Raw Score / Max Score) × 100
         </div>
         {['Unified 0–100 scale across all quotients', 'Conversion factors: IQ=1.0, EQ=2.0, SQ=2.0, AQ=1.28', 'Sub-component weighted aggregation formula', 'Enables cross-quotient comparison and visualization'].map(item => (
@@ -205,7 +205,7 @@ function ModuleCard({ module, pillar, onToggle, expanded }) {
     if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onToggle(); }
   };
   return (
-    <div className="rounded-[10px] overflow-hidden mb-2" style={{ background: 'var(--neutral-carbon)', border: `1px solid ${pillar.color}25` }}>
+    <div className="rounded-3xl overflow-hidden mb-2" style={{ background: 'var(--neutral-carbon)', border: `1px solid ${pillar.color}25` }}>
       <div onClick={onToggle} onKeyDown={handleKey} role="button" tabIndex={0} aria-expanded={expanded} aria-label={`${module.label} details`} className="px-3.5 py-3 cursor-pointer focus-visible:outline focus-visible:outline-gold flex items-center justify-between">
         <div className="flex items-center gap-2.5">
           <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: pillar.color }} />
@@ -232,7 +232,7 @@ function ModuleCard({ module, pillar, onToggle, expanded }) {
               <span className="text-[11px] text-surface-variant">{module.sessions} sessions</span>
             </div>
           </div>
-          <button onClick={() => setAssigned(true)} disabled={assigned} className="mt-2.5 px-3 py-1.5 text-[11px] font-[500] rounded-[6px] cursor-pointer disabled:opacity-70 disabled:cursor-default" style={{ background: `${pillar.color}15`, border: `1px solid ${pillar.color}30`, color: pillar.color }}>
+          <button onClick={() => setAssigned(true)} disabled={assigned} className="mt-2.5 px-3 py-1.5 text-[11px] font-[500] rounded-md cursor-pointer disabled:opacity-70 disabled:cursor-default" style={{ background: `${pillar.color}15`, border: `1px solid ${pillar.color}30`, color: pillar.color }}>
             {assigned ? 'Assigned ✓' : 'Assign Module'}
           </button>
         </div>
@@ -256,10 +256,10 @@ function RoadmapCalendar() {
       <h4 className="text-[13px] font-[600] mb-3">6-Month Development Roadmap</h4>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5">
         {['Month 1', 'Month 2', 'Month 3', 'Month 4', 'Month 5', 'Month 6'].map((month, i) => (
-          <div key={month} className="bg-surface-container-low border border-outline-variant rounded-[10px] p-3">
+          <div key={month} className="bg-surface-container-low border border-outline-variant rounded-3xl p-3">
             <div className="text-[11px] font-bold text-[var(--phase-int-soft)] mb-2">{month}</div>
             {(modulesByMonth[month] || []).map(m => (
-              <div key={m} className="px-2 py-1 mb-1 text-[11px] text-on-surface-variant rounded-[6px]" style={{ background: 'rgba(139,92,246,0.08)', border: '1px solid rgba(139,92,246,0.15)' }}>{m}</div>
+              <div key={m} className="px-2 py-1 mb-1 text-[11px] text-on-surface-variant rounded-md" style={{ background: 'var(--phase-int-panel)', border: '1px solid var(--phase-int-line)' }}>{m}</div>
             ))}
           </div>
         ))}
@@ -278,10 +278,10 @@ function InterventionSection({ pillarScores, activeNode, setActiveNode }) {
     <div className="flex-1 overflow-y-auto p-4 md:p-6">
       <div className="mb-6">
         <div className="flex items-center gap-2.5 mb-3">
-          <div className="px-2.5 py-0.5 text-[11px] font-[600] rounded-full" style={{ background: 'rgba(139,92,246,0.15)', border: '1px solid rgba(139,92,246,0.3)', color: 'var(--phase-int-soft)' }}>Phase 2</div>
+          <div className="px-2.5 py-0.5 text-[11px] font-[600] rounded-full" style={{ background: 'var(--phase-int-tint)', border: '1px solid var(--phase-int-line)', color: 'var(--phase-int-soft)' }}>Phase 2</div>
           <span className="text-[14px] font-bold">Strategic Intervention</span>
         </div>
-        <div className="rounded-[14px] p-4 overflow-x-auto" style={{ background: 'rgba(139,92,246,0.04)', border: '1px solid rgba(139,92,246,0.15)' }}>
+        <div className="rounded-2xl p-4 overflow-x-auto" style={{ background: 'var(--phase-int-fill)', border: '1px solid var(--phase-int-line)' }}>
           <div className="flex items-center gap-0 min-w-max">
             {INTERVENTION_NODES.map((node, i) => (
               <ProcessNode key={node.id} node={node} color="var(--phase-int)" index={i} isLast={i === INTERVENTION_NODES.length - 1} onClick={setActiveNode} active={activeNode?.id === node.id} />
@@ -290,7 +290,7 @@ function InterventionSection({ pillarScores, activeNode, setActiveNode }) {
         </div>
       </div>
 
-      <div className="flex gap-1 mb-5 bg-surface-container-low p-1 rounded-[10px] w-fit">
+      <div className="flex gap-1 mb-5 bg-surface-container-low p-1 rounded-3xl w-fit">
         {['modules', 'roadmap', 'eq-practice'].map(t => (
           <button key={t} onClick={() => setActiveTab(t)} className={`px-4 py-[7px] rounded-xl cursor-pointer text-[13px] font-[500] capitalize transition-all duration-150 border-none ${
             activeTab === t ? 'bg-[var(--phase-int)] text-white' : 'bg-transparent text-on-surface-variant'
@@ -311,7 +311,7 @@ function InterventionSection({ pillarScores, activeNode, setActiveNode }) {
                   <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: PILLARS[pid].color }} />
                   <span className="text-[13px] font-bold" style={{ color: PILLARS[pid].color }}>{PILLARS[pid].label}</span>
                   {isCritical(pillarScores[pid]) && (
-                    <span className="px-1.5 py-0.5 text-[10px] font-[600] text-[var(--status-err)] rounded" style={{ background: 'rgba(239,68,68,0.15)', border: '1px solid rgba(239,68,68,0.3)' }}>CRITICAL</span>
+                    <span className="px-1.5 py-0.5 text-[10px] font-[600] text-[var(--status-err)] rounded" style={{ background: 'var(--status-err-tint)', border: '1px solid var(--status-err-line)' }}>CRITICAL</span>
                   )}
                   <span className="ml-auto text-[11px] text-surface-variant">{expandedPillar === pid ? 'Collapse' : 'Expand'}</span>
                 </div>
@@ -339,13 +339,13 @@ function InterventionSection({ pillarScores, activeNode, setActiveNode }) {
               { step: 'THINK', desc: 'Identify the emotion. Assess the situation objectively. Consider consequences.',        color: 'var(--status-warn)' },
               { step: 'ACT',   desc: 'Choose a deliberate, constructive response aligned with values and goals.',             color: 'var(--status-ok)' },
             ].map(({ step, desc, color }) => (
-              <div key={step} className="p-5 text-center rounded-[14px]" style={{ background: alpha(color, 10), border: `1px solid ${alpha(color, 30)}` }}>
+              <div key={step} className="p-5 text-center rounded-2xl" style={{ background: alpha(color, 10), border: `1px solid ${alpha(color, 30)}` }}>
                 <div className="text-[18px] font-[800] mb-2" style={{ color }}>{step}</div>
                 <p className="text-technical-sm text-on-surface-variant leading-relaxed">{desc}</p>
               </div>
             ))}
           </div>
-          <div className="mt-5 p-4 rounded-[12px]" style={{ background: 'rgba(16,185,129,0.08)', border: '1px solid rgba(16,185,129,0.2)' }}>
+          <div className="mt-5 p-4 rounded-2xl" style={{ background: 'var(--status-ok-panel)', border: '1px solid var(--status-ok-line)' }}>
             <div className="text-[13px] font-[600] text-[var(--status-ok)] mb-1.5">Integration Across All Sessions</div>
             <p className="text-[13px] text-on-surface-variant leading-relaxed">The Stop-Think-Act framework is embedded as a meta-skill across all intervention modules — not just EQ sessions. Every facilitator is trained to prompt this practice during moments of challenge, conflict, or decision-making.</p>
           </div>
@@ -363,7 +363,7 @@ function InterventionRightPanel({ pillarScores }) {
         <div key={pid} className="mb-3">
           <div className="text-[11px] font-[600] mb-1.5" style={{ color: PILLARS[pid].color }}>{pid}</div>
           {mods.map(m => (
-            <div key={m.id} className="px-2 py-1.5 mb-0.5 text-[11px] text-on-surface-variant rounded-[2px]" style={{ background: 'rgba(10,10,10,0.03)', border: '1px solid var(--bone-line)' }}>
+            <div key={m.id} className="px-2 py-1.5 mb-0.5 text-[11px] text-on-surface-variant rounded-[2px]" style={{ background: 'var(--tint-subtle)', border: '1px solid var(--bone-line)' }}>
               {m.label}
             </div>
           ))}
@@ -386,7 +386,7 @@ function InterventionRightPanel({ pillarScores }) {
 
       <div className="border-t-[0.5px] border-outline-variant my-3" />
 
-      <div className="p-3 rounded-[10px] mb-4" style={{ background: 'rgba(139,92,246,0.08)', border: '1px solid rgba(139,92,246,0.2)' }}>
+      <div className="p-3 rounded-3xl mb-4" style={{ background: 'var(--phase-int-panel)', border: '1px solid var(--phase-int-line)' }}>
         <div className="text-[11px] font-[600] text-[var(--phase-int-soft)] mb-1.5">Content Library</div>
         <p className="text-[11px] text-surface-variant leading-relaxed">Upload questionnaires, rubrics, and module content via Admin / Config to populate this library.</p>
         <button className="mt-2 w-full justify-center px-3 py-1.5 bg-surface-container-low text-on-surface text-[13px] font-[500] rounded-lg border border-outline-variant cursor-pointer hover:opacity-90 transition-all flex items-center gap-1.5">
@@ -440,14 +440,14 @@ function PostAssessmentForm({ assessmentData, onSubmit }) {
       <div className="flex items-center gap-2.5 mb-5">
         <ClipboardList size={18} color="var(--phase-post)" />
         <h2 className="text-[18px] font-[800] m-0">Post-Intervention Assessment</h2>
-        <div className="ml-auto px-3 py-1 text-[11px] font-[600] rounded-full" style={{ background: 'rgba(20,184,166,0.15)', border: '1px solid rgba(20,184,166,0.3)', color: 'var(--phase-post-soft)' }}>Phase 3</div>
+        <div className="ml-auto px-3 py-1 text-[11px] font-[600] rounded-full" style={{ background: 'var(--phase-post-tint)', border: '1px solid var(--phase-post-line)', color: 'var(--phase-post-soft)' }}>Phase 3</div>
       </div>
       <p className="text-[13px] text-surface-variant mb-6">
         Re-assess all four pillars after the intervention period. Adjust the scores to reflect current performance.
       </p>
 
       {Object.entries(PILLARS).map(([pid, pillar]) => (
-        <div key={pid} className="mb-5 bg-surface-container-low rounded-[14px] p-5" style={{ border: `1px solid ${pillar.color}25` }}>
+        <div key={pid} className="mb-5 bg-surface-container-low rounded-2xl p-5" style={{ border: `1px solid ${pillar.color}25` }}>
           <div className="flex items-center gap-2.5 mb-4">
             <div className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ background: pillar.color, boxShadow: `0 0 8px ${pillar.color}` }} />
             <span className="text-[14px] font-bold" style={{ color: pillar.color }}>{pillar.label}</span>
@@ -459,7 +459,7 @@ function PostAssessmentForm({ assessmentData, onSubmit }) {
               const preVal = assessmentData?.rawScores?.[pid]?.[sp.id] ?? 0;
               const pct = Math.round((val / sp.max) * 100);
               return (
-                <div key={sp.id} className="rounded-[2px] p-3.5" style={{ background: 'rgba(10,10,10,0.02)', border: '1px solid var(--bone-line)' }}>
+                <div key={sp.id} className="rounded-[2px] p-3.5" style={{ background: 'var(--tint-hairline)', border: '1px solid var(--bone-line)' }}>
                   <div className="flex justify-between mb-1.5">
                     <div>
                       <div className="text-[13px] font-[600]">{sp.label}</div>
@@ -474,7 +474,7 @@ function PostAssessmentForm({ assessmentData, onSubmit }) {
                     onChange={e => updateScore(pid, sp.id, parseInt(e.target.value))}
                     className="w-full h-1.5 rounded-[3px] outline-none border-none p-0 cursor-pointer appearance-none"
                     style={{
-                      background: `linear-gradient(90deg, ${pillar.color} ${pct}%, rgba(10,10,10,0.08) ${pct}%)`,
+                      background: `linear-gradient(90deg, ${pillar.color} ${pct}%, var(--tint-mid) ${pct}%)`,
                     }}
                   />
                   <div className="flex justify-between mt-1">
@@ -517,10 +517,10 @@ function PostSection({ preScores, postScores, rawScores, activeNode, setActiveNo
     <div className="flex-1 overflow-y-auto p-4 md:p-6">
       <div className="mb-6">
         <div className="flex items-center gap-2.5 mb-3">
-          <div className="px-2.5 py-0.5 text-[11px] font-[600] rounded-full" style={{ background: 'rgba(20,184,166,0.15)', border: '1px solid rgba(20,184,166,0.3)', color: 'var(--phase-post-soft)' }}>Phase 3</div>
+          <div className="px-2.5 py-0.5 text-[11px] font-[600] rounded-full" style={{ background: 'var(--phase-post-tint)', border: '1px solid var(--phase-post-line)', color: 'var(--phase-post-soft)' }}>Phase 3</div>
           <span className="text-[14px] font-bold">Post-Intervention Evaluation</span>
         </div>
-        <div className="rounded-[14px] p-4 overflow-x-auto" style={{ background: 'rgba(20,184,166,0.04)', border: '1px solid rgba(20,184,166,0.15)' }}>
+        <div className="rounded-2xl p-4 overflow-x-auto" style={{ background: 'var(--phase-post-fill)', border: '1px solid var(--phase-post-line)' }}>
           <div className="flex items-center gap-0 min-w-max">
             {POST_INTERVENTION_NODES.map((node, i) => (
               <ProcessNode key={node.id} node={node} color="var(--phase-post)" index={i} isLast={i === POST_INTERVENTION_NODES.length - 1} onClick={setActiveNode} active={activeNode?.id === node.id} />
@@ -535,7 +535,7 @@ function PostSection({ preScores, postScores, rawScores, activeNode, setActiveNo
           { label: 'Post-Intervention Score', val: postUnified, color: 'var(--phase-post)', grade: getGrade(postUnified) },
           { label: 'Overall Improvement', val: delta, color: delta >= 0 ? 'var(--status-ok)' : 'var(--status-err)', isPercent: false, isDelta: true },
         ].map(({ label, val, color, grade, isDelta }) => (
-          <div key={label} className="bg-surface-container-low text-center rounded-[14px] p-5" style={{ border: `1px solid ${alpha(color, 30)}` }}>
+          <div key={label} className="bg-surface-container-low text-center rounded-2xl p-5" style={{ border: `1px solid ${alpha(color, 30)}` }}>
             <div className="text-[11px] text-surface-variant mb-1">{label}</div>
             <div className="text-[40px] font-[800] leading-none" style={{ color }}>
               {isDelta ? (delta >= 0 ? `+${delta}` : delta) : val}
@@ -546,7 +546,7 @@ function PostSection({ preScores, postScores, rawScores, activeNode, setActiveNo
         ))}
       </div>
 
-      <div className="flex gap-1 mb-5 bg-surface-container-low p-1 rounded-[10px] w-fit">
+      <div className="flex gap-1 mb-5 bg-surface-container-low p-1 rounded-3xl w-fit">
         {['comparison', 'radar', 'career', 'idp'].map(t => (
           <button key={t} onClick={() => setActiveTab(t)} className={`px-4 py-[7px] rounded-xl cursor-pointer text-[13px] font-[500] capitalize transition-all duration-150 border-none ${
             activeTab === t ? 'bg-[var(--phase-post)] text-white' : 'bg-transparent text-on-surface-variant'
@@ -557,10 +557,10 @@ function PostSection({ preScores, postScores, rawScores, activeNode, setActiveNo
       {activeTab === 'comparison' && (
         <div>
           <h3 className="text-[15px] font-bold mb-4">Before vs After Comparison</h3>
-          <div className="bg-surface-container-low border border-outline-variant rounded-[14px] p-5 mb-4">
+          <div className="bg-surface-container-low border border-outline-variant rounded-2xl p-5 mb-4">
             <ResponsiveContainer width="100%" height={240}>
               <BarChart data={comparisonData} barGap={4}>
-                <CartesianGrid strokeDasharray="3 3" stroke="rgba(10,10,10,0.06)" />
+                <CartesianGrid strokeDasharray="3 3" stroke="var(--tint-soft)" />
                 <XAxis dataKey="name" tick={{ fill: 'var(--neutral-mid)', fontSize: 12 }} />
                 <YAxis domain={[0, 100]} tick={{ fill: 'var(--neutral-dim)', fontSize: 11 }} />
                 <Tooltip contentStyle={{ background: 'var(--bone-panel)', border: '1px solid var(--bone-line)', borderRadius: 2, color: 'var(--neutral-dark)', fontSize: 12 }} />
@@ -576,7 +576,7 @@ function PostSection({ preScores, postScores, rawScores, activeNode, setActiveNo
               const d = postScores[id] - preScores[id];
               const pct = preScores[id] > 0 ? Math.round((d / preScores[id]) * 100) : 0;
               return (
-                <div key={id} className="bg-surface-container-low rounded-[12px] p-3.5" style={{ border: `1px solid ${pillar.color}25` }}>
+                <div key={id} className="bg-surface-container-low rounded-2xl p-3.5" style={{ border: `1px solid ${pillar.color}25` }}>
                   <div className="text-[11px] font-[600] mb-1.5" style={{ color: pillar.color }}>{pillar.short}</div>
                   <div className="flex justify-between mb-1.5">
                     <span className="text-technical-sm text-surface-variant">{preScores[id]}</span>
@@ -616,7 +616,7 @@ function PostSection({ preScores, postScores, rawScores, activeNode, setActiveNo
       {activeTab === 'career' && (
         <div>
           <h3 className="text-[15px] font-bold mb-4">Career Guidance & Recommendations</h3>
-          <div className="p-6 rounded-[16px] mb-4" style={{ background: 'rgba(99,102,241,0.08)', border: '1px solid rgba(99,102,241,0.25)' }}>
+          <div className="p-6 rounded-3xl mb-4" style={{ background: 'var(--phase-pre-panel)', border: '1px solid var(--phase-pre-line)' }}>
             <div className="flex items-start gap-4">
               <div>
                 <div className="text-[11px] text-surface-variant mb-1">Recommended Track</div>
@@ -625,7 +625,7 @@ function PostSection({ preScores, postScores, rawScores, activeNode, setActiveNo
                 <p className="text-[13px] text-on-surface-variant leading-relaxed mb-3">{careerProfile.desc}</p>
                 <div className="flex flex-wrap gap-1.5">
                   {careerProfile.roles.map(r => (
-                    <span key={r} className="px-2.5 py-1 text-technical-sm text-[var(--phase-pre-soft)] rounded-full" style={{ background: 'rgba(99,102,241,0.15)', border: '1px solid rgba(99,102,241,0.3)' }}>{r}</span>
+                    <span key={r} className="px-2.5 py-1 text-technical-sm text-[var(--phase-pre-soft)] rounded-full" style={{ background: 'var(--phase-pre-tint)', border: '1px solid var(--phase-pre-line)' }}>{r}</span>
                   ))}
                 </div>
               </div>
@@ -635,9 +635,9 @@ function PostSection({ preScores, postScores, rawScores, activeNode, setActiveNo
           <h4 className="text-[13px] font-[600] mb-3">All Career Profiles</h4>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
             {CAREER_PROFILES.map(cp => (
-              <div key={cp.id} className="p-3.5 rounded-[10px]" style={{
-                background: cp.id === careerProfile.id ? 'rgba(99,102,241,0.1)' : 'var(--neutral-carbon)',
-                border: `1px solid ${cp.id === careerProfile.id ? 'rgba(99,102,241,0.4)' : 'var(--bone-line)'}`,
+              <div key={cp.id} className="p-3.5 rounded-3xl" style={{
+                background: cp.id === careerProfile.id ? 'color-mix(in srgb, var(--phase-pre) 10%, transparent)' : 'var(--neutral-carbon)',
+                border: `1px solid ${cp.id === careerProfile.id ? 'color-mix(in srgb, var(--phase-pre) 40%, transparent)' : 'var(--bone-line)'}`,
               }}>
                 <div className="flex gap-2 items-start">
                   <div>
@@ -659,7 +659,7 @@ function PostSection({ preScores, postScores, rawScores, activeNode, setActiveNo
               <h4 className="text-[13px] font-[600] text-[var(--phase-post)] mb-3">Achieved Milestones</h4>
               {Object.entries(PILLARS).filter(([id]) => postScores[id] > preScores[id]).map(([id, p]) => (
                 <div key={id} className="flex gap-2 mb-2">
-                  <div className="w-4 h-4 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: 'rgba(16,185,129,0.2)', border: '1px solid var(--status-ok)' }}>
+                  <div className="w-4 h-4 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: 'var(--status-ok-line)', border: '1px solid var(--status-ok)' }}>
                     <Check size={10} className="text-[var(--status-ok)]" />
                   </div>
                   <span className="text-[13px] text-on-surface-variant">{p.label}: {preScores[id]} {'>'} {postScores[id]} (+{postScores[id] - preScores[id]})</span>
@@ -692,7 +692,7 @@ function PostRightPanel({ preScores, postScores }) {
   return (
     <>
       <div className="text-technical-sm font-[600] text-[var(--phase-post-soft)] mb-3">Outcome Summary</div>
-      <div className="p-3.5 rounded-[10px] mb-4" style={{ background: 'rgba(20,184,166,0.08)', border: '1px solid rgba(20,184,166,0.2)' }}>
+      <div className="p-3.5 rounded-3xl mb-4" style={{ background: 'var(--phase-post-panel)', border: '1px solid var(--phase-post-line)' }}>
         <div className="text-[11px] text-surface-variant mb-1">Unified Score Change</div>
         <div className="text-[28px] font-[800] text-[var(--phase-post)] leading-none">{preUnified} {'>'} {postUnified}</div>
         <div className="text-technical-sm font-[600]" style={{ color: delta >= 0 ? 'var(--status-ok)' : 'var(--status-err)' }}>{delta >= 0 ? `+${delta}` : delta} points ({preUnified > 0 ? Math.round((delta / preUnified) * 100) : 0}%)</div>
@@ -701,7 +701,7 @@ function PostRightPanel({ preScores, postScores }) {
       <div className="border-t-[0.5px] border-outline-variant my-3" />
 
       <div className="text-technical-sm font-[600] mb-2.5">Skill Shape</div>
-      <div className="p-3 text-center rounded-[10px] mb-4" style={{ background: 'rgba(99,102,241,0.08)', border: '1px solid rgba(99,102,241,0.2)' }}>
+      <div className="p-3 text-center rounded-3xl mb-4" style={{ background: 'var(--phase-pre-panel)', border: '1px solid var(--phase-pre-line)' }}>
         <div className="text-[36px] font-[900] text-[var(--phase-pre-soft)] leading-none">{skillShape}</div>
         <div className="text-technical-sm text-on-surface-variant">{skillShapeData?.label}</div>
       </div>
@@ -754,7 +754,7 @@ export default function Progress() {
 
   if (!assessmentData) {
     return (
-      <div className="flex items-center justify-center h-[calc(100vh-52px)] flex-col gap-4">
+      <div className="flex items-center justify-center h-full flex-col gap-4">
         <div className="opacity-30">
           <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
         </div>
@@ -768,7 +768,7 @@ export default function Progress() {
   const showPostForm = activePhase === 'post' && !postData && !submitted;
 
   return (
-    <div className="flex h-[calc(100vh-52px)] animate-fade">
+    <div className="flex h-full animate-fade">
       {/* Mobile phase selector */}
       <div className="hide-desktop p-3 border-b-[0.5px] border-outline-variant bg-surface-container-lowest flex gap-1 overflow-x-auto">
         {PHASES.map(phase => {
@@ -812,7 +812,7 @@ export default function Progress() {
               <button key={phase.id} onClick={() => {
                 if (phase.id === 'post' && !postData && !submitted) { /* stay or show form */ }
                 setActivePhase(phase.id);
-              }} className="flex items-center gap-2.5 px-3 py-2.5 rounded-[10px] cursor-pointer text-left transition-all duration-150" style={{
+              }} className="flex items-center gap-2.5 px-3 py-2.5 rounded-3xl cursor-pointer text-left transition-all duration-150" style={{
                 background: active ? alpha(phase.color, 15) : 'transparent',
                 border: `1px solid ${active ? phase.color : 'transparent'}`,
               }}>
@@ -837,7 +837,7 @@ export default function Progress() {
         )}
         {activePhase === 'pre' && PRE_INTERVENTION_NODES.map(node => (
           <div key={node.id} onClick={() => setActiveNode(node)} onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setActiveNode(node); } }} role="button" tabIndex={0} className="px-2.5 py-2 rounded-lg cursor-pointer mb-1 transition-all duration-150 focus-visible:outline focus-visible:outline-gold" style={{
-            background: activeNode?.id === node.id ? 'rgba(99,102,241,0.15)' : 'transparent',
+            background: activeNode?.id === node.id ? 'var(--phase-pre-tint)' : 'transparent',
             border: `1px solid ${activeNode?.id === node.id ? 'var(--phase-pre)' : 'transparent'}`,
           }}>
             <div className="text-technical-sm font-[500]">{node.label}</div>
@@ -849,7 +849,7 @@ export default function Progress() {
         )}
         {activePhase === 'intervention' && INTERVENTION_NODES.map(node => (
           <div key={node.id} onClick={() => setActiveNode(node)} onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setActiveNode(node); } }} role="button" tabIndex={0} className="px-2.5 py-2 rounded-lg cursor-pointer mb-1 transition-all duration-150 focus-visible:outline focus-visible:outline-gold" style={{
-            background: activeNode?.id === node.id ? 'rgba(139,92,246,0.15)' : 'transparent',
+            background: activeNode?.id === node.id ? 'var(--phase-int-tint)' : 'transparent',
             border: `1px solid ${activeNode?.id === node.id ? 'var(--phase-int)' : 'transparent'}`,
           }}>
             <div className="text-technical-sm font-[500]">{node.label}</div>
@@ -878,7 +878,7 @@ export default function Progress() {
             <div className="text-[11px] text-surface-variant uppercase tracking-wide mb-2.5">Process Nodes</div>
             {POST_INTERVENTION_NODES.map(node => (
               <div key={node.id} onClick={() => setActiveNode(node)} onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setActiveNode(node); } }} role="button" tabIndex={0} className="px-2.5 py-2 rounded-lg cursor-pointer mb-1 transition-all duration-150 focus-visible:outline focus-visible:outline-gold" style={{
-                background: activeNode?.id === node.id ? 'rgba(20,184,166,0.15)' : 'transparent',
+                background: activeNode?.id === node.id ? 'var(--phase-post-tint)' : 'transparent',
                 border: `1px solid ${activeNode?.id === node.id ? 'var(--phase-post)' : 'transparent'}`,
               }}>
                 <div className="text-technical-sm font-[500]">{node.label}</div>
@@ -907,7 +907,7 @@ export default function Progress() {
         {activePhase === 'intervention' && <InterventionRightPanel pillarScores={preScores} />}
         {activePhase === 'post' && !showPostForm && <PostRightPanel preScores={preScores} postScores={postScores} />}
         {showPostForm && (
-          <div className="p-3.5 rounded-[10px]" style={{ background: 'rgba(20,184,166,0.08)', border: '1px solid rgba(20,184,166,0.2)' }}>
+          <div className="p-3.5 rounded-3xl" style={{ background: 'var(--phase-post-panel)', border: '1px solid var(--phase-post-line)' }}>
             <div className="text-technical-sm font-[600] text-[var(--phase-post-soft)] mb-2">Instructions</div>
             <p className="text-technical-sm text-on-surface-variant leading-relaxed">Fill in the post-intervention scores for each sub-parameter. The form pre-fills with your pre-intervention scores so you can adjust based on observed progress.</p>
           </div>

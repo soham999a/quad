@@ -10,7 +10,7 @@ export default function ProcessNode({ node, color = 'var(--phase-pre)', index, i
         onClick={() => onClick && onClick(node)}
         style={{
           background: active ? alpha(color, 20) : 'var(--navy-4)',
-          border: `1px solid ${active ? color : 'rgba(10,10,10,0.08)'}`,
+          border: `1px solid ${active ? color : 'var(--tint-mid)'}`,
           borderRadius: 10,
           padding: '10px 14px',
           cursor: 'pointer',
@@ -85,7 +85,7 @@ export function NodeDetailPanel({ node, onClose, color = 'var(--phase-pre)' }) {
           </div>
           {node.artifacts.map(a => (
             <div key={a} style={{
-              padding: '6px 10px', background: 'rgba(10,10,10,0.04)',
+              padding: '6px 10px', background: 'var(--tint-soft)',
               border: '1px solid var(--border-light)', borderRadius: 6,
               fontSize: 12, color: 'var(--text-secondary)', marginBottom: 4,
             }}>{a}</div>

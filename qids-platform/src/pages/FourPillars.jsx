@@ -10,14 +10,14 @@ function PillarCard({ pillar, onClick, active }) {
     if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onClick(); }
   };
   return (
-    <div onClick={onClick} onKeyDown={handleKey} role="button" tabIndex={0} aria-pressed={active} className={`relative overflow-hidden rounded-[14px] p-5 cursor-pointer transition-all duration-200 focus-visible:outline focus-visible:outline-gold ${active ? '' : 'bg-surface-container-low border border-outline-variant'}`} style={{
-      background: active ? `${pillar.color}15` : undefined,
+    <div onClick={onClick} onKeyDown={handleKey} role="button" tabIndex={0} aria-pressed={active} className={`relative overflow-hidden rounded-2xl p-5 cursor-pointer transition-all duration-200 focus-visible:outline focus-visible:outline-gold ${active ? '' : 'bg-surface-container-low border border-outline-variant'}`} style={{
+      background: active ? `alpha(pillar.color, 15)` : undefined,
       border: active ? `1px solid ${pillar.color}` : undefined,
     }}>
       <div className="absolute top-0 left-0 right-0 h-[3px]" style={{ background: pillar.color }} />
       <div className="inline-flex px-3 py-1 rounded-full mb-2.5 text-label-md font-label-md font-extrabold" style={{
-        background: `${pillar.color}20`,
-        border: `1px solid ${pillar.color}40`,
+        background: `alpha(pillar.color, 20)`,
+        border: `1px solid alpha(pillar.color, 40)`,
         color: pillar.color,
       }}>{pillar.short}</div>
       <h3 className="text-label-md font-bold mb-1.5">{pillar.label}</h3>
@@ -41,16 +41,16 @@ function PillarDetail({ pillar }) {
   return (
     <div className="animate-fade">
       {/* Header */}
-      <div className="relative overflow-hidden rounded-[16px] p-7 mb-5" style={{
-        background: `${pillar.color}08`,
-        border: `1px solid ${pillar.color}30`,
+      <div className="relative overflow-hidden rounded-3xl p-7 mb-5" style={{
+        background: `alpha(pillar.color, 8)`,
+        border: `1px solid alpha(pillar.color, 30)`,
       }}>
         <div className="absolute top-0 left-0 right-0 h-[3px]" style={{ background: pillar.color }} />
         <div className="flex items-start justify-between">
           <div>
             <div className="inline-flex px-4 py-1.5 rounded-full mb-3 text-[18px] font-label-md font-extrabold" style={{
-              background: `${pillar.color}20`,
-              border: `1px solid ${pillar.color}40`,
+              background: `alpha(pillar.color, 20)`,
+              border: `1px solid alpha(pillar.color, 40)`,
               color: pillar.color,
             }}>{pillar.short}</div>
             <h2 className="text-headline-md font-extrabold mb-2">{pillar.label}</h2>
@@ -62,14 +62,14 @@ function PillarDetail({ pillar }) {
             <div className="text-technical-sm text-surface-variant">in unified score</div>
           </div>
         </div>
-        <div className="mt-3 py-2 px-3.5 bg-white/5 rounded-lg inline-block">
+        <div className="mt-3 py-2 px-3.5 bg-[var(--tint-soft)] rounded-lg inline-block">
           <span className="text-technical-sm text-surface-variant">Framework: </span>
           <span className="text-technical-sm font-semibold" style={{ color: pillar.color }}>{pillar.framework}</span>
         </div>
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-1 mb-5 bg-surface-container-low p-1 rounded-[10px] w-fit">
+      <div className="flex gap-1 mb-5 bg-surface-container-low p-1 rounded-3xl w-fit">
         {tabs.map(({ id, label, icon: Icon }) => (
           <button key={id} onClick={() => setTab(id)} className={`flex items-center gap-1.5 px-3.5 py-[7px] rounded-lg cursor-pointer border-none text-label-md font-medium transition-all duration-150 ${tab === id ? '' : 'text-on-surface-variant'}`} style={{
             background: tab === id ? pillar.color : 'transparent',
@@ -99,7 +99,7 @@ function PillarDetail({ pillar }) {
             <h4 className="text-label-md font-semibold mb-3" style={{ color: pillar.color }}>Development Focus</h4>
             {pillar.developmentFocus.map(d => (
               <div key={d} className="flex items-center gap-2 mb-2">
-                <div className="size-5 rounded-md flex items-center justify-center shrink-0" style={{ background: `${pillar.color}20` }}>
+                <div className="size-5 rounded-md flex items-center justify-center shrink-0" style={{ background: `alpha(pillar.color, 20)` }}>
                   <div className="size-[6px] rounded-full" style={{ background: pillar.color }} />
                 </div>
                 <span className="text-label-md text-on-surface-variant">{d}</span>
@@ -138,8 +138,8 @@ function PillarDetail({ pillar }) {
             <h4 className="text-label-md font-semibold mb-3" style={{ color: pillar.color }}>Assessment Methods</h4>
             {pillar.assessmentMethods.map(m => (
               <div key={m} className="py-2 px-3 mb-1.5 rounded-lg text-label-md text-on-surface-variant" style={{
-                background: `${pillar.color}10`,
-                border: `1px solid ${pillar.color}20`,
+                background: `alpha(pillar.color, 10)`,
+                border: `1px solid alpha(pillar.color, 20)`,
               }}>{m}</div>
             ))}
           </div>
@@ -165,37 +165,37 @@ function PillarDetail({ pillar }) {
         <div className="card">
           <h4 className="text-label-md font-semibold mb-3" style={{ color: pillar.color }}>Career Alignment</h4>
           <p className="text-label-md text-on-surface-variant leading-[1.7] mb-4">{pillar.careerAlignment}</p>
-          <div className="p-4 rounded-[10px]" style={{
-            background: `${pillar.color}08`,
-            border: `1px solid ${pillar.color}20`,
+          <div className="p-4 rounded-3xl" style={{
+            background: `alpha(pillar.color, 8)`,
+            border: `1px solid alpha(pillar.color, 20)`,
           }}>
             <div className="text-technical-sm text-surface-variant mb-2">High {pillar.short} Profile Roles</div>
             <div className="flex flex-wrap gap-2">
               {pillar.id === 'IQ' && ['Research Scientist', 'Software Engineer', 'Data Analyst', 'Financial Analyst', 'Academic Researcher'].map(r => (
                 <span key={r} className="px-2.5 py-1 rounded-full text-technical-sm" style={{
-                  background: `${pillar.color}15`,
-                  border: `1px solid ${pillar.color}30`,
+                  background: `alpha(pillar.color, 15)`,
+                  border: `1px solid alpha(pillar.color, 30)`,
                   color: pillar.color,
                 }}>{r}</span>
               ))}
               {pillar.id === 'EQ' && ['HR Director', 'Counselor', 'Team Lead', 'Customer Success', 'Therapist', 'Coach'].map(r => (
                 <span key={r} className="px-2.5 py-1 rounded-full text-technical-sm" style={{
-                  background: `${pillar.color}15`,
-                  border: `1px solid ${pillar.color}30`,
+                  background: `alpha(pillar.color, 15)`,
+                  border: `1px solid alpha(pillar.color, 30)`,
                   color: pillar.color,
                 }}>{r}</span>
               ))}
               {pillar.id === 'SQ' && ['Community Leader', 'Educator', 'Social Worker', 'PR Manager', 'Diplomat'].map(r => (
                 <span key={r} className="px-2.5 py-1 rounded-full text-technical-sm" style={{
-                  background: `${pillar.color}15`,
-                  border: `1px solid ${pillar.color}30`,
+                  background: `alpha(pillar.color, 15)`,
+                  border: `1px solid alpha(pillar.color, 30)`,
                   color: pillar.color,
                 }}>{r}</span>
               ))}
               {pillar.id === 'AQ' && ['Entrepreneur', 'Crisis Manager', 'Military Officer', 'Emergency Responder', 'Startup Founder'].map(r => (
                 <span key={r} className="px-2.5 py-1 rounded-full text-technical-sm" style={{
-                  background: `${pillar.color}15`,
-                  border: `1px solid ${pillar.color}30`,
+                  background: `alpha(pillar.color, 15)`,
+                  border: `1px solid alpha(pillar.color, 30)`,
                   color: pillar.color,
                 }}>{r}</span>
               ))}
@@ -229,7 +229,7 @@ export default function FourPillars() {
       {pillar && <PillarDetail pillar={pillar} />}
 
       {/* Innovative Features */}
-      <div className="mt-8 p-6 bg-surface-container-low border border-outline-variant rounded-[16px]">
+      <div className="mt-8 p-6 bg-surface-container-low border border-outline-variant rounded-3xl">
         <h3 className="text-[16px] font-bold mb-4 text-center">Innovative Features</h3>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           {[
@@ -237,7 +237,7 @@ export default function FourPillars() {
             { label: 'Resilience Dynamics Framework', desc: 'A revolutionary approach to understanding and developing adversity quotient as a dynamic, interconnected system.', color: 'var(--status-warn)' },
             { label: 'Integrated Assessment', desc: 'Multi-method assessment capturing interactions between domains for a holistic view of individual capabilities.', color: 'var(--phase-pre)' },
           ].map(f => (
-            <div key={f.label} className="p-4 bg-white/5 rounded-[10px]" style={{ border: `1px solid ${alpha(f.color, 20)}` }}>
+            <div key={f.label} className="p-4 bg-[var(--tint-soft)] rounded-3xl" style={{ border: `1px solid ${alpha(f.color, 20)}` }}>
               <div className="size-2 rounded-full mb-2" style={{ background: f.color }} />
               <div className="text-label-md font-bold mb-1.5">{f.label}</div>
               <div className="text-technical-sm text-on-surface-variant leading-relaxed">{f.desc}</div>

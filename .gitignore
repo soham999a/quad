@@ -4,3 +4,11 @@ QIDS_*.pdf
 QIDS_*.docx
 QiDS_*.pdf
 Structured Thinking QiDS Interview Mode.pdf
+
+# standalone git projects (have their own remotes)
+matrix-core/
+quotient-compass-core/
+
+# local artifacts
+qids-dev.log
+laptop-shots/

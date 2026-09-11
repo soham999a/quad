@@ -11,11 +11,11 @@ export const BAND_COLOR: Record<BandLevel, string> = {
 };
 
 export const THRESHOLD_META: Record<string, { label: string; color: string; bg: string }> = {
-  strong: { label: 'Strong Fit', color: '#10b981', bg: 'rgba(16,185,129,0.12)' },
-  good: { label: 'Good Fit', color: '#06b6d4', bg: 'rgba(6,182,212,0.12)' },
-  partial: { label: 'Partial Fit', color: '#f59e0b', bg: 'rgba(245,158,11,0.12)' },
-  stretch: { label: 'Stretch', color: '#f97316', bg: 'rgba(249,115,22,0.12)' },
-  mismatch: { label: 'Role Mismatch', color: '#ef4444', bg: 'rgba(239,68,68,0.12)' },
+  strong: { label: 'Strong Fit', color: '#10b981', bg: 'color-mix(in srgb, #10b981 12%, transparent)' },
+  good: { label: 'Good Fit', color: '#06b6d4', bg: 'color-mix(in srgb, #06b6d4 12%, transparent)' },
+  partial: { label: 'Partial Fit', color: '#f59e0b', bg: 'color-mix(in srgb, #f59e0b 12%, transparent)' },
+  stretch: { label: 'Stretch', color: '#f97316', bg: 'color-mix(in srgb, #f97316 12%, transparent)' },
+  mismatch: { label: 'Role Mismatch', color: '#ef4444', bg: 'color-mix(in srgb, #ef4444 12%, transparent)' },
 };
 
 export function thresholdMeta(level: string) {
