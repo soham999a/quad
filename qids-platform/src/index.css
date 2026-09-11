@@ -673,6 +673,7 @@ input[type="range"]::-moz-range-thumb {
 }
 
 .app-content {
+  flex: 1;
   margin-left: 260px;
   transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   height: 100vh;
@@ -769,10 +770,10 @@ input[type="range"]::-moz-range-thumb {
 /* Tablet breakpoint */
 @media (min-width: 769px) and (max-width: 1024px) {
   .desktop-sidebar {
-    max-width: 220px;
+    width: 220px;
   }
   .shell-collapsed .desktop-sidebar {
-    max-width: 64px;
+    width: 64px;
   }
   .app-content {
     margin-left: 220px;

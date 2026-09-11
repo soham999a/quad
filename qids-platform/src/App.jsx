@@ -361,8 +361,15 @@ function MobileMenuDrawer({ onClose }) {
   const navigate = useNavigate();
   const handleLogout = async () => { await logout(); onClose(); navigate('/login'); };
 
+  useEffect(() => {
+    const html = document.documentElement;
+    const prev = html.style.overflow;
+    html.style.overflow = 'hidden';
+    return () => { html.style.overflow = prev; };
+  }, []);
+
   return (
-    <div className="fixed inset-0 z-[100] bg-sidebar text-sidebar-foreground overflow-y-auto animate-fade-up">
+    <div className="fixed inset-0 z-[100] bg-sidebar text-sidebar-foreground overflow-y-auto animate-fade">
       <div className="flex justify-between items-center p-6 border-b border-sidebar-border">
         <div className="flex items-center gap-3">
           <QidsMark size={24} className="text-gold" />
@@ -562,8 +569,8 @@ function AppShell() {
           </footer>
         </div>
         <MobileNav onMenuOpen={() => setMobileMenuOpen(true)} />
-        {mobileMenuOpen && <MobileMenuDrawer onClose={() => setMobileMenuOpen(false)} />}
       </div>
+      {mobileMenuOpen && <MobileMenuDrawer onClose={() => setMobileMenuOpen(false)} />}
     </AppContext.Provider>
   );
 }
