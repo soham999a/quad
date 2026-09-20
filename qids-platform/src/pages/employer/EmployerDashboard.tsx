@@ -112,7 +112,7 @@ function RfiExplorer() {
         </div>
 
         <div className="lg:col-span-7">
-          <div className="kicker mb-4">Role Fit Ranking</div>
+          <div className="kicker mb-4" data-tour="talent-ranking">Role Fit Ranking</div>
           <div className="flex flex-col gap-3">
             {matches.map((r, idx) => {
               const meta = thresholdMeta(r.threshold);

@@ -7,7 +7,7 @@ import {
   computeWeightedScore, getGrade, isCritical, WEIGHTS, GRADE_BANDS,
   getCareerProfile, getSkillShape, IQ_MAX_SCORE, evaluateQidsAssessment, computeQidsPillarScores,
 } from '../core/engine/qids';
-import { useApp } from '../App';
+import { useApp } from '../context/AppContext';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { getUserAssessments } from '../services/firestoreService';
@@ -98,7 +98,7 @@ function GrowthTrendPanel({ uid, currentId }) {
   const fmtDate = iso => new Date(iso).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
 
   return (
-    <div className="mb-4 border-[0.5px] border-outline-variant rounded-3xl bg-surface-container-lowest p-4 md:p-5 animate-fade">
+    <div data-tour="prog-trend" className="mb-4 border-[0.5px] border-outline-variant rounded-3xl bg-surface-container-lowest p-4 md:p-5 animate-fade">
       <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
         <div className="flex items-center gap-2">
           <TrendIcon size={14} className="text-primary" />
@@ -379,7 +379,7 @@ function InterventionSection({ pillarScores, activeNode, setActiveNode }) {
       <div className="flex gap-1 mb-5 bg-surface-container-low p-1 rounded-3xl w-fit">
         {['modules', 'roadmap', 'eq-practice'].map(t => (
           <button key={t} onClick={() => setActiveTab(t)} className={`px-4 py-[7px] rounded-xl cursor-pointer text-[13px] font-[500] capitalize transition-all duration-150 border-none ${
-            activeTab === t ? 'bg-[var(--phase-int)] text-white' : 'bg-transparent text-on-surface-variant'
+            activeTab === t ? 'bg-[var(--phase-int)] text-on-primary' : 'bg-transparent text-on-surface-variant'
           }`}>{t.replace('-', ' ')}</button>
         ))}
       </div>
@@ -388,7 +388,9 @@ function InterventionSection({ pillarScores, activeNode, setActiveNode }) {
         <div>
           <div className="flex justify-between items-center mb-4">
             <h3 className="text-[15px] font-bold">Recommended Intervention Modules</h3>
-            <button className="px-3 py-1.5 bg-surface-container-low text-on-surface text-[13px] font-[500] rounded-lg border border-outline-variant cursor-pointer hover:opacity-90 transition-all flex items-center gap-1.5"><Plus size={12} /> Add Custom Module</button>
+            <button
+              onClick={() => toast('Custom modules are coming in a future release.', 'info')}
+              className="px-3 py-1.5 bg-surface-container-low text-on-surface text-[13px] font-[500] rounded-lg border border-outline-variant cursor-pointer hover:opacity-90 transition-all flex items-center gap-1.5"><Plus size={12} /> Add Custom Module</button>
           </div>
           <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
             {priorityPillars.map(pid => (
@@ -475,7 +477,9 @@ function InterventionRightPanel({ pillarScores }) {
       <div className="p-3 rounded-3xl mb-4" style={{ background: 'var(--phase-int-panel)', border: '1px solid var(--phase-int-line)' }}>
         <div className="text-[11px] font-[600] text-[var(--phase-int-soft)] mb-1.5">Content Library</div>
         <p className="text-[11px] text-surface-variant leading-relaxed">Upload questionnaires, rubrics, and module content via Admin / Config to populate this library.</p>
-        <button className="mt-2 w-full justify-center px-3 py-1.5 bg-surface-container-low text-on-surface text-[13px] font-[500] rounded-lg border border-outline-variant cursor-pointer hover:opacity-90 transition-all flex items-center gap-1.5">
+        <button
+          onClick={() => toast('The content library is coming in a future release.', 'info')}
+          className="mt-2 w-full justify-center px-3 py-1.5 bg-surface-container-low text-on-surface text-[13px] font-[500] rounded-lg border border-outline-variant cursor-pointer hover:opacity-90 transition-all flex items-center gap-1.5">
           <Package size={11} /> Open Library
         </button>
       </div>
@@ -575,7 +579,7 @@ function PostAssessmentForm({ assessmentData, onSubmit }) {
         </div>
       ))}
 
-      <button onClick={handleSubmit} disabled={saving} className="w-full justify-center py-[14px] text-label-md font-label-md rounded-xl bg-[var(--phase-post)] text-white hover:opacity-90 transition-all border-none cursor-pointer flex items-center gap-2 disabled:opacity-50">
+      <button onClick={handleSubmit} disabled={saving} className="w-full justify-center py-[14px] text-label-md font-label-md rounded-xl bg-[var(--phase-post)] text-on-primary hover:opacity-90 transition-all border-none cursor-pointer flex items-center gap-2 disabled:opacity-50">
         {saving ? 'Saving...' : <><Save size={14} /> Submit Post-Assessment</>}
       </button>
     </div>
@@ -635,7 +639,7 @@ function PostSection({ preScores, postScores, rawScores, activeNode, setActiveNo
       <div className="flex gap-1 mb-5 bg-surface-container-low p-1 rounded-3xl w-fit">
         {['comparison', 'radar', 'career', 'idp'].map(t => (
           <button key={t} onClick={() => setActiveTab(t)} className={`px-4 py-[7px] rounded-xl cursor-pointer text-[13px] font-[500] capitalize transition-all duration-150 border-none ${
-            activeTab === t ? 'bg-[var(--phase-post)] text-white' : 'bg-transparent text-on-surface-variant'
+            activeTab === t ? 'bg-[var(--phase-post)] text-on-primary' : 'bg-transparent text-on-surface-variant'
           }`}>{t}</button>
         ))}
       </div>
@@ -862,7 +866,7 @@ export default function Progress() {
           return (
             <button key={phase.id} onClick={() => setActivePhase(phase.id)}
               className={`flex-1 px-3 py-2 rounded-lg text-[11px] font-[600] cursor-pointer border-none whitespace-nowrap transition-all ${
-                active ? 'text-white' : 'text-surface-variant bg-transparent'
+                active ? 'text-on-primary' : 'text-surface-variant bg-transparent'
               }`}
               style={{ background: active ? phase.color : 'transparent' }}>
               {phase.label}
@@ -884,7 +888,7 @@ export default function Progress() {
       </div>
 
       {/* Left sidebar - hidden on mobile */}
-      <div className="w-[220px] border-r-[0.5px] border-outline-variant bg-surface-container-lowest p-5 overflow-y-auto flex-shrink-0 hide-mobile">
+      <div data-tour="prog-phases" className="w-[220px] border-r-[0.5px] border-outline-variant bg-surface-container-lowest p-5 overflow-y-auto flex-shrink-0 hide-mobile">
         <h3 className="text-[15px] font-bold mb-1">Progress Timeline</h3>
         <p className="text-technical-sm text-surface-variant mb-5">Track your journey through all phases</p>
 
@@ -988,7 +992,7 @@ export default function Progress() {
       )}
 
       {/* Right panel - hidden on mobile */}
-      <div className="w-[260px] border-l-[0.5px] border-outline-variant bg-surface-container-lowest p-5 overflow-y-auto flex-shrink-0 hide-mobile">
+      <div data-tour="prog-right" className="w-[260px] border-l-[0.5px] border-outline-variant bg-surface-container-lowest p-5 overflow-y-auto flex-shrink-0 hide-mobile">
         {activePhase === 'pre' && <PreRightPanel pillarScores={preScores} />}
         {activePhase === 'intervention' && <InterventionRightPanel pillarScores={preScores} />}
         {activePhase === 'post' && !showPostForm && <PostRightPanel preScores={preScores} postScores={postScores} />}

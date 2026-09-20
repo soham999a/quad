@@ -272,7 +272,7 @@ export default function EnterpriseRunner({ mode = 'enterprise', initialTier }) {
             <label className="flex flex-col gap-2">
               <span className="text-technical-sm font-technical-sm text-surface-variant">Email <span className="text-outline">(optional)</span></span>
               <input value={intake.email} onChange={e => setIntake({ ...intake, email: e.target.value })}
-                placeholder="you@org.com" type="email"
+                placeholder="you@org.com" type="email" autoComplete="email"
                 className="px-4 py-3 rounded-lg border-[0.5px] border-outline-variant bg-surface-container-lowest text-body-md text-on-background outline-none focus:border-primary placeholder:text-outline" />
             </label>
             <label className="flex flex-col gap-2">

@@ -6,7 +6,7 @@ import { getRandomDiagramQuestions } from '../data/diagramQuestions';
 import { generateIQQuestions, generateEQQuestions, generateAQQuestions, generateSQQuestions } from '../services/groqService';
 import DiagramQuestion from '../components/DiagramQuestion';
 import AIQuestionGenerator from '../components/AIQuestionGenerator';
-import { useApp } from '../App';
+import { useApp } from '../context/AppContext';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { saveAssessment, getStudentEvaluator, listPublicEvaluators, assignEvaluator, removeAssignment } from '../services/firestoreService';
@@ -611,7 +611,7 @@ function SQStep({ scores, onChange }) {
                           }`}>
                         <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${isSelected ? 'border-(--phase-int) bg-(--phase-int)' : 'border-outline-variant'
                           }`}>
-                          {isSelected && <div className="w-2 h-2 rounded-full bg-white" />}
+                          {isSelected && <div className="w-2 h-2 rounded-full bg-on-primary" />}
                         </div>
                         <span className="flex-1"><strong>{String.fromCharCode(65 + oi)}.</strong> {opt.text}</span>
                         {isSelected && (

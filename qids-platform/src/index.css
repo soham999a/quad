@@ -922,6 +922,19 @@ body.qids-focus .app-content {
   }
 }
 
+/* Global keyboard visibility: a consistent gold focus ring on every
+   interactive element that doesn't define its own focus style. */
+:where(a, button, input, select, textarea, [tabindex]):focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: 2px;
+}
+
+/* Tour spotlight ring — animated gold outline around the highlighted element. */
+.qids-tour-ring {
+  box-shadow: 0 0 0 2px var(--gold), 0 0 24px color-mix(in oklab, var(--gold) 45%, transparent);
+  transition: all 0.3s ease;
+}
+
 /* Skip link — hidden until keyboard-focused (a11y). */
 .skip-link {
   position: fixed;

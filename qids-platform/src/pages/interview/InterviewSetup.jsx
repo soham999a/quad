@@ -114,6 +114,7 @@ export default function InterviewSetup() {
               <label className="text-label-sm font-label-sm text-on-surface mb-1.5 block">Email (optional)</label>
               <input
                 type="email"
+                autoComplete="email"
                 value={candidateEmail}
                 onChange={e => setCandidateEmail(e.target.value)}
                 placeholder="alex@example.com"

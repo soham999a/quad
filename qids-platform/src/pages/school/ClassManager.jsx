@@ -97,7 +97,7 @@ export default function ClassManager() {
           <div className="text-technical-sm font-technical-sm text-surface-variant uppercase tracking-widest mb-1">Class Join Code</div>
           <div className="text-[28px] font-technical-sm text-primary tracking-widest">{cls.classCode}</div>
         </div>
-        <button onClick={copyCode} className="btn-outline flex items-center gap-2">
+        <button onClick={copyCode} data-tour="class-code" className="btn-outline flex items-center gap-2">
           <Copy size={14} />
           COPY CODE
         </button>
@@ -145,7 +145,7 @@ export default function ClassManager() {
 
       {/* New Assessment Modal */}
       {showNewAssessment && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">
           <div className="card p-8 max-w-[480px] w-full mx-4">
             <h2 className="text-headline-sm font-headline-sm text-on-background mb-6">New Class Assessment</h2>
             <div className="space-y-4">

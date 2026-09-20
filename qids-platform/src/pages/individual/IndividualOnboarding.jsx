@@ -116,6 +116,7 @@ export default function IndividualOnboarding() {
 
       <section className="fade-up text-center" style={{ animationDelay: '420ms' }}>
         <button onClick={handleBegin} disabled={!canProceed}
+          data-tour="ind-begin"
           className={`btn-primary glow w-full md:w-auto ${!canProceed ? 'opacity-40 cursor-not-allowed' : ''}`}>
           BEGIN ASSESSMENT <ArrowRight size={14} />
         </button>

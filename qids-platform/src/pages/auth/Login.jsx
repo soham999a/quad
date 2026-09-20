@@ -129,6 +129,7 @@ export default function Login() {
                   id="email"
                   placeholder="architect@qids.internal"
                   type="email"
+                  autoComplete="email"
                   value={email}
                   onChange={e => setEmail(e.target.value)}
                   required

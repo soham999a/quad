@@ -15,7 +15,7 @@ function ScaleInput() {
   return (
     <div className="flex gap-1.5 mt-2">
       {[1, 2, 3, 4, 5].map(n => (
-        <button key={n} onClick={() => setVal(n)} className="flex-1 px-1 py-1.5 rounded-lg cursor-pointer flex flex-col items-center gap-0.5 text-xs font-bold"
+        <button key={n} onClick={() => setVal(n)} aria-label={`${labels[n - 1]} (${n} of 5)`} className="flex-1 px-1 py-3 rounded-lg cursor-pointer flex flex-col items-center gap-0.5 text-xs font-bold touch-target"
           style={{
             border: `2px solid ${val === n ? 'var(--status-ok)' : 'var(--border-outline-variant)'}`,
             background: val === n ? alpha('var(--status-ok)', 15) : 'transparent',

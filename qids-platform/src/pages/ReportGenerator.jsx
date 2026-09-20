@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { PILLARS, SKILL_SHAPES, CONTEXTS, mergeEvaluationScores } from '../data/qidsData';
 import { computePillarScore, computeWeightedScore, getGrade, getCareerProfile, getSkillShape, WEIGHTS, GRADE_BANDS, IQ_MAX_SCORE } from '../core/engine/qids';
-import { useApp } from '../App';
+import { useApp } from '../context/AppContext';
 import QIDSRadar from '../components/RadarChart';
 import { Download, Printer, AlertTriangle, UserCheck } from 'lucide-react';
 
@@ -65,7 +65,7 @@ export default function ReportGenerator() {
             className="px-5 py-2.5 border-[0.5px] border-outline-variant text-on-surface-variant text-label-md font-label-md hover:text-primary hover:border-primary transition-all cursor-pointer bg-transparent uppercase tracking-widest">
             <Printer size={13} className="inline mr-2" /> Print
           </button>
-          <button onClick={handlePrint}
+          <button onClick={handlePrint} data-tour="report-export"
             className="px-5 py-2.5 bg-primary text-on-primary text-label-md font-label-md hover:opacity-90 transition-all cursor-pointer border-none uppercase tracking-widest">
             <Download size={13} className="inline mr-2" /> Export PDF
           </button>

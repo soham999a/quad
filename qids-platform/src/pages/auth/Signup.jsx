@@ -112,7 +112,7 @@ export default function Signup() {
 
             <div className="flex flex-col space-y-2">
               <label className="text-technical-sm font-technical-sm text-on-surface-variant uppercase" htmlFor="email">Email Address</label>
-              <input className={inputClass} id="email" placeholder="architect@qids.internal" type="email" value={form.email} onChange={e => set('email', e.target.value)} required />
+              <input className={inputClass} id="email" placeholder="architect@qids.internal" type="email" autoComplete="email" value={form.email} onChange={e => set('email', e.target.value)} required />
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

@@ -14,6 +14,7 @@ import EmptyState from './components/EmptyState';
 import { computePillarScore } from './core/engine/qids';
 import { getPlan, can } from './core/plans';
 import { AuthProvider, useAuth } from './context/AuthContext';
+import { AppContext, useApp } from './context/AppContext';
 import { useTheme } from './lib/theme';
 import useModalA11y from './lib/useModalA11y';
 import ProtectedRoute from './components/ProtectedRoute';
@@ -21,6 +22,8 @@ import OnboardingGate from './components/OnboardingGate';
 import { RoleRoute, EntitlementRoute } from './components/guards';
 import ErrorBoundary from './components/ErrorBoundary';
 import ThemeToggle from './components/ThemeToggle';
+import PageGuide from './components/PageGuide';
+import GuideTour, { isTourDone, resetTour } from './components/GuideTour';
 import { ToastProvider } from './components/Toast';
 import { getLatestAssessment, getLatestPostAssessment, getAllEvaluations } from './services/firestoreService';
 
@@ -116,8 +119,9 @@ function ScrollToTop() {
   return null;
 }
 
-export const AppContext = createContext(null);
-export const useApp = () => useContext(AppContext);
+// AppContext + useApp moved to ./context/AppContext — keeping the context in a
+// component-free module lets Vite Fast Refresh work on App.jsx without
+// invalidating the context instance (source of HMR null-context crashes).
 
 // ─── Persona-aware navigation ────────────────────────────────────────────────
 // Each audience sees its own information architecture under one shared shell.
@@ -299,6 +303,7 @@ function paletteItems(navigate, persona, { setTheme, theme }) {
     { group: 'Actions', label: 'Switch context', icon: LayoutGrid, hint: 'Mode', keywords: 'individual school enterprise role mode', run: () => navigate('/mode') },
     { group: 'Actions', label: theme === 'light' ? 'Switch to dark theme' : 'Switch to light theme', icon: theme === 'light' ? Moon : Sun, hint: 'Theme', keywords: 'dark light appearance appearance toggle', run: () => setTheme(theme === 'light' ? 'dark' : 'light') },
     { group: 'Actions', label: 'Toggle sidebar rail', icon: PanelLeftClose, hint: 'View', keywords: 'collapse expand rail width', run: () => window.dispatchEvent(new CustomEvent('qids:toggle-sidebar')) },
+    { group: 'Actions', label: 'Replay product tour', icon: Sparkles, hint: 'Help', keywords: 'tour guide help onboarding walkthrough', run: () => window.dispatchEvent(new CustomEvent('qids:start-tour')) },
   );
   return items;
 }
@@ -342,7 +347,7 @@ function Sidebar({ collapsed }) {
     }`;
 
   return (
-    <aside className="desktop-sidebar sidebar-shell fixed left-0 top-0 h-screen flex-col z-40 bg-sidebar text-sidebar-foreground">
+    <aside data-tour="nav-rail" className="desktop-sidebar sidebar-shell fixed left-0 top-0 h-screen flex-col z-40 bg-sidebar text-sidebar-foreground">
 
       <div className={`flex items-center gap-3 px-6 py-7 border-b border-sidebar-border ${collapsed ? 'justify-center px-0' : ''}`}>
         <QidsMark size={collapsed ? 24 : 26} className="text-gold flex-shrink-0" />
@@ -543,7 +548,7 @@ function MobileMenuDrawer({ onClose }) {
   );
 }
 
-function TopBar({ onMenuOpen, collapsed, onToggleSidebar, onOpenPalette }) {
+function TopBar({ onMenuOpen, collapsed, onToggleSidebar, onOpenPalette, onOpenGuide }) {
   const navigate = useNavigate();
   const { user, userProfile } = useAuth();
   const mode = userProfile?.role || 'individual';
@@ -571,15 +576,24 @@ function TopBar({ onMenuOpen, collapsed, onToggleSidebar, onOpenPalette }) {
       </div>
       <div className="flex items-center gap-5 topbar-actions">
         <button
+          onClick={onOpenGuide}
+          aria-label="Open page guide"
+          title="Page guide (Shift+/)"
+          data-tour="guide"
+          className="w-9 h-9 flex-shrink-0 flex items-center justify-center border border-sidebar-border text-muted-foreground hover:text-gold hover:border-gold/60 transition-colors cursor-pointer bg-transparent font-mono text-[13px]">
+          ?
+        </button>
+        <button
           onClick={onOpenPalette}
           aria-label="Open command palette"
           title="Search pages and actions (Ctrl+K)"
+          data-tour="search"
           className="hidden md:inline-flex items-center gap-2 h-8 px-3 border border-sidebar-border text-muted-foreground hover:text-gold hover:border-gold/60 transition-colors cursor-pointer bg-transparent font-mono text-[10px] tracking-[0.14em] uppercase">
           <Search size={12} strokeWidth={1.5} />
           <span className="hidden lg:inline">Search</span>
           <kbd className="text-[9px] opacity-70">⌘K</kbd>
         </button>
-        <span className="hidden md:inline-flex items-center"><ThemeToggle /></span>
+        <span className="hidden md:inline-flex items-center" data-tour="theme"><ThemeToggle /></span>
         <button onClick={() => navigate('/mode')}
           className="hidden md:inline-flex items-center gap-2 bg-transparent border-none p-0 font-mono text-[11px] tracking-[0.18em] uppercase text-muted-foreground hover:text-gold transition-colors cursor-pointer">
           Switch mode <ChevronRight size={12} />
@@ -608,6 +622,35 @@ function TopBar({ onMenuOpen, collapsed, onToggleSidebar, onOpenPalette }) {
 
 const SIDEBAR_KEY = 'qids-sidebar-collapsed';
 
+// First-run tour script. Steps whose selector doesn't exist at the current
+// breakpoint are skipped automatically by the engine (mobile-safe).
+const TOUR_STEPS = [
+  {
+    selector: '[data-tour="nav-rail"]',
+    kicker: 'WELCOME TO QIDS',
+    title: 'Everything lives in the rail',
+    body: 'Your sidebar is filtered to your role — only the sections you use. Collapse it when you want more room.',
+  },
+  {
+    selector: '[data-tour="search"]',
+    kicker: 'FAST NAVIGATION',
+    title: 'Search everything with Ctrl/⌘+K',
+    body: 'Jump to any page, start an assessment, or flip the theme — without touching the mouse. Recents are kept for you.',
+  },
+  {
+    selector: '[data-tour="guide"]',
+    kicker: 'HELP WHERE YOU ARE',
+    title: 'A manual on every tab',
+    body: 'This ? opens a short, contextual guide for the page you are on — press Shift+/ anywhere. Nothing to search, nothing to memorise.',
+  },
+  {
+    selector: '[data-tour="theme"]',
+    kicker: 'MAKE IT YOURS',
+    title: 'Dark or light, remembered',
+    body: 'Pick your theme and sidebar width — both persist across sessions and devices.',
+  },
+];
+
 function AppShell() {
   const [collapsed, setCollapsed] = useState(() => {
     // Restore the user's preferred rail width across sessions.
@@ -621,6 +664,8 @@ function AppShell() {
   const [evalStatus, setEvalStatus] = useState({});
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [paletteOpen, setPaletteOpen] = useState(false);
+  const [guideOpen, setGuideOpen] = useState(false);
+  const [tourSteps, setTourSteps] = useState(null); // null = not running
   const { user, userProfile } = useAuth();
   const navigate = useNavigate();
   const { setTheme, theme } = useTheme();
@@ -647,6 +692,34 @@ function AppShell() {
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
+  }, []);
+
+  // "?" (Shift+/) opens the per-tab guide, mirroring the top-bar button.
+  useEffect(() => {
+    const onKey = (e) => {
+      if (e.key === '?' && !e.metaKey && !e.ctrlKey && !e.altKey) {
+        const t = e.target;
+        if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable)) return;
+        e.preventDefault();
+        setGuideOpen(o => !o);
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, []);
+
+  // First-run tour: starts once per user, after the shell has rendered.
+  useEffect(() => {
+    if (!user || tourSteps !== null || isTourDone()) return;
+    const t = setTimeout(() => setTourSteps(TOUR_STEPS), 600);
+    return () => clearTimeout(t);
+  }, [user, tourSteps]);
+
+  // "Replay tour" palette action re-arms the tour.
+  useEffect(() => {
+    const onStart = () => { resetTour(); setTourSteps(TOUR_STEPS); };
+    window.addEventListener('qids:start-tour', onStart);
+    return () => window.removeEventListener('qids:start-tour', onStart);
   }, []);
 
   useEffect(() => {
@@ -681,7 +754,7 @@ function AppShell() {
         <a href="#qids-main" className="skip-link">Skip to content</a>
         <Sidebar collapsed={collapsed} />
         <div className={`app-content ${collapsed ? 'sidebar-collapsed' : ''}`}>
-          <TopBar onMenuOpen={() => setMobileMenuOpen(true)} collapsed={collapsed} onToggleSidebar={() => setCollapsed(c => !c)} onOpenPalette={() => setPaletteOpen(true)} />
+          <TopBar onMenuOpen={() => setMobileMenuOpen(true)} collapsed={collapsed} onToggleSidebar={() => setCollapsed(c => !c)} onOpenPalette={() => setPaletteOpen(true)} onOpenGuide={() => setGuideOpen(true)} />
           <main id="qids-main" className="flex-1 min-h-0 overflow-y-auto overflow-x-clip">
             <Routes>
               <Route index element={<PersonaHome />} />
@@ -831,6 +904,13 @@ function AppShell() {
         <MobileNav onMenuOpen={() => setMobileMenuOpen(true)} />
       </div>
       {mobileMenuOpen && <MobileMenuDrawer onClose={() => setMobileMenuOpen(false)} />}
+      <PageGuide open={guideOpen} onClose={() => setGuideOpen(false)} />
+      {tourSteps && (
+        <GuideTour
+          steps={tourSteps}
+          onDone={() => setTourSteps(null)}
+        />
+      )}
       <CommandPalette
         open={paletteOpen}
         onClose={() => setPaletteOpen(false)}

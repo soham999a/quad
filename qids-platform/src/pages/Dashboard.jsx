@@ -78,7 +78,7 @@ export default function Dashboard() {
       </section>
 
       {!loading && assessments.length === 0 && (
-        <section className="card card-gold p-6 md:p-8 mb-10 flex flex-wrap items-center justify-between gap-6 animate-fade-up relative overflow-hidden">
+        <section data-tour="dash-hero" className="card card-gold p-6 md:p-8 mb-10 flex flex-wrap items-center justify-between gap-6 animate-fade-up relative overflow-hidden">
           <div
             aria-hidden="true"
             className="absolute inset-0 pointer-events-none opacity-60"
@@ -101,7 +101,7 @@ export default function Dashboard() {
       )}
 
       {/* Stats Row */}
-      <section className="responsive-grid-4 gap-3 md:gap-4 w-full mb-10 md:mb-16">
+      <section data-tour="dash-stats" className="responsive-grid-4 gap-3 md:gap-4 w-full mb-10 md:mb-16">
         {loading ? (
           <>
             <div className="card p-5 md:p-6">
@@ -170,7 +170,7 @@ export default function Dashboard() {
       )}
 
       {/* Main Grid */}
-      <div className="responsive-grid-12 gap-6 md:gap-12">
+      <div data-tour="dash-activity" className="responsive-grid-12 gap-6 md:gap-12">
         {/* Recent Assessments */}
         <div className="md:col-span-8 col-span-full">
           <div className="flex justify-between items-end mb-5">

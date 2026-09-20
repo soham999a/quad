@@ -110,7 +110,7 @@ export default function MyEvaluator() {
           <div className="flex items-center justify-between flex-wrap gap-3">
             <div className="flex items-center gap-3.5">
               <div className="w-11 h-11 rounded-full bg-(--phase-pre) flex items-center justify-center shrink-0">
-                <span className="text-lg font-extrabold text-white">
+                <span className="text-lg font-extrabold text-on-primary">
                   {(currentEvaluator.name || 'E')[0].toUpperCase()}
                 </span>
               </div>
@@ -222,7 +222,7 @@ export default function MyEvaluator() {
             <div key={ev.uid} className={`flex items-center justify-between px-4 py-3.5 bg-surface-container-low border border-outline-variant rounded-xl transition-all ${currentEvaluator?.uid === ev.uid ? 'opacity-60' : ''}`}>
               <div className="flex items-center gap-3">
                 <div className="w-[38px] h-[38px] rounded-full bg-(--phase-pre) flex items-center justify-center shrink-0">
-                  <span className="text-sm font-extrabold text-white">{(ev.name || 'E')[0].toUpperCase()}</span>
+                  <span className="text-sm font-extrabold text-on-primary">{(ev.name || 'E')[0].toUpperCase()}</span>
                 </div>
                 <div>
                   <div className="text-sm font-semibold">{ev.name || 'Unnamed'}</div>
