@@ -138,7 +138,10 @@ export function irtScale(
   const p = max > 0 ? raw / max : 0;
   // Logistic transform: logit(p) ~ theta. Guard p extremes.
   const logit = Math.log(Math.max(p, 0.001) / Math.max(1 - p, 0.001));
-  const theta = logit * discrimination + difficultyBias;
+  // Positive difficultyBias = harder module → the same raw ratio reflects
+  // *lower* ability, so the bias is subtracted (matches DIFFICULTY_VALUE's
+  // E/M/H ladder where H > 0 is harder).
+  const theta = logit * discrimination - difficultyBias;
   // Map theta to T-score (mean 50, sd 10) via inverse-normal-ish: use bounded linear map.
   const tScore = Math.max(20, Math.min(80, Math.round(50 + theta * 10)));
   const z = (tScore - 50) / 10;

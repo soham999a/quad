@@ -1,3 +1,4 @@
+import usePageTitle from '../lib/usePageTitle';
 import React, { useState } from 'react';
 import { ChevronRight, ChevronDown, Info, X } from 'lucide-react';
 
@@ -116,6 +117,7 @@ function TreeNode({ node, depth = 0, expanded, onToggle, onSelect, selected }) {
 }
 
 export default function FrameworkMap() {
+  usePageTitle('Framework');
   const [expanded, setExpanded] = useState({ pillars: true, grading: true });
   const [selected, setSelected] = useState(null);
   const [detail, setDetail] = useState(null);
@@ -237,7 +239,7 @@ export default function FrameworkMap() {
         <div className="w-full lg:w-[280px] lg:border-l border-outline-variant bg-surface-container-low p-6 overflow-y-auto">
           <div className="flex justify-between items-start mb-4">
             <h3 className="text-sm font-bold">{NODE_DETAILS[detail.id]?.title || detail.label}</h3>
-            <button onClick={() => setDetail(null)} className="p-1 bg-transparent text-on-surface-variant hover:bg-surface-container-low cursor-pointer transition-all rounded"><X size={13} /></button>
+            <button onClick={() => setDetail(null)} aria-label="Close details" className="p-1 bg-transparent text-on-surface-variant hover:bg-surface-container-low cursor-pointer transition-all rounded"><X size={13} /></button>
           </div>
           <p className="text-sm text-on-surface-variant leading-relaxed">
             {NODE_DETAILS[detail.id]?.desc || 'Select a node to view details.'}

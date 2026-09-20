@@ -1,3 +1,4 @@
+import usePageTitle from '../lib/usePageTitle';
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
@@ -31,6 +32,7 @@ function StatCard({ icon: Icon, label, value, index, onClick }) {
 }
 
 export default function Dashboard() {
+  usePageTitle('Dashboard');
   const { user, userProfile } = useAuth();
   const navigate = useNavigate();
   const [assessments, setAssessments] = useState([]);

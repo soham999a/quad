@@ -1,3 +1,4 @@
+import usePageTitle from '../lib/usePageTitle';
 import React, { useState } from 'react';
 import { BookOpen, ChevronDown, ChevronUp, Clock, Calendar, Target, Brain, Heart, Users, Zap } from 'lucide-react';
 
@@ -392,6 +393,7 @@ function ModuleCard({ module, color }) {
 }
 
 export default function InterventionPlan() {
+  usePageTitle('Intervention plan');
   const [activePillar, setActivePillar] = useState('IQ');
   const [activeBand, setActiveBand] = useState('RED');
   const pillar = PILLARS[activePillar];

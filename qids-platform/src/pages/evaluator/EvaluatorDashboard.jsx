@@ -1,3 +1,4 @@
+import usePageTitle from '../../lib/usePageTitle';
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { doc, getDoc } from 'firebase/firestore';
@@ -6,8 +7,10 @@ import { useAuth } from '../../context/AuthContext';
 import { getEvaluatorAssignments, getUserAssessments, getAllEvaluations } from '../../services/firestoreService';
 import { PILLARS } from '../../data/qidsData';
 import { Users, ClipboardList, CheckCircle, Clock, ChevronRight, RefreshCw, UserCheck } from 'lucide-react';
+import EmptyState from '../../components/EmptyState';
 
 export default function EvaluatorDashboard() {
+  usePageTitle('Evaluator');
   const { user, userProfile } = useAuth();
   const navigate = useNavigate();
   const [assignments, setAssignments] = useState([]);
@@ -99,13 +102,11 @@ export default function EvaluatorDashboard() {
       </section>
 
       {assignments.length === 0 ? (
-        <div className="py-10 md:py-16 text-center border-[0.5px] border-outline-variant">
-          <Users size={28} className="text-outline mx-auto mb-4 opacity-40" />
-          <div className="text-label-md font-label-md text-on-background mb-1">No students assigned</div>
-          <div className="text-technical-sm font-technical-sm text-surface-variant">
-            Contact an admin to get assigned students to evaluate.
-          </div>
-        </div>
+        <EmptyState
+          icon={Users}
+          title="No students assigned"
+          description="Contact an admin to get assigned students to evaluate."
+        />
       ) : (
         <div className="flex flex-col">
           {assignments.map(assignment => {

@@ -1,3 +1,4 @@
+import usePageTitle from '../lib/usePageTitle';
 import React, { useState } from 'react';
 import { ClipboardList, ChevronDown, ChevronUp, BookOpen, Download, ExternalLink, Brain, Heart, Users, Zap } from 'lucide-react';
 
@@ -349,6 +350,7 @@ function AQQuestionnaire({ color }) {
 }
 
 export default function Questionnaires() {
+  usePageTitle('Questionnaires');
   const [activePillar, setActivePillar] = useState('IQ');
   const pillar = PILLARS[activePillar];
 

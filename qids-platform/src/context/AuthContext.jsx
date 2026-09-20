@@ -14,6 +14,7 @@ import {
 } from 'firebase/auth';
 import { doc, setDoc, getDoc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { auth, db } from '../firebase';
+import { upsertPublicEvaluator, removePublicEvaluator } from '../services/firestoreService';
 
 const AuthContext = createContext(null);
 export const useAuth = () => useContext(AuthContext);
@@ -105,6 +106,15 @@ export function AuthProvider({ children }) {
   const updateUserRole = async (uid, role) => {
     try {
       await updateDoc(doc(db, 'users', uid), { role, updatedAt: serverTimestamp() });
+      // Keep the public evaluator directory in sync with role changes.
+      if (role === 'evaluator') {
+        await upsertPublicEvaluator(uid, {
+          name: userProfile?.name || user?.displayName || '',
+          email: userProfile?.email || user?.email || '',
+        });
+      } else {
+        await removePublicEvaluator(uid);
+      }
       if (user?.uid === uid) {
         setUserProfile(prev => prev ? { ...prev, role } : prev);
       }

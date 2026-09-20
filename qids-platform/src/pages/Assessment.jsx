@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import usePageTitle from '../lib/usePageTitle';
+import React, { useState, useEffect, useRef } from 'react';
 import { PILLARS, EQ_QUESTIONS, SQ_QUESTIONS, IQ_QUESTIONS, AQ_QUESTIONS, mapAQLikert } from '../data/qidsData';
 import { evaluateQidsAssessment, getGrade } from '../core/engine/qids';
 import { getRandomDiagramQuestions } from '../data/diagramQuestions';
@@ -8,9 +9,12 @@ import AIQuestionGenerator from '../components/AIQuestionGenerator';
 import { useApp } from '../App';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { saveAssessment, getStudentEvaluator, getAllUsers, assignEvaluator, removeAssignment } from '../services/firestoreService';
+import { saveAssessment, getStudentEvaluator, listPublicEvaluators, assignEvaluator, removeAssignment } from '../services/firestoreService';
+import { logEvent } from '../lib/analytics';
 import { Save, ChevronRight, ChevronLeft, Check, CheckCircle, AlertCircle, ClipboardList, Brain, Heart, Users, Shield, ArrowRight } from 'lucide-react';
 import { useToast } from '../components/Toast';
+import { loadCheckpoint, saveCheckpoint, clearCheckpoint, loadRemoteCheckpoint, saveRemoteCheckpoint } from '../lib/checkpoint';
+import { useKeyboardAnswering, KeyboardHint, kbFocusStyle } from '../lib/keyboardAnswering';
 
 const STEPS = ['Intake & Consent', 'IQ Assessment', 'EQ Assessment', 'SQ Assessment', 'AQ Assessment', 'Review & Submit'];
 
@@ -234,10 +238,15 @@ function IQStep({ scores, onChange, ageGroup, context }) {
       });
       openSections.forEach(sec => {
         const aiData = scores['ai_' + sec];
-        if (aiData?.answers) {
-          const answered = Object.values(aiData.answers).filter(v => v !== undefined && v !== '').length;
-          total += answered;
-          correct += answered;
+        if (aiData?.answers && aiData?.questions) {
+          // Open answers are scored on merit (0–2 marks each via Groq rubric),
+          // never auto-credited just for responding.
+          const scored = aiData.openScores || {};
+          Object.entries(aiData.answers).forEach(([idx, val]) => {
+            if (val === undefined || val === '') return;
+            total += 2;
+            correct += scored[idx]?.marks ?? 0;
+          });
         }
       });
       return total > 0 ? correct : 0;
@@ -327,7 +336,7 @@ function IQStep({ scores, onChange, ageGroup, context }) {
               color="var(--status-ok)"
               label={`${sec.charAt(0).toUpperCase() + sec.slice(1)} IQ`}
               generateFn={(params) => generateIQQuestions({ ...params, section: sec })}
-              onAnswersChange={(ans, qs) => onChange('ai_' + sec, 0, { answers: ans, questions: qs })}
+              onAnswersChange={(ans, qs, openScores) => onChange('ai_' + sec, 0, { answers: ans, questions: qs, openScores })}
             />
           ))}
         </div>
@@ -338,6 +347,14 @@ function IQStep({ scores, onChange, ageGroup, context }) {
 
 // ─── EQ ASSESSMENT STEP ───────────────────────────────────────────────────────
 function EQStep({ scores, onChange, ageGroup }) {
+  // Keyboard-first answering for the Likert lists (1–5, auto-advance).
+  const kbCursor = useKeyboardAnswering({
+    count: 5,
+    mode: 'rating',
+    getOptionCount: () => 5,
+    onAnswer: (i, rating) => onChange('partA', activeComponent, i, rating),
+    deps: [activeComponent],
+  });
   const pillar = PILLARS.EQ;
   const [activeTab, setActiveTab] = useState('partA');
   const [activeComponent, setActiveComponent] = useState('SA');
@@ -396,18 +413,23 @@ function EQStep({ scores, onChange, ageGroup }) {
             })}
           </div>
 
-          <div className="mb-2">
-            <div className="text-label-md font-label-md" style={{ color: pillar.color }}>{compData[activeComponent].label}</div>
-            <div className="text-technical-sm font-technical-sm text-surface-variant mt-0.5">{compData[activeComponent].subParams}</div>
+          <div className="mb-2 flex items-end justify-between gap-3">
+            <div>
+              <div className="text-label-md font-label-md" style={{ color: pillar.color }}>{compData[activeComponent].label}</div>
+              <div className="text-technical-sm font-technical-sm text-surface-variant mt-0.5">{compData[activeComponent].subParams}</div>
+            </div>
+            <KeyboardHint />
           </div>
           <div className="mt-4">
             {compData[activeComponent].questions[age].map((q, i) => (
-              <LikertQuestion
-                key={i} q={q} index={i}
-                value={scores.partA?.[activeComponent]?.[i] || 0}
-                onChange={v => onChange('partA', activeComponent, i, v)}
-                color={pillar.color}
-              />
+              <div key={i} data-kb-focus={kbCursor === i || undefined} style={kbFocusStyle(kbCursor === i)}>
+                <LikertQuestion
+                  q={q} index={i}
+                  value={scores.partA?.[activeComponent]?.[i] || 0}
+                  onChange={v => onChange('partA', activeComponent, i, v)}
+                  color={pillar.color}
+                />
+              </div>
             ))}
           </div>
           <AIQuestionGenerator
@@ -930,6 +952,7 @@ function ReviewStep({ intake, rawScores }) {
 
 // ─── MAIN ASSESSMENT PAGE ─────────────────────────────────────────────────────
 export default function Assessment() {
+  usePageTitle('Assessment');
   const { setAssessmentData, demoMode, context } = useApp();
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -959,28 +982,66 @@ export default function Assessment() {
 
   const updateIntake = (k, v) => setIntake(prev => ({ ...prev, [k]: v }));
 
-  useEffect(() => {
-    if (!user) return;
-    (async () => {
-      setLoadingEv(true);
-      try {
-        const allUsers = await getAllUsers();
-        setEvaluators(allUsers.filter(u => u.role === 'evaluator'));
+  // ── Checkpoint/resume (blueprint P2) ─────────────────────────────────────────
+  const checkpointRef = useRef(null);
+  const [resumeState, setResumeState] = useState(null);
 
-        const assignment = await getStudentEvaluator(user.uid);
-        if (assignment) {
-          const evProfile = allUsers.find(u => u.uid === assignment.evaluatorUid);
-          if (evProfile) {
-            setCurrentEv(evProfile);
-            setIntake(prev => ({ ...prev, evaluator: evProfile.name || 'Assigned Evaluator', _evUid: assignment.evaluatorUid }));
-          }
-        }
-      } catch (e) {
-        // Silently fail
-      }
-      setLoadingEv(false);
+  // Focus mode: while answering (not intake/review/submitted), hide the shell
+  // chrome so the assessment is the only thing on screen.
+  useEffect(() => {
+    const active = !submitted && step >= 1 && step <= 4;
+    document.body.classList.toggle('qids-focus', active);
+    return () => document.body.classList.remove('qids-focus');
+  }, [step, submitted]);
+
+  // Restore once on mount — local layer first, then the cross-device layer.
+  // Only offer resume when there is real progress.
+  useEffect(() => {
+    let cancelled = false;
+    const pick = (cp) => {
+      const hasAnswers = [cp?.iqScores, cp?.eqScores, cp?.sqScores, cp?.aqScores]
+        .some(s => s && Object.keys(s).length > 0);
+      const hasIntake = cp?.intake && (cp.intake.name?.trim() || cp.intake.consent);
+      return cp && (cp.step > 0 || hasAnswers || hasIntake) ? cp : null;
+    };
+    const local = pick(loadCheckpoint('qids', user?.uid));
+    if (local) { setResumeState(local); return; }
+    (async () => {
+      const remote = pick(await loadRemoteCheckpoint('qids', user?.uid));
+      if (!cancelled && remote) setResumeState(remote);
     })();
+    return () => { cancelled = true; };
   }, [user]);
+
+  // Debounced save of all in-progress state on every change.
+  // Local layer saves every 600ms; cross-device layer every ~20s (throttled).
+  useEffect(() => {
+    if (submitted) return;
+    if (checkpointRef.current) clearTimeout(checkpointRef.current);
+    checkpointRef.current = setTimeout(() => {
+      const state = { step, intake, iqScores, eqScores, sqScores, aqScores };
+      saveCheckpoint('qids', user?.uid, state);
+      saveRemoteCheckpoint('qids', user?.uid, state);
+    }, 600);
+    return () => clearTimeout(checkpointRef.current);
+  }, [step, intake, iqScores, eqScores, sqScores, aqScores, submitted, user]);
+
+  const resumeAssessment = () => {
+    if (!resumeState) return;
+    setStep(resumeState.step ?? 0);
+    setIntake(prev => ({ ...prev, ...resumeState.intake }));
+    setIqScores(resumeState.iqScores ?? {});
+    setEqScores(resumeState.eqScores ?? {});
+    setSqScores(resumeState.sqScores ?? {});
+    setAqScores(resumeState.aqScores ?? {});
+    setResumeState(null);
+    toast('Resumed your saved progress.', 'success');
+  };
+
+  const discardResume = () => {
+    clearCheckpoint('qids', user?.uid);
+    setResumeState(null);
+  };
 
   const handleAssignEvaluator = async (evUid) => {
     setLoadingEv(true);
@@ -1163,6 +1224,8 @@ export default function Assessment() {
       if (!intake.consent) { toast('Please confirm consent before proceeding.', 'error'); return; }
       if (!intake.name.trim()) { toast('Please enter the full name.', 'error'); return; }
       if (!intake.ageGroup) { toast('Please select an age group.', 'error'); return; }
+      logEvent(user?.uid, 'intake_done', { ageGroup: intake.ageGroup });
+      logEvent(user?.uid, 'assessment_started');
     }
     setStep(s => s + 1);
   };
@@ -1211,6 +1274,8 @@ export default function Assessment() {
     }
     setSaving(false);
     if (user && !savedId) return;
+    clearCheckpoint('qids', user?.uid);
+    logEvent(user.uid, 'assessment_complete', { grade: data.grade, mode });
     setSubmitted(true);
   };
 
@@ -1251,6 +1316,26 @@ export default function Assessment() {
 
   return (
     <div className="page-pad max-w-[960px] mx-auto animate-fade">
+      {/* Resume banner — shown when an in-progress checkpoint exists */}
+      {resumeState && (
+        <div className="mb-6 flex flex-col sm:flex-row sm:items-center gap-3 p-4 border-[0.5px] border-primary/40 bg-primary/5">
+          <div className="flex-1">
+            <div className="text-label-md font-label-md text-on-surface">Unfinished assessment found</div>
+            <div className="text-technical-sm font-technical-sm text-surface-variant mt-1">
+              Saved {new Date(resumeState.savedAt).toLocaleString()} — step {((resumeState.step ?? 0) + 1)} of 6. You can continue where you left off.
+            </div>
+          </div>
+          <div className="flex gap-2 flex-shrink-0">
+            <button onClick={resumeAssessment} className="px-4 py-2 bg-primary text-on-primary text-technical-sm font-technical-sm uppercase tracking-widest cursor-pointer border-none hover:opacity-90 transition-all">
+              Resume
+            </button>
+            <button onClick={discardResume} className="px-4 py-2 border-[0.5px] border-outline-variant text-on-surface-variant text-technical-sm font-technical-sm uppercase tracking-widest cursor-pointer bg-transparent hover:border-primary hover:text-primary transition-all">
+              Discard
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Page header */}
       <div className="mb-6 md:mb-10">
         <div className="text-technical-sm font-technical-sm text-primary mb-2">ASSESSMENT PROTOCOL</div>

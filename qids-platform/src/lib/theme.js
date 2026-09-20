@@ -43,6 +43,8 @@ export function useTheme() {
 
   useEffect(() => {
     applyTheme(theme);
+    // Persist so the pre-paint script in index.html restores it on reload.
+    try { localStorage.setItem(THEME_STORAGE_KEY, theme); } catch { /* best-effort */ }
   }, [theme]);
 
   const toggle = useCallback(() => {

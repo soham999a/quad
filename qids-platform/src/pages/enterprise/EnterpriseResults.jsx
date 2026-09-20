@@ -1,3 +1,4 @@
+import usePageTitle from '../../lib/usePageTitle';
 import React, { useState, useMemo } from 'react';
 import { RadarChart as ReRadar, Radar, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer, Tooltip } from 'recharts';
 import { Shield, Target, Zap, Brain, ArrowLeft, FileText } from 'lucide-react';
@@ -107,6 +108,7 @@ function RfiList({ rfi }) {
 }
 
 export default function EnterpriseResults({ result, deployed, answers, onRestart }) {
+  usePageTitle('Enterprise results');
   const [view, setView] = useState('overview');
   const pii = result?.pii;
   const agility = result?.learningAgility;

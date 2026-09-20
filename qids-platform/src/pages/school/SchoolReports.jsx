@@ -1,3 +1,4 @@
+import usePageTitle from '../../lib/usePageTitle';
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
@@ -5,6 +6,7 @@ import { getTeacherClasses } from '../../services/schoolService';
 import { FileText, Download, ChevronRight, BarChart3 } from 'lucide-react';
 
 export default function SchoolReports() {
+  usePageTitle('School reports');
   const { user } = useAuth();
   const navigate = useNavigate();
   const [classes, setClasses] = useState([]);

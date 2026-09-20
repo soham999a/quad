@@ -1,3 +1,4 @@
+import usePageTitle from '../lib/usePageTitle';
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { PILLARS, SKILL_SHAPES, CONTEXTS, mergeEvaluationScores } from '../data/qidsData';
@@ -7,6 +8,7 @@ import QIDSRadar from '../components/RadarChart';
 import { Download, Printer, AlertTriangle, UserCheck } from 'lucide-react';
 
 export default function ReportGenerator() {
+  usePageTitle('Report generator');
   const { assessmentData, postData, context, demoMode, evaluations, mergedPillarScores } = useApp();
   const navigate = useNavigate();
   const [reportType, setReportType] = useState('full');

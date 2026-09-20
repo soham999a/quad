@@ -1,3 +1,4 @@
+import usePageTitle from '../../lib/usePageTitle';
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
@@ -7,6 +8,7 @@ import { useToast } from '../../components/Toast';
 import { FileText, Play, ChevronRight, Brain } from 'lucide-react';
 
 export default function InterviewSetup() {
+  usePageTitle('Interview setup');
   const { user, userProfile } = useAuth();
   const navigate = useNavigate();
   const toast = useToast();

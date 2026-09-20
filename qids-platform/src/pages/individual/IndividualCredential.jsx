@@ -1,8 +1,13 @@
+import usePageTitle from '../../lib/usePageTitle';
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { useAuth } from '../../context/AuthContext';
+import { useToast } from '../../components/Toast';
+import { logEvent } from '../../lib/analytics';
 import { RadarChart as ReRadar, Radar, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer } from 'recharts';
 import { ArrowLeft, Printer, Download, Shield } from 'lucide-react';
-import { getAssessment } from '../../services/firestoreService';
+import { getAssessment, publishCredential } from '../../services/firestoreService';
+import { Share2, Check } from 'lucide-react';
 import { computeQidsPillarScores, getGrade, computeWeightedScore, getSkillShape } from '../../core/engine/qids';
 
 const PILLAR_SHORT = { IQ: 'IQ', EQ: 'EQ', SQ: 'SQ', AQ: 'AQ' };
@@ -22,10 +27,14 @@ function MiniRadar({ pillarScores }) {
 }
 
 export default function IndividualCredential() {
+  usePageTitle('My credential');
   const { id } = useParams();
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const toast = useToast();
   const [assessment, setAssessment] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [publishState, setPublishState] = useState('idle');
 
   useEffect(() => {
     if (!id) { setLoading(false); return; }
@@ -118,11 +127,52 @@ export default function IndividualCredential() {
         </div>
       </div>
 
-      {/* Print Actions */}
-      <div className="mt-6 no-print flex gap-4">
+      {/* Actions */}
+      <div className="mt-6 no-print flex flex-col sm:flex-row gap-4">
         <button onClick={() => window.print()} className="btn-primary glow flex-1">
           <Printer size={14} /> PRINT / SAVE PDF
         </button>
+        <button
+          onClick={async () => {
+            setPublishState('publishing');
+            try {
+              const { hash } = await publishCredential(user.uid, assessment);
+              const url = `${window.location.origin}/credential/${assessment.id}`;
+              await navigator.clipboard?.writeText(url).catch(() => {});
+              logEvent(user.uid, 'credential_published', { assessmentId: assessment.id });
+              setPublishState('done');
+              toast('Public link copied — anyone can verify this credential.', 'success');
+              console.info('credential hash', hash);
+            } catch (e) {
+              console.warn('publish failed', e);
+              setPublishState('idle');
+              toast('Could not publish the public credential.', 'error');
+            }
+          }}
+          disabled={publishState !== 'idle'}
+          className="btn-outline flex-1">
+          {publishState === 'idle' && <><Share2 size={14} /> PUBLISH PUBLIC LINK</>}
+          {publishState === 'publishing' && 'Publishing…'}
+          {publishState === 'done' && <><Check size={14} /> LINK COPIED</>}
+        </button>
+        {publishState === 'done' && assessment?.id && (
+          <button
+            onClick={async () => {
+              const url = `${window.location.origin}/credential/${assessment.id}`;
+              const share = { title: 'My verified QIDS credential', text: 'Verify my QIDS intelligence profile.', url };
+              try {
+                if (navigator.share) { await navigator.share(share); return; }
+                throw new Error('no-web-share');
+              } catch (e) {
+                if (e?.name === 'AbortError') return; // user closed the sheet
+                await navigator.clipboard?.writeText(url).catch(() => {});
+                toast('Link copied — paste it anywhere.', 'success');
+              }
+            }}
+            className="btn-outline flex-1">
+            <Share2 size={14} /> SHARE LINK
+          </button>
+        )}
         <button onClick={() => navigate(-1)} className="btn-outline flex-1">
           BACK
         </button>

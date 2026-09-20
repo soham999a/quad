@@ -1,21 +1,28 @@
+import usePageTitle from '../../lib/usePageTitle';
 import React, { useState } from 'react';
 import { useNavigate, Link, Navigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { destinationFor, sanitizeNext } from '../../lib/flow';
+import friendlyAuthError from '../../lib/authErrors';
+import { logEvent } from '../../lib/analytics';
+import { auth } from '../../firebase';
 import { CONTEXTS } from '../../data/qidsData';
+import { Eye, EyeOff } from 'lucide-react';
 
+// NOTE: 'admin' is intentionally not self-selectable — it is a privileged role
+// granted by an existing admin (Firebase console until workspace RBAC ships).
 const ROLES = [
   { id: 'individual', label: 'Individual', desc: 'Personal development journey' },
   { id: 'student', label: 'Student', desc: 'School or institutional learner' },
   { id: 'teacher', label: 'Teacher', desc: 'Manage classes and assessments' },
   { id: 'evaluator', label: 'Evaluator / Counselor', desc: 'Assess and guide others' },
-  { id: 'admin', label: 'Institution Admin', desc: 'Manage an organization' },
   { id: 'employer', label: 'Employer', desc: 'Hiring and talent intelligence' },
 ];
 
 const CONTEXT_IDS = new Set(CONTEXTS.map(c => c.id));
 
 export default function Signup() {
+  usePageTitle('Create account');
   const { signup, loginWithGoogle, user, userProfile } = useAuth();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -33,6 +40,7 @@ export default function Signup() {
   if (user) return <Navigate to={next || destinationFor(userProfile?.role)} replace />;
 
   const set = (k, v) => setForm(prev => ({ ...prev, [k]: v }));
+  const [showPassword, setShowPassword] = useState(false);
 
   const handleSignup = async (e) => {
     e.preventDefault();
@@ -43,9 +51,10 @@ export default function Signup() {
     setLoading(true);
     try {
       await signup(form.email, form.password, form.name.trim(), form.role, form.context);
+      logEvent(auth.currentUser?.uid, 'signed_up', { role: form.role, method: 'email' });
       navigate(next || destinationFor(form.role));
     } catch (err) {
-      setError(err.message || 'Signup failed. Please try again.');
+      setError(friendlyAuthError(err, 'Signup failed. Please try again.'));
     } finally {
       setLoading(false);
     }
@@ -58,7 +67,7 @@ export default function Signup() {
       await loginWithGoogle(form.role, form.context);
       navigate('/mode');
     } catch (err) {
-      setError(err.message || 'Google sign-in failed.');
+      setError(friendlyAuthError(err, 'Google sign-in failed.'));
     } finally {
       setLoading(false);
     }
@@ -109,11 +118,19 @@ export default function Signup() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="flex flex-col space-y-2">
                 <label className="text-technical-sm font-technical-sm text-on-surface-variant uppercase" htmlFor="password">Access Key</label>
-                <input className={inputClass} id="password" placeholder="••••••••" type="password" value={form.password} onChange={e => set('password', e.target.value)} required />
+                <div className="relative">
+                  <input className={inputClass} id="password" placeholder="••••••••" type={showPassword ? 'text' : 'password'} value={form.password} onChange={e => set('password', e.target.value)} required />
+                  <button type="button" onClick={() => setShowPassword(v => !v)}
+                    aria-label={showPassword ? 'Hide password' : 'Show password'}
+                    aria-pressed={showPassword}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 p-1 bg-transparent border-none cursor-pointer text-surface-variant hover:text-on-surface transition-colors">
+                    {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                  </button>
+                </div>
               </div>
               <div className="flex flex-col space-y-2">
                 <label className="text-technical-sm font-technical-sm text-on-surface-variant uppercase" htmlFor="confirm">Confirm Key</label>
-                <input className={inputClass} id="confirm" placeholder="••••••••" type="password" value={form.confirm} onChange={e => set('confirm', e.target.value)} required />
+                <input className={inputClass} id="confirm" placeholder="••••••••" type={showPassword ? 'text' : 'password'} value={form.confirm} onChange={e => set('confirm', e.target.value)} required />
               </div>
             </div>
 

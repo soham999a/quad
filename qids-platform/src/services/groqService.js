@@ -1,32 +1,78 @@
 // Groq AI service — dynamic question generation for QIDS assessments
-// Uses llama-3.3-70b-versatile via Groq API
+// Uses llama-3.3-70b-versatile via a serverless proxy (/api/generate-questions)
+// so the API key stays server-side and never ships in the client bundle.
+// Falls back to a direct browser call when no proxy is available (local dev).
+
+import { getAuth } from 'firebase/auth';
+import { auth } from '../firebase';
 
 const GROQ_API_KEY = import.meta.env.VITE_GROQ_API_KEY;
+const GROQ_PROXY_URL = '/api/generate-questions';
 const GROQ_API_URL = 'https://api.groq.com/openai/v1/chat/completions';
 const MODEL = 'llama-3.3-70b-versatile';
 
 // ─── Core API call ────────────────────────────────────────────────────────────
-async function groqChat(messages, options = {}) {
-  if (!GROQ_API_KEY) throw new Error('VITE_GROQ_API_KEY not configured');
+let idTokenCache = { token: null, at: 0 };
+async function getIdToken() {
+  // ID tokens live ~1h; cache for 50min to avoid a refresh per call.
+  if (idTokenCache.token && Date.now() - idTokenCache.at < 50 * 60 * 1000) return idTokenCache.token;
+  const u = auth.currentUser ?? getAuth().currentUser;
+  if (!u) return null;
+  try {
+    idTokenCache = { token: await u.getIdToken(), at: Date.now() };
+    return idTokenCache.token;
+  } catch { return null; }
+}
 
-  const res = await fetch(GROQ_API_URL, {
+async function groqChat(messages, options = {}) {
+  const payload = {
+    messages,
+    temperature: options.temperature ?? 0.7,
+    maxTokens: options.maxTokens ?? 1500,
+    jsonMode: options.jsonMode ?? false,
+  };
+
+  // Preferred path: serverless proxy (key never leaves the server).
+  // Sends the caller's Firebase ID token so the proxy can verify the user
+  // and apply per-user rate limits.
+  const token = await getIdToken();
+  const res = await fetch(GROQ_PROXY_URL, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'Authorization': `Bearer ${GROQ_API_KEY}`,
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
     },
-    body: JSON.stringify({
-      model: MODEL,
-      messages,
-      temperature: options.temperature ?? 0.7,
-      max_tokens: options.maxTokens ?? 1500,
-      response_format: options.jsonMode ? { type: 'json_object' } : undefined,
-    }),
+    body: JSON.stringify(payload),
   });
 
   if (!res.ok) {
     const err = await res.json().catch(() => ({}));
-    throw new Error(err.error?.message || `Groq API error ${res.status}: ${JSON.stringify(err)}`);
+    // 404/405 means no proxy exists (plain `vite` dev server) — fall back to
+    // a direct call so local development keeps working without Vercel.
+    if (res.status !== 404 && res.status !== 405) {
+      throw new Error(err.error?.message || `Groq proxy error ${res.status}: ${JSON.stringify(err)}`);
+    }
+    if (!GROQ_API_KEY) throw new Error('VITE_GROQ_API_KEY not configured');
+    const direct = await fetch(GROQ_API_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${GROQ_API_KEY}`,
+      },
+      body: JSON.stringify({
+        model: MODEL,
+        messages,
+        temperature: payload.temperature,
+        max_tokens: payload.maxTokens,
+        response_format: payload.jsonMode ? { type: 'json_object' } : undefined,
+      }),
+    });
+    if (!direct.ok) {
+      const derr = await direct.json().catch(() => ({}));
+      throw new Error(derr.error?.message || `Groq API error ${direct.status}: ${JSON.stringify(derr)}`);
+    }
+    const ddata = await direct.json();
+    return ddata.choices[0].message.content;
   }
 
   const data = await res.json();
@@ -210,6 +256,50 @@ Rules:
 
   const parsed = JSON.parse(content);
   return parsed.questions || [];
+}
+
+// ─── Score open-ended answers against a rubric ───────────────────────────────
+// Returns per-question marks (0..maxMarks) with a brief rationale, so open
+// responses earn credit on merit instead of being auto-credited for effort.
+export async function scoreOpenAnswers({ questions, answers, ageGroup, maxMarks = 2 }) {
+  if (!questions?.length) return {};
+  const items = questions.map((q, i) => ({
+    index: i,
+    question: q.q || q.statement || q.question || '',
+    answer: String(answers?.[i] ?? ''),
+  })).filter(it => it.answer.trim().length > 0);
+  if (!items.length) return {};
+
+  const midBand = maxMarks === 2
+    ? '1 = partially addresses the question with some relevant reasoning'
+    : `1..${maxMarks - 1} = partially addresses the question`;
+  const prompt = `Score these open-ended assessment answers against their questions.
+Age group: ${ageGroup === '11-18' ? '11-18 years (school level)' : '19-32 years (professional level)'}.
+Each answer earns 0 to ${maxMarks} marks:
+  0 = non-response, irrelevant, or no genuine engagement with the question
+  ${midBand}
+  ${maxMarks} = thoughtful, specific, directly engages the question
+Be conservative: generic or evasive answers score 0.
+
+Items:
+${JSON.stringify(items, null, 2)}
+
+Return JSON only:
+{ "scores": [{ "index": 0, "marks": 0, "rationale": "one short sentence" }] }`;
+
+  const content = await groqChat([
+    { role: 'system', content: QIDS_SYSTEM_PROMPT },
+    { role: 'user', content: prompt },
+  ], { jsonMode: true, temperature: 0.2, maxTokens: 900 });
+
+  const parsed = JSON.parse(content);
+  const out = {};
+  for (const s of parsed.scores || []) {
+    if (typeof s.index !== 'number') continue;
+    const marks = Math.max(0, Math.min(maxMarks, Number(s.marks) || 0));
+    out[s.index] = { marks, rationale: String(s.rationale || '') };
+  }
+  return out;
 }
 
 // ─── Generate full assessment report narrative ────────────────────────────────

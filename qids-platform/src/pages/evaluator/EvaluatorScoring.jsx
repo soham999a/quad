@@ -1,3 +1,4 @@
+import usePageTitle from '../../lib/usePageTitle';
 import React, { useState, useEffect } from 'react';
 import { useParams, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
@@ -193,6 +194,7 @@ function PillarScoringSection({ pillar, scores, onScoreChange, completed }) {
 }
 
 export default function EvaluatorScoring() {
+  usePageTitle('Score assessment');
   const { assessmentId } = useParams();
   const location = useLocation();
   const navigate = useNavigate();

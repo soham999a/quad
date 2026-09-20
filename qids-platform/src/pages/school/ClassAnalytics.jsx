@@ -1,20 +1,23 @@
+import usePageTitle from '../../lib/usePageTitle';
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { getClass, getClassStudents } from '../../services/schoolService';
 import { getUserAssessments } from '../../services/firestoreService';
 import { computeClassAnalytics } from '../../core/engine/cohortAnalytics';
 import { PILLARS } from '../../data/qidsData';
-import { BarChart3, Users, Target, ChevronLeft } from 'lucide-react';
+import { BarChart3, Users, Target, ChevronLeft, Download } from 'lucide-react';
 
 const SHAPE_LABELS = { T: 'T-Shaped', I: 'I-Shaped', X: 'X-Shaped', M: 'M-Shaped' };
 const SHAPE_COLORS = { T: 'var(--color-primary)', I: 'var(--color-info)', X: 'var(--color-success)', M: 'var(--color-warning)' };
 
 export default function ClassAnalytics() {
+  usePageTitle('Class analytics');
   const { classId } = useParams();
   const navigate = useNavigate();
   const [analytics, setAnalytics] = useState(null);
   const [cls, setCls] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [exportRows, setExportRows] = useState([]);
 
   useEffect(() => {
     if (!classId) return;
@@ -37,6 +40,18 @@ export default function ClassAnalytics() {
 
         const result = computeClassAnalytics(classId, allAssessments);
         setAnalytics(result);
+        setExportRows(allAssessments.map(a => ({
+          name: a.intake?.name || '—',
+          ageGroup: a.ageGroup || a.intake?.ageGroup || '—',
+          unified: a.result?.unifiedScore ?? '',
+          IQ: a.pillarScores?.IQ ?? a.result?.pillarScores?.IQ ?? '',
+          EQ: a.pillarScores?.EQ ?? a.result?.pillarScores?.EQ ?? '',
+          SQ: a.pillarScores?.SQ ?? a.result?.pillarScores?.SQ ?? '',
+          AQ: a.pillarScores?.AQ ?? a.result?.pillarScores?.AQ ?? '',
+          grade: a.result?.grade?.grade ?? '',
+          shape: a.result?.skillShape ?? '',
+          date: a.createdAt?.toDate?.()?.toISOString?.().slice(0, 10) || '',
+        })));
       } catch {
         // silent
       } finally {
@@ -61,6 +76,29 @@ export default function ClassAnalytics() {
           Back to {cls?.name || 'Class'}
         </button>
       </div>
+
+      {exportRows.length > 0 && (
+        <div className="mb-6 flex justify-end">
+          <button
+            onClick={() => {
+              const headers = Object.keys(exportRows[0]);
+              const csv = [headers.join(','), ...exportRows.map(r => headers.map(h => {
+                const v = String(r[h] ?? '');
+                return v.includes(',') || v.includes('"') ? `"${v.replace(/"/g, '""')}` : v;
+              }).join(','))].join('\n');
+              const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+              const url = URL.createObjectURL(blob);
+              const a = document.createElement('a');
+              a.href = url;
+              a.download = `${(cls?.name || 'class').replace(/[^a-z0-9]+/gi, '-').toLowerCase()}-results.csv`;
+              a.click();
+              URL.revokeObjectURL(url);
+            }}
+            className="btn-outline !py-2 !text-[12px]">
+            <Download size={13} /> Export CSV
+          </button>
+        </div>
+      )}
 
       <section className="mb-10 md:mb-14">
         <div className="kicker mb-3">Class Analytics</div>

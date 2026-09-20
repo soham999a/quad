@@ -9,6 +9,7 @@ import { buildDeployList } from '../src/core/engine/adaptive';
 import { evaluateEnterpriseAssessment, UNETHICAL_OPTIONS } from '../src/core/engine/moduleScoring';
 import { deployRoleTrack } from '../src/core/runner/deploy';
 import { evaluateQidsAssessment, computeQidsPillarScores } from '../src/core/engine/qids';
+import { irtScale, computePII, getSkillShape, getCareerProfile, bandFromTScore, integrityBand } from '../src/core/engine/scoring';
 import { computeRFI, evaluateRoleMatches } from '../src/core/engine/scoring';
 import type { EnterpriseItem, EnterpriseTier, AnswerValue } from '../src/core/types';
 
@@ -141,6 +142,64 @@ function riqSmoke() {
   }
 }
 
+function edgeCaseSmoke() {
+  console.log('Smoke: scoring edge cases');
+
+  // irtScale bounds: raw 0 → Emerging, raw max → Exceptional, never NaN.
+  const zero = irtScale(0, 10, 0);
+  const full = irtScale(10, 10, 0);
+  check('irtScale zero-raw is Emerging', zero.band === 'Emerging', zero);
+  check('irtScale full-raw is Exceptional', full.band === 'Exceptional', full);
+  check('irtScale tScore bounded 20..80', [zero, full].every(s => s.tScore >= 20 && s.tScore <= 80));
+  check('irtScale percentile bounded 1..99', [zero, full].every(s => s.percentile >= 1 && s.percentile <= 99));
+  check('irtScale max=0 does not NaN', irtScale(0, 0, 0).tScore === 50 || Number.isFinite(irtScale(0, 0, 0).tScore));
+
+  // Difficulty bias: harder module lowers T at the same raw ratio.
+  const easy = irtScale(6, 10, 0);
+  const hard = irtScale(6, 10, 0.8);
+  check('difficulty bias lowers T-score', hard.tScore < easy.tScore, { easy: easy.tScore, hard: hard.tScore });
+
+  // PII scaling: 0% composite → floor ~40; perfect composite → ceiling 145 (tier-scaled).
+  const zeroModules = { CR: { raw: 0, max: 18, weight: 0.25 } };
+  const perfectModules = { CR: { raw: 18, max: 18, weight: 0.25 } };
+  const zeroPii = computePII(zeroModules as never, 'QGRA');
+  const perfectPii = computePII(perfectModules as never, 'QLIA');
+  check('PII zero composite ≈ 40', zeroPii.score >= 40 && zeroPii.score <= 45, zeroPii.score);
+  check('PII perfect caps at 145', perfectPii.score === 145, perfectPii.score);
+  check('PII tier scaling raises QLIA over QGRA', perfectPii.score > computePII(perfectModules as never, 'QGRA').score);
+
+  // Skill shape classification sanity.
+  check('balanced-high pillars → X or M shape', ['X', 'M'].includes(getSkillShape({ IQ: 85, EQ: 82, SQ: 88, AQ: 80 })));
+  check('single-spiked profile → I or T shape', ['I', 'T'].includes(getSkillShape({ IQ: 95, EQ: 40, SQ: 35, AQ: 30 })));
+
+  // Career profiles: boundary conditions resolve to a profile, never undefined.
+  for (const ps of [
+    { IQ: 80, EQ: 80, SQ: 80, AQ: 20 },
+    { IQ: 80, EQ: 40, SQ: 40, AQ: 40 },
+    { IQ: 40, EQ: 40, SQ: 40, AQ: 90 },
+    { IQ: 40, EQ: 40, SQ: 40, AQ: 40 },
+  ]) {
+    const cp = getCareerProfile(ps as never);
+    check(`careerProfile resolves for ${JSON.stringify(ps)}`, !!cp?.id);
+  }
+
+  // AQ weight formula: weights are the 1.5/1.0/1.0/1.5 RDF profile.
+  const aq = computeQidsPillarScores({ AQ: { SA: 19, PM: 19, RR: 19, RC: 19 } });
+  check('AQ perfect weighted RD = 100', aq.AQ === 100, aq.AQ);
+  const aqZero = computeQidsPillarScores({ AQ: { SA: 0, PM: 0, RR: 0, RC: 0 } });
+  check('AQ zero RD = 0', aqZero.AQ === 0, aqZero.AQ);
+
+  // Integrity bands: 0 flags → Pass; 1 → Concern; 2+ → Flag.
+  check('integrity 0 flags = Pass', integrityBand([], 8).band === 'Pass');
+  check('integrity 1 flag = Concern', integrityBand(['x'], 8).band === 'Concern');
+  check('integrity 2 flags = Flag', integrityBand(['x', 'y'], 8).band === 'Flag');
+
+  // Band boundaries: 65 is Exceptional floor, 35 is Emerging ceiling.
+  check('bandFromTScore 65 = Exceptional', bandFromTScore(65) === 'Exceptional');
+  check('bandFromTScore 64.9 = Proficient', bandFromTScore(64.9) === 'Proficient');
+  check('bandFromTScore 34.9 = Emerging', bandFromTScore(34.9) === 'Emerging');
+}
+
 function main() {
   const tiers: EnterpriseTier[] = ['QGRA', 'QPIA', 'QLIA'];
 
@@ -201,6 +260,7 @@ function main() {
   qidsSmoke();
   rfiSmoke();
   riqSmoke();
+  edgeCaseSmoke();
 
   console.log(`\n${pass} passed, ${fail} failed`);
 

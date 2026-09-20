@@ -1,5 +1,7 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Sparkles, RefreshCw, AlertCircle, ChevronDown, ChevronUp } from 'lucide-react';
+import { scoreOpenAnswers } from '../services/groqService';
+import { useAuth } from '../context/AuthContext';
 
 const alpha = (color, pct) => `color-mix(in srgb, ${color} ${pct}%, transparent)`;
 
@@ -127,18 +129,25 @@ export default function AIQuestionGenerator({
 }) {
   const [questions, setQuestions] = useState([]);
   const [answers, setAnswers] = useState({});
+  const [openScores, setOpenScores] = useState({});
+  const [scoring, setScoring] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [expanded, setExpanded] = useState(true);
   const [generated, setGenerated] = useState(false);
+  const [confirmRegen, setConfirmRegen] = useState(false);
+  const autoStarted = useRef(false);
+  const { user } = useAuth();
 
   const handleGenerate = async () => {
     setLoading(true);
     setError(null);
+    setConfirmRegen(false);
     try {
       const qs = await generateFn({ ageGroup, component, context, count: 3 });
       setQuestions(qs);
       setAnswers({});
+      setOpenScores({});
       setGenerated(true);
       setExpanded(true);
     } catch (e) {
@@ -148,10 +157,45 @@ export default function AIQuestionGenerator({
     }
   };
 
-  const handleAnswer = (idx, val) => {
+  // Auto-generate once when mounted, so the AI bonus isn't buried behind a
+  // button users have to discover. Manual "New Set" remains available.
+  useEffect(() => {
+    if (autoStarted.current || !user) return; // signed-in only — proxy enforces auth
+    autoStarted.current = true;
+    handleGenerate();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user]);
+
+  const requestRegenerate = () => {
+    const answered = Object.values(answers).filter(v => v !== undefined && v !== '').length;
+    if (answered > 0) setConfirmRegen(true);
+    else handleGenerate();
+  };
+
+  const handleAnswer = async (idx, val) => {
     const next = { ...answers, [idx]: val };
     setAnswers(next);
-    onAnswersChange?.(next, questions);
+    onAnswersChange?.(next, questions, openScores);
+
+    // Open-ended answers are rubric-scored on merit (0–2 marks) once all
+    // questions have non-empty responses.
+    if (questionType === 'open') {
+      const entries = Object.entries(next).filter(([, v]) => v !== undefined && v !== '');
+      if (questions.length > 0 && entries.length === questions.length && !scoring) {
+        setScoring(true);
+        try {
+          const result = await scoreOpenAnswers({ questions, answers: next, ageGroup, maxMarks: 2 });
+          setOpenScores(result);
+          onAnswersChange?.(next, questions, result);
+        } catch {
+          // Scoring failure must not silently inflate or zero the section;
+          // keep existing scores and surface a non-blocking notice.
+          setError('Could not score open answers automatically — they will count as 0 until you retry.');
+        } finally {
+          setScoring(false);
+        }
+      }
+    }
   };
 
   return (
@@ -171,7 +215,7 @@ export default function AIQuestionGenerator({
         </div>
         <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
           {generated && (
-            <button onClick={handleGenerate} disabled={loading} style={{
+            <button onClick={requestRegenerate} disabled={loading} style={{
               padding: '5px 10px', borderRadius: 7, cursor: 'pointer', fontSize: 11, fontWeight: 500,
               background: 'var(--tint-soft)', border: '1px solid var(--border-light)',
               color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: 4,
@@ -207,6 +251,31 @@ export default function AIQuestionGenerator({
         </div>
       )}
 
+      {/* Regenerate confirmation — answers would be lost */}
+      {confirmRegen && (
+        <div style={{ padding: '10px 16px', background: alpha('var(--status-warn)', 10), borderBottom: `1px solid ${alpha('var(--status-warn)', 25)}`, display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+          <AlertCircle size={13} color="var(--status-warn)" style={{ flexShrink: 0 }} />
+          <span style={{ fontSize: 12, color: 'var(--text-secondary)', flex: 1 }}>
+            Generating a new set will clear your current answers. Continue?
+          </span>
+          <button onClick={handleGenerate} style={{
+            padding: '4px 10px', borderRadius: 6, cursor: 'pointer', fontSize: 11, fontWeight: 600,
+            background: alpha('var(--status-warn)', 18), border: `1px solid ${alpha('var(--status-warn)', 35)}`, color: 'var(--status-warn)',
+          }}>Yes, regenerate</button>
+          <button onClick={() => setConfirmRegen(false)} style={{
+            padding: '4px 10px', borderRadius: 6, cursor: 'pointer', fontSize: 11,
+            background: 'transparent', border: '1px solid var(--border-light)', color: 'var(--text-muted)',
+          }}>Cancel</button>
+        </div>
+      )}
+
+      {/* Open-answer scoring status */}
+      {scoring && (
+        <div style={{ padding: '8px 16px', background: alpha(color, 6), borderBottom: `1px solid ${alpha(color, 15)}`, fontSize: 11, color: 'var(--text-muted)' }}>
+          Scoring your open answers against the rubric…
+        </div>
+      )}
+
       {/* Questions */}
       {generated && expanded && questions.length > 0 && (
         <div style={{ padding: 16 }}>
@@ -223,8 +292,9 @@ export default function AIQuestionGenerator({
       {/* Empty state */}
       {!generated && !loading && (
         <div style={{ padding: '20px 16px', textAlign: 'center', color: 'var(--text-muted)', fontSize: 12 }}>
-          Questions are generated fresh each time using the QIDS knowledge base and Groq AI.
-          Each assessment gets a unique set.
+          {user
+            ? 'Questions are generated fresh each time using the QIDS knowledge base and Groq AI.'
+            : 'Sign in to generate AI questions for this section.'}
         </div>
       )}
     </div>

@@ -1,3 +1,4 @@
+import usePageTitle from '../lib/usePageTitle';
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { ArrowRight, Check, LockKeyhole } from 'lucide-react';
@@ -56,6 +57,7 @@ const MODES = [
 ];
 
 export default function Mode() {
+  usePageTitle('Choose your mode');
   const [selected, setSelected] = useState('individual');
   const navigate = useNavigate();
   const { user } = useAuth();

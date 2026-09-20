@@ -22,12 +22,34 @@ service cloud.firestore {
     function isEvaluator() { return hasRole('evaluator'); }
     function isTeacher()   { return hasRole('teacher'); }
 
+    // Personas are self-declared (they choose the audience shell).
+    // 'admin' is privileged and may only be granted by another admin.
+    function isSelfRoleSelection() {
+      return (resource.data.role == 'individual' || !('role' in resource.data))
+        && request.resource.data.role in ['individual', 'student', 'teacher', 'evaluator', 'employer'];
+    }
+
+    // Plan is a billing field: clients may keep it unchanged but never set it.
+    // (Server / billing integration writes plans in a later phase.)
+    function planUnchanged() {
+      return request.resource.data.plan == resource.data.plan;
+    }
+
     // ── Users (profiles) ───────────────────────────────────────────────────
     // Self-read is required so the role helpers above can resolve.
+    // SECURITY: clients cannot escalate their own role to 'admin' and cannot
+    // grant themselves a paid plan. Admin grants go through an existing admin.
     match /users/{userId} {
-      allow read: if isOwner(userId);
-      allow create: if isOwner(userId);
-      allow update: if isOwner(userId) || isAdmin();
+      allow read: if isOwner(userId) || isAdmin();
+      allow create: if isAdmin()
+        || (isOwner(userId)
+            && request.resource.data.role != 'admin'
+            && (!('plan' in request.resource.data) || request.resource.data.plan == 'free'));
+      allow update: if isAdmin()
+        || (isOwner(userId)
+            && request.resource.data.role == resource.data.role
+            && planUnchanged())
+        || (isOwner(userId) && isSelfRoleSelection() && planUnchanged());
       allow delete: if isAdmin();
     }
 
@@ -39,12 +61,44 @@ service cloud.firestore {
       allow read, write: if isOwner(uid);
     }
 
+    // ── Assessment checkpoints ─────────────────────────────────────────────
+    // Cross-device resume state ({uid}_{kind} ids). Owner-only, like onboarding.
+    match /assessmentCheckpoints/{docId} {
+      allow read, write: if isSignedIn() && docId.split('_')[0] == request.auth.uid;
+    }
+
+    // ── Public evaluator directory ─────────────────────────────────────────
+    // Minimal directory entries ({ uid, name, email }) written by evaluators
+    // themselves, readable by any signed-in user. This replaces the old
+    // getAllUsers() lookup that permission-denied for non-admins.
+    match /publicEvaluators/{evaluatorUid} {
+      allow read: if isSignedIn();
+      allow create, update: if isOwner(evaluatorUid)
+        && request.resource.data.uid == evaluatorUid;
+      allow delete: if isOwner(evaluatorUid) || isAdmin();
+    }
+
     // ── Assessments ─────────────────────────────────────────────────────────
+    // Evaluators may read assessments of students assigned to them, so the
+    // evaluator console works under least-privilege rules.
     match /assessments/{assessmentId} {
-      allow read: if isOwner(resource.data.uid) || isAdmin();
+      allow read: if isOwner(resource.data.uid) || isAdmin()
+        || (isEvaluator()
+            && exists(/databases/$(database)/documents/evaluatorAssignments/$(request.auth.uid + '_' + resource.data.uid)));
       allow create: if isSignedIn() && request.resource.data.uid == request.auth.uid;
       allow update: if isOwner(resource.data.uid) || isAdmin();
       allow delete: if isOwner(resource.data.uid) || isAdmin();
+    }
+
+    // ── Public credentials (shareable /credential/:id) ─────────────────────
+    // Sanitised, user-published snapshots of a completed assessment:
+    // { uid, assessmentId, name, unifiedScore, grade, pillarScores, skillShape,
+    //   issuedAt, hash }. Readable by anyone (that's the point); writable only
+    // by the profile owner.
+    match /publicCredentials/{credId} {
+      allow read: if true;
+      allow create, update: if isSignedIn() && request.resource.data.uid == request.auth.uid;
+      allow delete: if isSignedIn() && resource.data.uid == request.auth.uid;
     }
 
     // ── Reports ─────────────────────────────────────────────────────────────
@@ -95,14 +149,33 @@ service cloud.firestore {
       allow delete: if isOwner(resource.data.uid) || isAdmin();
     }
 
+    // ── Product analytics (funnel events) ──────────────────────────────────
+    // Create-only for any signed-in user (append-only telemetry: users can add
+    // their own events but never read anyone's or modify existing ones).
+    // Validation keeps the shape tight: known event names, bounded props.
+    match /analytics_events/{eventId} {
+      allow read: if isAdmin();
+      allow create: if isSignedIn()
+        && request.resource.data.uid == request.auth.uid
+        && request.resource.data.name is string
+        && request.resource.data.name.size() > 0
+        && request.resource.data.name.size() <= 40
+        && (!('props' in request.resource.data) || request.resource.data.props.size() <= 10);
+      allow update, delete: if false;
+    }
+
     // ── Interview Sessions ─────────────────────────────────────────────────
+    // Only the named evaluator or candidate may create a session.
     match /interviewSessions/{sessionId} {
       allow read: if isSignedIn() && (
         resource.data.candidateUid == request.auth.uid ||
         resource.data.evaluatorUid == request.auth.uid ||
         isAdmin()
       );
-      allow create: if isSignedIn();
+      allow create: if isSignedIn() && (
+        request.resource.data.evaluatorUid == request.auth.uid ||
+        request.resource.data.candidateUid == request.auth.uid
+      );
       allow update: if isSignedIn() && (
         resource.data.candidateUid == request.auth.uid ||
         resource.data.evaluatorUid == request.auth.uid ||
@@ -116,6 +189,8 @@ service cloud.firestore {
     }
 
     // ── School Classes ─────────────────────────────────────────────────────
+    // Read stays signed-in-wide: students join by 6-char class code, which is
+    // the capability secret. Writes are restricted to the owning teacher.
     match /schoolClasses/{classId} {
       allow read: if isSignedIn();
       allow create: if isSignedIn() &&
@@ -129,11 +204,24 @@ service cloud.firestore {
     }
 
     // ── Class Students ─────────────────────────────────────────────────────
+    // Students join rosters themselves; the class teacher and admins manage.
     match /classStudents/{entryId} {
       allow read: if isSignedIn();
-      allow create: if isSignedIn();
-      allow update: if isSignedIn();
-      allow delete: if isSignedIn();
+      allow create: if isSignedIn() && (
+        request.resource.data.studentUid == request.auth.uid ||
+        isAdmin() ||
+        get(/databases/$(database)/documents/schoolClasses/$(request.resource.data.classId)).data.teacherUid == request.auth.uid
+      );
+      allow update: if isSignedIn() && (
+        resource.data.studentUid == request.auth.uid ||
+        isAdmin() ||
+        get(/databases/$(database)/documents/schoolClasses/$(resource.data.classId)).data.teacherUid == request.auth.uid
+      );
+      allow delete: if isSignedIn() && (
+        resource.data.studentUid == request.auth.uid ||
+        isAdmin() ||
+        get(/databases/$(database)/documents/schoolClasses/$(resource.data.classId)).data.teacherUid == request.auth.uid
+      );
     }
 
     // ── School Assessments ─────────────────────────────────────────────────

@@ -1,3 +1,4 @@
+import usePageTitle from '../../lib/usePageTitle';
 import { useState } from 'react';
 import { Check } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
@@ -9,6 +10,7 @@ const ROLE_OPTIONS = ['individual', 'student', 'teacher', 'evaluator', 'employer
 const inputClass = "w-full h-11 px-3 bg-transparent border border-border text-on-surface font-technical-sm outline-none focus:border-gold transition-colors";
 
 export default function Settings() {
+  usePageTitle('Settings');
   const { user, userProfile, updateUserFields, updateUserRole, changePassword, logout } = useAuth();
   const [name, setName] = useState(userProfile?.name || user?.displayName || '');
   const [context, setContext] = useState(userProfile?.context || 'individual');

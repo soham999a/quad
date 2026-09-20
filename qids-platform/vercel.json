@@ -1,3 +1,6 @@
 {
-  "rewrites": [{ "source": "/(.*)", "destination": "/index.html" }]
+  "rewrites": [
+    { "source": "/credential/:id", "destination": "/credential-meta?id=:id" },
+    { "source": "/(.*)", "destination": "/index.html" }
+  ]
 }

@@ -1,3 +1,4 @@
+import usePageTitle from '../lib/usePageTitle';
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { PILLARS } from '../data/qidsData';
@@ -208,6 +209,7 @@ function PillarDetail({ pillar }) {
 }
 
 export default function FourPillars() {
+  usePageTitle('The four pillars');
   const { pillarId } = useParams();
   const navigate = useNavigate();
   const [active, setActive] = useState(pillarId || 'IQ');

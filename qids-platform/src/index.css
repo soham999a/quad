@@ -706,6 +706,20 @@ input[type="range"]::-moz-range-thumb {
   display: none;
 }
 
+/* ── FOCUS MODE: assessment runners hide the chrome ──
+ * `body.qids-focus` is set while an assessment step is in progress so the
+ * sidebar/topbar/footer recede and only the assessment remains. Escape hatch:
+ * the runner always renders its own exit control. */
+body.qids-focus .desktop-sidebar,
+body.qids-focus .topbar,
+body.qids-focus .mobile-nav,
+body.qids-focus .app-content > footer {
+  display: none !important;
+}
+body.qids-focus .app-content {
+  margin-left: 0 !important;
+}
+
 /* ── MOBILE BREAKPOINT ── */
 @media (max-width: 768px) {
   .desktop-sidebar {
@@ -906,6 +920,24 @@ input[type="range"]::-moz-range-thumb {
   .hide-desktop {
     display: none !important;
   }
+}
+
+/* Skip link — hidden until keyboard-focused (a11y). */
+.skip-link {
+  position: fixed;
+  top: -48px;
+  left: 16px;
+  z-index: 200;
+  padding: 10px 16px;
+  background: var(--gold);
+  color: var(--on-primary, #0a0e1a);
+  font-family: var(--font-mono, monospace);
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  transition: top 0.15s ease;
+}
+.skip-link:focus {
+  top: 12px;
 }
 
 /* print CSS */

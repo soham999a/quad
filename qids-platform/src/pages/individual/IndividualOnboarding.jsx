@@ -1,3 +1,4 @@
+import usePageTitle from '../../lib/usePageTitle';
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowRight, Sparkles, GraduationCap, Briefcase, Brain, ChevronRight } from 'lucide-react';
@@ -15,6 +16,7 @@ const PURPOSES = [
 ];
 
 export default function IndividualOnboarding() {
+  usePageTitle('Individual onboarding');
   const navigate = useNavigate();
   const [ageGroup, setAgeGroup] = useState('');
   const [purpose, setPurpose] = useState('');

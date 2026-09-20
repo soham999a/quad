@@ -1,14 +1,17 @@
+import usePageTitle from '../../lib/usePageTitle';
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { getClass, getClassStudents, createSchoolAssessment } from '../../services/schoolService';
 import { useToast } from '../../components/Toast';
+import EmptyState from '../../components/EmptyState';
 import {
   Users, Plus, ClipboardList, BarChart3, Copy, ChevronRight,
   CheckCircle, Trash2,
 } from 'lucide-react';
 
 export default function ClassManager() {
+  usePageTitle('Manage class');
   const { classId } = useParams();
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -107,12 +110,11 @@ export default function ClassManager() {
         </div>
         <div className="gradient-rule mb-4" />
         {students.length === 0 ? (
-          <div className="card p-8 text-center">
-            <Users size={24} className="text-surface-variant mx-auto mb-3 opacity-40" />
-            <div className="text-body-sm font-body-sm text-surface-variant">
-              No students have joined yet. Share the class code with your students.
-            </div>
-          </div>
+          <EmptyState
+            icon={Users}
+            title="No students have joined yet"
+            description="Share the class code with your students — they join from their dashboard."
+          />
         ) : (
           <div className="flex flex-col">
             {students.map((s, i) => (

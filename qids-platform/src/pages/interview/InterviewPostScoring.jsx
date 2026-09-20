@@ -1,3 +1,4 @@
+import usePageTitle from '../../lib/usePageTitle';
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
@@ -8,6 +9,7 @@ import { useToast } from '../../components/Toast';
 import { Save, ChevronRight, ChevronLeft, AlertCircle } from 'lucide-react';
 
 export default function InterviewPostScoring() {
+  usePageTitle('Post-interview scoring');
   const { sessionId } = useParams();
   const { user } = useAuth();
   const navigate = useNavigate();

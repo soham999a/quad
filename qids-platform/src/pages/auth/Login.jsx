@@ -1,20 +1,26 @@
+import usePageTitle from '../../lib/usePageTitle';
 import React, { useState } from 'react';
 import { useNavigate, Link, Navigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { destinationFor, sanitizeNext } from '../../lib/flow';
-import { Check } from 'lucide-react';
+import friendlyAuthError from '../../lib/authErrors';
+import { logEvent } from '../../lib/analytics';
+import { auth } from '../../firebase';
+import { Check, Eye, EyeOff } from 'lucide-react';
 import QidsMark from '../../components/QidsMark';
 
+// NOTE: 'admin' is intentionally not self-selectable — it is a privileged role
+// granted by an existing admin (Firebase console until workspace RBAC ships).
 const ROLES = [
   { id: 'individual', label: 'Individual', desc: 'Personal development journey' },
   { id: 'student', label: 'Student', desc: 'School or institutional learner' },
   { id: 'teacher', label: 'Teacher', desc: 'Manage classes and assessments' },
   { id: 'evaluator', label: 'Evaluator / Counselor', desc: 'Assess and guide others' },
-  { id: 'admin', label: 'Institution Admin', desc: 'Manage an organization' },
   { id: 'employer', label: 'Employer', desc: 'Hiring and talent intelligence' },
 ];
 
 export default function Login() {
+  usePageTitle('Sign in');
   const { login, loginWithGoogle, resetPassword, updateUserRole, refreshProfile, user, userProfile } = useAuth();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -27,6 +33,7 @@ export default function Login() {
   const [pendingGoogleUser, setPendingGoogleUser] = useState(null);
   const [selectedRole, setSelectedRole] = useState('individual');
   const [resetSent, setResetSent] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const [pendingGoogleFlow, setPendingGoogleFlow] = useState(false);
 
   if (user && !pendingGoogleFlow) return <Navigate to={next || destinationFor(userProfile?.role)} replace />;
@@ -36,9 +43,10 @@ export default function Login() {
     setError(''); setLoading(true);
     try {
       const { profile } = await login(email, password);
+      logEvent(auth.currentUser?.uid, 'signed_in', { method: 'email' });
       navigate(next || destinationFor(profile?.role));
     }
-    catch (err) { setError(err.message || 'Login failed.'); }
+    catch (err) { setError(friendlyAuthError(err, 'Login failed.')); }
     finally { setLoading(false); }
   };
 
@@ -54,7 +62,7 @@ export default function Login() {
         navigate(next || '/app/dashboard');
       }
     }
-    catch (err) { setError(err.message || 'Google sign-in failed.'); setPendingGoogleFlow(false); }
+    catch (err) { setError(friendlyAuthError(err, 'Google sign-in failed.')); setPendingGoogleFlow(false); }
     finally { setLoading(false); }
   };
 
@@ -66,7 +74,7 @@ export default function Login() {
       setPendingGoogleFlow(false);
       navigate(next || destinationFor(selectedRole));
     } catch (err) {
-      setError(err.message || 'Failed to set role.');
+      setError(friendlyAuthError(err, 'Failed to set role.'));
     }
     finally { setShowRolePicker(false); setLoading(false); setPendingGoogleUser(null); }
   };
@@ -75,7 +83,7 @@ export default function Login() {
     if (!email) { setError('Enter your email address first.'); return; }
     setError(''); setLoading(true);
     try { await resetPassword(email); setResetSent(true); }
-    catch (err) { setError(err.message || 'Could not send reset email.'); }
+    catch (err) { setError(friendlyAuthError(err, 'Could not send reset email.')); }
     finally { setLoading(false); }
   };
 
@@ -135,15 +143,23 @@ export default function Login() {
                     Recovery
                   </button>
                 </div>
-                <input
-                  className="w-full h-12 px-4 bg-surface border border-outline-variant rounded-sm text-on-surface placeholder:text-surface-variant font-technical-sm transition-all outline-none focus:border-primary"
-                  id="password"
-                  placeholder="••••••••••••"
-                  type="password"
-                  value={password}
-                  onChange={e => setPassword(e.target.value)}
-                  required
-                />
+                <div className="relative">
+                  <input
+                    className="w-full h-12 px-4 pr-12 bg-surface border border-outline-variant rounded-sm text-on-surface placeholder:text-surface-variant font-technical-sm transition-all outline-none focus:border-primary"
+                    id="password"
+                    placeholder="••••••••••••"
+                    type={showPassword ? 'text' : 'password'}
+                    value={password}
+                    onChange={e => setPassword(e.target.value)}
+                    required
+                  />
+                  <button type="button" onClick={() => setShowPassword(v => !v)}
+                    aria-label={showPassword ? 'Hide password' : 'Show password'}
+                    aria-pressed={showPassword}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 p-1 bg-transparent border-none cursor-pointer text-surface-variant hover:text-on-surface transition-colors">
+                    {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                  </button>
+                </div>
               </div>
 
               <button

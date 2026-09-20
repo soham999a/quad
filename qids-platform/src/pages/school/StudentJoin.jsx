@@ -1,3 +1,4 @@
+import usePageTitle from '../../lib/usePageTitle';
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
@@ -6,6 +7,7 @@ import { useToast } from '../../components/Toast';
 import { BookOpen, Users, ArrowRight } from 'lucide-react';
 
 export default function StudentJoin() {
+  usePageTitle('Join a class');
   const { user, userProfile } = useAuth();
   const navigate = useNavigate();
   const toast = useToast();

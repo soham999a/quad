@@ -1,3 +1,4 @@
+import usePageTitle from '../../lib/usePageTitle';
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { getInterviewSession } from '../../services/interviewService';
@@ -18,6 +19,7 @@ const SHAPES = {
 const SCORE_COLORS = ['var(--status-err)', 'var(--gold-bright)', 'var(--phase-pre)', 'var(--status-ok)'];
 
 export default function InterviewReport() {
+  usePageTitle('Interview report');
   const { sessionId } = useParams();
   const navigate = useNavigate();
   const [session, setSession] = useState(null);

@@ -1,10 +1,13 @@
+import usePageTitle from '../../lib/usePageTitle';
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
-import { getAllUsers, assignEvaluator, removeAssignment, getEvaluatorAssignments, updateUserRole } from '../../services/firestoreService';
+import { getAllUsers, assignEvaluator, removeAssignment, getEvaluatorAssignments, updateUserRole, upsertPublicEvaluator, removePublicEvaluator, getFunnelSummary } from '../../services/firestoreService';
 import { useToast } from '../../components/Toast';
-import { Shield, UserCheck, UserX, Users, Search, RefreshCw, ChevronDown, ChevronUp } from 'lucide-react';
+import { Shield, UserCheck, UserX, Users, Search, RefreshCw, ChevronDown, ChevronUp, TrendingUp } from 'lucide-react';
+import EmptyState from '../../components/EmptyState';
 
 export default function AdminPanel() {
+  usePageTitle('Admin');
   const { user, userProfile } = useAuth();
   const toast = useToast();
   const [allUsers, setAllUsers] = useState([]);
@@ -12,6 +15,7 @@ export default function AdminPanel() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [expandedStudent, setExpandedStudent] = useState(null);
+  const [funnel, setFunnel] = useState(null);
   const role = userProfile?.role || 'individual';
 
   if (role !== 'admin') {
@@ -25,6 +29,10 @@ export default function AdminPanel() {
   }
 
   useEffect(() => { loadData(); }, []);
+
+  useEffect(() => {
+    getFunnelSummary(30).then(setFunnel).catch(() => setFunnel({ counts: {}, total: 0 }));
+  }, []);
 
   const loadData = async () => {
     setLoading(true);
@@ -67,7 +75,14 @@ export default function AdminPanel() {
   const handleRoleChange = async (uid, newRole) => {
     const ok = await updateUserRole(uid, newRole);
     if (ok) {
-      setAllUsers(prev => prev.map(u => u.uid === uid ? { ...u, role: newRole } : u));
+      // Keep the public evaluator directory in sync with role changes.
+      const u = allUsers.find(x => x.uid === uid);
+      if (newRole === 'evaluator') {
+        await upsertPublicEvaluator(uid, { name: u?.name, email: u?.email });
+      } else {
+        await removePublicEvaluator(uid);
+      }
+      setAllUsers(prev => prev.map(x => x.uid === uid ? { ...x, role: newRole } : x));
       toast(`Role updated to ${newRole}`, 'success');
     } else {
       toast('Failed to update role', 'error');
@@ -116,6 +131,48 @@ export default function AdminPanel() {
         ))}
       </section>
 
+      {/* Funnel (last 30 days) — acquisition → activation. */}
+      <section className="border-y-[0.5px] border-outline-variant mb-10 md:mb-16">
+        <div className="flex items-center gap-2 py-6 md:py-8">
+          <TrendingUp size={14} className="text-primary" />
+          <div className="text-technical-sm font-technical-sm text-surface-variant uppercase tracking-widest">Funnel — last {funnel?.windowDays ?? 30} days</div>
+        </div>
+        {(() => {
+          const c = funnel?.counts || {};
+          const FUNNEL = [
+            { key: 'signed_up', label: 'Signed up' },
+            { key: 'onboarding_done', label: 'Onboarded' },
+            { key: 'intake_done', label: 'Intake done' },
+            { key: 'assessment_started', label: 'Assessment started' },
+            { key: 'assessment_complete', label: 'Assessment complete' },
+            { key: 'enterprise_started', label: 'Enterprise started' },
+            { key: 'enterprise_complete', label: 'Enterprise complete' },
+            { key: 'credential_published', label: 'Credential published' },
+          ];
+          const max = Math.max(1, ...FUNNEL.map(f => c[f.key] || 0));
+          return (
+            <div className="pb-6 md:pb-8 space-y-3">
+              {FUNNEL.map(({ key, label }) => {
+                const v = c[key] || 0;
+                const pct = Math.round((v / max) * 100);
+                return (
+                  <div key={key} className="flex items-center gap-4">
+                    <div className="w-44 flex-shrink-0 text-technical-sm font-technical-sm text-on-surface-variant">{label}</div>
+                    <div className="flex-1 h-5 bg-surface-container-lowest border-[0.5px] border-outline-variant overflow-hidden" style={{ borderRadius: '4px' }}>
+                      <div className="h-full bg-primary/25 border-r-2 border-primary transition-all" style={{ width: `${Math.max(pct, v > 0 ? 3 : 0)}%` }} />
+                    </div>
+                    <div className="w-12 text-right text-technical-sm font-technical-sm text-primary tabular-nums">{v}</div>
+                  </div>
+                );
+              })}
+              {(funnel?.total ?? 0) === 0 && (
+                <div className="text-technical-sm font-technical-sm text-surface-variant pt-2">No events yet — funnel fills as users move through the product.</div>
+              )}
+            </div>
+          );
+        })()}
+      </section>
+
       {/* Search */}
       <div className="relative mb-6 md:mb-8">
         <Search size={14} className="text-surface-variant absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
@@ -137,7 +194,11 @@ export default function AdminPanel() {
         {loading ? (
           <div className="py-10 text-center text-technical-sm font-technical-sm text-surface-variant">Loading users...</div>
         ) : filtered.length === 0 ? (
-          <div className="py-10 text-center text-technical-sm font-technical-sm text-surface-variant">No students found.</div>
+          <EmptyState
+            icon={Search}
+            title="No students found"
+            description="Try a different name or email, or clear the search."
+          />
         ) : (
           <div className="flex flex-col">
             {filtered.map((student, i) => {

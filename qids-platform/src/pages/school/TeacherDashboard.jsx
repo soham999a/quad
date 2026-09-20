@@ -1,3 +1,4 @@
+import usePageTitle from '../../lib/usePageTitle';
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
@@ -8,6 +9,7 @@ import {
 import SeedSchoolData from '../../components/SeedSchoolData';
 
 export default function TeacherDashboard() {
+  usePageTitle('Teacher dashboard');
   const { user, userProfile } = useAuth();
   const navigate = useNavigate();
   const [classes, setClasses] = useState([]);

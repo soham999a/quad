@@ -1,7 +1,9 @@
+import usePageTitle from '../../lib/usePageTitle';
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowRight, ArrowLeft, Check, Sparkles, GraduationCap, Briefcase, Users, Target, Building2, Microscope } from 'lucide-react';
 import { Wordmark } from '../../components/PublicShell';
+import { logEvent } from '../../lib/analytics';
 import { useAuth } from '../../context/AuthContext';
 import { getOnboarding, saveOnboarding, completeOnboarding, ONBOARDING_DEFAULT } from '../../services/onboardingService';
 import { postOnboardingDestination } from '../../lib/flow';
@@ -304,6 +306,7 @@ const STEP_VIEWS = {
 // ─── Main wizard ──────────────────────────────────────────────────────────────
 
 export default function Onboarding() {
+  usePageTitle('Onboarding');
   const { user, userProfile, refreshProfile, updateUserFields } = useAuth();
   const navigate = useNavigate();
   const [state, setState] = useState(ONBOARDING_DEFAULT);
@@ -365,6 +368,7 @@ export default function Onboarding() {
     try {
       await updateProfileIfNeeded(state);
       await completeOnboarding(user.uid, state);
+      logEvent(user.uid, 'onboarding_done', { persona: state.persona });
       await refreshProfile();
       navigate(postOnboardingDestination(state.persona, state.contextId), { replace: true });
     } catch (e) {

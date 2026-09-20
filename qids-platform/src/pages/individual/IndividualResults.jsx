@@ -1,3 +1,4 @@
+import usePageTitle from '../../lib/usePageTitle';
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { RadarChart as ReRadar, Radar, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer, Tooltip } from 'recharts';
@@ -43,12 +44,53 @@ function ScoreGauge({ score, grade }) {
 }
 
 function PillarRadar({ pillarScores }) {
+  const wrapRef = React.useRef(null);
   const data = Object.entries(pillarScores).map(([k, v]) => ({
     subject: PILLAR_META[k]?.label?.split(' ')[0] || k, A: v, fullMark: 100,
   }));
+
+  // PNG export: serialize the live SVG, rasterize through an <img> onto a
+  // canvas with the page's own background, then download.
+  const exportPng = async () => {
+    const svg = wrapRef.current?.querySelector('svg');
+    if (!svg) return;
+    const clone = svg.cloneNode(true);
+    clone.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
+    const bg = getComputedStyle(document.documentElement).getPropertyValue('--background') || '#0a0e1a';
+    const xml = `<svg xmlns="http://www.w3.org/2000/svg">${clone.innerHTML}</svg>`;
+    const url = URL.createObjectURL(new Blob([xml], { type: 'image/svg+xml' }));
+    try {
+      const img = new Image();
+      await new Promise((res, rej) => { img.onload = res; img.onerror = rej; img.src = url; });
+      const canvas = document.createElement('canvas');
+      const box = svg.getBoundingClientRect() || { width: 600, height: 300 };
+      const scale = 2; // retina-sharp
+      canvas.width = box.width * scale;
+      canvas.height = box.height * scale;
+      const ctx = canvas.getContext('2d');
+      ctx.fillStyle = bg.trim() || '#0a0e1a';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+      const a = document.createElement('a');
+      a.download = `qids-pillar-radar.png`;
+      a.href = canvas.toDataURL('image/png');
+      a.click();
+    } finally {
+      URL.revokeObjectURL(url);
+    }
+  };
+
   return (
     <div className="card p-5 md:p-6">
-      <ResponsiveContainer width="100%" height={300}>
+      <div className="flex items-center justify-between mb-1">
+        <span className="label-eyebrow">PILLAR PROFILE</span>
+        <button type="button" onClick={exportPng} aria-label="Download radar chart as PNG"
+          className="inline-flex items-center gap-1.5 bg-transparent border-none cursor-pointer text-technical-sm font-technical-sm text-muted-foreground hover:text-primary transition-colors">
+          <Download size={13} /> PNG
+        </button>
+      </div>
+      <div ref={wrapRef}>
+        <ResponsiveContainer width="100%" height={300}>
         <ReRadar data={data} outerRadius="68%">
           <PolarGrid stroke="color-mix(in srgb, var(--gold) 15%, transparent)" />
           <PolarAngleAxis dataKey="subject" tick={{ fill: 'var(--neutral-mid)', fontSize: 12, fontWeight: 600 }} />
@@ -57,6 +99,7 @@ function PillarRadar({ pillarScores }) {
           <Tooltip contentStyle={{ background: 'var(--neutral-carbon-deep)', border: '1px solid color-mix(in srgb, var(--gold) 25%, transparent)', borderRadius: 8, color: 'var(--neutral-warm)', fontSize: 12 }} />
         </ReRadar>
       </ResponsiveContainer>
+      </div>
     </div>
   );
 }
@@ -88,6 +131,7 @@ function PillarBars({ pillarScores }) {
 }
 
 export default function IndividualResults() {
+  usePageTitle('My results');
   const { id } = useParams();
   const navigate = useNavigate();
   const { user } = useAuth();

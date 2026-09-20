@@ -1,3 +1,4 @@
+import usePageTitle from '../../lib/usePageTitle';
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
@@ -8,6 +9,7 @@ import { useToast } from '../../components/Toast';
 import { Play, Pause, ChevronRight, ChevronLeft, CheckCircle, Clock } from 'lucide-react';
 
 export default function InterviewLive() {
+  usePageTitle('Live interview');
   const { sessionId } = useParams();
   const { user } = useAuth();
   const navigate = useNavigate();

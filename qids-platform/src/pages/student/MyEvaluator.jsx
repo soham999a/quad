@@ -1,7 +1,8 @@
+import usePageTitle from '../../lib/usePageTitle';
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { getAllUsers, getStudentEvaluator, assignEvaluator, removeAssignment, getUserAssessments, getAllEvaluations } from '../../services/firestoreService';
+import { listPublicEvaluators, getStudentEvaluator, assignEvaluator, removeAssignment, getUserAssessments, getAllEvaluations } from '../../services/firestoreService';
 import { Check } from 'lucide-react';
 import { useToast } from '../../components/Toast';
 import { PILLARS } from '../../data/qidsData';
@@ -9,6 +10,7 @@ import { computePillarScore, computeWeightedScore, getGrade } from '../../core/e
 import { UserCheck, UserX, Users, RefreshCw, Mail, Search, AlertCircle, CheckCircle, Clock } from 'lucide-react';
 
 export default function MyEvaluator() {
+  usePageTitle('My evaluator');
   const { user } = useAuth();
   const toast = useToast();
   const navigate = useNavigate();
@@ -27,12 +29,13 @@ export default function MyEvaluator() {
   const loadData = async () => {
     setLoading(true);
     try {
-      const allUsers = await getAllUsers();
-      setEvaluators(allUsers.filter(u => u.role === 'evaluator'));
+      // Public evaluator directory — readable by any signed-in user.
+      const directory = await listPublicEvaluators();
+      setEvaluators(directory);
 
       const current = await getStudentEvaluator(user.uid);
       if (current) {
-        const ev = allUsers.find(u => u.uid === current.evaluatorUid);
+        const ev = directory.find(u => u.uid === current.evaluatorUid);
         setCurrentEvaluator(ev || null);
         // Load assessments and their evaluations
         const asms = await getUserAssessments(user.uid);

@@ -1,56 +1,120 @@
-import React, { useState, createContext, useContext, useEffect } from 'react';
-import { BrowserRouter, Routes, Route, NavLink, useNavigate, Navigate, useLocation } from 'react-router-dom';
+import React, { useState, createContext, useContext, useEffect, Suspense, lazy } from 'react';
+import { BrowserRouter, Routes, Route, NavLink, useNavigate, Navigate, useLocation, Outlet } from 'react-router-dom';
 import {
   Brain, Map, ClipboardList, TrendingUp, FileText, UserCheck,
   ChevronRight, Menu, LogOut, Home, BookOpen, X, Shield, Users, Sparkles, Building2, Target, Lock,
   PanelLeftClose, PanelLeftOpen,
-  Settings as SettingsIcon
+  Settings as SettingsIcon,
+  Search, Sun, Moon, LayoutGrid, History,
 } from 'lucide-react';
 import { PILLARS, mergeEvaluationScores } from './data/qidsData';
 import QidsMark from './components/QidsMark';
+import CommandPalette from './components/CommandPalette';
+import EmptyState from './components/EmptyState';
 import { computePillarScore } from './core/engine/qids';
 import { getPlan, can } from './core/plans';
 import { AuthProvider, useAuth } from './context/AuthContext';
+import { useTheme } from './lib/theme';
+import useModalA11y from './lib/useModalA11y';
 import ProtectedRoute from './components/ProtectedRoute';
 import OnboardingGate from './components/OnboardingGate';
+import { RoleRoute, EntitlementRoute } from './components/guards';
+import ErrorBoundary from './components/ErrorBoundary';
 import ThemeToggle from './components/ThemeToggle';
 import { ToastProvider } from './components/Toast';
 import { getLatestAssessment, getLatestPostAssessment, getAllEvaluations } from './services/firestoreService';
 
+// eagerly loaded (always on the critical path)
 import Landing from './pages/Landing';
-import Onboarding from './pages/onboarding/Onboarding';
 import Mode from './pages/Mode';
-import NotFound from './pages/NotFound';
-import Settings from './pages/account/Settings';
 import Login from './pages/auth/Login';
-import Signup from './pages/auth/Signup';
-import Dashboard from './pages/Dashboard';
-import FrameworkMap from './pages/FrameworkMap';
-import FourPillars from './pages/FourPillars';
-import Assessment from './pages/Assessment';
-import Progress from './pages/Progress';
-import ReportGenerator from './pages/ReportGenerator';
-import AdminPanel from './pages/admin/AdminPanel';
-import EvaluatorDashboard from './pages/evaluator/EvaluatorDashboard';
-import EvaluatorScoring from './pages/evaluator/EvaluatorScoring';
-import MyEvaluator from './pages/student/MyEvaluator';
-import Questionnaires from './pages/Questionnaires';
-import InterventionPlan from './pages/InterventionPlan';
-import EnterpriseRunner from './pages/enterprise/EnterpriseRunner';
-import EmployerDashboard from './pages/employer/EmployerDashboard';
-import IndividualOnboarding from './pages/individual/IndividualOnboarding';
-import IndividualResults from './pages/individual/IndividualResults';
-import IndividualCredential from './pages/individual/IndividualCredential';
-import InterviewerDashboard from './pages/interview/InterviewerDashboard';
-import InterviewSetup from './pages/interview/InterviewSetup';
-import InterviewPostScoring from './pages/interview/InterviewPostScoring';
-import InterviewLive from './pages/interview/InterviewLive';
-import InterviewReport from './pages/interview/InterviewReport';
-import TeacherDashboard from './pages/school/TeacherDashboard';
-import ClassManager from './pages/school/ClassManager';
-import ClassAnalytics from './pages/school/ClassAnalytics';
-import StudentJoin from './pages/school/StudentJoin';
-import SchoolReports from './pages/school/SchoolReports';
+
+// lazily loaded — each persona/page splits into its own chunk
+const Onboarding = lazy(() => import('./pages/onboarding/Onboarding'));
+const NotFound = lazy(() => import('./pages/NotFound'));
+const Settings = lazy(() => import('./pages/account/Settings'));
+const Signup = lazy(() => import('./pages/auth/Signup'));
+const Dashboard = lazy(() => import('./pages/Dashboard'));
+const FrameworkMap = lazy(() => import('./pages/FrameworkMap'));
+const FourPillars = lazy(() => import('./pages/FourPillars'));
+const Assessment = lazy(() => import('./pages/Assessment'));
+const Progress = lazy(() => import('./pages/Progress'));
+const ReportGenerator = lazy(() => import('./pages/ReportGenerator'));
+const AdminPanel = lazy(() => import('./pages/admin/AdminPanel'));
+const EvaluatorDashboard = lazy(() => import('./pages/evaluator/EvaluatorDashboard'));
+const EvaluatorScoring = lazy(() => import('./pages/evaluator/EvaluatorScoring'));
+const MyEvaluator = lazy(() => import('./pages/student/MyEvaluator'));
+const Questionnaires = lazy(() => import('./pages/Questionnaires'));
+const InterventionPlan = lazy(() => import('./pages/InterventionPlan'));
+const EnterpriseRunner = lazy(() => import('./pages/enterprise/EnterpriseRunner'));
+const EmployerDashboard = lazy(() => import('./pages/employer/EmployerDashboard'));
+const IndividualOnboarding = lazy(() => import('./pages/individual/IndividualOnboarding'));
+const IndividualResults = lazy(() => import('./pages/individual/IndividualResults'));
+const IndividualCredential = lazy(() => import('./pages/individual/IndividualCredential'));
+const InterviewerDashboard = lazy(() => import('./pages/interview/InterviewerDashboard'));
+const InterviewSetup = lazy(() => import('./pages/interview/InterviewSetup'));
+const InterviewPostScoring = lazy(() => import('./pages/interview/InterviewPostScoring'));
+const InterviewLive = lazy(() => import('./pages/interview/InterviewLive'));
+const InterviewReport = lazy(() => import('./pages/interview/InterviewReport'));
+const TeacherDashboard = lazy(() => import('./pages/school/TeacherDashboard'));
+const ClassManager = lazy(() => import('./pages/school/ClassManager'));
+const ClassAnalytics = lazy(() => import('./pages/school/ClassAnalytics'));
+const StudentJoin = lazy(() => import('./pages/school/StudentJoin'));
+const SchoolReports = lazy(() => import('./pages/school/SchoolReports'));
+const PublicCredential = lazy(() => import('./pages/credential/PublicCredential'));
+
+function PageSuspense({ children }) {
+  return (
+    <Suspense fallback={<PageSkeleton />}>
+      <ErrorBoundary>{children}</ErrorBoundary>
+    </Suspense>
+  );
+}
+
+/** Thin gold route-transition bar under the topbar while a chunk loads. */
+function RouteTransitionBar() {
+  const { pathname } = useLocation();
+  const [active, setActive] = useState(false);
+  useEffect(() => {
+    setActive(true);
+    const t = setTimeout(() => setActive(false), 450);
+    return () => clearTimeout(t);
+  }, [pathname]);
+  return (
+    <div aria-hidden="true" className="absolute bottom-0 left-0 right-0 h-[2px] overflow-hidden">
+      <div
+        className="h-full transition-all duration-500"
+        style={{
+          width: active ? '100%' : '0%',
+          opacity: active ? 1 : 0,
+          background: 'linear-gradient(90deg, var(--gold-bright), var(--gold))',
+        }}
+      />
+    </div>
+  );
+}
+
+/** Editorial page-shaped loading skeleton (uses the shared shimmer utility). */
+function PageSkeleton() {
+  return (
+    <div className="page-pad max-w-[960px] mx-auto animate-fade" aria-busy="true" aria-label="Loading page">
+      <div className="skeleton h-3 w-28 mb-4" />
+      <div className="skeleton h-8 w-72 max-w-full mb-3" />
+      <div className="skeleton h-px w-full mb-10" />
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+        {[0, 1, 2, 3].map(i => <div key={i} className="skeleton h-24" style={{ animationDelay: `${i * 120}ms` }} />)}
+      </div>
+      <div className="skeleton h-32 w-full" />
+    </div>
+  );
+}
+
+/** Scrolls to top on every route change. */
+function ScrollToTop() {
+  const { pathname } = useLocation();
+  useEffect(() => { window.scrollTo(0, 0); }, [pathname]);
+  return null;
+}
 
 export const AppContext = createContext(null);
 export const useApp = () => useContext(AppContext);
@@ -186,6 +250,59 @@ const MOBILE_NAV = [
   { path: '/app/pillars', label: 'Pillars', icon: Brain },
 ];
 
+const PALETTE_RECENTS_KEY = 'qids-palette-recents';
+
+function recordPaletteVisit(path, label) {
+  try {
+    const prev = JSON.parse(window.localStorage.getItem(PALETTE_RECENTS_KEY) || '[]')
+      .filter(r => r.path !== path);
+    prev.unshift({ path, label });
+    window.localStorage.setItem(PALETTE_RECENTS_KEY, JSON.stringify(prev.slice(0, 5)));
+  } catch { /* best-effort */ }
+}
+
+function readPaletteRecents() {
+  try { return JSON.parse(window.localStorage.getItem(PALETTE_RECENTS_KEY) || '[]'); } catch { return []; }
+}
+
+/**
+ * Command-palette index: the persona's own nav plus global actions.
+ * Built per-open so role/theme changes are always reflected.
+ */
+function paletteItems(navigate, persona, { setTheme, theme }) {
+  const navConfig = PERSONA_NAV[persona] || PERSONA_NAV.individual;
+  const items = [];
+  // Recents first — the fastest way back to where you were.
+  const recents = readPaletteRecents();
+  for (const r of recents) {
+    items.push({
+      group: 'Recent',
+      label: r.label,
+      icon: History,
+      keywords: 'recent ' + r.path,
+      run: () => navigate(r.path),
+    });
+  }
+  for (const group of navConfig.groups) {
+    for (const item of group.items) {
+      items.push({
+        group: 'Navigate',
+        label: item.label,
+        icon: item.icon,
+        keywords: group.label.toLowerCase(),
+        run: () => { recordPaletteVisit(item.path, item.label); navigate(item.path); },
+      });
+    }
+  }
+  items.push(
+    { group: 'Actions', label: 'New assessment', icon: ClipboardList, hint: 'Start', keywords: 'assess begin run qids', run: () => navigate('/app/assessment') },
+    { group: 'Actions', label: 'Switch context', icon: LayoutGrid, hint: 'Mode', keywords: 'individual school enterprise role mode', run: () => navigate('/mode') },
+    { group: 'Actions', label: theme === 'light' ? 'Switch to dark theme' : 'Switch to light theme', icon: theme === 'light' ? Moon : Sun, hint: 'Theme', keywords: 'dark light appearance appearance toggle', run: () => setTheme(theme === 'light' ? 'dark' : 'light') },
+    { group: 'Actions', label: 'Toggle sidebar rail', icon: PanelLeftClose, hint: 'View', keywords: 'collapse expand rail width', run: () => window.dispatchEvent(new CustomEvent('qids:toggle-sidebar')) },
+  );
+  return items;
+}
+
 // Where each persona lands when they enter the shell (Blueprint §5.1).
 const PERSONA_HOME = {
   individual: '/app/individual',
@@ -208,6 +325,8 @@ function Sidebar({ collapsed }) {
   const handleLogout = async () => { await logout(); navigate('/login'); };
   const role = userProfile?.role || 'student';
   const [showRoleSwitcher, setShowRoleSwitcher] = useState(false);
+  // Role switching is a development tool; it must not ship to prod.
+  const roleSwitcherEnabled = import.meta.env.DEV;
 
   const ROLE_OPTIONS = ['student', 'individual', 'teacher', 'evaluator', 'admin', 'employer'];
 
@@ -278,13 +397,15 @@ function Sidebar({ collapsed }) {
                     <div className="text-[10px] font-mono tracking-wider text-muted-foreground capitalize">{userProfile?.role || 'individual'}</div>
                   </div>
                 </div>
+                {roleSwitcherEnabled && (
                 <button
                   onClick={() => setShowRoleSwitcher(!showRoleSwitcher)}
                   className="w-full text-left mb-2 text-[10px] font-mono uppercase tracking-[0.14em] text-gold/80 hover:text-gold cursor-pointer bg-transparent border-none p-0 py-1"
                 >
                   {showRoleSwitcher ? '— Hide roles' : '+ Switch role'}
                 </button>
-                {showRoleSwitcher && (
+                )}
+                {roleSwitcherEnabled && showRoleSwitcher && (
                   <div className="mb-3 space-y-1">
                     {ROLE_OPTIONS.map(r => (
                       <button
@@ -360,16 +481,10 @@ function MobileMenuDrawer({ onClose }) {
   const { user, userProfile, logout } = useAuth();
   const navigate = useNavigate();
   const handleLogout = async () => { await logout(); onClose(); navigate('/login'); };
-
-  useEffect(() => {
-    const html = document.documentElement;
-    const prev = html.style.overflow;
-    html.style.overflow = 'hidden';
-    return () => { html.style.overflow = prev; };
-  }, []);
+  const modalRef = useModalA11y({ open: true, onClose });
 
   return (
-    <div className="fixed inset-0 z-[100] bg-sidebar text-sidebar-foreground overflow-y-auto animate-fade">
+    <div ref={modalRef} role="dialog" aria-modal="true" aria-label="Navigation menu" className="fixed inset-0 z-[100] bg-sidebar text-sidebar-foreground overflow-y-auto animate-fade">
       <div className="flex justify-between items-center p-6 border-b border-sidebar-border">
         <div className="flex items-center gap-3">
           <QidsMark size={24} className="text-gold" />
@@ -428,7 +543,7 @@ function MobileMenuDrawer({ onClose }) {
   );
 }
 
-function TopBar({ onMenuOpen, collapsed, onToggleSidebar }) {
+function TopBar({ onMenuOpen, collapsed, onToggleSidebar, onOpenPalette }) {
   const navigate = useNavigate();
   const { user, userProfile } = useAuth();
   const mode = userProfile?.role || 'individual';
@@ -437,6 +552,7 @@ function TopBar({ onMenuOpen, collapsed, onToggleSidebar }) {
 
   return (
     <header className="topbar">
+      <RouteTransitionBar />
       <div className="flex items-center gap-4 topbar-nav min-w-0">
         <button
           onClick={onToggleSidebar}
@@ -454,6 +570,15 @@ function TopBar({ onMenuOpen, collapsed, onToggleSidebar }) {
         </div>
       </div>
       <div className="flex items-center gap-5 topbar-actions">
+        <button
+          onClick={onOpenPalette}
+          aria-label="Open command palette"
+          title="Search pages and actions (Ctrl+K)"
+          className="hidden md:inline-flex items-center gap-2 h-8 px-3 border border-sidebar-border text-muted-foreground hover:text-gold hover:border-gold/60 transition-colors cursor-pointer bg-transparent font-mono text-[10px] tracking-[0.14em] uppercase">
+          <Search size={12} strokeWidth={1.5} />
+          <span className="hidden lg:inline">Search</span>
+          <kbd className="text-[9px] opacity-70">⌘K</kbd>
+        </button>
         <span className="hidden md:inline-flex items-center"><ThemeToggle /></span>
         <button onClick={() => navigate('/mode')}
           className="hidden md:inline-flex items-center gap-2 bg-transparent border-none p-0 font-mono text-[11px] tracking-[0.18em] uppercase text-muted-foreground hover:text-gold transition-colors cursor-pointer">
@@ -481,8 +606,13 @@ function TopBar({ onMenuOpen, collapsed, onToggleSidebar }) {
   );
 }
 
+const SIDEBAR_KEY = 'qids-sidebar-collapsed';
+
 function AppShell() {
-  const [collapsed, setCollapsed] = useState(false);
+  const [collapsed, setCollapsed] = useState(() => {
+    // Restore the user's preferred rail width across sessions.
+    try { return window.localStorage.getItem(SIDEBAR_KEY) === '1'; } catch { return false; }
+  });
   const [context, setContext] = useState('individual');
   const [assessmentData, setAssessmentData] = useState(null);
   const [postData, setPostData] = useState(null);
@@ -490,7 +620,34 @@ function AppShell() {
   const [mergedPillarScores, setMergedPillarScores] = useState(null);
   const [evalStatus, setEvalStatus] = useState({});
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const { user } = useAuth();
+  const [paletteOpen, setPaletteOpen] = useState(false);
+  const { user, userProfile } = useAuth();
+  const navigate = useNavigate();
+  const { setTheme, theme } = useTheme();
+
+  // Sidebar toggle from the command palette.
+  useEffect(() => {
+    const onToggle = () => setCollapsed(c => !c);
+    window.addEventListener('qids:toggle-sidebar', onToggle);
+    return () => window.removeEventListener('qids:toggle-sidebar', onToggle);
+  }, []);
+
+  // Persist sidebar collapse preference.
+  useEffect(() => {
+    try { window.localStorage.setItem(SIDEBAR_KEY, collapsed ? '1' : '0'); } catch { /* best-effort */ }
+  }, [collapsed]);
+
+  // ⌘K / Ctrl+K opens the command palette from anywhere in the shell.
+  useEffect(() => {
+    const onKey = (e) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault();
+        setPaletteOpen(o => !o);
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, []);
 
   useEffect(() => {
     if (!user) return;
@@ -521,46 +678,149 @@ function AppShell() {
   return (
     <AppContext.Provider value={{ context, setContext, assessmentData, setAssessmentData, postData, setPostData, evaluations, mergedPillarScores, evalStatus, demoMode: false }}>
       <div className={`flex min-h-screen bg-background ${collapsed ? 'shell-collapsed' : ''}`}>
+        <a href="#qids-main" className="skip-link">Skip to content</a>
         <Sidebar collapsed={collapsed} />
         <div className={`app-content ${collapsed ? 'sidebar-collapsed' : ''}`}>
-          <TopBar onMenuOpen={() => setMobileMenuOpen(true)} collapsed={collapsed} onToggleSidebar={() => setCollapsed(c => !c)} />
-          <main className="flex-1 min-h-0 overflow-y-auto overflow-x-clip">
+          <TopBar onMenuOpen={() => setMobileMenuOpen(true)} collapsed={collapsed} onToggleSidebar={() => setCollapsed(c => !c)} onOpenPalette={() => setPaletteOpen(true)} />
+          <main id="qids-main" className="flex-1 min-h-0 overflow-y-auto overflow-x-clip">
             <Routes>
               <Route index element={<PersonaHome />} />
-              <Route path="dashboard" element={<Dashboard />} />
-              <Route path="framework" element={<FrameworkMap />} />
-              <Route path="pillars" element={<FourPillars />} />
-              <Route path="pillars/:pillarId" element={<FourPillars />} />
-              <Route path="assessment" element={<Assessment />} />
-              <Route path="progress" element={<Progress />} />
-              <Route path="report" element={<ReportGenerator />} />
-              <Route path="settings" element={<Settings />} />
-              <Route path="admin" element={<AdminPanel />} />
-              <Route path="evaluator" element={<EvaluatorDashboard />} />
-              <Route path="evaluator/assess/:assessmentId" element={<EvaluatorScoring />} />
-              <Route path="my-evaluator" element={<MyEvaluator />} />
-              <Route path="questionnaires" element={<Questionnaires />} />
-              <Route path="intervention-plan" element={<InterventionPlan />} />
-              <Route path="enterprise" element={<EnterpriseRunner mode="enterprise" />} />
-              <Route path="enterprise/:tier" element={<EnterpriseRunner mode="enterprise" />} />
-              <Route path="role-fit" element={<EnterpriseRunner mode="role" />} />
-              <Route path="role-fit/:tier" element={<EnterpriseRunner mode="role" />} />
-              <Route path="talent" element={<EmployerDashboard />} />
-              <Route path="individual" element={<IndividualOnboarding />} />
-              <Route path="individual/results/:id" element={<IndividualResults />} />
-              <Route path="individual/credential/:id" element={<IndividualCredential />} />
-              <Route path="interview" element={<InterviewerDashboard />} />
-              <Route path="interview/setup" element={<InterviewSetup />} />
-              <Route path="interview/scoring/:sessionId" element={<InterviewPostScoring />} />
-              <Route path="interview/live/:sessionId" element={<InterviewLive />} />
-              <Route path="interview/report/:sessionId" element={<InterviewReport />} />
-              <Route path="school" element={<TeacherDashboard />} />
-              <Route path="school/create" element={<ClassManager />} />
-              <Route path="school/class/:classId" element={<ClassManager />} />
-              <Route path="school/class/:classId/analytics" element={<ClassAnalytics />} />
-              <Route path="school/join" element={<StudentJoin />} />
-              <Route path="school/reports" element={<SchoolReports />} />
-              <Route path="*" element={<PersonaHome />} />
+              <Route path="dashboard" element={<PageSuspense><Dashboard /></PageSuspense>} />
+              <Route path="framework" element={<PageSuspense><FrameworkMap /></PageSuspense>} />
+              <Route path="pillars" element={<PageSuspense><FourPillars /></PageSuspense>} />
+              <Route path="pillars/:pillarId" element={<PageSuspense><FourPillars /></PageSuspense>} />
+              <Route path="assessment" element={<PageSuspense><Assessment /></PageSuspense>} />
+              <Route path="progress" element={<PageSuspense><Progress /></PageSuspense>} />
+              <Route path="report" element={<PageSuspense><ReportGenerator /></PageSuspense>} />
+              <Route path="settings" element={<PageSuspense><Settings /></PageSuspense>} />
+
+              {/* Admin only — role enforced at the route, not just the sidebar. */}
+              <Route path="admin" element={
+                <RoleRoute roles={['admin']}>
+                  <PageSuspense><AdminPanel /></PageSuspense>
+                </RoleRoute>
+              } />
+
+              {/* Evaluator console — evaluators and admins. */}
+              <Route path="evaluator" element={
+                <RoleRoute roles={['evaluator', 'admin']}>
+                  <PageSuspense><EvaluatorDashboard /></PageSuspense>
+                </RoleRoute>
+              } />
+              <Route path="evaluator/assess/:assessmentId" element={
+                <RoleRoute roles={['evaluator', 'admin']}>
+                  <PageSuspense><EvaluatorScoring /></PageSuspense>
+                </RoleRoute>
+              } />
+
+              <Route path="my-evaluator" element={<PageSuspense><MyEvaluator /></PageSuspense>} />
+              <Route path="questionnaires" element={<PageSuspense><Questionnaires /></PageSuspense>} />
+
+              {/* Pro entitlement: intervention plans. */}
+              <Route path="intervention-plan" element={
+                <EntitlementRoute entitlement="interventionPlans" feature="Intervention plans">
+                  <PageSuspense><InterventionPlan /></PageSuspense>
+                </EntitlementRoute>
+              } />
+
+              {/* Enterprise batteries — Talent entitlement, employer/admin roles. */}
+              <Route path="enterprise" element={
+                <RoleRoute roles={['employer', 'admin']}>
+                  <EntitlementRoute entitlement="deployedBatteries" feature="Enterprise batteries">
+                    <PageSuspense><EnterpriseRunner mode="enterprise" /></PageSuspense>
+                  </EntitlementRoute>
+                </RoleRoute>
+              } />
+              <Route path="enterprise/:tier" element={
+                <RoleRoute roles={['employer', 'admin']}>
+                  <EntitlementRoute entitlement="deployedBatteries" feature="Enterprise batteries">
+                    <PageSuspense><EnterpriseRunner mode="enterprise" /></PageSuspense>
+                  </EntitlementRoute>
+                </RoleRoute>
+              } />
+              <Route path="role-fit" element={
+                <RoleRoute roles={['employer', 'admin']}>
+                  <EntitlementRoute entitlement="roleFit" feature="Role Fit">
+                    <PageSuspense><EnterpriseRunner mode="role" /></PageSuspense>
+                  </EntitlementRoute>
+                </RoleRoute>
+              } />
+              <Route path="role-fit/:tier" element={
+                <RoleRoute roles={['employer', 'admin']}>
+                  <EntitlementRoute entitlement="roleFit" feature="Role Fit">
+                    <PageSuspense><EnterpriseRunner mode="role" /></PageSuspense>
+                  </EntitlementRoute>
+                </RoleRoute>
+              } />
+              <Route path="talent" element={
+                <RoleRoute roles={['employer', 'admin']}>
+                  <PageSuspense><EmployerDashboard /></PageSuspense>
+                </RoleRoute>
+              } />
+
+              <Route path="individual" element={<PageSuspense><IndividualOnboarding /></PageSuspense>} />
+              <Route path="individual/results/:id" element={<PageSuspense><IndividualResults /></PageSuspense>} />
+              <Route path="individual/credential/:id" element={<PageSuspense><IndividualCredential /></PageSuspense>} />
+
+              {/* Interview Studio — evaluators and admins. */}
+              <Route path="interview" element={
+                <RoleRoute roles={['evaluator', 'admin', 'employer']}>
+                  <PageSuspense><InterviewerDashboard /></PageSuspense>
+                </RoleRoute>
+              } />
+              <Route path="interview/setup" element={
+                <RoleRoute roles={['evaluator', 'admin', 'employer']}>
+                  <PageSuspense><InterviewSetup /></PageSuspense>
+                </RoleRoute>
+              } />
+              <Route path="interview/scoring/:sessionId" element={
+                <RoleRoute roles={['evaluator', 'admin', 'employer']}>
+                  <PageSuspense><InterviewPostScoring /></PageSuspense>
+                </RoleRoute>
+              } />
+              <Route path="interview/live/:sessionId" element={
+                <RoleRoute roles={['evaluator', 'admin', 'employer']}>
+                  <PageSuspense><InterviewLive /></PageSuspense>
+                </RoleRoute>
+              } />
+              <Route path="interview/report/:sessionId" element={
+                <RoleRoute roles={['evaluator', 'admin', 'employer']}>
+                  <PageSuspense><InterviewReport /></PageSuspense>
+                </RoleRoute>
+              } />
+
+              {/* School — teachers manage; admins oversee. */}
+              <Route path="school" element={
+                <RoleRoute roles={['teacher', 'admin']}>
+                  <PageSuspense><TeacherDashboard /></PageSuspense>
+                </RoleRoute>
+              } />
+              <Route path="school/create" element={
+                <RoleRoute roles={['teacher', 'admin']}>
+                  <PageSuspense><ClassManager /></PageSuspense>
+                </RoleRoute>
+              } />
+              <Route path="school/class/:classId" element={
+                <RoleRoute roles={['teacher', 'admin']}>
+                  <PageSuspense><ClassManager /></PageSuspense>
+                </RoleRoute>
+              } />
+              <Route path="school/class/:classId/analytics" element={
+                <RoleRoute roles={['teacher', 'admin']}>
+                  <PageSuspense><ClassAnalytics /></PageSuspense>
+                </RoleRoute>
+              } />
+              <Route path="school/join" element={<PageSuspense><StudentJoin /></PageSuspense>} />
+              <Route path="school/reports" element={
+                <RoleRoute roles={['teacher', 'admin']}>
+                  <PageSuspense><SchoolReports /></PageSuspense>
+                </RoleRoute>
+              } />
+
+              {/* Unknown app routes: real 404, not a silent redirect. */}
+              <Route path="*" element={
+                <PageSuspense><NotFound inline /></PageSuspense>
+              } />
             </Routes>
           </main>
           <footer className="hidden md:flex items-center justify-between border-t border-border py-4 px-10">
@@ -571,6 +831,11 @@ function AppShell() {
         <MobileNav onMenuOpen={() => setMobileMenuOpen(true)} />
       </div>
       {mobileMenuOpen && <MobileMenuDrawer onClose={() => setMobileMenuOpen(false)} />}
+      <CommandPalette
+        open={paletteOpen}
+        onClose={() => setPaletteOpen(false)}
+        items={paletteItems(navigate, personaFor(userProfile?.role || 'individual'), { setTheme, theme })}
+      />
     </AppContext.Provider>
   );
 }
@@ -579,26 +844,28 @@ export default function App() {
   return (
     <AuthProvider>
       <BrowserRouter>
-        <ToastProvider>
-          <Routes>
-            <Route path="/" element={<Landing />} />
-            <Route path="/mode" element={<Mode />} />
-            <Route path="/login" element={<Login />} />
-            <Route path="/signup" element={<Signup />} />
-            <Route path="/onboarding" element={
-              <ProtectedRoute>
-                <Onboarding />
-              </ProtectedRoute>
-            } />
-            <Route path="/app/*" element={
-              <ProtectedRoute>
-                <OnboardingGate>
-                  <AppShell />
-                </OnboardingGate>
-              </ProtectedRoute>
-            } />
-            <Route path="*" element={<NotFound />} />
-          </Routes>
+        <ScrollToTop />
+        <ToastProvider>            <Routes>
+              <Route path="/" element={<Landing />} />
+              <Route path="/mode" element={<Mode />} />
+              <Route path="/login" element={<Login />} />
+              <Route path="/signup" element={<PageSuspense><Signup /></PageSuspense>} />
+              {/* Public credential — no auth, by design (the growth loop). */}
+              <Route path="/credential/:id" element={<PageSuspense><PublicCredential /></PageSuspense>} />
+              <Route path="/onboarding" element={
+                <ProtectedRoute>
+                  <PageSuspense><Onboarding /></PageSuspense>
+                </ProtectedRoute>
+              } />
+              <Route path="/app/*" element={
+                <ProtectedRoute>
+                  <OnboardingGate>
+                    <AppShell />
+                  </OnboardingGate>
+                </ProtectedRoute>
+              } />
+              <Route path="*" element={<PageSuspense><NotFound /></PageSuspense>} />
+            </Routes>
         </ToastProvider>
       </BrowserRouter>
     </AuthProvider>

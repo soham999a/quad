@@ -1,3 +1,4 @@
+import usePageTitle from '../../lib/usePageTitle';
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
@@ -17,6 +18,7 @@ const STATUS_STYLES = {
 };
 
 export default function InterviewerDashboard() {
+  usePageTitle('Interview studio');
   const { user } = useAuth();
   const navigate = useNavigate();
   const [sessions, setSessions] = useState([]);

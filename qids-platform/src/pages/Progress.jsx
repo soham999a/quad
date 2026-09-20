@@ -1,4 +1,6 @@
-import React, { useState } from 'react';
+import usePageTitle from '../lib/usePageTitle';
+import React, { useState, useEffect } from 'react';
+import EmptyState from '../components/EmptyState';
 import { PILLARS, PRE_INTERVENTION_NODES, INTERVENTION_NODES, POST_INTERVENTION_NODES, INTERVENTION_MODULES,
   CAREER_PROFILES, SKILL_SHAPES } from '../data/qidsData';
 import {
@@ -8,6 +10,9 @@ import {
 import { useApp } from '../App';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { getUserAssessments } from '../services/firestoreService';
+import { LineChart as ReLine, Line } from 'recharts';
+import { TrendingUp as TrendIcon } from 'lucide-react';
 import { savePostAssessment } from '../services/firestoreService';
 import ProcessNode, { NodeDetailPanel } from '../components/ProcessNode';
 import ScoreCard from '../components/ScoreCard';
@@ -54,13 +59,94 @@ function Heatmap({ pillarScores, rawScores }) {
   );
 }
 
+/**
+ * GrowthTrendPanel — pillar trajectories across assessment attempts.
+ * Blueprints' Reassess step made visible: one line per pillar over every
+ * recorded attempt. Hidden entirely when there is only one attempt —
+ * a trend of one point is noise, not insight.
+ */
+function GrowthTrendPanel({ uid, currentId }) {
+  const [attempts, setAttempts] = useState(null);
+
+  useEffect(() => {
+    if (!uid) return;
+    let alive = true;
+    getUserAssessments(uid).then(list => {
+      if (!alive) return;
+      const pts = (list || [])
+        .filter(a => a?.pillarScores && Object.keys(a.pillarScores).length > 0)
+        .map(a => ({
+          date: a.timestamp || a.createdAt?.toDate?.()?.toISOString?.() || null,
+          ...Object.fromEntries(Object.entries(a.pillarScores).map(([k, v]) => [k, Math.round(v)])),
+        }))
+        .filter(p => p.date)
+        .sort((a, b) => new Date(a.date) - new Date(b.date));
+      setAttempts(pts);
+    }).catch(() => setAttempts([]));
+    return () => { alive = false; };
+  }, [uid]);
+
+  if (attempts === null || attempts.length < 2) return null;
+
+  const deltas = ['IQ', 'EQ', 'SQ', 'AQ']
+    .map(id => {
+      const first = attempts[0][id];
+      const last = attempts[attempts.length - 1][id];
+      return last != null && first != null ? last - first : 0;
+    });
+  const net = deltas.reduce((s, d) => s + d, 0);
+  const fmtDate = iso => new Date(iso).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+
+  return (
+    <div className="mb-4 border-[0.5px] border-outline-variant rounded-3xl bg-surface-container-lowest p-4 md:p-5 animate-fade">
+      <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
+        <div className="flex items-center gap-2">
+          <TrendIcon size={14} className="text-primary" />
+          <span className="text-[11px] uppercase tracking-widest text-surface-variant">Growth across {attempts.length} attempts</span>
+        </div>
+        <span className="text-[11px] font-[600]" style={{ color: net > 0 ? 'var(--status-ok)' : net < 0 ? 'var(--status-err)' : 'var(--neutral-ink-500)' }}>
+          Net {net > 0 ? `+${net}` : net} since first assessment
+        </span>
+      </div>
+      <div style={{ width: '100%', height: 200 }}>
+        <ResponsiveContainer>
+          <ReLine data={attempts} margin={{ top: 4, right: 8, bottom: 0, left: -18 }}>
+            <XAxis dataKey="date" tickFormatter={fmtDate} tick={{ fontSize: 10, fill: 'var(--neutral-ink-500)' }} stroke="var(--outline-variant)" />
+            <YAxis domain={[0, 100]} tick={{ fontSize: 10, fill: 'var(--neutral-ink-500)' }} stroke="var(--outline-variant)" />
+            <Tooltip
+              contentStyle={{ background: 'var(--surface-1)', border: '0.5px solid var(--outline-variant)', borderRadius: 8, fontSize: 12 }}
+              labelStyle={{ color: 'var(--neutral-ink-500)' }}
+              labelFormatter={fmtDate}
+            />
+            {['IQ', 'EQ', 'SQ', 'AQ'].map((id, i) => (
+              <Line key={id} type="monotone" dataKey={id} stroke={PILLARS[id].color} strokeWidth={2} dot={{ r: 3 }} activeDot={{ r: 5 }} isAnimationActive={false} />
+            ))}
+          </ReLine>
+        </ResponsiveContainer>
+      </div>
+      <div className="flex gap-4 mt-3 flex-wrap">
+        {['IQ', 'EQ', 'SQ', 'AQ'].map((id, i) => (
+          <span key={id} className="flex items-center gap-1.5 text-[11px] text-surface-variant">
+            <span className="w-2 h-2 rounded-full" style={{ background: PILLARS[id].color }} />{id}
+            <span className="font-[600]" style={{ color: deltas[i] > 0 ? 'var(--status-ok)' : deltas[i] < 0 ? 'var(--status-err)' : 'inherit' }}>
+              {deltas[i] > 0 ? `+${deltas[i]}` : deltas[i]}
+            </span>
+          </span>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function PreSection({ pillarScores, rawScores, activeNode, setActiveNode }) {
   const unifiedScore = computeWeightedScore(pillarScores);
   const overallGrade = getGrade(unifiedScore);
   const criticalPillars = Object.entries(pillarScores).filter(([, s]) => isCritical(s));
+  const { user } = useAuth();
 
   return (
     <div className="flex-1 overflow-y-auto p-4 md:p-6">
+      <GrowthTrendPanel uid={user?.uid} />
       <div className="mb-6">
         <div className="flex items-center gap-2.5 mb-3">
           <div className="px-2.5 py-0.5 text-[11px] font-[600] rounded-full" style={{ background: 'var(--phase-pre-tint)', border: '1px solid var(--phase-pre-line)', color: 'var(--phase-pre-soft)' }}>Phase 1</div>
@@ -714,6 +800,7 @@ function PostRightPanel({ preScores, postScores }) {
 }
 
 export default function Progress() {
+  usePageTitle('Progress');
   const { assessmentData: ctxAssessment, postData: ctxPostData, setPostData } = useApp();
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -754,14 +841,13 @@ export default function Progress() {
 
   if (!assessmentData) {
     return (
-      <div className="flex items-center justify-center h-full flex-col gap-4">
-        <div className="opacity-30">
-          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
-        </div>
-        <h3 className="text-[18px] font-bold">No Assessment Found</h3>
-        <p className="text-label-md text-surface-variant">Complete an assessment first to view your progress timeline.</p>
-        <button onClick={() => navigate('/app/assessment')} className="px-6 py-2 bg-primary text-on-primary text-label-md font-label-md hover:opacity-90 transition-all cursor-pointer border-none">Start Assessment</button>
-      </div>
+      <EmptyState
+        icon={ClipboardList}
+        title="No Assessment Found"
+        description="Complete an assessment first to view your progress timeline."
+        actionLabel="Start Assessment"
+        onAction={() => navigate('/app/assessment')}
+      />
     );
   }
 

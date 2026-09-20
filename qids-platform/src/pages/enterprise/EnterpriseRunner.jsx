@@ -1,4 +1,5 @@
-import React, { useMemo, useState } from 'react';
+import usePageTitle from '../../lib/usePageTitle';
+import React, { useMemo, useState, useEffect, useRef } from 'react';
 import { useParams } from 'react-router-dom';
 import { ArrowLeft, ArrowRight, Check, ClipboardList, Building2, Target } from 'lucide-react';
 import { buildModeSteps, ENTERPRISE_TIERS, modulesForTier, ENTERPRISE_MODULES } from '../../core/modes';
@@ -9,6 +10,8 @@ import { moduleComplete, moduleAnsweredCount, assessmentComplete } from '../../c
 import { evaluateEnterpriseAssessment } from '../../core/engine/moduleScoring';
 import { useAuth } from '../../context/AuthContext';
 import { saveEnterpriseResult } from '../../services/firestoreService';
+import { loadCheckpoint, saveCheckpoint, clearCheckpoint, loadRemoteCheckpoint, saveRemoteCheckpoint } from '../../lib/checkpoint';
+import { logEvent } from '../../lib/analytics';
 import RunnerItems from './RunnerItems';
 import EnterpriseResults from './EnterpriseResults';
 
@@ -23,6 +26,7 @@ function riqModuleDef() {
 }
 
 export default function EnterpriseRunner({ mode = 'enterprise', initialTier }) {
+  usePageTitle('Enterprise assessment');
   const { tier: tierParam } = useParams();
   const { user } = useAuth();
   const [phase, setPhase] = useState('setup');
@@ -36,6 +40,63 @@ export default function EnterpriseRunner({ mode = 'enterprise', initialTier }) {
   const [result, setResult] = useState(null);
 
   const roleTrack = mode === 'role' && targetRole ? getTrackForProfile(targetRole) : undefined;
+
+  // ── Checkpoint/resume (blueprint P2) ───────────────────────────────────────
+  // The seeded deployment is fully reproducible from `seed`, so restoring
+  // { phase, tier, intake, targetRole, seed, answers, stepIndex } reconstructs
+  // the session exactly. Mode is part of the key so role/enterprise don't collide.
+  const cpKind = 'enterprise:' + mode;
+  const cpRef = useRef(null);
+  const [resumeState, setResumeState] = useState(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    const pick = (cp) => (cp && cp.phase === 'running' && cp.seed !== undefined ? cp : null);
+    const local = pick(loadCheckpoint(cpKind, user?.uid));
+    if (local) { setResumeState(local); return; }
+    (async () => {
+      const remote = pick(await loadRemoteCheckpoint(cpKind, user?.uid));
+      if (!cancelled && remote) setResumeState(remote);
+    })();
+    return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user]);
+
+  // Save while running or reviewing (not on setup/done).
+  // Local every 600ms; cross-device layer throttled internally (~20s).
+  useEffect(() => {
+    if (phase !== 'running' && phase !== 'review') return;
+    if (cpRef.current) clearTimeout(cpRef.current);
+    cpRef.current = setTimeout(() => {
+      const state = { phase, tier, intake, targetRole, seed, answers, stepIndex };
+      saveCheckpoint(cpKind, user?.uid, state);
+      saveRemoteCheckpoint(cpKind, user?.uid, state);
+    }, 600);
+    return () => clearTimeout(cpRef.current);
+  }, [phase, tier, intake, targetRole, seed, answers, stepIndex, user]);
+
+  const resumeSession = () => {
+    if (!resumeState) return;
+    const restored = deployTier(resumeState.tier || 'QGRA', resumeState.seed);
+    if (resumeState.targetRole) {
+      const track = getTrackForProfile(resumeState.targetRole);
+      if (track) restored.RIQ = deployRoleTrack(track.meta.id, resumeState.tier || 'QGRA', resumeState.seed);
+    }
+    setTier(resumeState.tier || 'QGRA');
+    setIntake(resumeState.intake || { name: '', email: '', org: '' });
+    setTargetRole(resumeState.targetRole || '');
+    setSeed(resumeState.seed);
+    setDeployed(restored);
+    setAnswers(resumeState.answers || {});
+    setStepIndex(resumeState.stepIndex ?? 0);
+    setPhase('running');
+    setResumeState(null);
+  };
+
+  const discardResume = () => {
+    clearCheckpoint(cpKind, user?.uid);
+    setResumeState(null);
+  };
 
   const steps = useMemo(() => {
     const base = buildModeSteps(mode, tier);
@@ -68,6 +129,7 @@ export default function EnterpriseRunner({ mode = 'enterprise', initialTier }) {
     setAnswers({});
     setStepIndex(0);
     setPhase('running');
+    if (user?.uid) logEvent(user.uid, 'enterprise_started', { tier });
   };
 
   const onChange = (itemId, value) => setAnswers(prev => ({ ...prev, [itemId]: value }));
@@ -82,11 +144,19 @@ export default function EnterpriseRunner({ mode = 'enterprise', initialTier }) {
     const res = evaluateEnterpriseAssessment(mode, tier, deployed, answers, intake, roleIds, roleTrack?.meta.id);
     setResult(res);
     setPhase('done');
+    clearCheckpoint(cpKind, user?.uid);
     if (!user?.uid) return;
+    logEvent(user.uid, 'enterprise_complete', { tier });
     try {
+      // Compact persistence: the seeded deployment is fully reproducible from
+      // {tier, targetRole, seed}, so we store only the id sequence + answers.
+      // Avoids ballooning docs toward the 1MB Firestore ceiling (QLIA + RIQ).
+      const deployedIds = Object.fromEntries(
+        Object.entries(deployed || {}).map(([mid, items]) => [mid, items.map(i => i.id)]),
+      );
       await saveEnterpriseResult(user.uid, {
         tier, mode, intake, targetRole, roleIds,
-        deployed, answers, seed, result: res,
+        seed, deployedIds, answers, result: res,
       });
     } catch (e) {
       console.error('Failed to persist enterprise result:', e);
@@ -98,6 +168,7 @@ export default function EnterpriseRunner({ mode = 'enterprise', initialTier }) {
     setDeployed(null);
     setPhase('setup');
     setAnswers({});
+    clearCheckpoint(cpKind, user?.uid);
   };
 
   // ── SETUP ───────────────────────────────────────────────────────────────────
@@ -130,6 +201,26 @@ export default function EnterpriseRunner({ mode = 'enterprise', initialTier }) {
             </div>
             <div className="text-technical-sm font-technical-sm text-surface-variant">{tier} battery</div>
           </div>
+          {/* Resume banner — shown when an in-progress session exists */}
+          {resumeState && (
+            <div className="mb-8 flex flex-col sm:flex-row sm:items-center gap-3 p-4 rounded-lg border-[0.5px] border-primary/40 bg-primary/5">
+              <div className="flex-1">
+                <div className="text-label-md font-label-md text-on-surface">Unfinished session found</div>
+                <div className="text-technical-sm font-technical-sm text-surface-variant mt-1">
+                  Saved {new Date(resumeState.savedAt).toLocaleString()} — {resumeState.tier} battery, section {String((resumeState.stepIndex ?? 0) + 1).padStart(2, '0')}. Continue where you left off.
+                </div>
+              </div>
+              <div className="flex gap-2 flex-shrink-0">
+                <button onClick={resumeSession} className="px-4 py-2 btn-primary !py-2 !text-[12px]">
+                  Resume
+                </button>
+                <button onClick={discardResume} className="px-4 py-2 btn-outline !py-2 !text-[12px]">
+                  Discard
+                </button>
+              </div>
+            </div>
+          )}
+
           <div className="gradient-rule mb-6" />
           <div className="grid md:grid-cols-3 gap-4">
             {ENTERPRISE_TIERS.map((t, ti) => {

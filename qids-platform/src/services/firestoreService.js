@@ -1,6 +1,6 @@
 import {
   collection, doc, addDoc, setDoc, getDoc, getDocs,
-  updateDoc, query, where, serverTimestamp, limit
+  updateDoc, deleteDoc, query, where, serverTimestamp, limit
 } from 'firebase/firestore';
 import { db } from '../firebase';
 
@@ -129,6 +129,31 @@ export async function getAllUsers() {
   } catch (e) { console.warn('getAllUsers failed:', e.message); return []; }
 }
 
+/**
+ * Aggregate funnel events (analytics_events) in one query-free pass.
+ * Firestore has no group-by, so pull the recent window and count client-side.
+ * Returns { counts: { eventName: n }, total, windowDays }.
+ */
+export async function getFunnelSummary(windowDays = 30) {
+  try {
+    const since = new Date(Date.now() - windowDays * 24 * 60 * 60 * 1000);
+    const snap = await getDocs(collection(db, 'analytics_events'));
+    const counts = {};
+    let total = 0;
+    snap.forEach(d => {
+      const ev = d.data();
+      const ts = ev.ts?.toDate?.() || (ev.ts ? new Date(ev.ts) : null);
+      if (ts && ts < since) return; // outside the window
+      counts[ev.name] = (counts[ev.name] || 0) + 1;
+      total += 1;
+    });
+    return { counts, total, windowDays };
+  } catch (e) {
+    console.warn('getFunnelSummary failed:', e.message);
+    return { counts: {}, total: 0, windowDays };
+  }
+}
+
 export async function assignEvaluator(evaluatorUid, studentUid) {
   try {
     const id = `${evaluatorUid}_${studentUid}`;
@@ -203,6 +228,74 @@ export async function updateUserRole(uid, role) {
     await updateDoc(doc(db, 'users', uid), { role, updatedAt: serverTimestamp() });
     return true;
   } catch (e) { console.warn('updateUserRole failed:', e.message); return false; }
+}
+
+// ── Public evaluator directory ────────────────────────────────────────────────
+// Minimal directory entries ({ uid, name, email }) that any signed-in user can
+// list. Replaces the old getAllUsers() lookup, which permission-denied for
+// non-admins because /users only allows self-read.
+
+export async function listPublicEvaluators() {
+  const td = typeof window !== 'undefined' ? window.__FIRESTORE_DATA__ : null;
+  if (td?.publicEvaluators) return td.publicEvaluators;
+  try {
+    const snap = await getDocs(collection(db, 'publicEvaluators'));
+    return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+  } catch (e) { console.warn('listPublicEvaluators failed:', e.message); return []; }
+}
+
+/** Keep the directory entry in sync with the user's profile/role. */
+export async function upsertPublicEvaluator(uid, { name, email }) {
+  try {
+    await setDoc(doc(db, 'publicEvaluators', uid), {
+      uid,
+      name: name || '',
+      email: email || '',
+      updatedAt: serverTimestamp(),
+    }, { merge: true });
+    return true;
+  } catch (e) { console.warn('upsertPublicEvaluator failed:', e.message); return false; }
+}
+
+export async function removePublicEvaluator(uid) {
+  try {
+    await deleteDoc(doc(db, 'publicEvaluators', uid));
+    return true;
+  } catch (e) { console.warn('removePublicEvaluator failed:', e.message); return false; }
+}
+
+// ── Public credentials (shareable, verifiable) ────────────────────────────────
+// Sanitised snapshot of a completed assessment. The hash binds the payload so
+// a viewer can confirm the record wasn't tampered with after issuance.
+
+export async function publishCredential(uid, assessment) {
+  const pillarScores = assessment.pillarScores || {};
+  const payload = {
+    uid,
+    assessmentId: assessment.id,
+    name: assessment.intake?.name || 'Candidate',
+    ageGroup: assessment.ageGroup || null,
+    unifiedScore: assessment.result?.unifiedScore ?? null,
+    grade: assessment.result?.grade ?? null,
+    pillarScores,
+    skillShape: assessment.result?.skillShape ?? null,
+  };
+  const hash = await sha256Hex(JSON.stringify(payload));
+  const ref = doc(db, 'publicCredentials', assessment.id);
+  await setDoc(ref, { ...payload, hash, issuedAt: serverTimestamp() });
+  return { id: assessment.id, hash };
+}
+
+export async function getPublicCredential(assessmentId) {
+  try {
+    const snap = await getDoc(doc(db, 'publicCredentials', assessmentId));
+    return snap.exists() ? { id: snap.id, ...snap.data() } : null;
+  } catch (e) { console.warn('getPublicCredential failed:', e.message); return null; }
+}
+
+async function sha256Hex(text) {
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text));
+  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
 }
 
 // ── Enterprise Results ─────────────────────────────────────────────────────────
