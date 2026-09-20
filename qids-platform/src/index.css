@@ -929,6 +929,21 @@ body.qids-focus .app-content {
   outline-offset: 2px;
 }
 
+/* Landing scroll reveal — sections rise gently into view. Applied via
+   IntersectionObserver; reduced-motion users get static content instead. */
+.reveal {
+  opacity: 0;
+  transform: translateY(24px);
+  transition: opacity 0.7s cubic-bezier(0.22, 1, 0.36, 1), transform 0.7s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.reveal-visible {
+  opacity: 1;
+  transform: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .reveal { opacity: 1; transform: none; transition: none; }
+}
+
 /* Tour spotlight ring — animated gold outline around the highlighted element. */
 .qids-tour-ring {
   box-shadow: 0 0 0 2px var(--gold), 0 0 24px color-mix(in oklab, var(--gold) 45%, transparent);

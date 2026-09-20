@@ -1,7 +1,9 @@
+import { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight, ArrowUpRight } from 'lucide-react';
 import { PublicShell, PublicFooter } from '../components/PublicShell';
 import OpenFieldDiagram from '../components/OpenFieldDiagram';
+import QidsMark from '../components/QidsMark';
 
 const QUOTIENTS = [
   ['01', 'IQ', 'Cognitive intelligence', 'Reasoning, analysis, structured problem-solving, and synthesis.', 'var(--iq)'],
@@ -74,7 +76,139 @@ const DIFFERENTIATORS = [
   ['Status discipline', 'Established architecture stays distinct from proposed concepts and future research.'],
 ];
 
+const FAQS = [
+  ['How long does the assessment take?',
+    'The core cycle takes about 20 minutes; the complete battery runs 40–60. Progress is checkpointed at every step — pause and resume exactly where you left off, on any device.'],
+  ['Is this a clinical diagnosis?',
+    'No. QiDS is a developmental instrument. It measures four capability quotients to inform learning and growth decisions — it is not a medical or psychological diagnostic device.'],
+  ['Who can see my results?',
+    'You do. A designated evaluator sees only what they need to score — nothing else. Publishing a public credential is opt-in, and even then it exposes only the profile you choose to seal.'],
+  ['What are the four quotients?',
+    'IQ (cognitive), EQ (emotional), SQ (social) and AQ (adaptive). They are read together as a shape rather than a single number — and that shape drives your development plan.'],
+  ['What age range is supported?',
+    'Instruments are age-banded from 8 to 60 — child through professional — so the same architecture serves classrooms and hiring panels alike.'],
+  ['How much does it cost?',
+    'The core assessment is free. Pro and Institution tiers — unlimited cycles, evidence portfolios, cohort analytics — are in active development.'],
+];
+
+/**
+ * SampleRadar — hand-rolled SVG (no chart dependency in the eager bundle)
+ * showing what a four-quotient profile looks like.
+ */
+function SampleRadar() {
+  const C = 150, R = 100;
+  const axes = [
+    { key: 'IQ', v: 78, color: 'var(--iq)', lx: C, ly: C - R - 26, anchor: 'middle' },
+    { key: 'EQ', v: 64, color: 'var(--eq)', lx: C + R + 24, ly: C + 4, anchor: 'start' },
+    { key: 'SQ', v: 71, color: 'var(--sq)', lx: C, ly: C + R + 30, anchor: 'middle' },
+    { key: 'AQ', v: 58, color: 'var(--aq)', lx: C - R - 24, ly: C + 4, anchor: 'end' },
+  ];
+  const pt = (i, val) => {
+    const a = -Math.PI / 2 + (i * Math.PI) / 2;
+    const r = (val / 100) * R;
+    return [C + r * Math.cos(a), C + r * Math.sin(a)];
+  };
+  const ring = (val) => axes.map((_, i) => pt(i, val).join(',')).join(' ');
+  const poly = axes.map((ax, i) => pt(i, ax.v).join(',')).join(' ');
+  return (
+    <svg viewBox="0 0 300 300" width="100%" role="img" aria-label="Sample four-quotient radar profile: IQ 78, EQ 64, SQ 71, AQ 58">
+      {[25, 50, 75, 100].map(v => (
+        <polygon key={v} points={ring(v)} fill="none" stroke="var(--border)" strokeWidth="0.5" />
+      ))}
+      {axes.map((ax, i) => {
+        const [x, y] = pt(i, 100);
+        return <line key={ax.key} x1={C} y1={C} x2={x} y2={y} stroke="var(--border)" strokeWidth="0.5" />;
+      })}
+      <polygon points={poly} fill="var(--gold)" fillOpacity="0.16" stroke="var(--gold)" strokeWidth="1.5" strokeLinejoin="round" />
+      {axes.map((ax, i) => {
+        const [x, y] = pt(i, ax.v);
+        return <circle key={ax.key} cx={x} cy={y} r="3" fill="var(--gold)" />;
+      })}
+      {axes.map(ax => (
+        <text key={ax.key} x={ax.lx} y={ax.ly} textAnchor={ax.anchor} fill={ax.color}
+          style={{ font: '600 13px "Space Grotesk", sans-serif', letterSpacing: '0.06em' }}>
+          {ax.key}
+          <tspan fill="var(--muted-foreground, gray)" style={{ font: '500 10px "JetBrains Mono", monospace' }}> {ax.v}</tspan>
+        </text>
+      ))}
+    </svg>
+  );
+}
+
+/** SampleCredential — an in-brand mock of the verifiable public credential. */
+function SampleCredential() {
+  const rows = [['IQ', 78, 'var(--iq)'], ['EQ', 64, 'var(--eq)'], ['SQ', 71, 'var(--sq)'], ['AQ', 58, 'var(--aq)']];
+  return (
+    <div className="flex h-full flex-col">
+      <div className="flex items-center justify-between">
+        <span className="inline-flex items-center gap-2">
+          <QidsMark size={16} className="text-gold" />
+          <span className="font-mono text-[10px] tracking-[0.28em] text-on-surface">QiDS</span>
+        </span>
+        <span className="text-[9px] font-mono uppercase tracking-[0.18em] text-gold">● Verified</span>
+      </div>
+      <div className="mt-7 font-display text-[20px] text-on-surface">Sample Profile</div>
+      <div className="mt-1 text-[10px] font-mono uppercase tracking-[0.14em] text-muted-foreground">Grade A · Exceptional</div>
+      <div className="mt-6 flex-1 space-y-3.5">
+        {rows.map(([k, v, c]) => (
+          <div key={k} className="flex items-center gap-3">
+            <span className="w-6 font-mono text-[10px] font-bold" style={{ color: c }}>{k}</span>
+            <span className="h-1.5 flex-1 overflow-hidden bg-surface-container-high">
+              <span className="block h-full" style={{ width: `${v}%`, background: c }} />
+            </span>
+            <span className="w-6 text-right font-mono text-[11px] text-on-surface">{v}</span>
+          </div>
+        ))}
+      </div>
+      <div className="mt-7 border-t border-border pt-4 font-mono text-[9px] leading-relaxed tracking-[0.08em] text-muted-foreground">
+        SHA-256 · 9F2C41…8E1A<br />qids.app/credential/8F3K2M
+      </div>
+    </div>
+  );
+}
+
 export default function Landing() {
+  // Scroll reveal — sections rise into view as they enter the viewport.
+  // Deliberately scroll-listener-based rather than IntersectionObserver:
+  // IO callbacks can be withheld in throttled/occluded webviews, which would
+  // leave sections stuck at opacity 0. A passive scroll check is deterministic
+  // everywhere, and removes itself once every section is revealed.
+  useEffect(() => {
+    const sections = Array.from(document.querySelectorAll('main > section'));
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      sections.forEach(el => el.classList.add('reveal-visible'));
+      return undefined;
+    }
+    sections.forEach(el => el.classList.add('reveal'));
+
+    let pending = sections.slice();
+    let ticking = false;
+    const check = () => {
+      ticking = false;
+      const vh = window.innerHeight;
+      pending = pending.filter(el => {
+        const r = el.getBoundingClientRect();
+        if (r.top < vh * 0.92 && r.bottom > 0) {
+          el.classList.add('reveal-visible');
+          return false;
+        }
+        return true;
+      });
+      if (pending.length === 0) detach();
+    };
+    const onScroll = () => {
+      if (!ticking) { ticking = true; requestAnimationFrame(check); }
+    };
+    const detach = () => {
+      window.removeEventListener('scroll', onScroll, { passive: true });
+      window.removeEventListener('resize', onScroll);
+    };
+    window.addEventListener('scroll', onScroll, { passive: true });
+    window.addEventListener('resize', onScroll);
+    check(); // reveal everything already in view at mount
+    return detach;
+  }, []);
+
   return (
     <PublicShell>
       <main>
@@ -274,6 +408,37 @@ export default function Landing() {
           </div>
         </section>
 
+        <section id="profile" className="surface-bone border-b border-border px-6 py-24 lg:px-12 lg:py-32">
+          <div className="mx-auto max-w-[1440px]">
+            <div className="mb-12 flex flex-wrap items-end justify-between gap-6">
+              <div>
+                <div className="label-eyebrow-gold mb-5">THE OUTPUT</div>
+                <h2 className="font-display text-[38px] leading-tight lg:text-[52px]">
+                  Not a score.
+                  <br />
+                  <span className="text-muted-foreground">An architecture of you.</span>
+                </h2>
+              </div>
+              <p className="max-w-sm text-[13px] leading-[1.7] text-muted-foreground">
+                Every cycle produces a four-quotient profile, a grade, and a development plan — and a
+                credential you can seal and share, verifiable by anyone with the link.
+              </p>
+            </div>
+            <div className="grid grid-cols-1 gap-px border border-border bg-border lg:grid-cols-5">
+              <div className="bg-background p-8 lg:col-span-3 lg:p-14">
+                <div className="label-eyebrow mb-6">SAMPLE PROFILE — FOUR QUOTIENTS</div>
+                <div className="mx-auto max-w-[420px]">
+                  <SampleRadar />
+                </div>
+              </div>
+              <div className="bg-background p-8 lg:col-span-2 lg:p-10">
+                <div className="label-eyebrow mb-6">SAMPLE CREDENTIAL</div>
+                <SampleCredential />
+              </div>
+            </div>
+          </div>
+        </section>
+
         <section className="border-b border-border bg-background px-6 py-24 lg:px-12 lg:py-32">
           <div className="mx-auto grid max-w-[1440px] grid-cols-12 gap-6">
             <div className="col-span-12 lg:col-span-4">
@@ -407,6 +572,31 @@ export default function Landing() {
                   )}
                 </div>
               ))}
+            </div>
+          </div>
+        </section>
+
+        <section className="border-b border-border bg-background px-6 py-24 lg:px-12 lg:py-32">
+          <div className="mx-auto grid max-w-[1440px] grid-cols-12 gap-6">
+            <div className="col-span-12 lg:col-span-4">
+              <div className="label-eyebrow-gold mb-5">FAQ</div>
+              <h2 className="font-display text-[38px] leading-tight lg:text-[48px]">
+                Questions,<br />
+                <span className="text-muted-foreground">answered plainly.</span>
+              </h2>
+            </div>
+            <div className="col-span-12 lg:col-span-8">
+              <div className="divide-y divide-border border-y border-border">
+                {FAQS.map(([q, a]) => (
+                  <details key={q} className="group">
+                    <summary className="flex cursor-pointer list-none items-center justify-between gap-4 py-5 font-display text-[17px] text-on-surface transition-colors hover:text-gold [&::-webkit-details-marker]:hidden">
+                      {q}
+                      <span className="font-mono text-[16px] text-muted-foreground transition-transform duration-200 group-open:rotate-45">+</span>
+                    </summary>
+                    <p className="pb-6 pr-8 text-[13px] leading-[1.75] text-muted-foreground">{a}</p>
+                  </details>
+                ))}
+              </div>
             </div>
           </div>
         </section>
