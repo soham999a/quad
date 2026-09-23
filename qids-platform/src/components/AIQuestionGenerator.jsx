@@ -1,132 +1,226 @@
+import { useTranslation } from 'react-i18next';
 import React, { useEffect, useRef, useState } from 'react';
 import { Sparkles, RefreshCw, AlertCircle, ChevronDown, ChevronUp } from 'lucide-react';
 import { scoreOpenAnswers } from '../services/groqService';
 import { useAuth } from '../context/AuthContext';
-
 const alpha = (color, pct) => `color-mix(in srgb, ${color} ${pct}%, transparent)`;
 
 // ─── Likert scale for AI-generated EQ/AQ questions ───────────────────────────
-function LikertInput({ value, onChange, color }) {
+function LikertInput({
+  value,
+  onChange,
+  color
+}) {
   const labels = ['Never', 'Rarely', 'Sometimes', 'Often', 'Always'];
-  return (
-    <div style={{ display: 'flex', gap: 6, marginTop: 8 }}>
-      {[1, 2, 3, 4, 5].map(n => (
-        <button key={n} onClick={() => onChange(n)} style={{
-          flex: 1, padding: '7px 4px', borderRadius: 8, cursor: 'pointer',
-          border: `2px solid ${value === n ? color : 'var(--border-light)'}`,
-          background: value === n ? alpha(color, 20) : 'transparent',
-          color: value === n ? color : 'var(--text-muted)',
-          fontSize: 12, fontWeight: 700, transition: 'all 0.15s',
-          display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2,
-        }}>
+  return <div style={{
+    display: 'flex',
+    gap: 6,
+    marginTop: 8
+  }}>
+      {[1, 2, 3, 4, 5].map(n => <button key={n} onClick={() => onChange(n)} style={{
+      flex: 1,
+      padding: '7px 4px',
+      borderRadius: 8,
+      cursor: 'pointer',
+      border: `2px solid ${value === n ? color : 'var(--border-light)'}`,
+      background: value === n ? alpha(color, 20) : 'transparent',
+      color: value === n ? color : 'var(--text-muted)',
+      fontSize: 12,
+      fontWeight: 700,
+      transition: 'all 0.15s',
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center',
+      gap: 2
+    }}>
           <span>{n}</span>
-          <span style={{ fontSize: 8, fontWeight: 400 }}>{labels[n - 1]}</span>
-        </button>
-      ))}
-    </div>
-  );
+          <span style={{
+        fontSize: 8,
+        fontWeight: 400
+      }}>{labels[n - 1]}</span>
+        </button>)}
+    </div>;
 }
 
 // ─── MCQ for AI-generated IQ/SQ questions ────────────────────────────────────
-function MCQInput({ options, selected, onSelect, color }) {
-  return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginTop: 8 }}>
+function MCQInput({
+  options,
+  selected,
+  onSelect,
+  color
+}) {
+  return <div style={{
+    display: 'flex',
+    flexDirection: 'column',
+    gap: 6,
+    marginTop: 8
+  }}>
       {options.map((opt, i) => {
-        const isSelected = selected === i;
-        const optText = typeof opt === 'string' ? opt : opt.text;
-        return (
-          <button key={i} onClick={() => onSelect(i)} style={{
-            padding: '9px 14px', borderRadius: 8, textAlign: 'left', cursor: 'pointer',
-            fontSize: 13, border: `1px solid ${isSelected ? color : 'var(--border-light)'}`,
-            background: isSelected ? alpha(color, 18) : 'var(--tint-hairline)',
-            color: isSelected ? 'white' : 'var(--text-secondary)',
-            transition: 'all 0.15s', display: 'flex', alignItems: 'center', gap: 10,
-          }}>
+      const isSelected = selected === i;
+      const optText = typeof opt === 'string' ? opt : opt.text;
+      return <button key={i} onClick={() => onSelect(i)} style={{
+        padding: '9px 14px',
+        borderRadius: 8,
+        textAlign: 'left',
+        cursor: 'pointer',
+        fontSize: 13,
+        border: `1px solid ${isSelected ? color : 'var(--border-light)'}`,
+        background: isSelected ? alpha(color, 18) : 'var(--tint-hairline)',
+        color: isSelected ? 'white' : 'var(--text-secondary)',
+        transition: 'all 0.15s',
+        display: 'flex',
+        alignItems: 'center',
+        gap: 10
+      }}>
             <div style={{
-              width: 20, height: 20, borderRadius: '50%', flexShrink: 0,
-              border: `2px solid ${isSelected ? color : 'var(--border-light)'}`,
-              background: isSelected ? color : 'transparent',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-            }}>
-              {isSelected && <div style={{ width: 8, height: 8, borderRadius: '50%', background: 'white' }} />}
+          width: 20,
+          height: 20,
+          borderRadius: '50%',
+          flexShrink: 0,
+          border: `2px solid ${isSelected ? color : 'var(--border-light)'}`,
+          background: isSelected ? color : 'transparent',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center'
+        }}>
+              {isSelected && <div style={{
+            width: 8,
+            height: 8,
+            borderRadius: '50%',
+            background: 'white'
+          }} />}
             </div>
-            <span style={{ fontWeight: 500 }}>{String.fromCharCode(65 + i)}.</span> {optText}
-          </button>
-        );
-      })}
-    </div>
-  );
+            <span style={{
+          fontWeight: 500
+        }}>{String.fromCharCode(65 + i)}.</span> {optText}
+          </button>;
+    })}
+    </div>;
 }
 
 // ─── Open text for AI-generated open questions ────────────────────────────────
-function OpenInput({ value, onChange }) {
-  return (
-    <textarea
-      value={value || ''}
-      onChange={e => onChange(e.target.value)}
-      placeholder="Write your answer here..."
-      rows={3}
-      style={{
-        width: '100%', marginTop: 8, padding: '10px 12px', borderRadius: 8, resize: 'vertical',
-        background: 'var(--tint-subtle)', border: '1px solid var(--border-light)',
-        color: 'var(--text-primary)', fontSize: 13, fontFamily: 'Inter', lineHeight: 1.5,
-        boxSizing: 'border-box',
-      }}
-    />
-  );
+function OpenInput({
+  value,
+  onChange
+}) {
+  const {
+    t
+  } = useTranslation();
+  return <textarea value={value || ''} onChange={e => onChange(e.target.value)} placeholder={t("AIQuestionGenerator.write_your_answer_here")} rows={3} style={{
+    width: '100%',
+    marginTop: 8,
+    padding: '10px 12px',
+    borderRadius: 8,
+    resize: 'vertical',
+    background: 'var(--tint-subtle)',
+    border: '1px solid var(--border-light)',
+    color: 'var(--text-primary)',
+    fontSize: 13,
+    fontFamily: 'Inter',
+    lineHeight: 1.5,
+    boxSizing: 'border-box'
+  }} />;
 }
 
 // ─── Single AI Question Card ──────────────────────────────────────────────────
-function AIQuestionCard({ question, index, answers, onAnswer, color, questionType }) {
+function AIQuestionCard({
+  question,
+  index,
+  answers,
+  onAnswer,
+  color,
+  questionType
+}) {
   const val = answers[index];
-
-  return (
-    <div style={{ marginBottom: 14, background: 'var(--navy-4)', border: `1px solid ${alpha(color, 20)}`, borderRadius: 12, padding: 16, position: 'relative' }}>
-      <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8, marginBottom: 10 }}>
-        <div style={{ padding: '2px 8px', borderRadius: 6, background: alpha(color, 15), border: `1px solid ${alpha(color, 30)}`, fontSize: 10, fontWeight: 700, color, flexShrink: 0, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+  return <div style={{
+    marginBottom: 14,
+    background: 'var(--navy-4)',
+    border: `1px solid ${alpha(color, 20)}`,
+    borderRadius: 12,
+    padding: 16,
+    position: 'relative'
+  }}>
+      <div style={{
+      display: 'flex',
+      alignItems: 'flex-start',
+      gap: 8,
+      marginBottom: 10
+    }}>
+        <div style={{
+        padding: '2px 8px',
+        borderRadius: 6,
+        background: alpha(color, 15),
+        border: `1px solid ${alpha(color, 30)}`,
+        fontSize: 10,
+        fontWeight: 700,
+        color,
+        flexShrink: 0,
+        textTransform: 'uppercase',
+        letterSpacing: '0.5px'
+      }}>
           AI | {question.subParam || question.subparam || 'Generated'}
         </div>
-        <div style={{ position: 'absolute', top: 12, right: 12, fontSize: 10, color: 'var(--text-muted)' }}>
+        <div style={{
+        position: 'absolute',
+        top: 12,
+        right: 12,
+        fontSize: 10,
+        color: 'var(--text-muted)'
+      }}>
           Q{index + 1}
         </div>
       </div>
 
-      {question.scenario && (
-        <div style={{ fontSize: 12, color: 'var(--text-secondary)', lineHeight: 1.6, marginBottom: 8, padding: '8px 10px', background: 'var(--tint-subtle)', borderRadius: 6, borderLeft: `3px solid ${alpha(color, 40)}` }}>
+      {question.scenario && <div style={{
+      fontSize: 12,
+      color: 'var(--text-secondary)',
+      lineHeight: 1.6,
+      marginBottom: 8,
+      padding: '8px 10px',
+      background: 'var(--tint-subtle)',
+      borderRadius: 6,
+      borderLeft: `3px solid ${alpha(color, 40)}`
+    }}>
           {question.scenario}
-        </div>
-      )}
+        </div>}
 
-      <div style={{ fontSize: 13, fontWeight: 500, lineHeight: 1.6, marginBottom: 4 }}>
+      <div style={{
+      fontSize: 13,
+      fontWeight: 500,
+      lineHeight: 1.6,
+      marginBottom: 4
+    }}>
         {question.q || question.statement || question.question}
       </div>
 
       {/* Render appropriate input based on question type */}
-      {questionType === 'likert' && (
-        <LikertInput value={val} onChange={v => onAnswer(index, v)} color={color} />
-      )}
-      {questionType === 'mcq' && question.options && (
-        <MCQInput options={question.options} selected={val} onSelect={v => onAnswer(index, v)} color={color} />
-      )}
-      {questionType === 'open' && (
-        <OpenInput value={val} onChange={v => onAnswer(index, v)} />
-      )}
-    </div>
-  );
+      {questionType === 'likert' && <LikertInput value={val} onChange={v => onAnswer(index, v)} color={color} />}
+      {questionType === 'mcq' && question.options && <MCQInput options={question.options} selected={val} onSelect={v => onAnswer(index, v)} color={color} />}
+      {questionType === 'open' && <OpenInput value={val} onChange={v => onAnswer(index, v)} />}
+    </div>;
 }
 
 // ─── Main AI Question Generator ───────────────────────────────────────────────
 export default function AIQuestionGenerator({
-  pillar,        // 'IQ' | 'EQ' | 'AQ' | 'SQ'
-  component,     // e.g. 'SA', 'verbal', 'PM', etc.
-  ageGroup,      // '11-18' | '19-32'
-  context,       // 'school' | 'corporate' etc.
-  questionType,  // 'likert' | 'mcq' | 'open'
+  pillar,
+  // 'IQ' | 'EQ' | 'AQ' | 'SQ'
+  component,
+  // e.g. 'SA', 'verbal', 'PM', etc.
+  ageGroup,
+  // '11-18' | '19-32'
+  context,
+  // 'school' | 'corporate' etc.
+  questionType,
+  // 'likert' | 'mcq' | 'open'
   color,
   onAnswersChange,
-  generateFn,    // async function that returns questions array
-  label,
+  generateFn,
+  // async function that returns questions array
+  label
 }) {
+  const {
+    t
+  } = useTranslation();
   const [questions, setQuestions] = useState([]);
   const [answers, setAnswers] = useState({});
   const [openScores, setOpenScores] = useState({});
@@ -137,14 +231,20 @@ export default function AIQuestionGenerator({
   const [generated, setGenerated] = useState(false);
   const [confirmRegen, setConfirmRegen] = useState(false);
   const autoStarted = useRef(false);
-  const { user } = useAuth();
-
+  const {
+    user
+  } = useAuth();
   const handleGenerate = async () => {
     setLoading(true);
     setError(null);
     setConfirmRegen(false);
     try {
-      const qs = await generateFn({ ageGroup, component, context, count: 3 });
+      const qs = await generateFn({
+        ageGroup,
+        component,
+        context,
+        count: 3
+      });
       setQuestions(qs);
       setAnswers({});
       setOpenScores({});
@@ -165,15 +265,16 @@ export default function AIQuestionGenerator({
     handleGenerate();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
-
   const requestRegenerate = () => {
     const answered = Object.values(answers).filter(v => v !== undefined && v !== '').length;
-    if (answered > 0) setConfirmRegen(true);
-    else handleGenerate();
+    if (answered > 0) setConfirmRegen(true);else handleGenerate();
   };
-
   const handleAnswer = async (idx, val) => {
-    const next = { ...answers, [idx]: val };
+    
+    const next = {
+      ...answers,
+      [idx]: val
+    };
     setAnswers(next);
     onAnswersChange?.(next, questions, openScores);
 
@@ -184,119 +285,184 @@ export default function AIQuestionGenerator({
       if (questions.length > 0 && entries.length === questions.length && !scoring) {
         setScoring(true);
         try {
-          const result = await scoreOpenAnswers({ questions, answers: next, ageGroup, maxMarks: 2 });
+          const result = await scoreOpenAnswers({
+            questions,
+            answers: next,
+            ageGroup,
+            maxMarks: 2
+          });
           setOpenScores(result);
           onAnswersChange?.(next, questions, result);
         } catch {
           // Scoring failure must not silently inflate or zero the section;
           // keep existing scores and surface a non-blocking notice.
-          setError('Could not score open answers automatically — they will count as 0 until you retry.');
+          setError(t("AIQuestionGenerator.could_not_score_open"));
         } finally {
           setScoring(false);
         }
       }
     }
   };
-
-  return (
-    <div style={{ marginTop: 16, border: `1px solid ${alpha(color, 25)}`, borderRadius: 14, overflow: 'hidden' }}>
+  return <div style={{
+    marginTop: 16,
+    border: `1px solid ${alpha(color, 25)}`,
+    borderRadius: 14,
+    overflow: 'hidden'
+  }}>
       {/* Header */}
       <div style={{
-        padding: '12px 16px', background: alpha(color, 8),
-        display: 'flex', alignItems: 'center', gap: 10,
-        borderBottom: generated && expanded ? '1px solid var(--border-light)' : 'none',
-      }}>
+      padding: '12px 16px',
+      background: alpha(color, 8),
+      display: 'flex',
+      alignItems: 'center',
+      gap: 10,
+      borderBottom: generated && expanded ? '1px solid var(--border-light)' : 'none'
+    }}>
         <Sparkles size={14} color={color} />
-        <div style={{ flex: 1 }}>
-          <div style={{ fontSize: 13, fontWeight: 700, color }}>AI-Generated Questions</div>
-          <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 1 }}>
+        <div style={{
+        flex: 1
+      }}>
+          <div style={{
+          fontSize: 13,
+          fontWeight: 700,
+          color
+        }}>{t("AIQuestionGenerator.ai_generated_questions")}</div>
+          <div style={{
+          fontSize: 11,
+          color: 'var(--text-muted)',
+          marginTop: 1
+        }}>
             {generated ? `${questions.length} questions generated by Groq (llama-3.3-70b)` : `Click to generate ${label || component} questions dynamically`}
           </div>
         </div>
-        <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
-          {generated && (
-            <button onClick={requestRegenerate} disabled={loading} style={{
-              padding: '5px 10px', borderRadius: 7, cursor: 'pointer', fontSize: 11, fontWeight: 500,
-              background: 'var(--tint-soft)', border: '1px solid var(--border-light)',
-              color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: 4,
-            }}>
-              <RefreshCw size={11} className={loading ? 'animate-spin' : ''} /> Regenerate
-            </button>
-          )}
+        <div style={{
+        display: 'flex',
+        gap: 6,
+        alignItems: 'center'
+      }}>
+          {generated && <button onClick={requestRegenerate} disabled={loading} style={{
+          padding: '5px 10px',
+          borderRadius: 7,
+          cursor: 'pointer',
+          fontSize: 11,
+          fontWeight: 500,
+          background: 'var(--tint-soft)',
+          border: '1px solid var(--border-light)',
+          color: 'var(--text-secondary)',
+          display: 'flex',
+          alignItems: 'center',
+          gap: 4
+        }}>
+              <RefreshCw size={11} className={loading ? 'animate-spin' : ''} />{t("AIQuestionGenerator.regenerate")}</button>}
           <button onClick={handleGenerate} disabled={loading} style={{
-            padding: '6px 14px', borderRadius: 8, cursor: 'pointer', fontSize: 12, fontWeight: 600,
-            background: loading ? 'var(--tint-soft)' : alpha(color, 20),
-            border: `1px solid ${alpha(color, 40)}`, color,
-            display: 'flex', alignItems: 'center', gap: 6,
-          }}>
-            {loading ? (
-              <><RefreshCw size={12} className="animate-spin" /> Generating...</>
-            ) : (
-              <><Sparkles size={12} /> {generated ? 'New Set' : 'Generate'}</>
-            )}
+          padding: '6px 14px',
+          borderRadius: 8,
+          cursor: 'pointer',
+          fontSize: 12,
+          fontWeight: 600,
+          background: loading ? 'var(--tint-soft)' : alpha(color, 20),
+          border: `1px solid ${alpha(color, 40)}`,
+          color,
+          display: 'flex',
+          alignItems: 'center',
+          gap: 6
+        }}>
+            {loading ? <><RefreshCw size={12} className="animate-spin" />{t("AIQuestionGenerator.generating")}</> : <><Sparkles size={12} /> {generated ? 'New Set' : 'Generate'}</>}
           </button>
-          {generated && (
-            <button onClick={() => setExpanded(!expanded)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', padding: 4 }}>
+          {generated && <button onClick={() => setExpanded(!expanded)} style={{
+          background: 'none',
+          border: 'none',
+          cursor: 'pointer',
+          color: 'var(--text-muted)',
+          padding: 4
+        }}>
               {expanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
-            </button>
-          )}
+            </button>}
         </div>
       </div>
 
       {/* Error */}
-      {error && (
-        <div style={{ padding: '10px 16px', background: alpha('var(--status-err)', 8), borderBottom: `1px solid ${alpha('var(--status-err)', 20)}`, display: 'flex', gap: 8, alignItems: 'flex-start' }}>
-          <AlertCircle size={13} color="var(--status-err)" style={{ flexShrink: 0, marginTop: 1 }} />
-          <span style={{ fontSize: 12, color: 'var(--status-err-soft)' }}>{error}</span>
-        </div>
-      )}
+      {error && <div style={{
+      padding: '10px 16px',
+      background: alpha('var(--status-err)', 8),
+      borderBottom: `1px solid ${alpha('var(--status-err)', 20)}`,
+      display: 'flex',
+      gap: 8,
+      alignItems: 'flex-start'
+    }}>
+          <AlertCircle size={13} color="var(--status-err)" style={{
+        flexShrink: 0,
+        marginTop: 1
+      }} />
+          <span style={{
+        fontSize: 12,
+        color: 'var(--status-err-soft)'
+      }}>{error}</span>
+        </div>}
 
       {/* Regenerate confirmation — answers would be lost */}
-      {confirmRegen && (
-        <div style={{ padding: '10px 16px', background: alpha('var(--status-warn)', 10), borderBottom: `1px solid ${alpha('var(--status-warn)', 25)}`, display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
-          <AlertCircle size={13} color="var(--status-warn)" style={{ flexShrink: 0 }} />
-          <span style={{ fontSize: 12, color: 'var(--text-secondary)', flex: 1 }}>
-            Generating a new set will clear your current answers. Continue?
-          </span>
+      {confirmRegen && <div style={{
+      padding: '10px 16px',
+      background: alpha('var(--status-warn)', 10),
+      borderBottom: `1px solid ${alpha('var(--status-warn)', 25)}`,
+      display: 'flex',
+      gap: 8,
+      alignItems: 'center',
+      flexWrap: 'wrap'
+    }}>
+          <AlertCircle size={13} color="var(--status-warn)" style={{
+        flexShrink: 0
+      }} />
+          <span style={{
+        fontSize: 12,
+        color: 'var(--text-secondary)',
+        flex: 1
+      }}>{t("AIQuestionGenerator.generating_a_new_set")}</span>
           <button onClick={handleGenerate} style={{
-            padding: '4px 10px', borderRadius: 6, cursor: 'pointer', fontSize: 11, fontWeight: 600,
-            background: alpha('var(--status-warn)', 18), border: `1px solid ${alpha('var(--status-warn)', 35)}`, color: 'var(--status-warn)',
-          }}>Yes, regenerate</button>
+        padding: '4px 10px',
+        borderRadius: 6,
+        cursor: 'pointer',
+        fontSize: 11,
+        fontWeight: 600,
+        background: alpha('var(--status-warn)', 18),
+        border: `1px solid ${alpha('var(--status-warn)', 35)}`,
+        color: 'var(--status-warn)'
+      }}>{t("AIQuestionGenerator.yes_regenerate")}</button>
           <button onClick={() => setConfirmRegen(false)} style={{
-            padding: '4px 10px', borderRadius: 6, cursor: 'pointer', fontSize: 11,
-            background: 'transparent', border: '1px solid var(--border-light)', color: 'var(--text-muted)',
-          }}>Cancel</button>
-        </div>
-      )}
+        padding: '4px 10px',
+        borderRadius: 6,
+        cursor: 'pointer',
+        fontSize: 11,
+        background: 'transparent',
+        border: '1px solid var(--border-light)',
+        color: 'var(--text-muted)'
+      }}>{t("AIQuestionGenerator.cancel")}</button>
+        </div>}
 
       {/* Open-answer scoring status */}
-      {scoring && (
-        <div style={{ padding: '8px 16px', background: alpha(color, 6), borderBottom: `1px solid ${alpha(color, 15)}`, fontSize: 11, color: 'var(--text-muted)' }}>
-          Scoring your open answers against the rubric…
-        </div>
-      )}
+      {scoring && <div style={{
+      padding: '8px 16px',
+      background: alpha(color, 6),
+      borderBottom: `1px solid ${alpha(color, 15)}`,
+      fontSize: 11,
+      color: 'var(--text-muted)'
+    }}>{t("AIQuestionGenerator.scoring_your_open_answers")}</div>}
 
       {/* Questions */}
-      {generated && expanded && questions.length > 0 && (
-        <div style={{ padding: 16 }}>
-          {questions.map((q, i) => (
-            <AIQuestionCard
-              key={i} question={q} index={i}
-              answers={answers} onAnswer={handleAnswer}
-              color={color} questionType={questionType}
-            />
-          ))}
-        </div>
-      )}
+      {generated && expanded && questions.length > 0 && <div style={{
+      padding: 16
+    }}>
+          {questions.map((q, i) => <AIQuestionCard key={i} question={q} index={i} answers={answers} onAnswer={handleAnswer} color={color} questionType={questionType} />)}
+        </div>}
 
       {/* Empty state */}
-      {!generated && !loading && (
-        <div style={{ padding: '20px 16px', textAlign: 'center', color: 'var(--text-muted)', fontSize: 12 }}>
-          {user
-            ? 'Questions are generated fresh each time using the QIDS knowledge base and Groq AI.'
-            : 'Sign in to generate AI questions for this section.'}
-        </div>
-      )}
-    </div>
-  );
+      {!generated && !loading && <div style={{
+      padding: '20px 16px',
+      textAlign: 'center',
+      color: 'var(--text-muted)',
+      fontSize: 12
+    }}>
+          {user ? 'Questions are generated fresh each time using the QIDS knowledge base and Groq AI.' : 'Sign in to generate AI questions for this section.'}
+        </div>}
+    </div>;
 }

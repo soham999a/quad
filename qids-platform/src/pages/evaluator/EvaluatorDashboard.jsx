@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import usePageTitle from '../../lib/usePageTitle';
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -8,22 +9,25 @@ import { getEvaluatorAssignments, getUserAssessments, getAllEvaluations } from '
 import { PILLARS } from '../../data/qidsData';
 import { Users, ClipboardList, CheckCircle, Clock, ChevronRight, RefreshCw, UserCheck } from 'lucide-react';
 import EmptyState from '../../components/EmptyState';
-
 export default function EvaluatorDashboard() {
+  const {
+    t
+  } = useTranslation();
   usePageTitle('Evaluator');
-  const { user, userProfile } = useAuth();
+  const {
+    user,
+    userProfile
+  } = useAuth();
   const navigate = useNavigate();
   const [assignments, setAssignments] = useState([]);
   const [students, setStudents] = useState({});
   const [assessments, setAssessments] = useState({});
   const [evaluations, setEvaluations] = useState({});
   const [loading, setLoading] = useState(true);
-
   useEffect(() => {
     if (!user) return;
     loadData();
   }, [user]);
-
   const loadData = async () => {
     setLoading(true);
     const assigns = await getEvaluatorAssignments(user.uid);
@@ -35,12 +39,17 @@ export default function EvaluatorDashboard() {
       try {
         const snap = await getDoc(doc(db, 'users', a.studentUid));
         if (snap.exists()) studentMap[a.studentUid] = snap.data();
-      } catch (e) { console.warn('Failed to load user doc', e); }
+      } catch (e) {
+        console.warn('Failed to load user doc', e);
+      }
       const userAssessments = await getUserAssessments(a.studentUid);
       assessmentMap[a.studentUid] = userAssessments;
       for (const asm of userAssessments) {
         const evals = await getAllEvaluations(asm.id);
-        evalMap[asm.id] = evals.reduce((acc, e) => ({ ...acc, [e.pillar]: e }), {});
+        evalMap[asm.id] = evals.reduce((acc, e) => ({
+          ...acc,
+          [e.pillar]: e
+        }), {});
       }
     }
     setStudents(studentMap);
@@ -48,86 +57,70 @@ export default function EvaluatorDashboard() {
     setEvaluations(evalMap);
     setLoading(false);
   };
-
   const getPillarStatus = (assessmentId, pillar) => {
     const pillarEvals = evaluations[assessmentId] || {};
     return pillarEvals[pillar] || null;
   };
-
   if (loading) {
-    return (
-      <div className="page-pad max-w-[1200px] mx-auto animate-fade text-center pt-20">
-        <div className="text-technical-sm font-technical-sm text-surface-variant">Loading your dashboard...</div>
-      </div>
-    );
+    return <div className="page-pad max-w-[1200px] mx-auto animate-fade text-center pt-20">
+        <div className="text-technical-sm font-technical-sm text-surface-variant">{t("EvaluatorDashboard.loading_your_dashboard")}</div>
+      </div>;
   }
-
   const role = userProfile?.role || 'individual';
   if (role !== 'evaluator' && role !== 'admin') {
-    return (
-      <div className="flex items-center justify-center min-h-[60vh] flex-col gap-3">
+    return <div className="flex items-center justify-center min-h-[60vh] flex-col gap-3">
         <ClipboardList size={40} className="text-primary/40" />
-        <div className="text-body-md font-label-md text-on-background">Evaluator access required</div>
-        <div className="text-technical-sm font-technical-sm text-on-surface-variant">You don't have permission to view this page.</div>
-      </div>
-    );
+        <div className="text-body-md font-label-md text-on-background">{t("EvaluatorDashboard.evaluator_access_required")}</div>
+        <div className="text-technical-sm font-technical-sm text-on-surface-variant">{t("EvaluatorDashboard.you_don_t_have")}</div>
+      </div>;
   }
-
-  return (
-    <div className="page-pad max-w-[1200px] mx-auto animate-fade">
+  return <div className="page-pad max-w-[1200px] mx-auto animate-fade">
       {/* Header */}
       <section className="flex justify-between items-start mb-10 md:mb-16">
         <div>
-          <div className="text-technical-sm font-technical-sm text-primary mb-2 uppercase tracking-[0.2em]">Evaluation</div>
-          <h1 className="text-headline-md font-headline-md text-on-background page-headline">Evaluator Dashboard</h1>
+          <div className="text-technical-sm font-technical-sm text-primary mb-2 uppercase tracking-[0.2em]">{t("EvaluatorDashboard.evaluation")}</div>
+          <h1 className="text-headline-md font-headline-md text-on-background page-headline">{t("EvaluatorDashboard.evaluator_dashboard")}</h1>
           <p className="text-body-md text-on-surface-variant mt-2">
-            {assignments.length > 0
-              ? `${assignments.length} assigned student${assignments.length > 1 ? 's' : ''}`
-              : 'No students assigned to you yet'}
+            {assignments.length > 0 ? `${assignments.length} assigned student${assignments.length > 1 ? 's' : ''}` : 'No students assigned to you yet'}
           </p>
         </div>
         <div className="flex items-center gap-3">
-          <button
-            onClick={() => navigate('/app/interview')}
-            className="inline-flex items-center gap-1.5 px-3.5 py-2 text-technical-sm font-technical-sm bg-primary/10 border-[0.5px] border-primary/30 text-primary hover:bg-primary/15 transition-all cursor-pointer uppercase tracking-widest flex-shrink-0"
-            style={{ borderRadius: '8px' }}>
-            <UserCheck size={12} /> Interview Studio
-          </button>
-          <button onClick={loadData}
-            className="inline-flex items-center gap-1.5 px-3.5 py-2 text-technical-sm font-technical-sm border-[0.5px] border-outline-variant text-on-surface-variant hover:text-primary hover:border-primary transition-all cursor-pointer bg-transparent uppercase tracking-widest flex-shrink-0"
-            style={{ borderRadius: '8px' }}>
-            <RefreshCw size={12} /> Refresh
-          </button>
+          <button onClick={() => navigate('/app/interview')} className="inline-flex items-center gap-1.5 px-3.5 py-2 text-technical-sm font-technical-sm bg-primary/10 border-[0.5px] border-primary/30 text-primary hover:bg-primary/15 transition-all cursor-pointer uppercase tracking-widest flex-shrink-0" style={{
+          borderRadius: '8px'
+        }}>
+            <UserCheck size={12} />{t("EvaluatorDashboard.interview_studio")}</button>
+          <button onClick={loadData} className="inline-flex items-center gap-1.5 px-3.5 py-2 text-technical-sm font-technical-sm border-[0.5px] border-outline-variant text-on-surface-variant hover:text-primary hover:border-primary transition-all cursor-pointer bg-transparent uppercase tracking-widest flex-shrink-0" style={{
+          borderRadius: '8px'
+        }}>
+            <RefreshCw size={12} />{t("EvaluatorDashboard.refresh")}</button>
         </div>
       </section>
 
-      {assignments.length === 0 ? (
-        <EmptyState
-          icon={Users}
-          title="No students assigned"
-          description="Contact an admin to get assigned students to evaluate."
-        />
-      ) : (
-        <div className="flex flex-col">
+      {assignments.length === 0 ? <EmptyState icon={Users} title={t("EvaluatorDashboard.no_students_assigned")} description="Contact an admin to get assigned students to evaluate." /> : <div className="flex flex-col">
           {assignments.map(assignment => {
-            const student = students[assignment.studentUid];
-            const studentAssessments = assessments[assignment.studentUid] || [];
-            const preAssessments = studentAssessments.filter(a => a.phase === 'pre');
-            const postAssessments = studentAssessments.filter(a => a.phase === 'post');
-            const preCount = preAssessments.length;
-            const postCount = postAssessments.length;
-            const phases = [
-              { id: 'pre', label: 'Pre-Intervention', list: preAssessments },
-              { id: 'post', label: 'Post-Intervention', list: postAssessments },
-            ];
-
-            return (
-              <div key={assignment.id} className="border-b-[0.5px] border-outline-variant group hover:bg-surface-container-low transition-colors">
+        
+        const student = students[assignment.studentUid];
+        const studentAssessments = assessments[assignment.studentUid] || [];
+        const preAssessments = studentAssessments.filter(a => a.phase === 'pre');
+        const postAssessments = studentAssessments.filter(a => a.phase === 'post');
+        const preCount = preAssessments.length;
+        const postCount = postAssessments.length;
+        const phases = [{
+          id: 'pre',
+          label: 'Pre-Intervention',
+          list: preAssessments
+        }, {
+          id: 'post',
+          label: 'Post-Intervention',
+          list: postAssessments
+        }];
+        return <div key={assignment.id} className="border-b-[0.5px] border-outline-variant group hover:bg-surface-container-low transition-colors">
                 {/* Student header — not clickable, just info display */}
                 <div className="h-14 md:h-16 flex items-center justify-between px-2">
                   <div className="flex items-center gap-4 md:gap-8 min-w-0 flex-1">
-                    <div className="size-8 flex items-center justify-center shrink-0 border-[0.5px] border-outline-variant text-technical-sm font-technical-sm text-primary bg-surface-container-low"
-                      style={{ borderRadius: '8px' }}>
+                    <div className="size-8 flex items-center justify-center shrink-0 border-[0.5px] border-outline-variant text-technical-sm font-technical-sm text-primary bg-surface-container-low" style={{
+                borderRadius: '8px'
+              }}>
                       {(student?.name || student?.email || '?')[0].toUpperCase()}
                     </div>
                     <div className="min-w-0 flex-1">
@@ -145,27 +138,23 @@ export default function EvaluatorDashboard() {
                 </div>
 
                 {/* Assessment list, grouped by phase */}
-                {preAssessments.length + postAssessments.length > 0 && (
-                  <div className="pb-2">
+                {preAssessments.length + postAssessments.length > 0 && <div className="pb-2">
                     {phases.map(ph => {
-                      if (ph.list.length === 0) return null;
-                      return (
-                        <div key={ph.id}>
+              if (ph.list.length === 0) return null;
+              return <div key={ph.id}>
                           <div className="px-2 md:px-8 py-2 text-technical-sm font-technical-sm text-primary uppercase tracking-[0.2em]">
                             {ph.label}
                           </div>
-                          {ph.list.map(asm => (
-                            <div
-                              key={asm.id}
-                              onClick={() => navigate(`/app/evaluator/assess/${asm.id}`, { state: { student, assessment: asm } })}
-                              className="h-12 md:h-14 flex items-center justify-between border-b-[0.5px] border-outline-variant/50 hover:bg-surface-container-low transition-colors px-2 md:px-8 cursor-pointer touch-target"
-                            >
+                          {ph.list.map(asm => <div key={asm.id} onClick={() => navigate(`/app/evaluator/assess/${asm.id}`, {
+                  state: {
+                    student,
+                    assessment: asm
+                  }
+                })} className="h-12 md:h-14 flex items-center justify-between border-b-[0.5px] border-outline-variant/50 hover:bg-surface-container-low transition-colors px-2 md:px-8 cursor-pointer touch-target">
                               <div className="flex items-center gap-4 md:gap-8 min-w-0 flex-1">
                                 <ClipboardList size={13} className="text-surface-variant flex-shrink-0" />
                                 <div className="min-w-0 flex-1">
-                                  <div className="text-label-md font-label-md text-on-background truncate">
-                                    Assessment
-                                  </div>
+                                  <div className="text-label-md font-label-md text-on-background truncate">{t("EvaluatorDashboard.assessment")}</div>
                                   <div className="text-technical-sm font-technical-sm text-surface-variant truncate">
                                     {asm.createdAt?.toDate?.()?.toLocaleDateString() || asm.timestamp ? new Date(asm.timestamp).toLocaleDateString() : 'No date'}
                                   </div>
@@ -174,45 +163,28 @@ export default function EvaluatorDashboard() {
                               <div className="flex items-center gap-3 md:gap-8 flex-shrink-0">
                                 <div className="flex gap-1">
                                   {['EQ', 'SQ', 'AQ'].map(pillar => {
-                                    const ev = getPillarStatus(asm.id, pillar);
-                                    return (
-                                      <div key={pillar} className="size-[22px] flex items-center justify-center border-[0.5px]"
-                                        style={{
-                                          borderRadius: '6px',
-                                          borderColor: ev ? 'var(--gold)' : 'var(--bone-line)',
-                                          background: ev ? 'var(--gold-tint)' : 'transparent'
-                                        }}
-                                        title={`${pillar}: ${ev ? 'Scored' : 'Pending'}`}>
-                                        {ev
-                                          ? <CheckCircle size={9} className="text-primary" />
-                                          : <Clock size={9} className="text-outline" />
-                                        }
-                                      </div>
-                                    );
-                                  })}
+                        const ev = getPillarStatus(asm.id, pillar);
+                        return <div key={pillar} className="size-[22px] flex items-center justify-center border-[0.5px]" style={{
+                          borderRadius: '6px',
+                          borderColor: ev ? 'var(--gold)' : 'var(--bone-line)',
+                          background: ev ? 'var(--gold-tint)' : 'transparent'
+                        }} title={`${pillar}: ${ev ? 'Scored' : 'Pending'}`}>
+                                        {ev ? <CheckCircle size={9} className="text-primary" /> : <Clock size={9} className="text-outline" />}
+                                      </div>;
+                      })}
                                 </div>
                                 <ChevronRight size={14} className="text-surface-variant flex-shrink-0" />
                               </div>
-                            </div>
-                          ))}
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
+                            </div>)}
+                        </div>;
+            })}
+                  </div>}
 
-                {studentAssessments.length === 0 && (
-                  <div className="pb-2 px-2 md:px-8">
-                    <div className="h-12 flex items-center text-technical-sm font-technical-sm text-surface-variant">
-                      No assessments yet
-                    </div>
-                  </div>
-                )}
-              </div>
-            );
-          })}
-        </div>
-      )}
-    </div>
-  );
+                {studentAssessments.length === 0 && <div className="pb-2 px-2 md:px-8">
+                    <div className="h-12 flex items-center text-technical-sm font-technical-sm text-surface-variant">{t("EvaluatorDashboard.no_assessments_yet")}</div>
+                  </div>}
+              </div>;
+      })}
+        </div>}
+    </div>;
 }

@@ -3,6 +3,7 @@ import ReactDOM from 'react-dom/client'
 import App from './App.jsx'
 import './index.css'
 import { applyTheme, resolveTheme } from './lib/theme'
+import './i18n'
 
 applyTheme(resolveTheme())
 

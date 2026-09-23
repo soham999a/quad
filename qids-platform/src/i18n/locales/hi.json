@@ -1,0 +1,230 @@
+{
+  "common": {
+    "loading": "लोड हो रहा है…"
+  },
+  "lang": {
+    "label": "भाषा",
+    "aria": "भाषा बदलें"
+  },
+  "nav": {
+    "groups": {
+      "platform": "प्लेटफ़ॉर्म",
+      "knowledge": "ज्ञान",
+      "school": "विद्यालय",
+      "account": "खाता",
+      "evaluation": "मूल्यांकन",
+      "talent": "प्रतिभा",
+      "admin": "एडमिन"
+    },
+    "items": {
+      "home": "होम",
+      "my_assessment": "मेरा आकलन",
+      "progress": "प्रगति",
+      "reports": "रिपोर्ट",
+      "four_pillars": "चार स्तंभ",
+      "framework": "फ़्रेमवर्क गाइड",
+      "intervention": "हस्तक्षेप योजना",
+      "my_evaluator": "मेरा मूल्यांकर्ता",
+      "settings": "सेटिंग्स",
+      "join_class": "कक्षा से जुड़ें",
+      "classes": "कक्षाएँ",
+      "school_reports": "रिपोर्ट",
+      "evaluator_dashboard": "मूल्यांकक डैशबोर्ड",
+      "interview_studio": "इंटरव्यू स्टूडियो",
+      "talent_console": "प्रतिभा कंसोल",
+      "deploy": "डिप्लॉय (QGRA+)",
+      "role_fit": "भूमिका उपयुक्तता",
+      "admin_panel": "एडमिन पैनल",
+      "school": "विद्यालय",
+      "evaluator": "मूल्यांकक",
+      "dashboard": "डैशबोर्ड",
+      "assess": "आकलन",
+      "report": "रिपोर्ट",
+      "pillars": "स्तंभ",
+      "more": "और"
+    },
+    "new_assessment": "नया आकलन",
+    "sign_out": "साइन आउट",
+    "skip": "सामग्री पर जाएँ",
+    "switch_mode": "मोड बदलें",
+    "search": "खोजें",
+    "page_guide": "पेज गाइड (Shift+/)",
+    "open_palette": "कमांड पैलेट खोलें",
+    "expand": "साइडबार खोलें",
+    "collapse": "साइडबार समेटें",
+    "open_menu": "मेनू खोलें",
+    "close_menu": "मेनू बंद करें",
+    "more_menu": "और मेनू",
+    "nav_sections": "अनुभाग",
+    "menu": "नेविगेशन मेनू"
+  },
+  "topbar": {
+    "mode": "मोड"
+  },
+  "palette": {
+    "placeholder": "पेज और क्रियाएँ खोजें…",
+    "search_commands": "कमांड खोजें",
+    "no_matches": "कोई मेल नहीं",
+    "no_matches_hint": "“{{query}}” से कुछ मेल नहीं खाता। पेज या क्रिया का नाम आज़माएँ।",
+    "navigate": "↑↓ नेविगेट करें",
+    "select": "↵ चुनें",
+    "group_recent": "हाल के",
+    "group_navigate": "नेविगेट करें",
+    "group_actions": "क्रियाएँ",
+    "new_assessment": "नया आकलन",
+    "start": "शुरू करें",
+    "switch_context": "संदर्भ बदलें",
+    "mode": "मोड",
+    "theme_dark": "डार्क थीम पर जाएँ",
+    "theme_light": "लाइट थीम पर जाएँ",
+    "theme_hint": "थीम",
+    "toggle_sidebar": "साइडबार बदलें",
+    "view": "दृश्य",
+    "replay_tour": "प्रोडक्ट टूर दोबारा देखें",
+    "help": "सहायता",
+    "keywords_theme": "dark light appearance toggle",
+    "keywords_assess": "assess begin run qids",
+    "keywords_context": "individual school enterprise role mode",
+    "keywords_sidebar": "collapse expand rail width",
+    "keywords_tour": "tour guide help onboarding walkthrough"
+  },
+  "tour": {
+    "rail_kicker": "क्यूआईडीएस में आपका स्वागत है",
+    "rail_title": "सब कुछ रेल में है",
+    "rail_body": "आपका साइडबार आपकी भूमिका के अनुसार है — केवल वही अनुभाग जो आप उपयोग करते हैं। ज़्यादा जगह चाहिए तो इसे समेटें।",
+    "search_kicker": "तेज़ नेविगेशन",
+    "search_title": "Ctrl/⌘+K से सब खोजें",
+    "search_body": "किसी भी पेज पर जाएँ, आकलन शुरू करें या थीम बदलें — बिना माउस छुए। हाल के पेज आपके लिए सुरक्षित रहते हैं।",
+    "guide_kicker": "मदद, वहीं जहाँ आप हैं",
+    "guide_title": "हर टैब पर एक मैनुअल",
+    "guide_body": "यह ? आपके पेज की छोटी, संदर्भ-आधारित गाइड खोलता है — कहीं भी Shift+/ दबाएँ। खोजने की ज़रूरत नहीं, याद रखने की भी नहीं।",
+    "theme_kicker": "इसे अपना बनाएँ",
+    "theme_title": "डार्क या लाइट, याद रखा जाता है",
+    "theme_body": "अपनी थीम और साइडबार चौड़ाई चुनें — दोनों सेशन और डिवाइस में बने रहते हैं।",
+    "back": "पीछे",
+    "next": "आगे",
+    "finish": "समाप्त",
+    "end": "टूर समाप्त करें",
+    "step": "चरण {{n}} / {{total}}",
+    "dialog": "प्रोडक्ट टूर"
+  },
+  "auth": {
+    "brand_line1": "क्वाड्रंट इंटेलिजेंस",
+    "brand_line2": "डायग्नोस्टिक सिस्टम",
+    "brand_full": "क्वाड्रंट इंटेलिजेंस डायग्नोस्टिक सिस्टम",
+    "sign_in": "साइन इन",
+    "signing_in": "प्रमाणीकरण हो रहा है…",
+    "email": "ईमेल पता",
+    "email_ph": "architect@qids.internal",
+    "access_key": "एक्सेस की",
+    "recovery": "रिकवरी",
+    "enter_email_first": "पहले अपना ईमेल पता दर्ज करें।",
+    "reset_sent": "रीसेट लिंक भेजा गया। अपना ईमेल देखें।",
+    "reset_failed": "रीसेट ईमेल नहीं भेजा जा सका।",
+    "auth_proxy": "प्रमाणीकरण प्रॉक्सी",
+    "continue_google": "Google से जारी रखें",
+    "new_here": "नए उपयोगकर्ता?",
+    "request_access": "एक्सेस का अनुरोध करें",
+    "choose_role": "अपनी भूमिका चुनें",
+    "choose_role_desc": "यह आपका मुख्य खाता प्रकार होगा।",
+    "continue": "जारी रखें",
+    "setting_up": "सेटअप हो रहा है…",
+    "registration": "पंजीकरण",
+    "register": "पंजीकरण करें",
+    "processing": "प्रक्रिया जारी है…",
+    "full_name": "पूरा नाम",
+    "name_ph": "आपका पूरा नाम",
+    "confirm_key": "की की पुष्टि करें",
+    "classification": "वर्गीकरण",
+    "context": "संदर्भ",
+    "existing_here": "पहले से उपयोगकर्ता?",
+    "sign_in_link": "साइन इन",
+    "name_required": "कृपया अपना पूरा नाम दर्ज करें।",
+    "pwd_mismatch": "पासवर्ड मेल नहीं खाते।",
+    "pwd_short": "पासवर्ड कम से कम 6 अक्षरों का होना चाहिए।",
+    "proxy": "प्रॉक्सी",
+    "login_failed": "लॉगिन विफल हुआ।",
+    "google_failed": "Google साइन-इन विफल हुआ।",
+    "google_failed_role": "Google साइन-इन विफल हुआ।",
+    "role_failed": "भूमिका सेट नहीं हो सकी।",
+    "signup_failed": "साइनअप विफल हुआ। कृपया पुनः प्रयास करें।",
+    "roles": {
+      "individual": {
+        "label": "व्यक्तिगत",
+        "desc": "व्यक्तिगत विकास यात्रा"
+      },
+      "student": {
+        "label": "छात्र",
+        "desc": "विद्यालय या संस्थागत शिक्षार्थी"
+      },
+      "teacher": {
+        "label": "शिक्षक",
+        "desc": "कक्षाएँ और आकलन प्रबंधित करें"
+      },
+      "evaluator": {
+        "label": "मूल्यांकक / काउंसलर",
+        "desc": "दूसरों का आकलन और मार्गदर्शन"
+      },
+      "employer": {
+        "label": "नियोक्ता",
+        "desc": "हायरिंग और प्रतिभा विश्लेषण"
+      }
+    }
+  },
+  "dash": {
+    "welcome": "वापसी पर स्वागत है",
+    "greeting_morning": "सुप्रभात",
+    "greeting_afternoon": "नमस्कार",
+    "greeting_evening": "शुभ संध्या",
+    "tagline": "संरचना · स्पष्टता · गहराई"
+  },
+  "err": {
+    "title": "कुछ गलत हो गया",
+    "default": "इस पेज को रेंडर करते समय अप्रत्याशित त्रुटि हुई। आपकी सहेजी गई प्रगति सुरक्षित है।",
+    "retry": "पुनः प्रयास करें",
+    "go_home": "होम पर जाएँ"
+  },
+  "theme": {
+    "to_dark": "डार्क मोड पर जाएँ",
+    "to_light": "लाइट मोड पर जाएँ"
+  },
+  "guide": {
+    "panel": "पेज गाइड",
+    "show_around": "मुझे दिखाइए",
+    "close": "गाइड बंद करें"
+  },
+  "landing": {
+    "cta_begin": "आकलन शुरू करें",
+    "cta_explore": "आर्किटेक्चर देखें",
+    "hero_sub": "QiDS मानव क्षमता का बुनियादी ढांचा है — आकलन, साक्ष्य, विकास और दीर्घकालिक वृद्धि को लोगों और संस्थानों में जोड़ता है।",
+    "nav_architecture": "आर्किटेक्चर",
+    "nav_individual": "व्यक्तिगत",
+    "nav_school": "विद्यालय",
+    "nav_interview": "इंटरव्यू"
+  },
+  "footer": {
+    "left": "QiDS · क्वाड्रंट इंटेलिजेंस डेवलपमेंट सिस्टम",
+    "right": "संरचना · स्पष्टता · गहराई"
+  },
+  "inter": {
+    "max_n": "अधिकतम: {{n}}",
+    "max_pts": "अधिकतम: {{n}} अंक",
+    "max_marks": "अधिकतम: {{n}} अंक",
+    "select_two": "2 गतिविधियाँ चुनें ({{n}}/2 चयनित):",
+    "subtotal": "भाग A उप-योग ({{x}})",
+    "riq_track": "RIQ · {{x}}",
+    "high_roles": "उच्च {{x}} प्रोफ़ाइल भूमिकाएँ",
+    "modules_for": "{{x}} के लिए हस्तक्षेप मॉड्यूल",
+    "follow_up": "अनुवर्ती प्रश्न: {{x}}",
+    "maps_to": "मैपिंग: {{x}}",
+    "level_n": "स्तर {{n}}:",
+    "grade_upper": "ग्रेड {{n}}",
+    "grade_n": "ग्रेड {{n}}",
+    "growth_n": "{{n}} आकलनों में वृद्धि",
+    "condition": "शर्त: {{x}}",
+    "normalized": "सामान्यीकृत: {{x}}/100",
+    "students_n": "छात्र ({{n}})",
+    "part_n": "भाग {{n}}",
+    "qids_x": "QIDS · {{x}}"
+  }
+}

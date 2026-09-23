@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import usePageTitle from '../../lib/usePageTitle';
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -8,10 +9,14 @@ import { useToast } from '../../components/Toast';
 import { PILLARS } from '../../data/qidsData';
 import { computePillarScore, computeWeightedScore, getGrade } from '../../core/engine/qids';
 import { UserCheck, UserX, Users, RefreshCw, Mail, Search, AlertCircle, CheckCircle, Clock } from 'lucide-react';
-
 export default function MyEvaluator() {
+  const {
+    t
+  } = useTranslation();
   usePageTitle('My evaluator');
-  const { user } = useAuth();
+  const {
+    user
+  } = useAuth();
   const toast = useToast();
   const navigate = useNavigate();
   const [currentEvaluator, setCurrentEvaluator] = useState(null);
@@ -20,19 +25,16 @@ export default function MyEvaluator() {
   const [assigning, setAssigning] = useState(false);
   const [search, setSearch] = useState('');
   const [evalAssessments, setEvalAssessments] = useState([]);
-
   useEffect(() => {
     if (!user) return;
     loadData();
   }, [user]);
-
   const loadData = async () => {
     setLoading(true);
     try {
       // Public evaluator directory — readable by any signed-in user.
       const directory = await listPublicEvaluators();
       setEvaluators(directory);
-
       const current = await getStudentEvaluator(user.uid);
       if (current) {
         const ev = directory.find(u => u.uid === current.evaluatorUid);
@@ -43,7 +45,10 @@ export default function MyEvaluator() {
         for (const a of asms) {
           if (a.id) {
             const evals = await getAllEvaluations(a.id).catch(() => []);
-            enriched.push({ ...a, evaluations: evals });
+            enriched.push({
+              ...a,
+              evaluations: evals
+            });
           }
         }
         setEvalAssessments(enriched);
@@ -56,8 +61,7 @@ export default function MyEvaluator() {
     }
     setLoading(false);
   };
-
-  const handleAssign = async (evaluatorUid) => {
+  const handleAssign = async evaluatorUid => {
     setAssigning(true);
     try {
       await assignEvaluator(evaluatorUid, user.uid);
@@ -69,7 +73,6 @@ export default function MyEvaluator() {
     }
     setAssigning(false);
   };
-
   const handleRemove = async () => {
     if (!currentEvaluator) return;
     setAssigning(true);
@@ -82,31 +85,21 @@ export default function MyEvaluator() {
     }
     setAssigning(false);
   };
-
-  const filtered = evaluators.filter(e =>
-    !search || (e.name && e.name.toLowerCase().includes(search.toLowerCase())) ||
-    (e.email && e.email.toLowerCase().includes(search.toLowerCase()))
-  );
-
+  const filtered = evaluators.filter(e => !search || e.name && e.name.toLowerCase().includes(search.toLowerCase()) || e.email && e.email.toLowerCase().includes(search.toLowerCase()));
   if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-[40vh]">
-        <div className="text-sm text-surface-variant">Loading...</div>
-      </div>
-    );
+    return <div className="flex items-center justify-center min-h-[40vh]">
+        <div className="text-sm text-surface-variant">{t("MyEvaluator.loading")}</div>
+      </div>;
   }
-
-  return (
-    <div className="max-w-[720px] mx-auto px-5 py-6">
+  return <div className="max-w-[720px] mx-auto px-5 py-6">
       {/* Header */}
       <div className="mb-7">
-        <h1 className="text-2xl font-extrabold mb-1.5">My Evaluator</h1>
-        <p className="text-sm text-surface-variant">Select an evaluator to assess your Part B activities</p>
+        <h1 className="text-2xl font-extrabold mb-1.5">{t("MyEvaluator.my_evaluator")}</h1>
+        <p className="text-sm text-surface-variant">{t("MyEvaluator.select_an_evaluator_to")}</p>
       </div>
 
       {/* Current evaluator */}
-      {currentEvaluator ? (
-        <div className="bg-surface-container-low border border-outline-variant rounded-2xl p-6 mb-7">
+      {currentEvaluator ? <div className="bg-surface-container-low border border-outline-variant rounded-2xl p-6 mb-7">
           <div className="flex items-center justify-between flex-wrap gap-3">
             <div className="flex items-center gap-3.5">
               <div className="w-11 h-11 rounded-full bg-(--phase-pre) flex items-center justify-center shrink-0">
@@ -121,105 +114,111 @@ export default function MyEvaluator() {
                 </div>
               </div>
             </div>
-            <button onClick={handleRemove} disabled={assigning} className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg cursor-pointer text-xs font-medium" style={{ background: 'color-mix(in srgb, var(--status-err) 10%, transparent)', border: '1px solid color-mix(in srgb, var(--status-err) 20%, transparent)', color: 'var(--status-err-soft)' }}>
-              <UserX size={13} /> Remove
-            </button>
+            <button onClick={handleRemove} disabled={assigning} className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg cursor-pointer text-xs font-medium" style={{
+          background: 'color-mix(in srgb, var(--status-err) 10%, transparent)',
+          border: '1px solid color-mix(in srgb, var(--status-err) 20%, transparent)',
+          color: 'var(--status-err-soft)'
+        }}>
+              <UserX size={13} />{t("MyEvaluator.remove")}</button>
           </div>
-          <div className="flex items-center gap-1.5 mt-3 px-3 py-2 rounded-lg border" style={{ background: 'color-mix(in srgb, var(--status-ok) 8%, transparent)', borderColor: 'color-mix(in srgb, var(--status-ok) 15%, transparent)' }}>
+          <div className="flex items-center gap-1.5 mt-3 px-3 py-2 rounded-lg border" style={{
+        background: 'color-mix(in srgb, var(--status-ok) 8%, transparent)',
+        borderColor: 'color-mix(in srgb, var(--status-ok) 15%, transparent)'
+      }}>
             <UserCheck size={13} color="var(--status-ok-soft)" />
-            <span className="text-xs" style={{ color: 'var(--status-ok-soft)' }}>You are assigned to this evaluator</span>
+            <span className="text-xs" style={{
+          color: 'var(--status-ok-soft)'
+        }}>{t("MyEvaluator.you_are_assigned_to")}</span>
           </div>
 
           {/* Evaluator Scores */}
-          {evalAssessments.length > 0 && (
-            <div className="mt-4">
-              <div className="text-sm font-bold mb-2.5">Evaluator Scores</div>
+          {evalAssessments.length > 0 && <div className="mt-4">
+              <div className="text-sm font-bold mb-2.5">{t("MyEvaluator.evaluator_scores")}</div>
               {evalAssessments.map(a => {
-                const evals = a.evaluations || [];
-                const scoredPillars = evals.filter(e => e.status === 'completed').map(e => e.pillar);
-                if (scoredPillars.length === 0) return null;
+          const evals = a.evaluations || [];
+          const scoredPillars = evals.filter(e => e.status === 'completed').map(e => e.pillar);
+          if (scoredPillars.length === 0) return null;
 
-                // Compute scores from evaluation data
-                const mergedRaw = JSON.parse(JSON.stringify(a.rawScores || {}));
-                evals.forEach(ev => {
-                  if (ev.pillar === 'SQ' && ev.scores?.SQ) {
-                    let ace = 0, pba = 0;
-                    Object.entries(ev.scores.SQ).forEach(([id, c]) => {
-                      const t = Object.values(c || {}).reduce((s, v) => s + (v || 0), 0);
-                      if (id.startsWith('ACE')) ace += t; else if (id.startsWith('PBA')) pba += t;
-                    });
-                    mergedRaw.SQ = { ...mergedRaw.SQ, ACE: ace, PBA: pba };
-                  }
-                  if (ev.pillar === 'AQ' && ev.scores?.AQ) {
-                    Object.entries(ev.scores.AQ).forEach(([comp, c]) => {
-                      const pb = Object.values(c || {}).reduce((s, v) => s + (v || 0), 0);
-                      const orig = a.rawScores?.AQ?.[comp] || 0;
-                      mergedRaw.AQ = { ...mergedRaw.AQ, [comp]: Math.min(pb + (orig > pb ? orig - 10 : 0), 19) };
-                    });
-                  }
-                });
-
-                const score = scoredPillars.reduce((s, p) => {
-                  const v = computePillarScore(p, mergedRaw[p] || {});
-                  return s + v;
-                }, 0) / scoredPillars.length;
-                const grade = getGrade(Math.round(score));
-
-                return (
-                  <div key={a.id} className="px-3 py-3 mb-2 rounded-lg cursor-pointer" style={{ background: 'color-mix(in srgb, var(--neutral-dark) 3%, transparent)', border: '1px solid var(--border-light)' }} onClick={() => navigate('/app/report')}>
+          // Compute scores from evaluation data
+          const mergedRaw = JSON.parse(JSON.stringify(a.rawScores || {}));
+          evals.forEach(ev => {
+            if (ev.pillar === 'SQ' && ev.scores?.SQ) {
+              let ace = 0,
+                pba = 0;
+              Object.entries(ev.scores.SQ).forEach(([id, c]) => {
+                const t = Object.values(c || {}).reduce((s, v) => s + (v || 0), 0);
+                if (id.startsWith('ACE')) ace += t;else if (id.startsWith('PBA')) pba += t;
+              });
+              mergedRaw.SQ = {
+                ...mergedRaw.SQ,
+                ACE: ace,
+                PBA: pba
+              };
+            }
+            if (ev.pillar === 'AQ' && ev.scores?.AQ) {
+              Object.entries(ev.scores.AQ).forEach(([comp, c]) => {
+                const pb = Object.values(c || {}).reduce((s, v) => s + (v || 0), 0);
+                const orig = a.rawScores?.AQ?.[comp] || 0;
+                mergedRaw.AQ = {
+                  ...mergedRaw.AQ,
+                  [comp]: Math.min(pb + (orig > pb ? orig - 10 : 0), 19)
+                };
+              });
+            }
+          });
+          const score = scoredPillars.reduce((s, p) => {
+            const v = computePillarScore(p, mergedRaw[p] || {});
+            return s + v;
+          }, 0) / scoredPillars.length;
+          const grade = getGrade(Math.round(score));
+          return <div key={a.id} className="px-3 py-3 mb-2 rounded-lg cursor-pointer" style={{
+            background: 'color-mix(in srgb, var(--neutral-dark) 3%, transparent)',
+            border: '1px solid var(--border-light)'
+          }} onClick={() => navigate('/app/report')}>
                     <div className="flex justify-between items-center">
                       <div>
                         <div className="text-xs font-semibold">
                           {a.intake?.name || 'Assessment'} — {a.createdAt?.toDate ? a.createdAt.toDate().toLocaleDateString() : ''}
                         </div>
                         <div className="text-xs text-surface-variant flex gap-1.5 mt-1 flex-wrap">
-                          {scoredPillars.map(p => (
-                            <span key={p} className="px-1.5 py-0.5 rounded text-[10px] font-semibold inline-flex items-center gap-0.5" style={{ background: `${PILLARS[p]?.color}15`, color: PILLARS[p]?.color }}>{p} <Check size={9} /></span>
-                          ))}
+                          {scoredPillars.map(p => <span key={p} className="px-1.5 py-0.5 rounded text-[10px] font-semibold inline-flex items-center gap-0.5" style={{
+                    background: `${PILLARS[p]?.color}15`,
+                    color: PILLARS[p]?.color
+                  }}>{p} <Check size={9} /></span>)}
                         </div>
                       </div>
-                      <div className="px-2 py-0.5 rounded-md text-sm font-bold" style={{ background: grade.bg, border: `1px solid ${grade.color}40`, color: grade.color }}>
+                      <div className="px-2 py-0.5 rounded-md text-sm font-bold" style={{
+                background: grade.bg,
+                border: `1px solid ${grade.color}40`,
+                color: grade.color
+              }}>
                         {grade.grade}
                       </div>
                     </div>
-                  </div>
-                );
-              })}
-              {evalAssessments.every(a => (a.evaluations || []).filter(e => e.status === 'completed').length === 0) && (
-                <div className="text-xs text-surface-variant p-2 flex items-center gap-1.5">
-                  <Clock size={12} /> Awaiting evaluator scores
-                </div>
-              )}
-            </div>
-          )}
-        </div>
-      ) : (
-        <div className="bg-surface-container-low border border-outline-variant rounded-2xl p-6 mb-7">
+                  </div>;
+        })}
+              {evalAssessments.every(a => (a.evaluations || []).filter(e => e.status === 'completed').length === 0) && <div className="text-xs text-surface-variant p-2 flex items-center gap-1.5">
+                  <Clock size={12} />{t("MyEvaluator.awaiting_evaluator_scores")}</div>}
+            </div>}
+        </div> : <div className="bg-surface-container-low border border-outline-variant rounded-2xl p-6 mb-7">
           <div className="flex items-center gap-2 mb-2">
             <AlertCircle size={14} className="text-surface-variant" />
-            <span className="text-sm font-semibold">No evaluator assigned</span>
+            <span className="text-sm font-semibold">{t("MyEvaluator.no_evaluator_assigned")}</span>
           </div>
-          <p className="text-sm text-surface-variant">Choose an evaluator below to get started. They will review and score your Part B activities.</p>
-        </div>
-      )}
+          <p className="text-sm text-surface-variant">{t("MyEvaluator.choose_an_evaluator_below")}</p>
+        </div>}
 
       {/* Search */}
       <div className="relative mb-4">
         <Search size={14} className="text-surface-variant absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
-        <input type="text" placeholder="Search evaluators by name or email..." value={search} onChange={e => setSearch(e.target.value)}
-          className="w-full py-2.5 pl-9 pr-3.5 rounded-lg border border-outline-variant bg-surface-container-low text-on-surface text-sm outline-none"
-        />
+        <input type="text" placeholder={t("MyEvaluator.search_evaluators_by_name")} value={search} onChange={e => setSearch(e.target.value)} className="w-full py-2.5 pl-9 pr-3.5 rounded-lg border border-outline-variant bg-surface-container-low text-on-surface text-sm outline-none" />
       </div>
 
       {/* Evaluator list */}
-      {filtered.length === 0 ? (
-        <div className="text-center px-5 py-10 text-surface-variant text-sm">
+      {filtered.length === 0 ? <div className="text-center px-5 py-10 text-surface-variant text-sm">
           {search ? 'No evaluators match your search.' : 'No evaluators available.'}
-        </div>
-      ) : (
-        <div className="flex flex-col gap-2">
-          {filtered.map(ev => (
-            <div key={ev.uid} className={`flex items-center justify-between px-4 py-3.5 bg-surface-container-low border border-outline-variant rounded-xl transition-all ${currentEvaluator?.uid === ev.uid ? 'opacity-60' : ''}`}>
+        </div> : <div className="flex flex-col gap-2">
+          {filtered.map(ev => <div key={ev.uid} className={`flex items-center justify-between px-4 py-3.5 bg-surface-container-low border border-outline-variant rounded-xl transition-all ${currentEvaluator?.uid === ev.uid ? 'opacity-60' : ''}`}>
               <div className="flex items-center gap-3">
                 <div className="w-[38px] h-[38px] rounded-full bg-(--phase-pre) flex items-center justify-center shrink-0">
                   <span className="text-sm font-extrabold text-on-primary">{(ev.name || 'E')[0].toUpperCase()}</span>
@@ -229,30 +228,24 @@ export default function MyEvaluator() {
                   <div className="text-xs text-surface-variant">{ev.email || ''}</div>
                 </div>
               </div>
-              {currentEvaluator?.uid === ev.uid ? (
-                <div className="text-xs flex items-center gap-1" style={{ color: 'var(--status-ok-soft)' }}>
-                  <UserCheck size={13} /> Assigned
-                </div>
-              ) : (
-                <button onClick={() => handleAssign(ev.uid)} disabled={assigning || !!currentEvaluator} className="px-3.5 py-1.5 rounded-lg text-xs font-medium" style={{
-                  background: 'color-mix(in srgb, var(--phase-pre) 15%, transparent)', border: '1px solid color-mix(in srgb, var(--phase-pre) 30%, transparent)',
-                  color: assigning ? 'var(--text-muted)' : 'var(--phase-pre-pale)',
-                  cursor: assigning || currentEvaluator ? 'not-allowed' : 'pointer',
-                  opacity: currentEvaluator ? 0.4 : 1,
-                }}>
+              {currentEvaluator?.uid === ev.uid ? <div className="text-xs flex items-center gap-1" style={{
+          color: 'var(--status-ok-soft)'
+        }}>
+                  <UserCheck size={13} />{t("MyEvaluator.assigned")}</div> : <button onClick={() => handleAssign(ev.uid)} disabled={assigning || !!currentEvaluator} className="px-3.5 py-1.5 rounded-lg text-xs font-medium" style={{
+          background: 'color-mix(in srgb, var(--phase-pre) 15%, transparent)',
+          border: '1px solid color-mix(in srgb, var(--phase-pre) 30%, transparent)',
+          color: assigning ? 'var(--text-muted)' : 'var(--phase-pre-pale)',
+          cursor: assigning || currentEvaluator ? 'not-allowed' : 'pointer',
+          opacity: currentEvaluator ? 0.4 : 1
+        }}>
                   {assigning ? '...' : 'Select'}
-                </button>
-              )}
-            </div>
-          ))}
-        </div>
-      )}
+                </button>}
+            </div>)}
+        </div>}
 
       <div className="text-center mt-5">
         <button onClick={loadData} className="inline-flex items-center gap-1.5 px-4 py-2 text-xs rounded-lg border border-outline-variant bg-surface-container-low text-on-surface hover:bg-surface cursor-pointer transition-all">
-          <RefreshCw size={12} /> Refresh
-        </button>
+          <RefreshCw size={12} />{t("MyEvaluator.refresh")}</button>
       </div>
-    </div>
-  );
+    </div>;
 }

@@ -1,6 +1,8 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 
 export function PageFrame({ part, kicker, title, lede, children, actions }) {
+  const { t } = useTranslation();
   return (
     <div className="min-h-screen">
       <div className="border-b border-rule bg-surface/40">
@@ -8,7 +10,7 @@ export function PageFrame({ part, kicker, title, lede, children, actions }) {
           <div className="flex items-center gap-3 mb-8">
             {part && (
               <>
-                <span className="font-mono text-[11px] tracking-[0.22em] text-gold">PART {part}</span>
+                <span className="font-mono text-[11px] tracking-[0.22em] text-gold">{t("inter.part_n", { n: part })}</span>
                 <span className="h-px w-12 bg-gold" />
               </>
             )}

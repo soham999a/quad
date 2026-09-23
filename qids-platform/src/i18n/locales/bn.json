@@ -1,0 +1,230 @@
+{
+  "common": {
+    "loading": "লোড হচ্ছে…"
+  },
+  "lang": {
+    "label": "ভাষা",
+    "aria": "ভাষা পরিবর্তন করুন"
+  },
+  "nav": {
+    "groups": {
+      "platform": "প্ল্যাটফর্ম",
+      "knowledge": "জ্ঞান",
+      "school": "স্কুল",
+      "account": "অ্যাকাউন্ট",
+      "evaluation": "মূল্যায়ন",
+      "talent": "প্রতিভা",
+      "admin": "অ্যাডমিন"
+    },
+    "items": {
+      "home": "হোম",
+      "my_assessment": "আমার মূল্যায়ন",
+      "progress": "অগ্রগতি",
+      "reports": "রিপোর্ট",
+      "four_pillars": "চার স্তম্ভ",
+      "framework": "ফ্রেমওয়ার্ক গাইড",
+      "intervention": "হস্তক্ষেপ পরিকল্পনা",
+      "my_evaluator": "আমার মূল্যায়নকারী",
+      "settings": "সেটিংস",
+      "join_class": "ক্লাসে যোগ দিন",
+      "classes": "ক্লাস",
+      "school_reports": "রিপোর্ট",
+      "evaluator_dashboard": "মূল্যায়নকারী ড্যাশবোর্ড",
+      "interview_studio": "ইন্টারভিউ স্টুডিও",
+      "talent_console": "প্রতিভা কনসোল",
+      "deploy": "ডিপ্লয় (QGRA+)",
+      "role_fit": "রোল ফিট",
+      "admin_panel": "অ্যাডমিন প্যানেল",
+      "school": "স্কুল",
+      "evaluator": "মূল্যায়নকারী",
+      "dashboard": "ড্যাশবোর্ড",
+      "assess": "মূল্যায়ন",
+      "report": "রিপোর্ট",
+      "pillars": "স্তম্ভ",
+      "more": "আরও"
+    },
+    "new_assessment": "নতুন মূল্যায়ন",
+    "sign_out": "সাইন আউট",
+    "skip": "সরাসরি বিষয়বস্তুতে যান",
+    "switch_mode": "মোড পরিবর্তন",
+    "search": "খুঁজুন",
+    "page_guide": "পেজ গাইড (Shift+/)",
+    "open_palette": "কমান্ড প্যালেট খুলুন",
+    "expand": "সাইডবার খুলুন",
+    "collapse": "সাইডবার বন্ধ করুন",
+    "open_menu": "মেনু খুলুন",
+    "close_menu": "মেনু বন্ধ করুন",
+    "more_menu": "আরও মেনু",
+    "nav_sections": "অংশ",
+    "menu": "নেভিগেশন মেনু"
+  },
+  "topbar": {
+    "mode": "মোড"
+  },
+  "palette": {
+    "placeholder": "পেজ ও কাজ খুঁজুন…",
+    "search_commands": "কমান্ড খুঁজুন",
+    "no_matches": "কোনো মিল নেই",
+    "no_matches_hint": "\"{{query}}\" এর সাথে কিছু মেলে না। পেজ বা কাজের নাম লিখুন।",
+    "navigate": "↑↓ নেভিগেট",
+    "select": "↵ নির্বাচন",
+    "group_recent": "সাম্প্রতিক",
+    "group_navigate": "নেভিগেট",
+    "group_actions": "কাজ",
+    "new_assessment": "নতুন মূল্যায়ন",
+    "start": "শুরু",
+    "switch_context": "প্রসঙ্গ পরিবর্তন",
+    "mode": "মোড",
+    "theme_dark": "ডার্ক থিমে যান",
+    "theme_light": "লাইট থিমে যান",
+    "theme_hint": "থিম",
+    "toggle_sidebar": "সাইডবার পরিবর্তন",
+    "view": "ভিউ",
+    "replay_tour": "প্রোডাক্ট ট্যুর আবার দেখুন",
+    "help": "সহায়তা",
+    "keywords_theme": "dark light appearance toggle",
+    "keywords_assess": "assess begin run qids",
+    "keywords_context": "individual school enterprise role mode",
+    "keywords_sidebar": "collapse expand rail width",
+    "keywords_tour": "tour guide help onboarding walkthrough"
+  },
+  "tour": {
+    "rail_kicker": "কিউআইডিএস-এ স্বাগতম",
+    "rail_title": "সবকিছু রেইলেই",
+    "rail_body": "আপনার সাইডবার আপনার ভূমিকা অনুযায়ী — শুধু যে অংশগুলো আপনি ব্যবহার করেন। বেশি জায়গা চাইলে ছোট করুন।",
+    "search_kicker": "দ্রুত নেভিগেশন",
+    "search_title": "Ctrl/⌘+K দিয়ে সব খুঁজুন",
+    "search_body": "যেকোনো পেজে যান, মূল্যায়ন শুরু করুন বা থিম বদলান — মাউস ছাড়াই। সাম্প্রতিক পেজগুলো সংরক্ষিত থাকে।",
+    "guide_kicker": "সাহায্য, ঠিক যেখানে আছেন",
+    "guide_title": "প্রতিটি ট্যাবে একটি ম্যানুয়াল",
+    "guide_body": "এই ? আপনার পেজের ছোট গাইড খোলে — যেকোনো জায়গায় Shift+/ চাপুন। খোঁজার দরকার নেই, মুখস্থও নয়।",
+    "theme_kicker": "নিজের মতো সাজান",
+    "theme_title": "ডার্ক বা লাইট, মনে থাকে",
+    "theme_body": "থিম ও সাইডবারের প্রস্থ বেছে নিন — দুটোই সেশন ও ডিভাইসে বজায় থাকে।",
+    "back": "পিছনে",
+    "next": "পরবর্তী",
+    "finish": "শেষ",
+    "end": "ট্যুর শেষ করুন",
+    "step": "ধাপ {{n}} / {{total}}",
+    "dialog": "প্রোডাক্ট ট্যুর"
+  },
+  "auth": {
+    "brand_line1": "কোয়াড্রান্ট ইন্টেলিজেন্স",
+    "brand_line2": "ডায়াগনস্টিক সিস্টেম",
+    "brand_full": "কোয়াড্রান্ট ইন্টেলিজেন্স ডায়াগনস্টিক সিস্টেম",
+    "sign_in": "সাইন ইন",
+    "signing_in": "প্রমাণীকরণ চলছে…",
+    "email": "ইমেল ঠিকানা",
+    "email_ph": "architect@qids.internal",
+    "access_key": "অ্যাক্সেস কী",
+    "recovery": "রিকভারি",
+    "enter_email_first": "প্রথমে আপনার ইমেল ঠিকানা লিখুন।",
+    "reset_sent": "রিসেট লিংক পাঠানো হয়েছে। ইমেল দেখুন।",
+    "reset_failed": "রিসেট ইমেল পাঠানো যায়নি।",
+    "auth_proxy": "প্রমাণীকরণ প্রক্সি",
+    "continue_google": "Google দিয়ে চালিয়ে যান",
+    "new_here": "নতুন ব্যবহারকারী?",
+    "request_access": "অ্যাক্সেস চান",
+    "choose_role": "ভূমিকা বেছে নিন",
+    "choose_role_desc": "এটিই হবে আপনার প্রধান অ্যাকাউন্টের ধরন।",
+    "continue": "চালিয়ে যান",
+    "setting_up": "সেটআপ চলছে…",
+    "registration": "নিবন্ধন",
+    "register": "নিবন্ধন করুন",
+    "processing": "প্রক্রিয়া চলছে…",
+    "full_name": "পুরো নাম",
+    "name_ph": "আপনার পুরো নাম",
+    "confirm_key": "কী নিশ্চিত করুন",
+    "classification": "শ্রেণিবিভাগ",
+    "context": "প্রসঙ্গ",
+    "existing_here": "আগে থেকেই ব্যবহারকারী?",
+    "sign_in_link": "সাইন ইন",
+    "name_required": "অনুগ্রহ করে আপনার পুরো নাম লিখুন।",
+    "pwd_mismatch": "পাসওয়ার্ড মেলে না।",
+    "pwd_short": "পাসওয়ার্ড কমপক্ষে ৬ অক্ষরের হতে হবে।",
+    "proxy": "প্রক্সি",
+    "login_failed": "লগইন ব্যর্থ হয়েছে।",
+    "google_failed": "Google সাইন-ইন ব্যর্থ হয়েছে।",
+    "google_failed_role": "Google সাইন-ইন ব্যর্থ হয়েছে।",
+    "role_failed": "ভূমিকা নির্ধারণ করা যায়নি।",
+    "signup_failed": "সাইনআপ ব্যর্থ হয়েছে। আবার চেষ্টা করুন।",
+    "roles": {
+      "individual": {
+        "label": "ব্যক্তিগত",
+        "desc": "ব্যক্তিগত উন্নয়নের যাত্রা"
+      },
+      "student": {
+        "label": "শিক্ষার্থী",
+        "desc": "স্কুল বা প্রাতিষ্ঠানিক শিক্ষার্থী"
+      },
+      "teacher": {
+        "label": "শিক্ষক",
+        "desc": "ক্লাস ও মূল্যায়ন পরিচালনা করুন"
+      },
+      "evaluator": {
+        "label": "মূল্যায়নকারী / কাউন্সেলর",
+        "desc": "অন্যদের মূল্যায়ন ও দিকনির্দেশনা"
+      },
+      "employer": {
+        "label": "নিয়োগকর্তা",
+        "desc": "নিয়োগ ও প্রতিভা বিশ্লেষণ"
+      }
+    }
+  },
+  "dash": {
+    "welcome": "স্বাগতম",
+    "greeting_morning": "শুভ সকাল",
+    "greeting_afternoon": "শুভ অপরাহ্ন",
+    "greeting_evening": "শুভ সন্ধ্যা",
+    "tagline": "কাঠামো · স্পষ্টতা · গভীরতা"
+  },
+  "err": {
+    "title": "কিছু ভুল হয়েছে",
+    "default": "এই পেজ দেখানোর সময় অপ্রত্যাশিত ত্রুটি হয়েছে। আপনার সংরক্ষিত অগ্রগতি নিরাপদ আছে।",
+    "retry": "আবার চেষ্টা করুন",
+    "go_home": "হোমে যান"
+  },
+  "theme": {
+    "to_dark": "ডার্ক মোডে যান",
+    "to_light": "লাইট মোডে যান"
+  },
+  "guide": {
+    "panel": "পেজ গাইড",
+    "show_around": "আমাকে দেখান",
+    "close": "গাইড বন্ধ করুন"
+  },
+  "landing": {
+    "cta_begin": "মূল্যায়ন শুরু করুন",
+    "cta_explore": "আর্কিটেকচার দেখুন",
+    "hero_sub": "QiDS মানব সক্ষমতার অবকাঠামো — মূল্যায়ন, প্রমাণ, উন্নয়ন ও দীর্ঘমেয়াদি অগ্রগতিকে মানুষ ও প্রতিষ্ঠানের সাথে যুক্ত করে।",
+    "nav_architecture": "আর্কিটেকচার",
+    "nav_individual": "ব্যক্তিগত",
+    "nav_school": "স্কুল",
+    "nav_interview": "ইন্টারভিউ"
+  },
+  "footer": {
+    "left": "QiDS · কোয়াড্রান্ট ইন্টেলিজেন্স ডেভেলপমেন্ট সিস্টেম",
+    "right": "কাঠামো · স্পষ্টতা · গভীরতা"
+  },
+  "inter": {
+    "max_n": "সর্বোচ্চ: {{n}}",
+    "max_pts": "সর্বোচ্চ: {{n}} পয়েন্ট",
+    "max_marks": "সর্বোচ্চ: {{n}} নম্বর",
+    "select_two": "২টি কার্যক্রম নির্বাচন করুন ({{n}}/২ নির্বাচিত):",
+    "subtotal": "পার্ট এ উপ-মোট ({{x}})",
+    "riq_track": "RIQ · {{x}}",
+    "high_roles": "উচ্চ {{x}} প্রোফাইল ভূমিকা",
+    "modules_for": "{{x}}-এর জন্য হস্তক্ষেপ মডিউল",
+    "follow_up": "ফলো-আপ: {{x}}",
+    "maps_to": "ম্যাপ করে: {{x}}",
+    "level_n": "স্তর {{n}}:",
+    "grade_upper": "গ্রেড {{n}}",
+    "grade_n": "গ্রেড {{n}}",
+    "growth_n": "{{n}}টি মূল্যায়নে অগ্রগতি",
+    "condition": "শর্ত: {{x}}",
+    "normalized": "স্বাভাবিকীকৃত: {{x}}/100",
+    "students_n": "শিক্ষার্থী ({{n}})",
+    "part_n": "পার্ট {{n}}",
+    "qids_x": "QIDS · {{x}}"
+  }
+}

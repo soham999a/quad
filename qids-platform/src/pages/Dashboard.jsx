@@ -1,6 +1,7 @@
 import usePageTitle from '../lib/usePageTitle';
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../context/AuthContext';
 import { getUserAssessments, getUserReports } from '../services/firestoreService';
 import { PILLARS, getGrade, computeWeightedScore } from '../data/qidsData';
@@ -8,11 +9,14 @@ import { computeQidsPillarScores } from '../core/engine/qids';
 import { ClipboardList, TrendingUp, FileText, Activity, ChevronRight, ArrowRight, Sparkles } from 'lucide-react';
 import SeedExampleData from '../components/SeedExampleData';
 import { getSkillShape } from '../core/engine/scoring';
-
-function StatCard({ icon: Icon, label, value, index, onClick }) {
-  return (
-    <button type="button" disabled={!onClick} onClick={onClick}
-      className={`card card-hover group relative overflow-hidden p-5 md:p-6 text-left transition-all duration-200 ${onClick ? 'cursor-pointer' : 'cursor-default'}`}>
+function StatCard({
+  icon: Icon,
+  label,
+  value,
+  index,
+  onClick
+}) {
+  return <button type="button" disabled={!onClick} onClick={onClick} className={`card card-hover group relative overflow-hidden p-5 md:p-6 text-left transition-all duration-200 ${onClick ? 'cursor-pointer' : 'cursor-default'}`}>
       <div className="flex items-center gap-2 mb-3 md:mb-4">
         <span className="w-6 h-6 rounded-lg bg-primary/15 flex items-center justify-center group-hover:bg-primary/25 transition-colors">
           <Icon size={13} className="text-primary" />
@@ -22,88 +26,78 @@ function StatCard({ icon: Icon, label, value, index, onClick }) {
       </div>
       <div className="flex items-baseline gap-2">
         <div className="num text-[24px] md:text-[28px] text-on-background">{value}</div>
-        {onClick && (
-          <ChevronRight size={13} className="text-primary opacity-0 -translate-x-1.5 group-hover:translate-x-0 group-hover:opacity-100 transition-all self-center flex-shrink-0" />
-        )}
+        {onClick && <ChevronRight size={13} className="text-primary opacity-0 -translate-x-1.5 group-hover:translate-x-0 group-hover:opacity-100 transition-all self-center flex-shrink-0" />}
       </div>
       <div aria-hidden="true" className="absolute inset-x-0 bottom-0 h-px bg-[linear-gradient(90deg,transparent,var(--gold-line),transparent)] opacity-0 group-hover:opacity-100 transition-opacity" />
-    </button>
-  );
+    </button>;
 }
-
 export default function Dashboard() {
+  const {
+    t
+  } = useTranslation();
   usePageTitle('Dashboard');
-  const { user, userProfile } = useAuth();
+  const {
+    user,
+    userProfile
+  } = useAuth();
   const navigate = useNavigate();
   const [assessments, setAssessments] = useState([]);
   const [reports, setReports] = useState([]);
   const [loading, setLoading] = useState(true);
-
   useEffect(() => {
     if (!user) return;
-    Promise.all([getUserAssessments(user.uid), getUserReports(user.uid)])
-      .then(([a, r]) => { setAssessments(a); setReports(r); })
-      .catch(() => {})
-      .finally(() => setLoading(false));
+    Promise.all([getUserAssessments(user.uid), getUserReports(user.uid)]).then(([a, r]) => {
+      setAssessments(a);
+      setReports(r);
+    }).catch(() => {}).finally(() => setLoading(false));
   }, [user]);
-
   const preAssessments = assessments.filter(a => a.phase === 'pre');
   const postAssessments = assessments.filter(a => a.phase === 'post');
-
-  const getLinkedPost = (preId) => postAssessments.find(p => p.linkedAssessmentId === preId) || null;
-
-  const getResult = (a) => {
+  const getLinkedPost = preId => postAssessments.find(p => p.linkedAssessmentId === preId) || null;
+  const getResult = a => {
     if (a.result?.unifiedScore != null) {
-      return { unified: a.result.unifiedScore, grade: a.result.grade, pillarScores: a.result.pillarScores || a.pillarScores || {} };
+      return {
+        unified: a.result.unifiedScore,
+        grade: a.result.grade,
+        pillarScores: a.result.pillarScores || a.pillarScores || {}
+      };
     }
     const scores = a.pillarScores || {};
     const pillarScores = Object.keys(scores).length ? scores : computeQidsPillarScores(a.rawScores || {});
     const unified = computeWeightedScore(pillarScores) || 0;
-    return { unified, grade: getGrade(unified), pillarScores };
+    return {
+      unified,
+      grade: getGrade(unified),
+      pillarScores
+    };
   };
-
   const totalAssessments = preAssessments.length;
   const totalReports = reports.length;
-  const avgScore = preAssessments.length > 0
-    ? Math.round(preAssessments.reduce((sum, a) => sum + (getResult(a).unified || 0), 0) / preAssessments.length)
-    : '--';
-
-  return (
-    <div className="page-pad max-w-[1520px] mx-auto animate-fade">
+  const avgScore = preAssessments.length > 0 ? Math.round(preAssessments.reduce((sum, a) => sum + (getResult(a).unified || 0), 0) / preAssessments.length) : '--';
+  return <div className="page-pad max-w-[1520px] mx-auto animate-fade">
       {/* Page Header */}
       <section className="mb-10 md:mb-14">
-        <div className="kicker mb-3">Dashboard</div>
-        <h1 className="text-headline-md font-headline-md text-on-background page-headline">Good morning, {userProfile?.name || user?.displayName || 'there'}.</h1>
+        <div className="kicker mb-3">{t("Dashboard.dashboard")}</div>
+        <h1 className="text-headline-md font-headline-md text-on-background page-headline">{t(`dash.greeting_${new Date().getHours() < 12 ? 'morning' : new Date().getHours() < 17 ? 'afternoon' : 'evening'}`)}, {userProfile?.name || user?.displayName || 'there'}.</h1>
         <div className="gradient-rule mt-6" />
       </section>
 
-      {!loading && assessments.length === 0 && (
-        <section data-tour="dash-hero" className="card card-gold p-6 md:p-8 mb-10 flex flex-wrap items-center justify-between gap-6 animate-fade-up relative overflow-hidden">
-          <div
-            aria-hidden="true"
-            className="absolute inset-0 pointer-events-none opacity-60"
-            style={{ background: 'radial-gradient(ellipse at 0% 0%, var(--gold-soft), transparent 55%)' }}
-          />
+      {!loading && assessments.length === 0 && <section data-tour="dash-hero" className="card card-gold p-6 md:p-8 mb-10 flex flex-wrap items-center justify-between gap-6 animate-fade-up relative overflow-hidden">
+          <div aria-hidden="true" className="absolute inset-0 pointer-events-none opacity-60" style={{
+        background: 'radial-gradient(ellipse at 0% 0%, var(--gold-soft), transparent 55%)'
+      }} />
           <div className="relative">
-            <div className="label-eyebrow-gold mb-3">STEP 01 — BEGIN</div>
-            <h2 className="font-display text-[22px] md:text-[26px] leading-snug">
-              No assessment on record yet.
-            </h2>
-            <p className="mt-2 text-[13px] text-muted-foreground max-w-xl leading-relaxed">
-              Your first assessment establishes the baseline every report, plan, and growth
-              trajectory is built on. It takes roughly twenty minutes.
-            </p>
+            <div className="label-eyebrow-gold mb-3">{t("Dashboard.step_01_begin")}</div>
+            <h2 className="font-display text-[22px] md:text-[26px] leading-snug">{t("Dashboard.no_assessment_on_record")}</h2>
+            <p className="mt-2 text-[13px] text-muted-foreground max-w-xl leading-relaxed">{t("Dashboard.your_first_assessment_establishes")}</p>
           </div>
-          <button onClick={() => navigate('/app/assessment')} className="btn-primary relative">
-            Begin Assessment <ArrowRight size={15} />
+          <button onClick={() => navigate('/app/assessment')} className="btn-primary relative">{t("Dashboard.begin_assessment")}<ArrowRight size={15} />
           </button>
-        </section>
-      )}
+        </section>}
 
       {/* Stats Row */}
       <section data-tour="dash-stats" className="responsive-grid-4 gap-3 md:gap-4 w-full mb-10 md:mb-16">
-        {loading ? (
-          <>
+        {loading ? <>
             <div className="card p-5 md:p-6">
               <div className="skeleton h-3 w-24 mb-4" />
               <div className="skeleton h-8 w-14" />
@@ -120,27 +114,34 @@ export default function Dashboard() {
               <div className="skeleton h-3 w-24 mb-4" />
               <div className="skeleton h-8 w-16" />
             </div>
-          </>
-        ) : (
-          <>
+          </> : <>
             <StatCard icon={ClipboardList} label="Assessments" value={totalAssessments} index="01" onClick={() => navigate('/app/assessment')} />
             <StatCard icon={FileText} label="Reports" value={totalReports} index="02" onClick={() => navigate('/app/report')} />
             <StatCard icon={Activity} label="Avg Score" value={avgScore} index="03" onClick={() => navigate('/app/progress')} />
             <StatCard icon={TrendingUp} label="Since Last" value={preAssessments.length ? 'Active' : '--'} index="04" onClick={preAssessments.length ? () => navigate('/app/progress') : undefined} />
             {preAssessments.length > 0 && (() => {
-              const latest = preAssessments[0];
-              const latestMode = latest.mode || 'qids';
-              if (latestMode !== 'individual') return null;
-              const { pillarScores } = getResult(latest);
-              const shape = getSkillShape(pillarScores);
-              const shapeLabel = { T: 'T-Shaped', I: 'I-Shaped', X: 'X-Shaped', M: 'M-Shaped' }[shape] || shape;
-              return (
-                <div className="card card-hover group relative overflow-hidden p-5 md:p-6 cursor-pointer transition-all duration-200"
-                  onClick={() => navigate(`/app/individual/results/${latest.id}`)} role="button" tabIndex={0}
-                  onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); navigate(`/app/individual/results/${latest.id}`); } }}>
+          const latest = preAssessments[0];
+          const latestMode = latest.mode || 'qids';
+          if (latestMode !== 'individual') return null;
+          const {
+            pillarScores
+          } = getResult(latest);
+          const shape = getSkillShape(pillarScores);
+          const shapeLabel = {
+            T: 'T-Shaped',
+            I: 'I-Shaped',
+            X: 'X-Shaped',
+            M: 'M-Shaped'
+          }[shape] || shape;
+          return <div className="card card-hover group relative overflow-hidden p-5 md:p-6 cursor-pointer transition-all duration-200" onClick={() => navigate(`/app/individual/results/${latest.id}`)} role="button" tabIndex={0} onKeyDown={e => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault();
+              navigate(`/app/individual/results/${latest.id}`);
+            }
+          }}>
                   <div className="flex items-center gap-2 mb-3 md:mb-4">
                     <span className="w-6 h-6 rounded-lg bg-primary/15 flex items-center justify-center group-hover:bg-primary/25 transition-colors"><Sparkles size={13} className="text-primary" /></span>
-                    <div className="text-technical-sm font-technical-sm text-surface-variant uppercase tracking-widest">Skill Shape</div>
+                    <div className="text-technical-sm font-technical-sm text-surface-variant uppercase tracking-widest">{t("Dashboard.skill_shape")}</div>
                     <span className="section-index ml-auto tabular-nums">05</span>
                   </div>
                   <div className="flex items-center justify-between gap-2">
@@ -151,40 +152,35 @@ export default function Dashboard() {
                     <ChevronRight size={14} className="text-primary opacity-0 -translate-x-1.5 group-hover:translate-x-0 group-hover:opacity-100 transition-all flex-shrink-0" />
                   </div>
                   <div aria-hidden="true" className="absolute inset-x-0 bottom-0 h-px bg-[linear-gradient(90deg,transparent,var(--gold-line),transparent)] opacity-0 group-hover:opacity-100 transition-opacity" />
-                </div>
-              );
-            })()}
-          </>
-        )}
+                </div>;
+        })()}
+          </>}
       </section>
 
       {/* Seed Data */}
-      {!loading && preAssessments.length === 0 && (
-        <div className="mb-8 md:mb-12">
+      {!loading && preAssessments.length === 0 && <div className="mb-8 md:mb-12">
           <SeedExampleData onDone={() => {
-            Promise.all([getUserAssessments(user.uid), getUserReports(user.uid)])
-              .then(([a, r]) => { setAssessments(a); setReports(r); })
-              .catch(() => {});
-          }} />
-        </div>
-      )}
+        Promise.all([getUserAssessments(user.uid), getUserReports(user.uid)]).then(([a, r]) => {
+          setAssessments(a);
+          setReports(r);
+        }).catch(() => {});
+      }} />
+        </div>}
 
       {/* Main Grid */}
       <div data-tour="dash-activity" className="responsive-grid-12 gap-6 md:gap-12">
         {/* Recent Assessments */}
         <div className="md:col-span-8 col-span-full">
           <div className="flex justify-between items-end mb-5">
-            <span className="kicker">Recent Assessments</span>
+            <span className="kicker">{t("Dashboard.recent_assessments")}</span>
             <span className="text-technical-sm font-technical-sm text-surface-variant">
               Showing 01 — {Math.min(preAssessments.length, 4)} of {preAssessments.length}
             </span>
           </div>
           <div className="gradient-rule mb-6" />
 
-          {loading ? (
-            <div className="flex flex-col" aria-busy="true" aria-label="Loading assessments">
-              {[0, 1, 2, 3].map(i => (
-                <div key={i} className="h-14 md:h-16 flex items-center justify-between border-b-[0.5px] border-outline-variant px-2">
+          {loading ? <div className="flex flex-col" aria-busy="true" aria-label={t("Dashboard.loading_assessments")}>
+              {[0, 1, 2, 3].map(i => <div key={i} className="h-14 md:h-16 flex items-center justify-between border-b-[0.5px] border-outline-variant px-2">
                   <div className="flex items-center gap-4 md:gap-8 min-w-0 flex-1">
                     <div className="skeleton h-3 w-5 flex-shrink-0" />
                     <div className="min-w-0 flex-1">
@@ -193,104 +189,116 @@ export default function Dashboard() {
                     </div>
                   </div>
                   <div className="skeleton h-5 w-16 flex-shrink-0" />
-                </div>
-              ))}
-            </div>
-          ) : preAssessments.length === 0 ? (
-            <div className="py-10 md:py-16 text-center">
+                </div>)}
+            </div> : preAssessments.length === 0 ? <div className="py-10 md:py-16 text-center">
               <ClipboardList size={24} className="text-surface-variant mx-auto mb-4 opacity-40" />
-              <div className="text-technical-sm font-technical-sm text-surface-variant mb-4">No assessments recorded</div>
-              <button onClick={() => navigate('/app/assessment')} className="btn-primary glow mx-auto">
-                START FIRST ASSESSMENT
-              </button>
-            </div>
-          ) : (
-            <div className="flex flex-col">
+              <div className="text-technical-sm font-technical-sm text-surface-variant mb-4">{t("Dashboard.no_assessments_recorded")}</div>
+              <button onClick={() => navigate('/app/assessment')} className="btn-primary glow mx-auto">{t("Dashboard.start_first_assessment")}</button>
+            </div> : <div className="flex flex-col">
               {preAssessments.slice(0, 4).map((a, idx) => {
-                const { unified, grade } = getResult(a);
-                const hasPost = !!getLinkedPost(a.id);
-                const isIndividual = a.mode === 'individual';
-                return (
-                  <div key={a.id}
-                    onClick={() => isIndividual ? navigate(`/app/individual/results/${a.id}`) : navigate('/app/assessment', { state: { assessment: a, postAssessment: getLinkedPost(a.id) } })}
-                    onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); isIndividual ? navigate(`/app/individual/results/${a.id}`) : navigate('/app/assessment', { state: { assessment: a, postAssessment: getLinkedPost(a.id) } }); } }}
-                    role="button"
-                    tabIndex={0}
-                    aria-label={`Open ${a.intake?.name || 'assessment'} results`}
-                    className="h-14 md:h-16 flex items-center justify-between relative border-b-[0.5px] border-outline-variant group hover:bg-surface-container-low transition-colors px-2 pl-3 cursor-pointer touch-target focus-visible:outline focus-visible:outline-gold">
+            const {
+              unified,
+              grade
+            } = getResult(a);
+            const hasPost = !!getLinkedPost(a.id);
+            const isIndividual = a.mode === 'individual';
+            return <div key={a.id} onClick={() => isIndividual ? navigate(`/app/individual/results/${a.id}`) : navigate('/app/assessment', {
+              state: {
+                assessment: a,
+                postAssessment: getLinkedPost(a.id)
+              }
+            })} onKeyDown={e => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                isIndividual ? navigate(`/app/individual/results/${a.id}`) : navigate('/app/assessment', {
+                  state: {
+                    assessment: a,
+                    postAssessment: getLinkedPost(a.id)
+                  }
+                });
+              }
+            }} role="button" tabIndex={0} aria-label={`Open ${a.intake?.name || 'assessment'} results`} className="h-14 md:h-16 flex items-center justify-between relative border-b-[0.5px] border-outline-variant group hover:bg-surface-container-low transition-colors px-2 pl-3 cursor-pointer touch-target focus-visible:outline focus-visible:outline-gold">
                     <span aria-hidden="true" className="absolute left-0 top-0 bottom-0 w-0.5 bg-gold opacity-0 group-hover:opacity-100 transition-opacity" />
                     <div className="flex items-center gap-4 md:gap-8 min-w-0 flex-1">
                       <span className="text-technical-sm font-technical-sm text-surface-variant flex-shrink-0">{String(idx + 1).padStart(2, '0')}</span>
                       <div className="min-w-0 flex-1">
                         <div className="text-label-md font-label-md text-on-background truncate">
                           {a.intake?.name || 'Assessment'}
-                          {isIndividual && <span className="chip ml-2 text-[10px] py-0 px-2" style={{ background: 'var(--gold-tint)', color: 'var(--color-primary)', borderColor: 'var(--gold-line)' }}>INDIVIDUAL</span>}
+                          {isIndividual && <span className="chip ml-2 text-[10px] py-0 px-2" style={{
+                      background: 'var(--gold-tint)',
+                      color: 'var(--color-primary)',
+                      borderColor: 'var(--gold-line)'
+                    }}>{t("Dashboard.individual")}</span>}
                         </div>
                         <div className="text-technical-sm font-technical-sm text-surface-variant truncate">
-                          {a.createdAt?.toDate ? a.createdAt.toDate().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'Recent'}
+                          {a.createdAt?.toDate ? a.createdAt.toDate().toLocaleDateString('en-US', {
+                      month: 'short',
+                      day: 'numeric',
+                      year: 'numeric'
+                    }) : 'Recent'}
                           {hasPost && ' | Post-Complete'}
                         </div>
                       </div>
                     </div>
                     <div className="flex items-center gap-3 md:gap-8 flex-shrink-0">
-                      {unified && grade ? (
-                        <span className="chip" style={{ background: 'var(--gold-tint)', color: 'var(--color-primary)', borderColor: 'var(--gold-line)' }}>
+                      {unified && grade ? <span className="chip" style={{
+                  background: 'var(--gold-tint)',
+                  color: 'var(--color-primary)',
+                  borderColor: 'var(--gold-line)'
+                }}>
                           GRADE {grade.grade}
-                        </span>
-                      ) : (
-                        <span className="chip">PENDING</span>
-                      )}
+                        </span> : <span className="chip">{t("Dashboard.pending")}</span>}
                       <ChevronRight size={14} className="text-surface-variant flex-shrink-0" />
                     </div>
-                  </div>
-                );
-              })}
-            </div>
-          )}
+                  </div>;
+          })}
+            </div>}
 
-          {preAssessments.length > 0 && (
-            <div className="mt-6 md:mt-8">
-              <button onClick={() => navigate('/app/assessment')} className="btn-outline w-full md:w-auto">
-                VIEW ALL ASSESSMENTS
-              </button>
-            </div>
-          )}
+          {preAssessments.length > 0 && <div className="mt-6 md:mt-8">
+              <button onClick={() => navigate('/app/assessment')} className="btn-outline w-full md:w-auto">{t("Dashboard.view_all_assessments")}</button>
+            </div>}
         </div>
 
         {/* Quick Actions */}
         <div className="md:col-span-4 col-span-full">
           <div className="flex items-center gap-3 mb-5">
-            <span className="kicker">Quick Actions</span>
+            <span className="kicker">{t("Dashboard.quick_actions")}</span>
           </div>
           <div className="gradient-rule mb-6" />
           <div className="flex flex-col gap-3">
-            {[
-              { label: 'Start Assessment', path: '/app/assessment' },
-              { label: 'Generate Report', path: '/app/report' },
-              { label: 'View My Evaluator', path: '/app/my-evaluator' },
-              { label: 'Intervention Plan', path: '/app/intervention-plan' },
-              { label: 'Interview Studio', path: '/app/interview' },
-            ].map(({ label, path }, i) => (
-              <button key={label} onClick={() => navigate(path)}
-                className="card card-hover group flex items-center gap-4 w-full p-4 text-body-md text-on-surface-variant hover:text-primary transition-colors cursor-pointer bg-transparent touch-target text-left">
+            {[{
+            label: 'Start Assessment',
+            path: '/app/assessment'
+          }, {
+            label: 'Generate Report',
+            path: '/app/report'
+          }, {
+            label: 'View My Evaluator',
+            path: '/app/my-evaluator'
+          }, {
+            label: 'Intervention Plan',
+            path: '/app/intervention-plan'
+          }, {
+            label: 'Interview Studio',
+            path: '/app/interview'
+          }].map(({
+            label,
+            path
+          }, i) => <button key={label} onClick={() => navigate(path)} className="card card-hover group flex items-center gap-4 w-full p-4 text-body-md text-on-surface-variant hover:text-primary transition-colors cursor-pointer bg-transparent touch-target text-left">
                 <span className="section-index tabular-nums">{String(i + 1).padStart(2, '0')}</span>
                 <span className="flex-1">{label}</span>
                 <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform text-surface-variant flex-shrink-0" />
-              </button>
-            ))}
+              </button>)}
           </div>
 
           <div className="mt-6 card p-6 md:p-8">
             <div className="flex items-center gap-2 mb-4">
               <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />
-              <div className="text-technical-sm font-technical-sm text-primary uppercase tracking-widest">System Notification</div>
+              <div className="text-technical-sm font-technical-sm text-primary uppercase tracking-widest">{t("Dashboard.system_notification")}</div>
             </div>
-            <p className="text-body-md text-on-surface-variant leading-relaxed">
-              Your intelligence profile is being updated. New dimensional insights will be available upon completion of your next assessment.
-            </p>
+            <p className="text-body-md text-on-surface-variant leading-relaxed">{t("Dashboard.your_intelligence_profile_is")}</p>
           </div>
         </div>
       </div>
-    </div>
-  );
+    </div>;
 }

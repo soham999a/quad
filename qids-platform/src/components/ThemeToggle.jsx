@@ -1,4 +1,5 @@
 import { Sun, Moon } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { useTheme } from '../lib/theme';
 
 /**
@@ -6,14 +7,15 @@ import { useTheme } from '../lib/theme';
  * Bone = light base; navy premium = dark. Fits the Swiss/editorial style.
  */
 export default function ThemeToggle({ className = '' }) {
+  const { t } = useTranslation();
   const { theme, toggle } = useTheme();
   const isLight = theme === 'light';
   return (
     <button
       type="button"
       onClick={toggle}
-      aria-label={isLight ? 'Switch to dark mode' : 'Switch to light mode'}
-      title={isLight ? 'Switch to dark mode' : 'Switch to light mode'}
+      aria-label={isLight ? t('theme.to_dark') : t('theme.to_light')}
+      title={isLight ? t('theme.to_dark') : t('theme.to_light')}
       className={`inline-flex items-center gap-2 bg-transparent border-none p-0 cursor-pointer group ${className}`}
     >
       <Sun size={13} strokeWidth={1.5} className={isLight ? 'text-gold' : 'text-muted-foreground group-hover:text-gold'} />

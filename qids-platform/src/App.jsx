@@ -17,6 +17,7 @@ import { AuthProvider, useAuth } from './context/AuthContext';
 import { AppContext, useApp } from './context/AppContext';
 import { useTheme } from './lib/theme';
 import useModalA11y from './lib/useModalA11y';
+import { useTranslation } from 'react-i18next';
 import ProtectedRoute from './components/ProtectedRoute';
 import OnboardingGate from './components/OnboardingGate';
 import { RoleRoute, EntitlementRoute } from './components/guards';
@@ -25,6 +26,7 @@ import ThemeToggle from './components/ThemeToggle';
 import PageGuide from './components/PageGuide';
 import GuideTour, { isTourDone, resetTour } from './components/GuideTour';
 import { ToastProvider } from './components/Toast';
+import LanguageSwitcher from './components/LanguageSwitcher';
 import { getLatestAssessment, getLatestPostAssessment, getAllEvaluations } from './services/firestoreService';
 
 // eagerly loaded (always on the critical path)
@@ -139,6 +141,10 @@ function nav(id, groups) {
   return { id, groups };
 }
 
+// Sidebar/palette labels are translation keys, resolved at render time so a
+// language switch re-renders the shell instantly. Icons stay code-side.
+const navKey = { PLATFORM: 'platform', KNOWLEDGE: 'knowledge', SCHOOL: 'school', ACCOUNT: 'account', EVALUATION: 'evaluation', TALENT: 'talent', ADMIN: 'admin' };
+
 const PERSONA_NAV = {
   individual: nav('individual', [
     {
@@ -247,11 +253,11 @@ const PERSONA_NAV = {
 };
 
 const MOBILE_NAV = [
-  { path: '/app/dashboard', label: 'Home', icon: Home },
-  { path: '/app/assessment', label: 'Assess', icon: ClipboardList },
-  { path: '/app/progress', label: 'Progress', icon: TrendingUp },
-  { path: '/app/report', label: 'Report', icon: FileText },
-  { path: '/app/pillars', label: 'Pillars', icon: Brain },
+  { path: '/app/dashboard', label: 'nav.items.home', icon: Home },
+  { path: '/app/assessment', label: 'nav.items.assess', icon: ClipboardList },
+  { path: '/app/progress', label: 'nav.items.progress', icon: TrendingUp },
+  { path: '/app/report', label: 'nav.items.report', icon: FileText },
+  { path: '/app/pillars', label: 'nav.items.pillars', icon: Brain },
 ];
 
 const PALETTE_RECENTS_KEY = 'qids-palette-recents';
@@ -273,14 +279,14 @@ function readPaletteRecents() {
  * Command-palette index: the persona's own nav plus global actions.
  * Built per-open so role/theme changes are always reflected.
  */
-function paletteItems(navigate, persona, { setTheme, theme }) {
+function paletteItems(navigate, persona, { setTheme, theme }, t) {
   const navConfig = PERSONA_NAV[persona] || PERSONA_NAV.individual;
   const items = [];
   // Recents first — the fastest way back to where you were.
   const recents = readPaletteRecents();
   for (const r of recents) {
     items.push({
-      group: 'Recent',
+      group: t('palette.group_recent'),
       label: r.label,
       icon: History,
       keywords: 'recent ' + r.path,
@@ -289,21 +295,22 @@ function paletteItems(navigate, persona, { setTheme, theme }) {
   }
   for (const group of navConfig.groups) {
     for (const item of group.items) {
+      const label = t(item.label);
       items.push({
-        group: 'Navigate',
-        label: item.label,
+        group: t('palette.group_navigate'),
+        label,
         icon: item.icon,
-        keywords: group.label.toLowerCase(),
-        run: () => { recordPaletteVisit(item.path, item.label); navigate(item.path); },
+        keywords: t(`nav.groups.${navKey[group.label] || 'platform'}`).toLowerCase(),
+        run: () => { recordPaletteVisit(item.path, label); navigate(item.path); },
       });
     }
   }
   items.push(
-    { group: 'Actions', label: 'New assessment', icon: ClipboardList, hint: 'Start', keywords: 'assess begin run qids', run: () => navigate('/app/assessment') },
-    { group: 'Actions', label: 'Switch context', icon: LayoutGrid, hint: 'Mode', keywords: 'individual school enterprise role mode', run: () => navigate('/mode') },
-    { group: 'Actions', label: theme === 'light' ? 'Switch to dark theme' : 'Switch to light theme', icon: theme === 'light' ? Moon : Sun, hint: 'Theme', keywords: 'dark light appearance appearance toggle', run: () => setTheme(theme === 'light' ? 'dark' : 'light') },
-    { group: 'Actions', label: 'Toggle sidebar rail', icon: PanelLeftClose, hint: 'View', keywords: 'collapse expand rail width', run: () => window.dispatchEvent(new CustomEvent('qids:toggle-sidebar')) },
-    { group: 'Actions', label: 'Replay product tour', icon: Sparkles, hint: 'Help', keywords: 'tour guide help onboarding walkthrough', run: () => window.dispatchEvent(new CustomEvent('qids:start-tour')) },
+    { group: t('palette.group_actions'), label: t('palette.new_assessment'), icon: ClipboardList, hint: t('palette.start'), keywords: t('palette.keywords_assess'), run: () => navigate('/app/assessment') },
+    { group: t('palette.group_actions'), label: t('palette.switch_context'), icon: LayoutGrid, hint: t('palette.mode'), keywords: t('palette.keywords_context'), run: () => navigate('/mode') },
+    { group: t('palette.group_actions'), label: theme === 'light' ? t('palette.theme_dark') : t('palette.theme_light'), icon: theme === 'light' ? Moon : Sun, hint: t('palette.theme_hint'), keywords: t('palette.keywords_theme'), run: () => setTheme(theme === 'light' ? 'dark' : 'light') },
+    { group: t('palette.group_actions'), label: t('palette.toggle_sidebar'), icon: PanelLeftClose, hint: t('palette.view'), keywords: t('palette.keywords_sidebar'), run: () => window.dispatchEvent(new CustomEvent('qids:toggle-sidebar')) },
+    { group: t('palette.group_actions'), label: t('palette.replay_tour'), icon: Sparkles, hint: t('palette.help'), keywords: t('palette.keywords_tour'), run: () => window.dispatchEvent(new CustomEvent('qids:start-tour')) },
   );
   return items;
 }
@@ -325,6 +332,7 @@ function PersonaHome() {
 }
 
 function Sidebar({ collapsed }) {
+  const { t } = useTranslation();
   const { user, userProfile, logout, updateUserRole } = useAuth();
   const navigate = useNavigate();
   const handleLogout = async () => { await logout(); navigate('/login'); };
@@ -363,10 +371,11 @@ function Sidebar({ collapsed }) {
         {navConfig.groups.map(group => (
           <div key={group.label} className="mb-6">
             {!collapsed && (
-              <div className="label-eyebrow px-4 mb-3">{group.label}</div>
+              <div className="label-eyebrow px-4 mb-3">{t(`nav.groups.${navKey[group.label] || 'platform'}`)}</div>
             )}
-            {group.items.map(({ path, label, icon: Icon, entitlement }) => {
+            {group.items.map(({ path, label: labelKey, icon: Icon, entitlement }) => {
               const locked = entitlement ? !can(plan, entitlement) : false;
+              const label = t(labelKey);
               return (
                 <NavLink key={path} to={path} end={path === '/app/dashboard'} className={navItemClass} title={locked ? `${label} · ${plan.name} plan` : label}>
                   <Icon size={16} strokeWidth={1.5} className={locked ? 'opacity-50' : ''} />
@@ -384,7 +393,7 @@ function Sidebar({ collapsed }) {
       <div className={`px-6 mb-4 ${collapsed ? '!px-2' : ''}`}>
         <button onClick={() => navigate('/app/assessment')}
           className="btn-primary w-full !py-2.5 !text-[13px]">
-          {collapsed ? '+' : 'New Assessment'}
+          {collapsed ? '+' : t('nav.new_assessment')}
         </button>
       </div>
 
@@ -440,10 +449,10 @@ function Sidebar({ collapsed }) {
                 </div>
               </div>
             )}
-            <button onClick={handleLogout} aria-label="Sign out"
+            <button onClick={handleLogout} aria-label={t('nav.sign_out')}
               className={`w-full flex items-center gap-3 py-2 text-[13px] text-muted-foreground hover:text-on-surface transition-colors cursor-pointer ${collapsed ? 'justify-center px-0' : 'pl-1'}`}>
               <LogOut size={15} strokeWidth={1.5} />
-              {!collapsed && <span className="tracking-wide">Sign Out</span>}
+              {!collapsed && <span className="tracking-wide">{t('nav.sign_out')}</span>}
             </button>
           </div>
         )}
@@ -461,6 +470,7 @@ function Sidebar({ collapsed }) {
 }
 
 function MobileNav({ onMenuOpen }) {
+  const { t } = useTranslation();
   const location = useLocation();
   return (
     <nav className="mobile-nav">
@@ -470,26 +480,27 @@ function MobileNav({ onMenuOpen }) {
           <NavLink key={path} to={path} end={path === '/app/dashboard'}
             className={`mobile-nav-item ${isActive ? 'active' : ''}`}>
             <Icon size={19} strokeWidth={isActive ? 2 : 1.5} className="mobile-nav-icon" />
-            <span style={{ fontSize: 10, fontWeight: isActive ? 500 : 400 }}>{label}</span>
+            <span style={{ fontSize: 10, fontWeight: isActive ? 500 : 400 }}>{t(label)}</span>
           </NavLink>
         );
       })}
-      <button onClick={onMenuOpen} aria-label="More menu" className="mobile-nav-item">
+      <button onClick={onMenuOpen} aria-label={t('nav.more_menu')} className="mobile-nav-item">
         <Menu size={19} strokeWidth={1.5} className="mobile-nav-icon" />
-        <span style={{ fontSize: 10 }}>More</span>
+        <span style={{ fontSize: 10 }}>{t('nav.items.more')}</span>
       </button>
     </nav>
   );
 }
 
 function MobileMenuDrawer({ onClose }) {
+  const { t } = useTranslation();
   const { user, userProfile, logout } = useAuth();
   const navigate = useNavigate();
   const handleLogout = async () => { await logout(); onClose(); navigate('/login'); };
   const modalRef = useModalA11y({ open: true, onClose });
 
   return (
-    <div ref={modalRef} role="dialog" aria-modal="true" aria-label="Navigation menu" className="fixed inset-0 z-[100] bg-sidebar text-sidebar-foreground overflow-y-auto animate-fade">
+    <div ref={modalRef} role="dialog" aria-modal="true" aria-label={t('nav.menu')} className="fixed inset-0 z-[100] bg-sidebar text-sidebar-foreground overflow-y-auto animate-fade">
       <div className="flex justify-between items-center p-6 border-b border-sidebar-border">
         <div className="flex items-center gap-3">
           <QidsMark size={24} className="text-gold" />
@@ -498,7 +509,7 @@ function MobileMenuDrawer({ onClose }) {
             <span className="font-mono text-[9px] tracking-[0.22em] text-muted-foreground mt-1.5">INTELLIGENCE · DEVELOPMENT · SYSTEM</span>
           </div>
         </div>
-        <button onClick={onClose} aria-label="Close menu"
+        <button onClick={onClose} aria-label={t('nav.close_menu')}
           className="p-2 border border-sidebar-border text-muted-foreground hover:text-on-surface transition-colors cursor-pointer bg-transparent">
           <X size={16} />
         </button>
@@ -519,8 +530,8 @@ function MobileMenuDrawer({ onClose }) {
       <div className="p-6 space-y-8">
         {(PERSONA_NAV[personaFor(userProfile?.role)] || PERSONA_NAV.individual).groups.map(group => (
           <div key={group.label}>
-            <div className="label-eyebrow mb-3">{group.label}</div>
-            {group.items.map(({ path, label, icon: Icon, entitlement }) => {
+            <div className="label-eyebrow mb-3">{t(`nav.groups.${navKey[group.label] || 'platform'}`)}</div>
+            {group.items.map(({ path, label: labelKey, icon: Icon, entitlement }) => {
               const locked = entitlement ? !can(getPlan(userProfile?.plan), entitlement) : false;
               return (
                 <NavLink key={path} to={path} end={path === '/app/dashboard'} onClick={onClose}
@@ -528,7 +539,7 @@ function MobileMenuDrawer({ onClose }) {
                     `flex items-center gap-4 py-3 transition-colors ${isActive ? 'text-gold border-l-2 border-gold pl-3' : 'text-muted-foreground hover:text-on-surface pl-3'
                     }`}>
                   <Icon size={15} strokeWidth={1.5} className={locked ? 'opacity-50' : ''} />
-                  <span className={`text-[13px] tracking-wide ${locked ? 'opacity-50' : ''}`}>{label}</span>
+                  <span className={`text-[13px] tracking-wide ${locked ? 'opacity-50' : ''}`}>{t(labelKey)}</span>
                   {locked && <Lock size={11} className="ml-auto text-gold/60" />}
                 </NavLink>
               );
@@ -538,10 +549,11 @@ function MobileMenuDrawer({ onClose }) {
       </div>
 
       <div className="p-6 border-t border-sidebar-border" style={{ paddingBottom: 'calc(24px + env(safe-area-inset-bottom, 0px))' }}>
+        <div className="mb-4"><LanguageSwitcher expanded /></div>
         <button onClick={handleLogout}
           className="w-full flex items-center justify-center gap-3 py-4 border border-sidebar-border text-muted-foreground text-[13px] tracking-wide hover:text-on-surface hover:border-gold/50 transition-colors cursor-pointer bg-transparent">
           <LogOut size={15} strokeWidth={1.5} />
-          Sign Out
+          {t('nav.sign_out')}
         </button>
       </div>
     </div>
@@ -549,6 +561,7 @@ function MobileMenuDrawer({ onClose }) {
 }
 
 function TopBar({ onMenuOpen, collapsed, onToggleSidebar, onOpenPalette, onOpenGuide }) {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { user, userProfile } = useAuth();
   const mode = userProfile?.role || 'individual';
@@ -561,8 +574,8 @@ function TopBar({ onMenuOpen, collapsed, onToggleSidebar, onOpenPalette, onOpenG
       <div className="flex items-center gap-4 topbar-nav min-w-0">
         <button
           onClick={onToggleSidebar}
-          aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-          title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+          aria-label={collapsed ? t('nav.expand') : t('nav.collapse')}
+          title={collapsed ? t('nav.expand') : t('nav.collapse')}
           className="w-9 h-9 flex-shrink-0 flex items-center justify-center border border-sidebar-border text-muted-foreground hover:text-on-surface hover:border-gold/60 transition-colors cursor-pointer bg-transparent">
           {collapsed
             ? <PanelLeftOpen size={16} strokeWidth={1.5} />
@@ -570,33 +583,34 @@ function TopBar({ onMenuOpen, collapsed, onToggleSidebar, onOpenPalette, onOpenG
         </button>
         <div className="flex items-center gap-2 font-mono text-[12px] tracking-wider min-w-0">
           <span className="text-gold status-dot-pulse">●</span>
-          <span className="text-muted-foreground">MODE</span>
+          <span className="text-muted-foreground">{t('topbar.mode')}</span>
           <span className="text-on-surface truncate capitalize">{mode}</span>
         </div>
       </div>
       <div className="flex items-center gap-5 topbar-actions">
         <button
           onClick={onOpenGuide}
-          aria-label="Open page guide"
-          title="Page guide (Shift+/)"
+          aria-label={t('nav.page_guide')}
+          title={t('nav.page_guide')}
           data-tour="guide"
           className="w-9 h-9 flex-shrink-0 flex items-center justify-center border border-sidebar-border text-muted-foreground hover:text-gold hover:border-gold/60 transition-colors cursor-pointer bg-transparent font-mono text-[13px]">
           ?
         </button>
         <button
           onClick={onOpenPalette}
-          aria-label="Open command palette"
-          title="Search pages and actions (Ctrl+K)"
+          aria-label={t('nav.open_palette')}
+          title={t('nav.open_palette')}
           data-tour="search"
           className="hidden md:inline-flex items-center gap-2 h-8 px-3 border border-sidebar-border text-muted-foreground hover:text-gold hover:border-gold/60 transition-colors cursor-pointer bg-transparent font-mono text-[10px] tracking-[0.14em] uppercase">
           <Search size={12} strokeWidth={1.5} />
-          <span className="hidden lg:inline">Search</span>
+          <span className="hidden lg:inline">{t('nav.search')}</span>
           <kbd className="text-[9px] opacity-70">⌘K</kbd>
         </button>
+        <LanguageSwitcher />
         <span className="hidden md:inline-flex items-center" data-tour="theme"><ThemeToggle /></span>
         <button onClick={() => navigate('/mode')}
           className="hidden md:inline-flex items-center gap-2 bg-transparent border-none p-0 font-mono text-[11px] tracking-[0.18em] uppercase text-muted-foreground hover:text-gold transition-colors cursor-pointer">
-          Switch mode <ChevronRight size={12} />
+          {t('nav.switch_mode')} <ChevronRight size={12} />
         </button>
         <span className="hidden md:block h-4 w-px bg-sidebar-border" />
         <div className="flex items-center gap-3">
@@ -610,8 +624,9 @@ function TopBar({ onMenuOpen, collapsed, onToggleSidebar, onOpenPalette, onOpenG
         </div>
       </div>
       <div className="topbar-mobile-actions hide-desktop">
+        <LanguageSwitcher />
         <ThemeToggle />
-        <button onClick={onMenuOpen} aria-label="Open menu"
+        <button onClick={onMenuOpen} aria-label={t('nav.open_menu')}
           className="p-2 text-muted-foreground hover:text-on-surface transition-colors cursor-pointer bg-transparent border-none">
           <Menu size={20} />
         </button>
@@ -622,36 +637,40 @@ function TopBar({ onMenuOpen, collapsed, onToggleSidebar, onOpenPalette, onOpenG
 
 const SIDEBAR_KEY = 'qids-sidebar-collapsed';
 
-// First-run tour script. Steps whose selector doesn't exist at the current
-// breakpoint are skipped automatically by the engine (mobile-safe).
-const TOUR_STEPS = [
-  {
-    selector: '[data-tour="nav-rail"]',
-    kicker: 'WELCOME TO QIDS',
-    title: 'Everything lives in the rail',
-    body: 'Your sidebar is filtered to your role — only the sections you use. Collapse it when you want more room.',
-  },
-  {
-    selector: '[data-tour="search"]',
-    kicker: 'FAST NAVIGATION',
-    title: 'Search everything with Ctrl/⌘+K',
-    body: 'Jump to any page, start an assessment, or flip the theme — without touching the mouse. Recents are kept for you.',
-  },
-  {
-    selector: '[data-tour="guide"]',
-    kicker: 'HELP WHERE YOU ARE',
-    title: 'A manual on every tab',
-    body: 'This ? opens a short, contextual guide for the page you are on — press Shift+/ anywhere. Nothing to search, nothing to memorise.',
-  },
-  {
-    selector: '[data-tour="theme"]',
-    kicker: 'MAKE IT YOURS',
-    title: 'Dark or light, remembered',
-    body: 'Pick your theme and sidebar width — both persist across sessions and devices.',
-  },
-];
+// First-run tour script, resolved per language at start time. Steps whose
+// selector doesn't exist at the current breakpoint fall back to a centered
+// card (mobile-safe).
+function tourSteps(t) {
+  return [
+    {
+      selector: '[data-tour="nav-rail"]',
+      kicker: t('tour.rail_kicker'),
+      title: t('tour.rail_title'),
+      body: t('tour.rail_body'),
+    },
+    {
+      selector: '[data-tour="search"]',
+      kicker: t('tour.search_kicker'),
+      title: t('tour.search_title'),
+      body: t('tour.search_body'),
+    },
+    {
+      selector: '[data-tour="guide"]',
+      kicker: t('tour.guide_kicker'),
+      title: t('tour.guide_title'),
+      body: t('tour.guide_body'),
+    },
+    {
+      selector: '[data-tour="theme"]',
+      kicker: t('tour.theme_kicker'),
+      title: t('tour.theme_title'),
+      body: t('tour.theme_body'),
+    },
+  ];
+}
 
 function AppShell() {
+  const { t } = useTranslation();
   const [collapsed, setCollapsed] = useState(() => {
     // Restore the user's preferred rail width across sessions.
     try { return window.localStorage.getItem(SIDEBAR_KEY) === '1'; } catch { return false; }
@@ -709,18 +728,20 @@ function AppShell() {
   }, []);
 
   // First-run tour: starts once per user, after the shell has rendered.
+  // Steps are re-resolved per language so a replay always speaks the
+  // user's current language.
   useEffect(() => {
     if (!user || tourSteps !== null || isTourDone()) return;
-    const t = setTimeout(() => setTourSteps(TOUR_STEPS), 600);
-    return () => clearTimeout(t);
-  }, [user, tourSteps]);
+    const tid = setTimeout(() => setTourSteps(tourSteps(t)), 600);
+    return () => clearTimeout(tid);
+  }, [user, tourSteps, t]);
 
   // "Replay tour" palette action re-arms the tour.
   useEffect(() => {
-    const onStart = () => { resetTour(); setTourSteps(TOUR_STEPS); };
+    const onStart = () => { resetTour(); setTourSteps(tourSteps(t)); };
     window.addEventListener('qids:start-tour', onStart);
     return () => window.removeEventListener('qids:start-tour', onStart);
-  }, []);
+  }, [t]);
 
   useEffect(() => {
     if (!user) return;
@@ -751,7 +772,7 @@ function AppShell() {
   return (
     <AppContext.Provider value={{ context, setContext, assessmentData, setAssessmentData, postData, setPostData, evaluations, mergedPillarScores, evalStatus, demoMode: false }}>
       <div className={`flex min-h-screen bg-background ${collapsed ? 'shell-collapsed' : ''}`}>
-        <a href="#qids-main" className="skip-link">Skip to content</a>
+        <a href="#qids-main" className="skip-link">{t('nav.skip')}</a>
         <Sidebar collapsed={collapsed} />
         <div className={`app-content ${collapsed ? 'sidebar-collapsed' : ''}`}>
           <TopBar onMenuOpen={() => setMobileMenuOpen(true)} collapsed={collapsed} onToggleSidebar={() => setCollapsed(c => !c)} onOpenPalette={() => setPaletteOpen(true)} onOpenGuide={() => setGuideOpen(true)} />
@@ -897,8 +918,8 @@ function AppShell() {
             </Routes>
           </main>
           <footer className="hidden md:flex items-center justify-between border-t border-border py-4 px-10">
-            <span className="font-mono text-[10px] tracking-[0.22em] text-muted-foreground">QiDS · QUADRANT INTELLIGENCE DEVELOPMENT SYSTEM</span>
-            <span className="font-mono text-[10px] tracking-[0.28em] text-muted-foreground">STRUCTURE · CLARITY · DEPTH</span>
+            <span className="font-mono text-[10px] tracking-[0.22em] text-muted-foreground">{t('footer.left')}</span>
+            <span className="font-mono text-[10px] tracking-[0.28em] text-muted-foreground">{t('footer.right')}</span>
           </footer>
         </div>
         <MobileNav onMenuOpen={() => setMobileMenuOpen(true)} />
@@ -914,7 +935,7 @@ function AppShell() {
       <CommandPalette
         open={paletteOpen}
         onClose={() => setPaletteOpen(false)}
-        items={paletteItems(navigate, personaFor(userProfile?.role || 'individual'), { setTheme, theme })}
+        items={paletteItems(navigate, personaFor(userProfile?.role || 'individual'), { setTheme, theme }, t)}
       />
     </AppContext.Provider>
   );

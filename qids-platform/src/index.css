@@ -324,6 +324,13 @@ textarea:focus-visible {
   }
 }
 
+/* ── Indic scripts (Hindi/Marathi: Devanagari, Bengali) ──
+   Loaded with the base fonts; these keep translated UI crisp at the same
+   optical size instead of falling back to system fonts. */
+.indic-text {
+  font-family: 'Noto Sans Devanagari', 'Noto Sans Bengali', var(--font-sans, sans-serif);
+}
+
 /* ── Skeleton loading ── */
 @keyframes shimmer {
   0% { background-position: -400px 0; }

@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { createPortal } from 'react-dom';
 import { ArrowRight, ArrowLeft, X } from 'lucide-react';
 
@@ -33,6 +34,7 @@ export function resetTour() {
 }
 
 export default function GuideTour({ steps, onDone }) {
+  const { t } = useTranslation();
   const [idx, setIdx] = useState(0);
   const [rect, setRect] = useState(null); // null = no visible target → centered card
   const finishedRef = useRef(false);
@@ -134,7 +136,7 @@ export default function GuideTour({ steps, onDone }) {
       };
 
   return createPortal(
-    <div className="fixed inset-0 z-[140]" role="dialog" aria-modal="true" aria-label="Product tour">
+    <div className="fixed inset-0 z-[140]" role="dialog" aria-modal="true" aria-label={t('tour.dialog')}>
       {/* Dimmer, with a transparent hole around the target when it exists */}
       <div
         className="absolute inset-0"
@@ -176,8 +178,8 @@ export default function GuideTour({ steps, onDone }) {
         }}
       >
         <div className="flex items-start justify-between gap-3 mb-2">
-          <span className="label-eyebrow !mb-0">{step.kicker || `STEP ${idx + 1} OF ${total}`}</span>
-          <button type="button" onClick={finish} aria-label="End tour" className="p-1 bg-transparent border-none cursor-pointer text-muted-foreground hover:text-on-surface transition-colors -mt-1 -mr-1">
+          <span className="label-eyebrow !mb-0">{step.kicker || t('tour.step', { n: idx + 1, total })}</span>
+          <button type="button" onClick={finish} aria-label={t('tour.end')} className="p-1 bg-transparent border-none cursor-pointer text-muted-foreground hover:text-on-surface transition-colors -mt-1 -mr-1">
             <X size={14} />
           </button>
         </div>
@@ -195,11 +197,11 @@ export default function GuideTour({ steps, onDone }) {
           <div className="flex items-center gap-2">
             {idx > 0 && (
               <button type="button" onClick={back} className="btn-outline !py-1.5 !px-3 !text-[11px] flex items-center gap-1">
-                <ArrowLeft size={11} /> Back
+                <ArrowLeft size={11} /> {t('tour.back')}
               </button>
             )}
             <button type="button" onClick={next} className="btn-primary !py-1.5 !px-3.5 !text-[11px] flex items-center gap-1.5">
-              {last ? 'Finish' : 'Next'} <ArrowRight size={12} />
+              {last ? t('tour.finish') : t('tour.next')} <ArrowRight size={12} />
             </button>
           </div>
         </div>

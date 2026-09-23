@@ -1,0 +1,230 @@
+{
+  "common": {
+    "loading": "Loading…"
+  },
+  "lang": {
+    "label": "Language",
+    "aria": "Change language"
+  },
+  "nav": {
+    "groups": {
+      "platform": "PLATFORM",
+      "knowledge": "KNOWLEDGE",
+      "school": "SCHOOL",
+      "account": "ACCOUNT",
+      "evaluation": "EVALUATION",
+      "talent": "TALENT",
+      "admin": "ADMIN"
+    },
+    "items": {
+      "home": "Home",
+      "my_assessment": "My Assessment",
+      "progress": "Progress",
+      "reports": "Reports",
+      "four_pillars": "Four Pillars",
+      "framework": "Framework Guide",
+      "intervention": "Intervention Plan",
+      "my_evaluator": "My Evaluator",
+      "settings": "Settings",
+      "join_class": "Join Class",
+      "classes": "Classes",
+      "school_reports": "Reports",
+      "evaluator_dashboard": "Evaluator Dashboard",
+      "interview_studio": "Interview Studio",
+      "talent_console": "Talent Console",
+      "deploy": "Deploy (QGRA+)",
+      "role_fit": "Role Fit",
+      "admin_panel": "Admin Panel",
+      "school": "School",
+      "evaluator": "Evaluator",
+      "dashboard": "Dashboard",
+      "assess": "Assess",
+      "report": "Report",
+      "pillars": "Pillars",
+      "more": "More"
+    },
+    "new_assessment": "New Assessment",
+    "sign_out": "Sign Out",
+    "skip": "Skip to content",
+    "switch_mode": "Switch mode",
+    "search": "Search",
+    "page_guide": "Page guide (Shift+/)",
+    "open_palette": "Open command palette",
+    "expand": "Expand sidebar",
+    "collapse": "Collapse sidebar",
+    "open_menu": "Open menu",
+    "close_menu": "Close menu",
+    "more_menu": "More menu",
+    "nav_sections": "Sections",
+    "menu": "Navigation menu"
+  },
+  "topbar": {
+    "mode": "MODE"
+  },
+  "palette": {
+    "placeholder": "Search pages and actions…",
+    "search_commands": "Search commands",
+    "no_matches": "NO MATCHES",
+    "no_matches_hint": "Nothing matches “{{query}}”. Try a page name or action.",
+    "navigate": "↑↓ Navigate",
+    "select": "↵ Select",
+    "group_recent": "Recent",
+    "group_navigate": "Navigate",
+    "group_actions": "Actions",
+    "new_assessment": "New assessment",
+    "start": "Start",
+    "switch_context": "Switch context",
+    "mode": "Mode",
+    "theme_dark": "Switch to dark theme",
+    "theme_light": "Switch to light theme",
+    "theme_hint": "Theme",
+    "toggle_sidebar": "Toggle sidebar rail",
+    "view": "View",
+    "replay_tour": "Replay product tour",
+    "help": "Help",
+    "keywords_theme": "dark light appearance toggle",
+    "keywords_assess": "assess begin run qids",
+    "keywords_context": "individual school enterprise role mode",
+    "keywords_sidebar": "collapse expand rail width",
+    "keywords_tour": "tour guide help onboarding walkthrough"
+  },
+  "tour": {
+    "rail_kicker": "WELCOME TO QIDS",
+    "rail_title": "Everything lives in the rail",
+    "rail_body": "Your sidebar is filtered to your role — only the sections you use. Collapse it when you want more room.",
+    "search_kicker": "FAST NAVIGATION",
+    "search_title": "Search everything with Ctrl/⌘+K",
+    "search_body": "Jump to any page, start an assessment, or flip the theme — without touching the mouse. Recents are kept for you.",
+    "guide_kicker": "HELP WHERE YOU ARE",
+    "guide_title": "A manual on every tab",
+    "guide_body": "This ? opens a short, contextual guide for the page you are on — press Shift+/ anywhere. Nothing to search, nothing to memorise.",
+    "theme_kicker": "MAKE IT YOURS",
+    "theme_title": "Dark or light, remembered",
+    "theme_body": "Pick your theme and sidebar width — both persist across sessions and devices.",
+    "back": "Back",
+    "next": "Next",
+    "finish": "Finish",
+    "end": "End tour",
+    "step": "STEP {{n}} OF {{total}}",
+    "dialog": "Product tour"
+  },
+  "auth": {
+    "brand_line1": "Quadrant Intelligence",
+    "brand_line2": "Diagnostic System",
+    "brand_full": "Quadrant Intelligence Diagnostic System",
+    "sign_in": "Sign In",
+    "signing_in": "Authenticating...",
+    "email": "Email Address",
+    "email_ph": "architect@qids.internal",
+    "access_key": "Access Key",
+    "recovery": "Recovery",
+    "enter_email_first": "Enter your email address first.",
+    "reset_sent": "Reset link sent. Check your email.",
+    "reset_failed": "Could not send reset email.",
+    "auth_proxy": "Authentication Proxy",
+    "continue_google": "Continue with Google",
+    "new_here": "NEW PERSONNEL?",
+    "request_access": "REQUEST ACCESS",
+    "choose_role": "Choose your role",
+    "choose_role_desc": "This will be your primary account type.",
+    "continue": "Continue",
+    "setting_up": "Setting up...",
+    "registration": "Registration",
+    "register": "Register",
+    "processing": "Processing...",
+    "full_name": "Full Name",
+    "name_ph": "Your full name",
+    "confirm_key": "Confirm Key",
+    "classification": "Classification",
+    "context": "Context",
+    "existing_here": "EXISTING PERSONNEL?",
+    "sign_in_link": "SIGN IN",
+    "name_required": "Please enter your full name.",
+    "pwd_mismatch": "Passwords do not match.",
+    "pwd_short": "Password must be at least 6 characters.",
+    "proxy": "Proxy",
+    "login_failed": "Login failed.",
+    "google_failed": "Google sign-in failed.",
+    "google_failed_role": "Google sign-in failed.",
+    "role_failed": "Failed to set role.",
+    "signup_failed": "Signup failed. Please try again.",
+    "roles": {
+      "individual": {
+        "label": "Individual",
+        "desc": "Personal development journey"
+      },
+      "student": {
+        "label": "Student",
+        "desc": "School or institutional learner"
+      },
+      "teacher": {
+        "label": "Teacher",
+        "desc": "Manage classes and assessments"
+      },
+      "evaluator": {
+        "label": "Evaluator / Counselor",
+        "desc": "Assess and guide others"
+      },
+      "employer": {
+        "label": "Employer",
+        "desc": "Hiring and talent intelligence"
+      }
+    }
+  },
+  "dash": {
+    "welcome": "Welcome back",
+    "greeting_morning": "Good morning",
+    "greeting_afternoon": "Good afternoon",
+    "greeting_evening": "Good evening",
+    "tagline": "STRUCTURE · CLARITY · DEPTH"
+  },
+  "err": {
+    "title": "Something went wrong",
+    "default": "An unexpected error occurred while rendering this page. Your saved progress is intact.",
+    "retry": "Try again",
+    "go_home": "Go home"
+  },
+  "theme": {
+    "to_dark": "Switch to dark mode",
+    "to_light": "Switch to light mode"
+  },
+  "guide": {
+    "panel": "Page guide",
+    "show_around": "Show me around",
+    "close": "Close guide"
+  },
+  "landing": {
+    "cta_begin": "Begin Assessment",
+    "cta_explore": "Explore Architecture",
+    "hero_sub": "QiDS is infrastructure for human capability — connecting assessment, evidence, development, and longitudinal growth across people and institutions.",
+    "nav_architecture": "Architecture",
+    "nav_individual": "Individual",
+    "nav_school": "School",
+    "nav_interview": "Interview"
+  },
+  "footer": {
+    "left": "QiDS · QUADRANT INTELLIGENCE DEVELOPMENT SYSTEM",
+    "right": "STRUCTURE · CLARITY · DEPTH"
+  },
+  "inter": {
+    "max_n": "Max: {{n}}",
+    "max_pts": "Max: {{n}} pts",
+    "max_marks": "Max: {{n}} marks",
+    "select_two": "Select 2 Activities ({{n}}/2 selected):",
+    "subtotal": "Part A Sub-total ({{x}})",
+    "riq_track": "RIQ · {{x}}",
+    "high_roles": "High {{x}} Profile Roles",
+    "modules_for": "Intervention modules for {{x}}",
+    "follow_up": "Follow-up: {{x}}",
+    "maps_to": "Maps to: {{x}}",
+    "level_n": "Level {{n}}:",
+    "grade_upper": "GRADE {{n}}",
+    "grade_n": "Grade {{n}}",
+    "growth_n": "Growth across {{n}} attempts",
+    "condition": "Condition: {{x}}",
+    "normalized": "Normalized: {{x}}/100",
+    "students_n": "Students ({{n}})",
+    "part_n": "PART {{n}}",
+    "qids_x": "QIDS · {{x}}"
+  }
+}

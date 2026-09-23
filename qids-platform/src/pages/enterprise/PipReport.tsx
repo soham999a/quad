@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import React from 'react';
 import { RadarChart as ReRadar, Radar, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer, Tooltip } from 'recharts';
 import { Printer, FileText, TrendingUp, TrendingDown, Target, Zap, Shield, Download, ArrowLeft, CheckCircle2, AlertTriangle } from 'lucide-react';
@@ -5,52 +6,89 @@ import type { PipReportData, Insight } from '../../core/report/pip';
 import { BAND_COLOR, thresholdMeta, AGILITY_META } from '../../core/runner/format';
 import type { RadarPoint } from '../../core/report/pip';
 import type { RadarDimension } from '../../core/types';
-
 const DIM_LABELS: Record<string, string> = {
-  IQ: 'Intelligence', EQ: 'Emotional', SQ: 'Social', AQ: 'Adaptability',
-  CT: 'Critical Thinking', DQ: 'Decision Quality', LA: 'Learning Agility', PR: 'Professional Readiness',
+  IQ: 'Intelligence',
+  EQ: 'Emotional',
+  SQ: 'Social',
+  AQ: 'Adaptability',
+  CT: 'Critical Thinking',
+  DQ: 'Decision Quality',
+  LA: 'Learning Agility',
+  PR: 'Professional Readiness'
 };
-
-function PageShell({ page, title, children, breakAfter = true }: { page: string; title: string; children: React.ReactNode; breakAfter?: boolean }) {
-  return (
-    <section className={`pip-page bg-surface-container-lowest border-[0.5px] border-outline-variant ${breakAfter ? 'pip-page-break' : ''}`}>
+function PageShell({
+  page,
+  title,
+  children,
+  breakAfter = true
+}: {
+  page: string;
+  title: string;
+  children: React.ReactNode;
+  breakAfter?: boolean;
+}) {
+  const {
+    t
+  } = useTranslation();
+  return <section className={`pip-page bg-surface-container-lowest border-[0.5px] border-outline-variant ${breakAfter ? 'pip-page-break' : ''}`}>
       <div className="flex items-center justify-between px-6 md:px-8 pt-6 md:pt-8 pb-4 border-b-[0.5px] border-outline-variant">
         <div className="flex items-center gap-3">
           <FileText size={14} className="text-primary" />
-          <span className="text-technical-sm font-technical-sm text-surface-variant">PERFORMANCE INTELLIGENCE PROFILE</span>
+          <span className="text-technical-sm font-technical-sm text-surface-variant">{t("PipReport.performance_intelligence_profile")}</span>
           <span className="text-surface-variant/40">·</span>
           <span className="text-label-md font-label-md text-on-background">{title}</span>
         </div>
         <div className="text-technical-sm font-technical-sm text-surface-variant">{page} / 4</div>
       </div>
       <div className="px-6 md:px-8 py-6 md:py-8">{children}</div>
-    </section>
-  );
+    </section>;
 }
-
-function SectionTitle({ children, kicker }: { children: React.ReactNode; kicker?: string }) {
-  return (
-    <div className="mb-5">
+function SectionTitle({
+  children,
+  kicker
+}: {
+  children: React.ReactNode;
+  kicker?: string;
+}) {
+  return <div className="mb-5">
       {kicker && <div className="text-technical-sm font-technical-sm text-primary mb-1 uppercase tracking-widest">{kicker}</div>}
       <h3 className="text-label-md font-label-md text-on-background">{children}</h3>
-    </div>
-  );
+    </div>;
 }
-
-function Pill({ children, color }: { children: React.ReactNode; color: string }) {
-  return (
-    <span className="px-2 py-1 text-technical-sm font-technical-sm rounded-full" style={{ background: `color-mix(in srgb, ${color} 20%, transparent)`, color, border: `1px solid color-mix(in srgb, ${color} 40%, transparent)` }}>
+function Pill({
+  children,
+  color
+}: {
+  children: React.ReactNode;
+  color: string;
+}) {
+  return <span className="px-2 py-1 text-technical-sm font-technical-sm rounded-full" style={{
+    background: `color-mix(in srgb, ${color} 20%, transparent)`,
+    color,
+    border: `1px solid color-mix(in srgb, ${color} 40%, transparent)`
+  }}>
       {children}
-    </span>
-  );
+    </span>;
 }
-
-function InsightRow({ icon, item, tone }: { icon: React.ComponentType<{ size?: number; className?: string; style?: React.CSSProperties }>; item: Insight; tone: 'good' | 'bad' }) {
+function InsightRow({
+  icon,
+  item,
+  tone
+}: {
+  icon: React.ComponentType<{
+    size?: number;
+    className?: string;
+    style?: React.CSSProperties;
+  }>;
+  item: Insight;
+  tone: 'good' | 'bad';
+}) {
   const color = tone === 'good' ? 'var(--status-ok)' : 'var(--status-err)';
   const Icon = icon;
-  return (
-    <div className="flex items-start gap-3 py-3 border-b-[0.5px] border-outline-variant last:border-b-0">
-      <Icon size={14} className="mt-1 flex-shrink-0" style={{ color }} />
+  return <div className="flex items-start gap-3 py-3 border-b-[0.5px] border-outline-variant last:border-b-0">
+      <Icon size={14} className="mt-1 flex-shrink-0" style={{
+      color
+    }} />
       <div className="flex-1 min-w-0">
         <div className="flex items-center justify-between gap-3">
           <span className="text-label-md font-label-md text-on-background">{item.name}</span>
@@ -58,47 +96,61 @@ function InsightRow({ icon, item, tone }: { icon: React.ComponentType<{ size?: n
         </div>
         <p className="text-body-md text-on-surface-variant leading-relaxed mt-1">{item.descriptor}</p>
       </div>
-    </div>
-  );
+    </div>;
 }
 
 // ── Page 1: Executive Summary ─────────────────────────────────────────────────
 
-function PiiGauge({ score, max, color }: { score: number; max: number; color: string }) {
+function PiiGauge({
+  score,
+  max,
+  color
+}: {
+  score: number;
+  max: number;
+  color: string;
+}) {
   const pct = Math.min(score / max, 1) * 100;
-  return (
-    <div className="relative w-44 h-44 mx-auto">
+  return <div className="relative w-44 h-44 mx-auto">
       <svg viewBox="0 0 100 100" className="w-full h-full -rotate-90">
         <circle cx="50" cy="50" r="42" fill="none" stroke="color-mix(in srgb, var(--slate-muted) 15%, transparent)" strokeWidth="8" />
-        <circle cx="50" cy="50" r="42" fill="none" stroke={color} strokeWidth="8" strokeLinecap="round"
-          strokeDasharray={`${(pct / 100) * 264} 264`} />
+        <circle cx="50" cy="50" r="42" fill="none" stroke={color} strokeWidth="8" strokeLinecap="round" strokeDasharray={`${pct / 100 * 264} 264`} />
       </svg>
       <div className="absolute inset-0 flex flex-col items-center justify-center">
         <span className="text-[34px] leading-none font-headline-md text-on-background">{score}</span>
         <span className="text-technical-sm font-technical-sm text-surface-variant mt-1">/ {max}</span>
       </div>
-    </div>
-  );
+    </div>;
 }
-
-function Page1({ p }: { p: PipReportData['page1'] }) {
-  return (
-    <PageShell page="01" title="Executive Summary">
+function Page1({
+  p
+}: {
+  p: PipReportData['page1'];
+}) {
+  const {
+    t
+  } = useTranslation();
+  return <PageShell page="01" title={t("PipReport.executive_summary")}>
       <div className="grid md:grid-cols-12 gap-8">
         <div className="md:col-span-5">
-          <SectionTitle kicker="Performance Intelligence Index">PII Composite</SectionTitle>
+          <SectionTitle kicker="Performance Intelligence Index">{t("PipReport.pii_composite")}</SectionTitle>
           <PiiGauge score={p.piiScore} max={p.piiMax} color={p.hiringConfidence.color} />
           <div className="mt-4 text-center">
-            <div className="text-label-md font-label-md" style={{ color: p.hiringConfidence.color }}>{p.piiBand} · {p.piiLabel}</div>
+            <div className="text-label-md font-label-md" style={{
+            color: p.hiringConfidence.color
+          }}>{p.piiBand} · {p.piiLabel}</div>
             <div className="text-technical-sm font-technical-sm text-surface-variant mt-1">Top {100 - p.percentile}% banded against peer cohort</div>
           </div>
           <div className="mt-6 border-[0.5px] border-outline-variant bg-surface-container-low p-4">
             <div className="flex items-center justify-between mb-2">
-              <div className="text-technical-sm font-technical-sm text-surface-variant">Learning Agility Index</div>
+              <div className="text-technical-sm font-technical-sm text-surface-variant">{t("PipReport.learning_agility_index")}</div>
               <div className="text-label-md font-label-md text-on-background">{AGILITY_META[p.learningAgility.label]?.label || p.learningAgility.label} · {p.learningAgility.score}/10</div>
             </div>
             <div className="h-[6px] bg-surface-variant/20 overflow-hidden">
-              <div className="h-full" style={{ width: `${p.learningAgility.score * 10}%`, background: 'var(--phase-pre)' }} />
+              <div className="h-full" style={{
+              width: `${p.learningAgility.score * 10}%`,
+              background: 'var(--phase-pre)'
+            }} />
             </div>
           </div>
         </div>
@@ -106,17 +158,15 @@ function Page1({ p }: { p: PipReportData['page1'] }) {
         <div className="md:col-span-7">
           <div className="grid sm:grid-cols-2 gap-6">
             <div>
-              <SectionTitle kicker="Top 3 Strengths"><span className="flex items-center gap-2"><TrendingUp size={14} className="text-emerald-400" /> Strengths</span></SectionTitle>
+              <SectionTitle kicker="Top 3 Strengths"><span className="flex items-center gap-2"><TrendingUp size={14} className="text-emerald-400" />{t("PipReport.strengths")}</span></SectionTitle>
               {p.strengths.map(s => <InsightRow key={s.name} icon={TrendingUp} item={s} tone="good" />)}
             </div>
             <div>
-              <SectionTitle kicker="Top 3 Risks"><span className="flex items-center gap-2"><TrendingDown size={14} className="text-red-400" /> Risk Areas</span></SectionTitle>
-              {p.risks.map(s => (
-                <div key={s.name}>
-                  {s.flagged && <div className="flex items-center gap-2 text-technical-sm font-technical-sm text-red-400 mb-2"><AlertTriangle size={12} /> Integrity flag — review before placement</div>}
+              <SectionTitle kicker="Top 3 Risks"><span className="flex items-center gap-2"><TrendingDown size={14} className="text-red-400" />{t("PipReport.risk_areas")}</span></SectionTitle>
+              {p.risks.map(s => <div key={s.name}>
+                  {s.flagged && <div className="flex items-center gap-2 text-technical-sm font-technical-sm text-red-400 mb-2"><AlertTriangle size={12} />{t("PipReport.integrity_flag_review_before")}</div>}
                   <InsightRow icon={TrendingDown} item={s} tone="bad" />
-                </div>
-              ))}
+                </div>)}
             </div>
           </div>
         </div>
@@ -126,29 +176,27 @@ function Page1({ p }: { p: PipReportData['page1'] }) {
         <div className="border-[0.5px] border-outline-variant bg-surface-container-low p-5">
           <div className="flex items-center gap-2 mb-3">
             <Target size={14} className="text-primary" />
-            <span className="text-label-md font-label-md text-on-background">Role Recommendation</span>
+            <span className="text-label-md font-label-md text-on-background">{t("PipReport.role_recommendation")}</span>
           </div>
           <div className="flex items-center justify-between mb-1">
             <span className="text-headline-md font-headline-md text-on-background">{p.roleRecommendation.role}</span>
             <span className="text-label-md font-label-md text-primary">{p.roleRecommendation.matchPct}%</span>
           </div>
           <p className="text-body-md text-on-surface-variant leading-relaxed">{p.roleRecommendation.statement}</p>
-          {p.roleRecommendation.alternatives.length > 0 && (
-            <div className="mt-4 flex flex-col gap-2">
-              {p.roleRecommendation.alternatives.map(alt => (
-                <div key={alt.role} className="flex items-center justify-between text-technical-sm font-technical-sm text-surface-variant">
+          {p.roleRecommendation.alternatives.length > 0 && <div className="mt-4 flex flex-col gap-2">
+              {p.roleRecommendation.alternatives.map(alt => <div key={alt.role} className="flex items-center justify-between text-technical-sm font-technical-sm text-surface-variant">
                   <span>{alt.role}</span>
                   <span className="text-on-surface">{alt.matchPct}%</span>
-                </div>
-              ))}
-            </div>
-          )}
+                </div>)}
+            </div>}
         </div>
 
         <div className="border-[0.5px] border-outline-variant bg-surface-container-low p-5">
           <div className="flex items-center gap-2 mb-3">
-            <Shield size={14} style={{ color: p.hiringConfidence.color }} />
-            <span className="text-label-md font-label-md text-on-background">Hiring Confidence</span>
+            <Shield size={14} style={{
+            color: p.hiringConfidence.color
+          }} />
+            <span className="text-label-md font-label-md text-on-background">{t("PipReport.hiring_confidence")}</span>
           </div>
           <div className="flex items-center gap-3 mb-3">
             <Pill color={p.hiringConfidence.color}>{p.hiringConfidence.level}</Pill>
@@ -156,49 +204,76 @@ function Page1({ p }: { p: PipReportData['page1'] }) {
           </div>
           <p className="text-body-md text-on-surface-variant leading-relaxed">{p.hiringConfidence.rationale}</p>
           <div className="mt-4 flex items-center justify-between">
-            <span className="text-technical-sm font-technical-sm text-surface-variant">Percentile rank</span>
+            <span className="text-technical-sm font-technical-sm text-surface-variant">{t("PipReport.percentile_rank")}</span>
             <span className="text-label-md font-label-md text-on-background">Top {100 - p.percentile}%</span>
           </div>
         </div>
       </div>
-    </PageShell>
-  );
+    </PageShell>;
 }
 
 // ── Page 2: Dimensional Radar + Table ─────────────────────────────────────────
 
-function DimensionalRadar({ points, norm }: { points: RadarPoint[]; norm: Record<RadarDimension, number> }) {
-  const data = points.map(pt => ({ subject: DIM_LABELS[pt.dimension] || pt.dimension, Candidate: pt.score, 'Peer Norm': norm[pt.dimension] }));
-  return (
-    <ResponsiveContainer width="100%" height={360}>
+function DimensionalRadar({
+  points,
+  norm
+}: {
+  points: RadarPoint[];
+  norm: Record<RadarDimension, number>;
+}) {
+  const data = points.map(pt => ({
+    subject: DIM_LABELS[pt.dimension] || pt.dimension,
+    Candidate: pt.score,
+    'Peer Norm': norm[pt.dimension]
+  }));
+  return <ResponsiveContainer width="100%" height={360}>
       <ReRadar data={data} outerRadius="70%">
         <PolarGrid stroke="color-mix(in srgb, var(--slate-muted) 20%, transparent)" />
-        <PolarAngleAxis dataKey="subject" tick={{ fill: 'var(--slate-muted)', fontSize: 11, fontWeight: 600 }} />
+        <PolarAngleAxis dataKey="subject" tick={{
+        fill: 'var(--slate-muted)',
+        fontSize: 11,
+        fontWeight: 600
+      }} />
         <PolarRadiusAxis angle={90} domain={[0, 100]} tick={false} axisLine={false} />
-        <Radar dataKey="Candidate" stroke="var(--gold)" fill="var(--gold)" fillOpacity={0.28} strokeWidth={2} dot={{ fill: 'var(--gold)', r: 3 }} />
+        <Radar dataKey="Candidate" stroke="var(--gold)" fill="var(--gold)" fillOpacity={0.28} strokeWidth={2} dot={{
+        fill: 'var(--gold)',
+        r: 3
+      }} />
         <Radar dataKey="Peer Norm" stroke="var(--slate-deep)" fill="var(--slate-deep)" fillOpacity={0.06} strokeWidth={1.5} strokeDasharray="4 4" />
-        <Tooltip contentStyle={{ background: 'var(--ink)', border: '1px solid color-mix(in srgb, var(--slate-muted) 20%, transparent)', borderRadius: 8, color: 'var(--neutral-warm)', fontSize: 12 }} />
+        <Tooltip contentStyle={{
+        background: 'var(--ink)',
+        border: '1px solid color-mix(in srgb, var(--slate-muted) 20%, transparent)',
+        borderRadius: 8,
+        color: 'var(--neutral-warm)',
+        fontSize: 12
+      }} />
       </ReRadar>
-    </ResponsiveContainer>
-  );
+    </ResponsiveContainer>;
 }
-
-function Page2({ p }: { p: PipReportData['page2'] }) {
-  return (
-    <PageShell page="02" title="Dimensional Intelligence">
-      <SectionTitle kicker="8-Axis Radar">Candidate vs Peer Cohort</SectionTitle>
+function Page2({
+  p
+}: {
+  p: PipReportData['page2'];
+}) {
+  const {
+    t
+  } = useTranslation();
+  return <PageShell page="02" title={t("PipReport.dimensional_intelligence")}>
+      <SectionTitle kicker="8-Axis Radar">{t("PipReport.candidate_vs_peer_cohort")}</SectionTitle>
       <div className="grid md:grid-cols-2 gap-8">
         <DimensionalRadar points={p.radar} norm={p.peerNorm} />
         <div>
           <div className="flex flex-col">
-            {p.radar.map(pt => (
-              <div key={pt.dimension} className="flex items-center justify-between gap-3 py-2.5 border-b-[0.5px] border-outline-variant last:border-b-0">
+            {p.radar.map(pt => <div key={pt.dimension} className="flex items-center justify-between gap-3 py-2.5 border-b-[0.5px] border-outline-variant last:border-b-0">
                 <div className="w-28 flex-shrink-0">
                   <div className="text-label-md font-label-md text-on-background">{pt.dimension}</div>
                   <div className="text-technical-sm font-technical-sm text-surface-variant">{DIM_LABELS[pt.dimension]}</div>
                 </div>
                 <div className="flex-1 h-[5px] bg-surface-container-high overflow-hidden mx-3">
-                  <div className="h-full" style={{ width: `${Math.max(pt.score, 2)}%`, background: BAND_COLOR[pt.band] || 'var(--gold)' }} />
+                  <div className="h-full" style={{
+                width: `${Math.max(pt.score, 2)}%`,
+                background: BAND_COLOR[pt.band] || 'var(--gold)'
+              }} />
                 </div>
                 <div className="w-24 flex-shrink-0 text-right">
                   <span className="text-label-md font-label-md text-on-background">{pt.tScore}</span>
@@ -207,43 +282,46 @@ function Page2({ p }: { p: PipReportData['page2'] }) {
                 <div className="w-20 flex-shrink-0 text-right">
                   <Pill color={BAND_COLOR[pt.band] || 'var(--gold)'}>{pt.band}</Pill>
                 </div>
-              </div>
-            ))}
+              </div>)}
           </div>
         </div>
       </div>
-    </PageShell>
-  );
+    </PageShell>;
 }
 
 // ── Page 3: Competency Heatmap ────────────────────────────────────────────────
 
-function Page3({ p }: { p: PipReportData['page3'] }) {
-  return (
-    <PageShell page="03" title="Competency Heatmap">
-      <SectionTitle kicker="Sub-Dimension Performance">
-        Module × competency scores <span className="text-surface-variant">— gold highlights the top role-fit relevance</span>
+function Page3({
+  p
+}: {
+  p: PipReportData['page3'];
+}) {
+  const {
+    t
+  } = useTranslation();
+  return <PageShell page="03" title={t("PipReport.competency_heatmap")}>
+      <SectionTitle kicker="Sub-Dimension Performance">{t("PipReport.module_competency_scores")}<span className="text-surface-variant">{t("PipReport.gold_highlights_the_top")}</span>
       </SectionTitle>
       <div className="overflow-x-auto">
         <table className="w-full text-left">
           <thead>
             <tr className="text-technical-sm font-technical-sm text-surface-variant uppercase tracking-widest border-b-[0.5px] border-outline-variant">
-              <th className="py-3 pr-4 font-normal">Module</th>
-              <th className="py-3 pr-4 font-normal">Competency</th>
-              <th className="py-3 pr-4 font-normal text-right">Raw</th>
-              <th className="py-3 pr-4 font-normal text-right">T</th>
-              <th className="py-3 pr-4 font-normal text-right">Pct</th>
-              <th className="py-3 font-normal text-right">Band</th>
+              <th className="py-3 pr-4 font-normal">{t("PipReport.module")}</th>
+              <th className="py-3 pr-4 font-normal">{t("PipReport.competency")}</th>
+              <th className="py-3 pr-4 font-normal text-right">{t("PipReport.raw")}</th>
+              <th className="py-3 pr-4 font-normal text-right">{t("PipReport.t")}</th>
+              <th className="py-3 pr-4 font-normal text-right">{t("PipReport.pct")}</th>
+              <th className="py-3 font-normal text-right">{t("PipReport.band")}</th>
             </tr>
           </thead>
           <tbody>
-            {p.rows.map((r, i) => (
-              <tr key={i} className="border-b-[0.5px] border-outline-variant"
-                style={r.roleRelevant ? { background: 'color-mix(in srgb, var(--gold) 6%, transparent)' } : undefined}>
+            {p.rows.map((r, i) => <tr key={i} className="border-b-[0.5px] border-outline-variant" style={r.roleRelevant ? {
+            background: 'color-mix(in srgb, var(--gold) 6%, transparent)'
+          } : undefined}>
                 <td className="py-3 pr-4 text-label-md font-label-md text-on-background">{r.module}</td>
                 <td className="py-3 pr-4">
                   <span className="text-body-md text-on-surface-variant">{r.name}</span>
-                  {r.roleRelevant && <Pill color="var(--gold)">role-fit</Pill>}
+                  {r.roleRelevant && <Pill color="var(--gold)">{t("PipReport.role_fit")}</Pill>}
                 </td>
                 <td className="py-3 pr-4 text-right text-technical-sm font-technical-sm text-surface-variant">{r.raw}/{r.max}</td>
                 <td className="py-3 pr-4 text-right text-label-md font-label-md text-on-background">{r.tScore}</td>
@@ -251,73 +329,97 @@ function Page3({ p }: { p: PipReportData['page3'] }) {
                   <div className="flex items-center justify-end gap-2">
                     <span className="text-technical-sm font-technical-sm text-surface-variant">{r.pct}%</span>
                     <div className="w-20 h-[5px] bg-surface-container-high overflow-hidden">
-                      <div className="h-full" style={{ width: `${Math.max(r.pct, 2)}%`, background: r.pct >= 75 ? 'var(--status-ok)' : r.pct >= 60 ? 'var(--status-warn)' : 'var(--status-err)' }} />
+                      <div className="h-full" style={{
+                    width: `${Math.max(r.pct, 2)}%`,
+                    background: r.pct >= 75 ? 'var(--status-ok)' : r.pct >= 60 ? 'var(--status-warn)' : 'var(--status-err)'
+                  }} />
                     </div>
                   </div>
                 </td>
                 <td className="py-3 text-right">
                   <Pill color={BAND_COLOR[r.band] || 'var(--slate-muted)'}>{r.band}</Pill>
                 </td>
-              </tr>
-            ))}
+              </tr>)}
           </tbody>
         </table>
       </div>
-    </PageShell>
-  );
+    </PageShell>;
 }
 
 // ── Page 4: Work-Style Derived Insights ───────────────────────────────────────
 
-const PAGE4_SECTIONS = (p: PipReportData['page4']) => [
-  { kicker: 'Works best under', label: 'Optimal Conditions', item: p.worksBestUnder },
-  { kicker: 'Needs support when', label: 'Support Requirement', item: p.needsSupportWhen },
-  { kicker: 'Communication style', label: 'Interaction', item: p.communicationStyle },
-  { kicker: 'Leadership style', label: 'People', item: p.leadershipStyle },
-  { kicker: 'Decision style', label: 'Decisions', item: p.decisionStyle },
-  { kicker: 'Learning preference', label: 'Upskilling', item: p.learningPreference },
-  { kicker: 'Execution preference', label: 'Delivery', item: p.executionPreference },
-];
-
-function Page4({ p }: { p: PipReportData['page4'] }) {
+const PAGE4_SECTIONS = (p: PipReportData['page4']) => [{
+  kicker: 'Works best under',
+  label: 'Optimal Conditions',
+  item: p.worksBestUnder
+}, {
+  kicker: 'Needs support when',
+  label: 'Support Requirement',
+  item: p.needsSupportWhen
+}, {
+  kicker: 'Communication style',
+  label: 'Interaction',
+  item: p.communicationStyle
+}, {
+  kicker: 'Leadership style',
+  label: 'People',
+  item: p.leadershipStyle
+}, {
+  kicker: 'Decision style',
+  label: 'Decisions',
+  item: p.decisionStyle
+}, {
+  kicker: 'Learning preference',
+  label: 'Upskilling',
+  item: p.learningPreference
+}, {
+  kicker: 'Execution preference',
+  label: 'Delivery',
+  item: p.executionPreference
+}];
+function Page4({
+  p
+}: {
+  p: PipReportData['page4'];
+}) {
+  const {
+    t
+  } = useTranslation();
   const sections = PAGE4_SECTIONS(p);
-  return (
-    <PageShell page="04" title="Behavioural & Work-Style Insights" breakAfter={false}>
-      <SectionTitle kicker="Derived From Work-Style, Judgement & Agility Data">
-        How the candidate tends to work, communicate and lead
-      </SectionTitle>
+  return <PageShell page="04" title={t("PipReport.behavioural_work_style_insights")} breakAfter={false}>
+      <SectionTitle kicker="Derived From Work-Style, Judgement & Agility Data">{t("PipReport.how_the_candidate_tends")}</SectionTitle>
       <div className="grid sm:grid-cols-2 gap-4">
-        {sections.map(s => (
-          <div key={s.kicker} className="border-[0.5px] border-outline-variant bg-surface-container-low p-5">
+        {sections.map(s => <div key={s.kicker} className="border-[0.5px] border-outline-variant bg-surface-container-low p-5">
             <div className="text-technical-sm font-technical-sm text-surface-variant uppercase tracking-widest mb-1">{s.kicker}</div>
             <div className="text-label-md font-label-md text-primary mb-2">{s.item.label}</div>
             <p className="text-body-md text-on-surface-variant leading-relaxed">{s.item.detail}</p>
-          </div>
-        ))}
+          </div>)}
       </div>
-    </PageShell>
-  );
+    </PageShell>;
 }
 
 // ── Full report + print ───────────────────────────────────────────────────────
 
-export default function PipReport({ data }: { data: PipReportData }) {
+export default function PipReport({
+  data
+}: {
+  data: PipReportData;
+}) {
+  const {
+    t
+  } = useTranslation();
   const onPrint = () => window.print();
-
-  return (
-    <div className="pip-report">
+  return <div className="pip-report">
       <div className="hidden md:flex items-center justify-between mb-6 print:hidden">
         <div>
           <div className="text-technical-sm font-technical-sm text-primary mb-1 uppercase tracking-widest">PIP · {data.header.tier}</div>
-          <h1 className="text-headline-md font-headline-md text-on-background page-headline">Performance Intelligence Profile</h1>
+          <h1 className="text-headline-md font-headline-md text-on-background page-headline">{t("PipReport.performance_intelligence_profile_2")}</h1>
           <p className="text-body-md text-surface-variant mt-2 leading-relaxed">
             {data.header.name} · {data.header.date} · Target: {data.header.targetRole} · Assessor: {data.header.assessorOrg}
           </p>
         </div>
-        <button onClick={onPrint}
-          className="flex items-center gap-2 px-6 py-3 bg-primary text-on-primary-container text-label-md font-label-md hover:opacity-90 transition-opacity cursor-pointer border-none">
-          <Printer size={14} /> PRINT / PDF
-        </button>
+        <button onClick={onPrint} className="flex items-center gap-2 px-6 py-3 bg-primary text-on-primary-container text-label-md font-label-md hover:opacity-90 transition-opacity cursor-pointer border-none">
+          <Printer size={14} />{t("PipReport.print_pdf")}</button>
       </div>
 
       <div className="flex flex-col gap-8 md:gap-10 print:gap-0 print:block">
@@ -326,6 +428,5 @@ export default function PipReport({ data }: { data: PipReportData }) {
         <Page3 p={data.page3} />
         <Page4 p={data.page4} />
       </div>
-    </div>
-  );
+    </div>;
 }
