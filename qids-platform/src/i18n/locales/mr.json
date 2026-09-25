@@ -56,7 +56,8 @@
     "close_menu": "मेनू बंद करा",
     "more_menu": "अधिक मेनू",
     "nav_sections": "विभाग",
-    "menu": "नेव्हिगेशन मेनू"
+    "menu": "नेव्हिगेशन मेनू",
+    "notifications": "सूचना"
   },
   "topbar": {
     "mode": "मोड"
@@ -256,5 +257,13 @@
   },
   "interviewReport": {
     "session_transcript": "सेशन ट्रान्स्क्रिप्ट"
+  },
+  "notifications": {
+    "mark_all_read": "सर्व वाचलेले खूण करा",
+    "nothing_yet": "तुम्ही सर्व पाहिले आहे"
+  },
+  "AdminPanel": {
+    "recent_errors": "अलीकडील त्रुटी",
+    "no_errors_reported": "त्रुटी नाहीत — सिस्टम निरोगी आहे"
   }
 }

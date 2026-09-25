@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { getClass, getClassStudents, createSchoolAssessment, getClassAssessments, getClassAttempts } from '../../services/schoolService';
+import { notifyClassAssignment } from '../../services/notificationService';
 import { useToast } from '../../components/Toast';
 import EmptyState from '../../components/EmptyState';
 import { Users, Plus, ClipboardList, BarChart3, Copy, ChevronRight, CheckCircle, Trash2, Send, Share2 } from 'lucide-react';
@@ -16,7 +17,8 @@ export default function ClassManager() {
     classId
   } = useParams();
   const {
-    user
+    user,
+    userProfile
   } = useAuth();
   const navigate = useNavigate();
   const toast = useToast();
@@ -68,6 +70,13 @@ export default function ClassManager() {
       });
       // refresh the list so the new assignment appears immediately
       getClassAssessments(classId).then(setAssignments).catch(() => {});
+      // notify every student in the class (fire-and-forget)
+      notifyClassAssignment({
+        classId,
+        teacherName: userProfile?.name || user.displayName || 'Your teacher',
+        title: assessmentTitle.trim(),
+        classCode: cls?.classCode || '',
+      });
       toast('Assessment created', 'success');
       setShowNewAssessment(false);
       setAssessmentTitle('');

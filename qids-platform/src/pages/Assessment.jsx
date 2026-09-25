@@ -2,6 +2,7 @@ import { useTranslation } from 'react-i18next';
 import usePageTitle from '../lib/usePageTitle';
 import React, { useState, useEffect, useRef } from 'react';
 import { PILLARS, EQ_QUESTIONS, SQ_QUESTIONS, IQ_QUESTIONS, AQ_QUESTIONS, mapAQLikert } from '../data/qidsData';
+import { useBankText } from '../data/banks';
 import { evaluateQidsAssessment, getGrade } from '../core/engine/qids';
 import { getRandomDiagramQuestions } from '../data/diagramQuestions';
 import { generateIQQuestions, generateEQQuestions, generateAQQuestions, generateSQQuestions } from '../services/groqService';
@@ -12,6 +13,7 @@ import { useAuth } from '../context/AuthContext';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { saveAssessment, getStudentEvaluator, listPublicEvaluators, assignEvaluator, removeAssignment } from '../services/firestoreService';
 import { recordSchoolAttempt } from '../services/schoolService';
+import { notifyAttemptRecorded } from '../services/notificationService';
 import { logEvent } from '../lib/analytics';
 import { Save, ChevronRight, ChevronLeft, Check, CheckCircle, AlertCircle, ClipboardList, Brain, Heart, Users, Shield, ArrowRight } from 'lucide-react';
 import { useToast } from '../components/Toast';
@@ -48,9 +50,10 @@ function MCQQuestion({
   onSelect,
   color
 }) {
+  const tq = useBankText();
   return <div className="mb-4 p-3 md:p-4 bg-surface-container-low border-[0.5px] border-outline-variant">
       <div className="text-technical-sm font-technical-sm text-on-surface mb-3 leading-relaxed">
-        <span className="text-surface-variant mr-2">Q{index + 1}.</span>{q.q}
+        <span className="text-surface-variant mr-2">Q{index + 1}.</span>{tq(q.q)}
       </div>
       <div className="flex flex-col gap-2">
         {q.options.map((opt, i) => {
@@ -59,7 +62,7 @@ function MCQQuestion({
               <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${isSelected ? 'border-primary bg-primary' : 'border-outline-variant'}`}>
                 {isSelected && <div className="w-2 h-2 rounded-full bg-on-primary"></div>}
               </div>
-              <span className="font-medium">{String.fromCharCode(65 + i)}.</span> {opt}
+              <span className="font-medium">{String.fromCharCode(65 + i)}.</span> {tq(opt)}
             </button>;
       })}
       </div>
@@ -74,9 +77,10 @@ function OpenQuestion({
   const {
     t
   } = useTranslation();
+  const tq = useBankText();
   return <div className="mb-4 p-4 bg-surface-container-low border-[0.5px] border-outline-variant">
       <div className="text-technical-sm font-technical-sm text-on-surface mb-3 leading-relaxed">
-        <span className="text-surface-variant mr-2">Q{index + 1}.</span>{q.q}
+        <span className="text-surface-variant mr-2">Q{index + 1}.</span>{tq(q.q)}
       </div>
       <textarea value={value || ''} onChange={e => onChange(e.target.value)} placeholder={t("Assessment.write_your_answer_here")} rows={3} className="w-full p-3 bg-background border-[0.5px] border-outline-variant text-on-surface text-technical-sm font-technical-sm outline-none focus:border-primary resize-y" />
     </div>;
@@ -88,15 +92,16 @@ function LikertQuestion({
   onChange,
   color
 }) {
+  const tq = useBankText();
   const labels = ['Never', 'Rarely', 'Sometimes', 'Often', 'Always'];
   return <div className="mb-4 p-3 md:p-4 bg-surface-container-low border-[0.5px] border-outline-variant">
       <div className="text-technical-sm font-technical-sm text-on-surface mb-4 leading-relaxed">
-        <span className="text-surface-variant mr-2">{index + 1}.</span>{q}
+        <span className="text-surface-variant mr-2">{index + 1}.</span>{tq(q)}
       </div>
       <div className="flex gap-1.5 md:gap-2 items-stretch">
         {[1, 2, 3, 4, 5].map(n => <button key={n} onClick={() => onChange(n)} className={`flex-1 px-1 md:px-2 py-3 md:py-4 cursor-pointer transition-all border-[0.5px] flex flex-col items-center gap-1 touch-target ${value === n ? 'border-primary bg-primary/15 text-primary' : 'border-outline-variant bg-transparent text-surface-variant hover:border-primary hover:text-primary'}`}>
             <span className="text-sm md:text-base font-bold">{n}</span>
-            <span className="text-[8px] md:text-[9px] font-normal text-center leading-tight">{labels[n - 1]}</span>
+            <span className="text-[8px] md:text-[9px] font-normal text-center leading-tight">{tq(labels[n - 1])}</span>
           </button>)}
       </div>
     </div>;
@@ -583,7 +588,7 @@ function SQStep({
           <div className="p-3 border-[0.5px] border-(--phase-int)/30 bg-(--phase-int)/5 text-technical-sm font-technical-sm text-on-surface-variant leading-relaxed mb-5">
             <strong style={{
           color: pillar.color
-        }}>{t("Assessment.cognitive_social_intelligence_test")}</strong> {SQ_QUESTIONS.component2_CSI.instructions}
+        }}>{t("Assessment.cognitive_social_intelligence_test")}</strong> {tq(SQ_QUESTIONS.component2_CSI.instructions)}
           </div>
           {SQ_QUESTIONS.component2_CSI.questions.map((q, qi) => {
         
@@ -593,9 +598,9 @@ function SQStep({
             color: pillar.color
           }}>Q{qi + 1} — {q.subParam}</div>
                 <div className="text-technical-sm font-technical-sm text-on-surface-variant leading-relaxed mb-3 p-3 bg-surface-container-low border-l-2 border-(--phase-int)/40">
-                  <strong>{t("Assessment.scenario")}</strong> {q.scenario}
+                  <strong>{t("Assessment.scenario")}</strong> {tq(q.scenario)}
                 </div>
-                <div className="text-technical-sm font-technical-sm text-on-surface mb-3">{q.question}</div>
+                <div className="text-technical-sm font-technical-sm text-on-surface mb-3">{tq(q.question)}</div>
                 <div className="flex flex-col gap-2">
                   {q.options.map((opt, oi) => {
               const isSelected = selected === oi;
@@ -604,7 +609,7 @@ function SQStep({
                         <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${isSelected ? 'border-(--phase-int) bg-(--phase-int)' : 'border-outline-variant'}`}>
                           {isSelected && <div className="w-2 h-2 rounded-full bg-on-primary" />}
                         </div>
-                        <span className="flex-1"><strong>{String.fromCharCode(65 + oi)}.</strong> {opt.text}</span>
+                        <span className="flex-1"><strong>{String.fromCharCode(65 + oi)}.</strong> {tq(opt.text)}</span>
                         {isSelected && <span className="text-[11px] px-2 py-0.5 font-bold flex-shrink-0" style={{
                   backgroundColor: alpha(markColor, 20),
                   color: markColor
@@ -615,7 +620,7 @@ function SQStep({
             })}
                 </div>
                 {selected !== undefined && <div className="mt-3 p-3 border-[0.5px] border-(--phase-int)/20 bg-(--phase-int)/5 text-technical-sm font-technical-sm text-surface-variant italic">
-                    <strong className="text-(--phase-int)">{t("Assessment.assessor_note")}</strong> {q.assessorNote}
+                    <strong className="text-(--phase-int)">{t("Assessment.assessor_note")}</strong> {tq(q.assessorNote)}
                   </div>}
               </div>;
       })}
@@ -1386,6 +1391,7 @@ export default function Assessment() {
               studentName: userProfile?.name || user.displayName || 'Student',
               assessmentId: savedId,
             }).catch(err => console.error('schoolAttempt log failed:', err));
+            notifyAttemptRecorded({ studentUid: user.uid, title: assignmentCtx?.title || 'class assessment' });
           }
         } else {
           console.error('Save failed: saveAssessment returned null');

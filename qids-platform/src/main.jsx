@@ -4,6 +4,7 @@ import App from './App.jsx'
 import './index.css'
 import { applyTheme, resolveTheme } from './lib/theme'
 import './i18n'
+import './lib/errorReport' // installs window error + unhandledrejection handlers
 
 applyTheme(resolveTheme())
 

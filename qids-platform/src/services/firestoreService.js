@@ -324,3 +324,24 @@ export async function getUserEnterpriseResults(uid) {
     return sortByCreatedAt(snap.docs.map(d => ({ id: d.id, ...d.data() })));
   } catch (e) { console.warn('getUserEnterpriseResults failed:', e.message); return []; }
 }
+// ─── Error reports (ops, admin-only read) ────────────────────────────────────
+// Written by the /api/log-error endpoint via the Admin SDK; admins read the
+// latest ones in the Admin Panel to spot production breakage early.
+export async function getRecentErrorReports(max = 25) {
+  try {
+    const snap = await getDocs(collection(db, 'errorReports'));
+    const rows = snap.docs.map(d => {
+      const data = d.data();
+      return {
+        id: d.id,
+        ...data,
+        tsMs: data.serverTs?.toMillis?.() || data.clientTs?.toMillis?.() || 0,
+      };
+    });
+    rows.sort((a, b) => b.tsMs - a.tsMs);
+    return rows.slice(0, max);
+  } catch (e) {
+    console.warn('getRecentErrorReports failed:', e.message);
+    return [];
+  }
+}

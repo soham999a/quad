@@ -27,6 +27,7 @@ import PageGuide from './components/PageGuide';
 import GuideTour, { isTourDone, resetTour } from './components/GuideTour';
 import { ToastProvider } from './components/Toast';
 import LanguageSwitcher from './components/LanguageSwitcher';
+import NotificationBell from './components/NotificationBell';
 import { getLatestAssessment, getLatestPostAssessment, getAllEvaluations } from './services/firestoreService';
 
 // eagerly loaded (always on the critical path)
@@ -590,6 +591,7 @@ function TopBar({ onMenuOpen, collapsed, onToggleSidebar, onOpenPalette, onOpenG
         </div>
       </div>
       <div className="flex items-center gap-5 topbar-actions">
+        <NotificationBell />
         <button
           onClick={onOpenGuide}
           aria-label={t('nav.page_guide')}

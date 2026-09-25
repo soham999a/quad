@@ -1,5 +1,6 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
+import { reportError } from '../lib/errorReport';
 
 /**
  * Catches render-time errors anywhere below it and shows a styled recovery
@@ -23,6 +24,7 @@ class BoundaryInner extends React.Component {
 
   componentDidCatch(error, info) {
     console.error('UI error boundary caught:', error, info?.componentStack);
+    reportError(error, { componentStack: info?.componentStack, kind: 'boundary' });
   }
 
   render() {

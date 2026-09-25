@@ -11,13 +11,15 @@
     "test:e2e:run": "node tests/visual_test.mjs",
     "test:engine": "tsc -p tests/tsconfig.smoke.json && node -e \"require('fs').writeFileSync('tests/.smoke-out/package.json', JSON.stringify({type:'commonjs'}))\" && node tests/.smoke-out/tests/engine-smoke.cjs",
     "test:runner": "node tests/runner_test.mjs",
-    "pretest:e2e": "echo 'Make sure dev server is running: npm run dev'"
+    "pretest:e2e": "echo 'Make sure dev server is running: npm run dev'",
+    "test:e2e:pw": "playwright test"
   },
   "devDependencies": {
     "@babel/core": "^8.0.6",
     "@babel/generator": "^8.0.6",
     "@babel/traverse": "^8.0.6",
     "@babel/types": "^8.0.6",
+    "@playwright/test": "^1.63.0",
     "@types/react": "^19.2.18",
     "@types/react-dom": "^19.2.4",
     "@vitejs/plugin-react": "^6.0.1",

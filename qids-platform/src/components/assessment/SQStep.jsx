@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 
 import React, { useState } from 'react';
 import { PILLARS, SQ_QUESTIONS } from '../../data/qidsData';
+import { useBankText } from '../../data/banks';
 import { generateSQQuestions } from '../../services/groqService';
 import AIQuestionGenerator from '../AIQuestionGenerator';
 import { SectionHeader, RubricScorer } from './shared';
@@ -15,6 +16,7 @@ export default function SQStep({
   const {
     t
   } = useTranslation();
+  const tq = useBankText();
   const pillar = PILLARS.SQ;
   const [activeComponent, setActiveComponent] = useState('ACE');
   const [selectedPBAs, setSelectedPBAs] = useState(scores.selectedPBAs || []);
@@ -82,7 +84,7 @@ export default function SQStep({
             backgroundColor: pillar.color + '08'
           }}>
                   <div>
-                    <div className="text-label-md font-label-md text-on-surface">{ex.label}</div>
+                    <div className="text-label-md font-label-md text-on-surface">{tq(ex.label)}</div>
                     <div className="text-technical-sm font-technical-sm text-surface-variant mt-0.5">Sub-parameter: {ex.subParam} | Max: {ex.marks} marks</div>
                   </div>
                   <div className="text-[20px] font-label-md" style={{
@@ -90,7 +92,7 @@ export default function SQStep({
             }}>{total}/{ex.marks}</div>
                 </div>
                 <div className="p-4">
-                  <div className="text-technical-sm font-technical-sm text-on-surface-variant leading-relaxed mb-4">{ex.desc}</div>
+                  <div className="text-technical-sm font-technical-sm text-on-surface-variant leading-relaxed mb-4">{tq(ex.desc)}</div>
                   <div className="text-technical-sm font-technical-sm text-surface-variant uppercase tracking-widest mb-3">{t("SQStep.assessor_rubric")}</div>
                   {ex.rubric.map(r => <RubricScorer key={r.criterion} criterion={r.criterion} marks={r.marks} desc={r.desc} value={exScores[r.criterion] ?? undefined} onChange={v => onChange('ACE', ex.id, r.criterion, v)} color={pillar.color} />)}
                 </div>
@@ -159,8 +161,8 @@ export default function SQStep({
             return <button key={act.id} onClick={() => !isDisabled && togglePBA(act.id)} className={`px-3 py-2.5 text-left border-[0.5px] transition-all cursor-pointer ${isDisabled ? 'opacity-40 cursor-not-allowed' : ''} ${isSelected ? 'border-(--phase-int) bg-(--phase-int)/10' : 'border-outline-variant bg-surface-container-low hover:border-(--phase-int)'}`}>
                     <div className="text-technical-sm font-technical-sm" style={{
                 color: isSelected ? pillar.color : undefined
-              }}>{act.id}: {act.label}</div>
-                    <div className="text-[10px] text-surface-variant mt-0.5">{act.time} | {act.bestFor}</div>
+              }}>{act.id}: {tq(act.label)}</div>
+                    <div className="text-[10px] text-surface-variant mt-0.5">{act.time} | {tq(act.bestFor)}</div>
                   </button>;
           })}
             </div>

@@ -32,17 +32,10 @@ jobs:
       - name: Engine smoke tests
         run: npm run test:engine
 
-      # E2E needs Firebase/Groq env vars; run when present, skip PRs without them.
-      - name: E2E smoke (optional)
-        if: env.VITE_FIREBASE_API_KEY != ''
-        env:
-          VITE_FIREBASE_API_KEY: ${{ secrets.VITE_FIREBASE_API_KEY }}
-          VITE_FIREBASE_AUTH_DOMAIN: ${{ secrets.VITE_FIREBASE_AUTH_DOMAIN }}
-          VITE_FIREBASE_PROJECT_ID: ${{ secrets.VITE_FIREBASE_PROJECT_ID }}
-          VITE_FIREBASE_STORAGE_BUCKET: ${{ secrets.VITE_FIREBASE_STORAGE_BUCKET }}
-          VITE_FIREBASE_MESSAGING_SENDER_ID: ${{ secrets.VITE_FIREBASE_MESSAGING_SENDER_ID }}
-          VITE_FIREBASE_APP_ID: ${{ secrets.VITE_FIREBASE_APP_ID }}
-        run: |
-          npm run dev -- --port 5173 --strictPort &
-          npx wait-on http://localhost:5173 --timeout 30000
-          npm run test:e2e:run || echo "::warning::E2E failed — non-blocking"
+      # Playwright e2e smoke — public surfaces only (landing, auth, guards,
+      # language switching). No project credentials needed, runs on every push.
+      - name: Install Playwright browser
+        run: npx playwright install --with-deps chromium
+
+      - name: E2E smoke tests
+        run: npx playwright test

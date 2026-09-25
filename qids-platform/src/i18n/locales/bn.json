@@ -56,7 +56,8 @@
     "close_menu": "মেনু বন্ধ করুন",
     "more_menu": "আরও মেনু",
     "nav_sections": "অংশ",
-    "menu": "নেভিগেশন মেনু"
+    "menu": "নেভিগেশন মেনু",
+    "notifications": "বিজ্ঞপ্তি"
   },
   "topbar": {
     "mode": "মোড"
@@ -256,5 +257,13 @@
   },
   "interviewReport": {
     "session_transcript": "সেশন ট্রান্সক্রিপ্ট"
+  },
+  "notifications": {
+    "mark_all_read": "সব পড়া হিসেবে চিহ্নিত করুন",
+    "nothing_yet": "আপনি সব দেখেছেন"
+  },
+  "AdminPanel": {
+    "recent_errors": "সাম্প্রতিক ত্রুটি",
+    "no_errors_reported": "কোনো ত্রুটি নেই — সিস্টেম সুস্থ"
   }
 }

@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { joinClass } from '../../services/schoolService';
+import { notifyStudentJoined } from '../../services/notificationService';
 import { useToast } from '../../components/Toast';
 import { BookOpen, Users, ArrowRight } from 'lucide-react';
 export default function StudentJoin() {
@@ -25,6 +26,16 @@ export default function StudentJoin() {
     try {
       const classId = await joinClass(user.uid, userProfile?.name || user.displayName || 'Student', code.trim().toUpperCase());
       toast('Joined class successfully!', 'success');
+      // Tell the teacher (fire-and-forget; needs the class name + teacher uid)
+      import('../../services/schoolService').then(({ getClass }) => getClass(classId)).then(cls => {
+        if (cls?.teacherUid) {
+          notifyStudentJoined({
+            teacherUid: cls.teacherUid,
+            studentName: userProfile?.name || user.displayName || 'A student',
+            className: cls.name || 'your class',
+          });
+        }
+      }).catch(() => {});
       navigate(`/app/school/class/${classId}`);
     } catch (e) {
       toast(e.message || 'Invalid class code', 'error');

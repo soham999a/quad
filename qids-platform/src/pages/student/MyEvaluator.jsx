@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { listPublicEvaluators, getStudentEvaluator, assignEvaluator, removeAssignment, getUserAssessments, getAllEvaluations } from '../../services/firestoreService';
+import { notifyEvaluatorAssigned } from '../../services/notificationService';
 import { Check } from 'lucide-react';
 import { useToast } from '../../components/Toast';
 import { PILLARS } from '../../data/qidsData';
@@ -15,7 +16,8 @@ export default function MyEvaluator() {
   } = useTranslation();
   usePageTitle('My evaluator');
   const {
-    user
+    user,
+    userProfile
   } = useAuth();
   const toast = useToast();
   const navigate = useNavigate();
@@ -65,6 +67,10 @@ export default function MyEvaluator() {
     setAssigning(true);
     try {
       await assignEvaluator(evaluatorUid, user.uid);
+      notifyEvaluatorAssigned({
+        evaluatorUid,
+        studentName: userProfile?.name || user.displayName || 'A student',
+      });
       const ev = evaluators.find(e => e.uid === evaluatorUid);
       setCurrentEvaluator(ev || null);
       toast(`Assigned to ${ev?.name || 'evaluator'}`, 'success');

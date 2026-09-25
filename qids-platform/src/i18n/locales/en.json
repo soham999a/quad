@@ -56,7 +56,8 @@
     "close_menu": "Close menu",
     "more_menu": "More menu",
     "nav_sections": "Sections",
-    "menu": "Navigation menu"
+    "menu": "Navigation menu",
+    "notifications": "Notifications"
   },
   "topbar": {
     "mode": "MODE"
@@ -256,5 +257,13 @@
   },
   "interviewReport": {
     "session_transcript": "SESSION TRANSCRIPT"
+  },
+  "notifications": {
+    "mark_all_read": "Mark all read",
+    "nothing_yet": "You're all caught up"
+  },
+  "AdminPanel": {
+    "recent_errors": "RECENT ERRORS",
+    "no_errors_reported": "No errors reported — system healthy"
   }
 }

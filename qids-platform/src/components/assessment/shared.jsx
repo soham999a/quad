@@ -1,7 +1,10 @@
 import { useTranslation } from 'react-i18next';
+import { useBankText } from '../../data/banks';
 // ─── Assessment shared UI atoms ───────────────────────────────────────────────
 // Extracted from Assessment.jsx (P2 decomposition). Pure presentational atoms
 // used across the intake/IQ/EQ/SQ/AQ steps. All styling tokens stay inline.
+// Bank strings (questions/options/criteria) render through tq() — the
+// question-bank dictionary for the active language, English fallback.
 
 export function SectionHeader({
   title,
@@ -24,9 +27,10 @@ export function MCQQuestion({
   onSelect,
   color
 }) {
+  const tq = useBankText();
   return <div className="mb-4 p-3 md:p-4 bg-surface-container-low border-[0.5px] border-outline-variant">
       <div className="text-technical-sm font-technical-sm text-on-surface mb-3 leading-relaxed">
-        <span className="text-surface-variant mr-2">Q{index + 1}.</span>{q.q}
+        <span className="text-surface-variant mr-2">Q{index + 1}.</span>{tq(q.q)}
       </div>
       <div className="flex flex-col gap-2">
         {q.options.map((opt, i) => {
@@ -35,7 +39,7 @@ export function MCQQuestion({
               <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${isSelected ? 'border-primary bg-primary' : 'border-outline-variant'}`}>
                 {isSelected && <div className="w-2 h-2 rounded-full bg-on-primary"></div>}
               </div>
-              <span className="font-medium">{String.fromCharCode(65 + i)}.</span> {opt}
+              <span className="font-medium">{String.fromCharCode(65 + i)}.</span> {tq(opt)}
             </button>;
       })}
       </div>
@@ -50,9 +54,10 @@ export function OpenQuestion({
   const {
     t
   } = useTranslation();
+  const tq = useBankText();
   return <div className="mb-4 p-4 bg-surface-container-low border-[0.5px] border-outline-variant">
       <div className="text-technical-sm font-technical-sm text-on-surface mb-3 leading-relaxed">
-        <span className="text-surface-variant mr-2">Q{index + 1}.</span>{q.q}
+        <span className="text-surface-variant mr-2">Q{index + 1}.</span>{tq(q.q)}
       </div>
       <textarea value={value || ''} onChange={e => onChange(e.target.value)} placeholder={t("shared.write_your_answer_here")} rows={3} className="w-full p-3 bg-background border-[0.5px] border-outline-variant text-on-surface text-technical-sm font-technical-sm outline-none focus:border-primary resize-y" />
     </div>;
@@ -64,15 +69,16 @@ export function LikertQuestion({
   onChange,
   color
 }) {
+  const tq = useBankText();
   const labels = ['Never', 'Rarely', 'Sometimes', 'Often', 'Always'];
   return <div className="mb-4 p-3 md:p-4 bg-surface-container-low border-[0.5px] border-outline-variant">
       <div className="text-technical-sm font-technical-sm text-on-surface mb-4 leading-relaxed">
-        <span className="text-surface-variant mr-2">{index + 1}.</span>{q}
+        <span className="text-surface-variant mr-2">{index + 1}.</span>{tq(q)}
       </div>
       <div className="flex gap-1.5 md:gap-2 items-stretch">
         {[1, 2, 3, 4, 5].map(n => <button key={n} onClick={() => onChange(n)} className={`flex-1 px-1 md:px-2 py-3 md:py-4 cursor-pointer transition-all border-[0.5px] flex flex-col items-center gap-1 touch-target ${value === n ? 'border-primary bg-primary/15 text-primary' : 'border-outline-variant bg-transparent text-surface-variant hover:border-primary hover:text-primary'}`}>
             <span className="text-sm md:text-base font-bold">{n}</span>
-            <span className="text-[8px] md:text-[9px] font-normal text-center leading-tight">{labels[n - 1]}</span>
+            <span className="text-[8px] md:text-[9px] font-normal text-center leading-tight">{tq(labels[n - 1])}</span>
           </button>)}
       </div>
     </div>;
@@ -86,11 +92,12 @@ export function RubricScorer({
   color
 }) {
   const { t } = useTranslation();
+  const tq = useBankText();
   return <div className="mb-3 p-4 bg-surface-container-low border-[0.5px] border-outline-variant">
       <div className="flex justify-between items-start mb-3">
         <div className="flex-1">
-          <div className="text-technical-sm font-technical-sm text-on-surface">{criterion}</div>
-          <div className="text-[11px] text-surface-variant leading-relaxed mt-1">{desc}</div>
+          <div className="text-technical-sm font-technical-sm text-on-surface">{tq(criterion)}</div>
+          <div className="text-[11px] text-surface-variant leading-relaxed mt-1">{tq(desc)}</div>
         </div>
         <div className="text-[11px] text-surface-variant flex-shrink-0 ml-3">{t("inter.max_n", { n: marks })}</div>
       </div>

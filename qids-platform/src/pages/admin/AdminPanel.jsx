@@ -2,9 +2,9 @@ import { useTranslation } from 'react-i18next';
 import usePageTitle from '../../lib/usePageTitle';
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
-import { getAllUsers, assignEvaluator, removeAssignment, getEvaluatorAssignments, updateUserRole, upsertPublicEvaluator, removePublicEvaluator, getFunnelSummary } from '../../services/firestoreService';
+import { getAllUsers, assignEvaluator, removeAssignment, getEvaluatorAssignments, updateUserRole, upsertPublicEvaluator, removePublicEvaluator, getFunnelSummary, getRecentErrorReports } from '../../services/firestoreService';
 import { useToast } from '../../components/Toast';
-import { Shield, UserCheck, UserX, Users, Search, RefreshCw, ChevronDown, ChevronUp, TrendingUp } from 'lucide-react';
+import { Shield, UserCheck, UserX, Users, Search, RefreshCw, ChevronDown, ChevronUp, TrendingUp, AlertTriangle } from 'lucide-react';
 import EmptyState from '../../components/EmptyState';
 export default function AdminPanel() {
   const {
@@ -22,6 +22,7 @@ export default function AdminPanel() {
   const [search, setSearch] = useState('');
   const [expandedStudent, setExpandedStudent] = useState(null);
   const [funnel, setFunnel] = useState(null);
+  const [errors, setErrors] = useState([]);
   const role = userProfile?.role || 'individual';
   if (role !== 'admin') {
     return <div className="flex items-center justify-center min-h-[60vh] flex-col gap-3">
@@ -32,12 +33,6 @@ export default function AdminPanel() {
   }
   useEffect(() => {
     loadData();
-  }, []);
-  useEffect(() => {
-    getFunnelSummary(30).then(setFunnel).catch(() => setFunnel({
-      counts: {},
-      total: 0
-    }));
   }, []);
   const loadData = async () => {
     setLoading(true);
@@ -52,6 +47,8 @@ export default function AdminPanel() {
       });
     }
     setAssignments(assignMap);
+    getFunnelSummary(30).then(setFunnel).catch(() => {});
+    getRecentErrorReports(20).then(setErrors).catch(() => {});
     setLoading(false);
   };
   const students = allUsers.filter(u => u.role === 'student' || u.role === 'individual');
@@ -200,6 +197,32 @@ export default function AdminPanel() {
               {(funnel?.total ?? 0) === 0 && <div className="text-technical-sm font-technical-sm text-surface-variant pt-2">{t("AdminPanel.no_events_yet_funnel")}</div>}
             </div>;
       })()}
+      </section>
+
+      {/* Recent error reports (ops) — what broke in the wild, newest first. */}
+      <section className="border-y-[0.5px] border-outline-variant mb-10 md:mb-16">
+        <div className="flex items-center justify-between py-4">
+          <div className="flex items-center gap-2">
+            <AlertTriangle size={13} className="text-[var(--status-warn)]" />
+            <span className="text-technical-sm font-technical-sm text-surface-variant uppercase tracking-widest">{t("AdminPanel.recent_errors")}</span>
+          </div>
+          <span className="text-technical-sm font-technical-sm text-surface-variant">{errors.length ? `${errors.length}` : ''}</span>
+        </div>
+        <div className="gradient-rule mb-4" />
+        {errors.length === 0 ? <div className="text-technical-sm font-technical-sm text-surface-variant pb-6">{t("AdminPanel.no_errors_reported")}</div> : <div className="flex flex-col">
+            {errors.map(err => <div key={err.id} className="py-3 border-b-[0.5px] border-outline-variant last:border-b-0">
+                <div className="flex items-center gap-3 flex-wrap">
+                  <span className="chip text-[10px] uppercase" style={{ background: 'color-mix(in srgb, var(--status-warn) 12%, transparent)', color: 'var(--status-warn)' }}>{err.category || 'runtime'}</span>
+                  <span className="text-label-sm font-label-sm text-on-background truncate max-w-[420px]" title={err.message}>{err.message}</span>
+                  <span className="text-[10px] font-mono text-surface-variant ml-auto flex-shrink-0">
+                    {err.tsMs ? new Date(err.tsMs).toLocaleString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : ''}
+                  </span>
+                </div>
+                <div className="text-[10px] font-mono text-surface-variant mt-1">
+                  {err.page || '/'}{err.uid ? ` · uid: ${err.uid.slice(0, 8)}…` : ''}
+                </div>
+              </div>)}
+          </div>}
       </section>
 
       {/* Search */}
