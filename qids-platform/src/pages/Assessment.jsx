@@ -379,7 +379,11 @@ function EQStep({
   const {
     t
   } = useTranslation();
+  const pillar = PILLARS.EQ;
+  const [activeTab, setActiveTab] = useState('partA');
+  const [activeComponent, setActiveComponent] = useState('SA');
   // Keyboard-first answering for the Likert lists (1–5, auto-advance).
+  // Declared after activeComponent — the callbacks below read it.
   const kbCursor = useKeyboardAnswering({
     count: 5,
     mode: 'rating',
@@ -387,9 +391,6 @@ function EQStep({
     onAnswer: (i, rating) => onChange('partA', activeComponent, i, rating),
     deps: [activeComponent]
   });
-  const pillar = PILLARS.EQ;
-  const [activeTab, setActiveTab] = useState('partA');
-  const [activeComponent, setActiveComponent] = useState('SA');
   const age = ageGroup || '11-18';
   const components = ['SA', 'ER', 'SM', 'E', 'IS'];
   const compData = EQ_QUESTIONS.partA;
