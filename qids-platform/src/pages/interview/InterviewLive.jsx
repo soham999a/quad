@@ -46,9 +46,12 @@ export default function InterviewLive() {
     const interval = setInterval(() => setElapsed(e => e + 1), 1000);
     return () => clearInterval(interval);
   }, [session?.status, paused]);
-  const currentQuestion = LIVE_QUESTIONS[questionIdx];
+  // Question bank: session-specific AI questions when present, else the
+  // standard bank. Rubric map still drives dimension labels/descriptors.
+  const questionBank = (session?.liveQuestions?.length >= 4 ? session.liveQuestions : LIVE_QUESTIONS);
+  const currentQuestion = questionBank[questionIdx];
   const currentDim = currentQuestion ? RUBRIC_MAP[currentQuestion.dimension] : null;
-  const totalQuestions = LIVE_QUESTIONS.length;
+  const totalQuestions = questionBank.length;
   const answeredCount = Object.keys(scores).length;
   const isComplete = answeredCount === totalQuestions && Object.values(scores).every(s => s > 0);
   const formatTime = sec => {
@@ -74,9 +77,11 @@ export default function InterviewLive() {
     try {
       await updateInterviewSession(session.id, {
         liveQuestionIndex: questionIdx,
-        liveResponses: LIVE_QUESTIONS.map(q => ({
+        liveResponses: questionBank.map(q => ({
           questionId: q.id,
-          response: '',
+          questionText: q.text,
+          dimension: q.dimension,
+          response: notes[q.id] || '',
           score: scores[q.id] || null
         }))
       });
@@ -100,7 +105,7 @@ export default function InterviewLive() {
       const evaluatorAssessment = Object.entries(dimScores).map(([dimId, dimScoreList]) => ({
         dimensionId: dimId,
         score: Math.round(dimScoreList.reduce((a, b) => a + b, 0) / dimScoreList.length),
-        notes: ''
+        notes: Object.entries(notes).filter(([qId]) => questionBank.some(q => q.id === qId && q.dimension === dimId)).map(([, txt]) => txt).filter(Boolean).join(' · ')
       }));
       const result = computeInterviewResult({
         selfAssessment: undefined,
@@ -110,9 +115,11 @@ export default function InterviewLive() {
       await updateInterviewSession(session.id, {
         evaluatorAssessment,
         liveQuestionIndex: questionIdx,
-        liveResponses: LIVE_QUESTIONS.map(q => ({
+        liveResponses: questionBank.map(q => ({
           questionId: q.id,
-          response: '',
+          questionText: q.text,
+          dimension: q.dimension,
+          response: notes[q.id] || '',
           score: scores[q.id] || null
         })),
         mergedScores: result.mergedScores,

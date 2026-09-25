@@ -124,3 +124,26 @@ export async function getClassAssessments(classId) {
 export async function updateSchoolAssessment(assessmentId, updates) {
   await updateDoc(doc(db, ASSESSMENTS, assessmentId), { ...updates, updatedAt: serverTimestamp() });
 }
+
+// ─── Student attempts (append-only) ───────────────────────────────────────────
+// When a student completes an assessment that was assigned to their class, we
+// record the attempt in its own collection so teachers can see who finished
+// what — without giving students write access to the assessment documents.
+
+export async function recordSchoolAttempt({ schoolAssessmentId, classId, teacherUid, studentUid, studentName, assessmentId }) {
+  await addDoc(collection(db, 'schoolAttempts'), {
+    schoolAssessmentId,
+    classId,
+    teacherUid,
+    studentUid,
+    studentName,
+    assessmentId,
+    completedAt: new Date().toISOString(),
+  });
+}
+
+export async function getClassAttempts(classId) {
+  const q = query(collection(db, 'schoolAttempts'), where('classId', '==', classId));
+  const snap = await getDocs(q);
+  return sortByTimestamp(snap.docs.map(d => ({ id: d.id, ...d.data() })), 'completedAt');
+}

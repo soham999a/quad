@@ -226,5 +226,35 @@
     "students_n": "Students ({{n}})",
     "part_n": "PART {{n}}",
     "qids_x": "QIDS · {{x}}"
+  },
+  "myClass": {
+    "my_class": "MY CLASS",
+    "no_class_yet": "You're not in a class yet",
+    "no_class_yet_desc": "Ask your teacher for a join code, then join your class to see your assigned assessments and results here.",
+    "join_class": "Join a class",
+    "assigned_assessments": "ASSIGNED ASSESSMENTS",
+    "pending_count": "{{pending}} pending · {{done}} done",
+    "no_assignments": "Nothing assigned yet",
+    "no_assignments_desc": "When your teacher assigns an assessment, it will appear here with a one-tap start.",
+    "your_score": "Your score",
+    "view_results": "View results",
+    "start": "Start",
+    "could_not_load_classes": "Couldn't load your classes",
+    "could_not_load_assignments": "Couldn't load assignments"
+  },
+  "classManager": {
+    "assigned_assessments": "ASSIGNED ASSESSMENTS",
+    "no_assignments_yet": "No assessments assigned yet",
+    "no_assignments_yet_desc": "Create one below — students see it instantly on their My Class page.",
+    "completed_count": "{{done}} of {{total}} students completed",
+    "share": "Share"
+  },
+  "individualResults": {
+    "since_last_assessment": "vs last assessment",
+    "attempt_history": "ATTEMPT HISTORY",
+    "retake_assessment": "Retake assessment"
+  },
+  "interviewReport": {
+    "session_transcript": "SESSION TRANSCRIPT"
   }
 }

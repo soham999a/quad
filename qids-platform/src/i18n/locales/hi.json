@@ -226,5 +226,35 @@
     "students_n": "छात्र ({{n}})",
     "part_n": "भाग {{n}}",
     "qids_x": "QIDS · {{x}}"
+  },
+  "myClass": {
+    "my_class": "मेरी कक्षा",
+    "no_class_yet": "आप अभी किसी कक्षा में नहीं हैं",
+    "no_class_yet_desc": "अपने शिक्षक से जॉइन कोड लें, फिर अपनी कक्षा से जुड़ें — यहाँ आपके असाइन किए गए असेसमेंट और परिणाम दिखेंगे।",
+    "join_class": "कक्षा में शामिल हों",
+    "assigned_assessments": "असाइन किए गए असेसमेंट",
+    "pending_count": "{{pending}} बाकी · {{done}} पूरे",
+    "no_assignments": "अभी कुछ असाइन नहीं हुआ है",
+    "no_assignments_desc": "जब आपका शिक्षक कोई असेसमेंट देगा, तो वह यहाँ एक टैप में शुरू करने के लिए दिखेगा।",
+    "your_score": "आपका स्कोर",
+    "view_results": "परिणाम देखें",
+    "start": "शुरू करें",
+    "could_not_load_classes": "कक्षाएँ लोड नहीं हो सकीं",
+    "could_not_load_assignments": "असाइनमेंट लोड नहीं हो सके"
+  },
+  "classManager": {
+    "assigned_assessments": "असाइन किए गए असेसमेंट",
+    "no_assignments_yet": "अभी कोई असेसमेंट असाइन नहीं हुआ",
+    "no_assignments_yet_desc": "नीचे से एक बनाएँ — छात्रों को उनके मेरी कक्षा पेज पर तुरंत दिखेगा।",
+    "completed_count": "{{total}} में से {{done}} छात्रों ने पूरा किया",
+    "share": "साझा करें"
+  },
+  "individualResults": {
+    "since_last_assessment": "पिछले असेसमेंट से",
+    "attempt_history": "प्रयास इतिहास",
+    "retake_assessment": "दोबारा असेसमेंट दें"
+  },
+  "interviewReport": {
+    "session_transcript": "सेशन ट्रांसक्रिप्ट"
   }
 }

@@ -5,7 +5,7 @@ import {
   ChevronRight, Menu, LogOut, Home, BookOpen, X, Shield, Users, Sparkles, Building2, Target, Lock,
   PanelLeftClose, PanelLeftOpen,
   Settings as SettingsIcon,
-  Search, Sun, Moon, LayoutGrid, History,
+  Search, Sun, Moon, LayoutGrid, History, GraduationCap,
 } from 'lucide-react';
 import { PILLARS, mergeEvaluationScores } from './data/qidsData';
 import QidsMark from './components/QidsMark';
@@ -49,6 +49,7 @@ const AdminPanel = lazy(() => import('./pages/admin/AdminPanel'));
 const EvaluatorDashboard = lazy(() => import('./pages/evaluator/EvaluatorDashboard'));
 const EvaluatorScoring = lazy(() => import('./pages/evaluator/EvaluatorScoring'));
 const MyEvaluator = lazy(() => import('./pages/student/MyEvaluator'));
+const MyClass = lazy(() => import('./pages/student/MyClass'));
 const Questionnaires = lazy(() => import('./pages/Questionnaires'));
 const InterventionPlan = lazy(() => import('./pages/InterventionPlan'));
 const EnterpriseRunner = lazy(() => import('./pages/enterprise/EnterpriseRunner'));
@@ -185,6 +186,7 @@ const PERSONA_NAV = {
     {
       label: 'SCHOOL',
       items: [
+        { path: '/app/my-class', label: 'My Class', icon: GraduationCap },
         { path: '/app/school/join', label: 'Join Class', icon: BookOpen },
       ],
     },
@@ -808,6 +810,7 @@ function AppShell() {
               } />
 
               <Route path="my-evaluator" element={<PageSuspense><MyEvaluator /></PageSuspense>} />
+              <Route path="my-class" element={<PageSuspense><MyClass /></PageSuspense>} />
               <Route path="questionnaires" element={<PageSuspense><Questionnaires /></PageSuspense>} />
 
               {/* Pro entitlement: intervention plans. */}

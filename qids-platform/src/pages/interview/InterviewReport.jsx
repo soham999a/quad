@@ -3,7 +3,7 @@ import usePageTitle from '../../lib/usePageTitle';
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { getInterviewSession } from '../../services/interviewService';
-import { RUBRIC_DIMENSIONS } from '../../core/data/interviewRubrics';
+import { RUBRIC_DIMENSIONS, RUBRIC_MAP } from '../../core/data/interviewRubrics';
 import { PILLARS } from '../../data/qidsData';
 import { Brain, Download, ChevronRight, AlertCircle, BarChart3, Target, Users } from 'lucide-react';
 const SHAPES = {
@@ -157,6 +157,10 @@ export default function InterviewReport() {
                 <div className="text-technical-sm font-technical-sm text-surface-variant mt-2">
                   Maps to {PILLARS.find(p => p.id === d.pillar)?.short || d.pillar}
                 </div>
+                {evaluatorAssessment?.find(e => e.dimensionId === d.id)?.notes &&
+                  <div className="mt-3 pt-3 border-t-[0.5px] border-outline-variant text-body-sm font-body-sm text-on-surface-variant italic">
+                    “{evaluatorAssessment.find(e => e.dimensionId === d.id).notes}”
+                  </div>}
               </div>;
         })}
         </div>
@@ -245,6 +249,29 @@ export default function InterviewReport() {
                   {role}
                 </span>)}
             </div>
+          </div>
+        </section>}
+
+      {/* Session transcript — per-question responses and interviewer notes */}
+      {Array.isArray(session?.liveResponses) && session.liveResponses.length > 0 &&
+        session.liveResponses.some(r => (r.response && r.response.trim()) || r.score != null) &&
+        <section className="mb-8">
+          <div className="kicker mb-4">{t("InterviewReport.session_transcript")}</div>
+          <div className="gradient-rule mb-6" />
+          <div className="space-y-4">
+            {session.liveResponses.map((r, i) => {
+              const dimLabel = RUBRIC_MAP?.[r.dimension]?.label || r.dimension || '';
+              const hasContent = (r.response && r.response.trim()) || r.score != null;
+              if (!hasContent) return null;
+              return <div key={r.questionId || i} className="card p-5">
+                <div className="flex items-center justify-between mb-2">
+                  <div className="text-technical-sm font-technical-sm text-surface-variant">Q{String(i + 1).padStart(2, '0')}{dimLabel ? ` · ${dimLabel}` : ''}</div>
+                  {r.score != null && <span className="text-technical-sm font-technical-sm text-primary">{r.score}/5</span>}
+                </div>
+                {r.questionText && <div className="text-label-sm font-label-sm text-on-background mb-2">{r.questionText}</div>}
+                {r.response && r.response.trim() && <div className="text-body-sm font-body-sm text-on-surface-variant italic">“{r.response}”</div>}
+              </div>;
+            })}
           </div>
         </section>}
 

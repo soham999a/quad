@@ -5,7 +5,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { RadarChart as ReRadar, Radar, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer, Tooltip } from 'recharts';
 import { Sparkles, ArrowLeft, TrendingUp, TrendingDown, Target, Brain, Award, FileText, Download, CheckCircle2, AlertTriangle } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
-import { getAssessment } from '../../services/firestoreService';
+import { getAssessment, getUserAssessments } from '../../services/firestoreService';
 import { computeQidsPillarScores, getGrade, computeWeightedScore, getSkillShape, getCareerProfile } from '../../core/engine/qids';
 const PILLAR_META = {
   IQ: {
@@ -199,6 +199,7 @@ export default function IndividualResults() {
     user
   } = useAuth();
   const [assessment, setAssessment] = useState(null);
+  const [allAttempts, setAllAttempts] = useState([]);
   const [loading, setLoading] = useState(true);
   useEffect(() => {
     if (!id) {
@@ -206,7 +207,12 @@ export default function IndividualResults() {
       return;
     }
     getAssessment(id).then(setAssessment).catch(() => {}).finally(() => setLoading(false));
-  }, [id]);
+    if (user) {
+      getUserAssessments(user.uid).then(list => {
+        setAllAttempts((list || []).filter(a => a.phase !== 'post').sort((a, b) => new Date(a.timestamp || a.createdAt?.toDate?.() || 0) - new Date(b.timestamp || b.createdAt?.toDate?.() || 0)));
+      }).catch(() => {});
+    }
+  }, [id, user]);
   if (loading) {
     return <div className="page-pad max-w-[1100px] mx-auto animate-fade pb-24 md:pb-16">
         <div className="space-y-6">
@@ -229,6 +235,12 @@ export default function IndividualResults() {
   const skillShape = getSkillShape(pillarScores);
   const careerProfile = getCareerProfile(pillarScores);
   const shape = SKILL_SHAPE_DESC[skillShape];
+  // Growth trajectory: where this attempt sits in the user's history.
+  const attemptIdx = allAttempts.findIndex(a => a.id === id);
+  const prevAttempt = attemptIdx > 0 ? allAttempts[attemptIdx - 1] : null;
+  const prevUnified = prevAttempt ? (prevAttempt.unifiedScore ?? prevAttempt.result?.unifiedScore ?? null) : null;
+  const unifiedNum = Number(unified) || 0;
+  const delta = prevUnified != null ? Math.round(unifiedNum - Number(prevUnified)) : null;
   const sorted = Object.entries(pillarScores).sort((a, b) => b[1] - a[1]);
   const strengths = sorted.slice(0, 2);
   const development = sorted.slice(-2).reverse();
@@ -241,8 +253,32 @@ export default function IndividualResults() {
         <p className="text-body-md text-surface-variant max-w-2xl mt-3 leading-relaxed">
           {assessment.intake?.name ? `${assessment.intake.name}'s` : 'Your'} personalized assessment results across four dimensions of intelligence.
         </p>
+        {delta != null && <div className={`inline-flex items-center gap-2 mt-4 px-4 py-2 border-[0.5px] ${delta >= 0 ? 'border-success/40 bg-success/10 text-success' : 'border-err/40 bg-err/10 text-err'}`}>
+            {delta >= 0 ? <TrendingUp size={14} /> : <TrendingDown size={14} />}
+            <span className="text-label-sm font-label-sm tracking-wide">
+              {delta >= 0 ? '+' : ''}{delta} {t("IndividualResults.since_last_assessment")}
+            </span>
+          </div>}
         <div className="gradient-rule mt-6" />
       </section>
+
+      {/* Attempt timeline — every baseline take, this one highlighted */}
+      {allAttempts.length > 1 && <section className="mb-8 fade-up" style={{ animationDelay: '30ms' }}>
+          <div className="kicker mb-3">{t("IndividualResults.attempt_history")}</div>
+          <div className="gradient-rule mb-4" />
+          <div className="flex flex-wrap gap-2">
+            {allAttempts.map((a, i) => {
+              const s = a.unifiedScore ?? a.result?.unifiedScore;
+              const isActive = a.id === id;
+              const d = new Date(a.timestamp || a.createdAt?.toDate?.() || 0);
+              return <button key={a.id} onClick={() => !isActive && navigate(`/app/individual/results/${a.id}`)} disabled={isActive}
+                className={`px-4 py-2.5 border-[0.5px] text-left transition-all cursor-pointer ${isActive ? 'border-primary/60 bg-primary/10' : 'border-outline-variant hover:border-primary/30 bg-surface-container-low'}`}>
+                <div className="text-technical-sm font-technical-sm text-surface-variant">#{String(i + 1).padStart(2, '0')} · {isNaN(d.getTime()) ? '—' : d.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}</div>
+                <div className={`text-label-md font-label-md ${isActive ? 'text-primary' : 'text-on-surface'}`}>{s != null ? Math.round(Number(s)) : '—'}</div>
+              </button>;
+            })}
+          </div>
+        </section>}
 
       {/* Score Hero */}
       <section className="card p-8 md:p-10 mb-8 fade-up" style={{
@@ -336,10 +372,10 @@ export default function IndividualResults() {
       {/* Actions */}
       <section className="fade-up flex flex-col md:flex-row gap-4" style={{
       animationDelay: '360ms'
-    }}>
-        <button onClick={() => navigate(`/app/individual/credential/${id}`)} className="btn-primary glow flex-1">
-          <Download size={14} />{t("IndividualResults.download_credential")}</button>
-        <button onClick={() => navigate('/app/individual')} className="btn-outline flex-1">{t("IndividualResults.new_assessment")}</button>
+    }}>        <button onClick={() => navigate(`/app/individual/credential/${id}`)} className="btn-primary glow flex-1">
+          <Download size={14} />{t("IndividualResults.download_credential")}
+        </button>
+        <button onClick={() => navigate('/app/individual')} className="btn-outline flex-1">{t("IndividualResults.retake_assessment")}</button>
       </section>
     </div>;
 }

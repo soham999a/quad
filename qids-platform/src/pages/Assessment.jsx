@@ -11,6 +11,7 @@ import { useApp } from '../context/AppContext';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { saveAssessment, getStudentEvaluator, listPublicEvaluators, assignEvaluator, removeAssignment } from '../services/firestoreService';
+import { recordSchoolAttempt } from '../services/schoolService';
 import { logEvent } from '../lib/analytics';
 import { Save, ChevronRight, ChevronLeft, Check, CheckCircle, AlertCircle, ClipboardList, Brain, Heart, Users, Shield, ArrowRight } from 'lucide-react';
 import { useToast } from '../components/Toast';
@@ -948,12 +949,28 @@ export default function Assessment() {
     context
   } = useApp();
   const {
-    user
+    user,
+    userProfile
   } = useAuth();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  // Class-assignment context handed off via localStorage by /app/my-class:
+  // { teacherUid, classId, title } for the teacher-readable attempt record.
+  const assignmentCtx = (() => {
+    try {
+      const raw = window.localStorage.getItem('qids-school-assignment');
+      if (!raw) return null;
+      const ctx = JSON.parse(raw);
+      return ctx?.classId === classIdParam ? ctx : null;
+    } catch { return null; }
+  })();
   const toast = useToast();
   const mode = searchParams.get('mode') || 'qids';
+  // School-mode assignment context: when a student starts a teacher-assigned
+  // assessment, these identify the class + the specific assignment. Stamped
+  // onto the saved assessment doc and mirrored into the schoolAttempts log.
+  const classIdParam = searchParams.get('classId') || '';
+  const schoolAssessmentIdParam = searchParams.get('assignmentId') || '';
   const [step, setStep] = useState(0);
   const [intake, setIntake] = useState({
     name: '',
@@ -1346,6 +1363,10 @@ export default function Assessment() {
       _eqPartA: eqPartA,
       _aqPartA: aqPartA
     };
+    if (classIdParam && schoolAssessmentIdParam) {
+      data.classId = classIdParam;
+      data.schoolAssessmentId = schoolAssessmentIdParam;
+    }
     setAssessmentData(data);
     setSaving(true);
     let savedId = null;
@@ -1354,6 +1375,18 @@ export default function Assessment() {
         savedId = await saveAssessment(user.uid, data);
         if (savedId) {
           toast('Assessment saved successfully!', 'success');
+          // School-assigned flow: log the attempt so the teacher's roster and
+          // the student's assignment card can reflect completion.
+          if (classIdParam && schoolAssessmentIdParam) {
+            recordSchoolAttempt({
+              schoolAssessmentId: schoolAssessmentIdParam,
+              classId: classIdParam,
+              teacherUid: assignmentCtx?.teacherUid || null,
+              studentUid: user.uid,
+              studentName: userProfile?.name || user.displayName || 'Student',
+              assessmentId: savedId,
+            }).catch(err => console.error('schoolAttempt log failed:', err));
+          }
         } else {
           console.error('Save failed: saveAssessment returned null');
           toast('Saved locally — sync failed. Check connection.', 'error');
@@ -1368,6 +1401,9 @@ export default function Assessment() {
     setSaving(false);
     if (user && !savedId) return;
     clearCheckpoint('qids', user?.uid);
+    if (classIdParam && schoolAssessmentIdParam) {
+      try { window.localStorage.removeItem('qids-school-assignment'); } catch { /* noop */ }
+    }
     logEvent(user.uid, 'assessment_complete', {
       grade: data.grade,
       mode
@@ -1383,7 +1419,7 @@ export default function Assessment() {
         <h2 className="text-headline-md font-headline-md text-on-surface mb-4">{t("Assessment.assessment_complete")}</h2>
         <p className="text-body-md font-body-md text-on-surface-variant mb-10 leading-relaxed">{t("Assessment.baseline_data_for")}<strong className="text-on-surface">{intake.name || 'the individual'}</strong>{t("Assessment.has_been_recorded_proceed")}</p>
         <div className="flex gap-4 justify-center flex-wrap">
-          {mode === 'individual' ? <button onClick={() => navigate('/app/individual')} className="px-8 py-4 bg-primary text-on-primary text-label-md font-label-md hover:opacity-90 transition-all cursor-pointer border-none uppercase tracking-widest">{t("Assessment.view_my_results")}</button> : <button onClick={() => navigate('/app/assessment')} className="px-8 py-4 bg-primary text-on-primary text-label-md font-label-md hover:opacity-90 transition-all cursor-pointer border-none uppercase tracking-widest">{t("Assessment.view_analysis")}</button>}
+          {mode === 'individual' ? <button onClick={() => navigate('/app/individual')} className="px-8 py-4 bg-primary text-on-primary text-label-md font-label-md hover:opacity-90 transition-all cursor-pointer border-none uppercase tracking-widest">{t("Assessment.view_my_results")}</button> : classIdParam && schoolAssessmentIdParam ? <button onClick={() => navigate(`/app/my-class`)} className="px-8 py-4 bg-primary text-on-primary text-label-md font-label-md hover:opacity-90 transition-all cursor-pointer border-none uppercase tracking-widest">{t("Assessment.back_to_my_class")}</button> : <button onClick={() => navigate('/app/assessment')} className="px-8 py-4 bg-primary text-on-primary text-label-md font-label-md hover:opacity-90 transition-all cursor-pointer border-none uppercase tracking-widest">{t("Assessment.view_analysis")}</button>}
           <button onClick={() => {
           setSubmitted(false);
           setStep(0);

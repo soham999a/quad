@@ -226,5 +226,35 @@
     "students_n": "শিক্ষার্থী ({{n}})",
     "part_n": "পার্ট {{n}}",
     "qids_x": "QIDS · {{x}}"
+  },
+  "myClass": {
+    "my_class": "আমার ক্লাস",
+    "no_class_yet": "আপনি এখনো কোনো ক্লাসে যোগ দেননি",
+    "no_class_yet_desc": "শিক্ষকের কাছ থেকে জয়েন কোড নিন, তারপর ক্লাসে যোগ দিন — আপনার অ্যাসাইন করা অ্যাসেসমেন্ট ও ফলাফল এখানে দেখা যাবে।",
+    "join_class": "ক্লাসে যোগ দিন",
+    "assigned_assessments": "অ্যাসাইন করা অ্যাসেসমেন্ট",
+    "pending_count": "{{pending}} বাকি · {{done}} সম্পন্ন",
+    "no_assignments": "এখনো কিছু অ্যাসাইন করা হয়নি",
+    "no_assignments_desc": "শিক্ষক অ্যাসেসমেন্ট দিলে সেটি এখানে এক ট্যাপে শুরু করার জন্য দেখা যাবে।",
+    "your_score": "আপনার স্কোর",
+    "view_results": "ফলাফল দেখুন",
+    "start": "শুরু করুন",
+    "could_not_load_classes": "ক্লাস লোড করা যায়নি",
+    "could_not_load_assignments": "অ্যাসাইনমেন্ট লোড করা যায়নি"
+  },
+  "classManager": {
+    "assigned_assessments": "অ্যাসাইন করা অ্যাসেসমেন্ট",
+    "no_assignments_yet": "এখনো কোনো অ্যাসেসমেন্ট অ্যাসাইন করা হয়নি",
+    "no_assignments_yet_desc": "নিচে একটি তৈরি করুন — ছাত্রদের মাই ক্লাস পেজে সঙ্গে সঙ্গে দেখা যাবে।",
+    "completed_count": "{{total}} জনের মধ্যে {{done}} জন সম্পন্ন করেছে",
+    "share": "শেয়ার"
+  },
+  "individualResults": {
+    "since_last_assessment": "আগের অ্যাসেসমেন্টের তুলনায়",
+    "attempt_history": "প্রচেষ্টার ইতিহাস",
+    "retake_assessment": "আবার অ্যাসেসমেন্ট দিন"
+  },
+  "interviewReport": {
+    "session_transcript": "সেশন ট্রান্সক্রিপ্ট"
   }
 }

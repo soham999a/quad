@@ -226,5 +226,35 @@
     "students_n": "विद्यार्थी ({{n}})",
     "part_n": "भाग {{n}}",
     "qids_x": "QIDS · {{x}}"
+  },
+  "myClass": {
+    "my_class": "माझा वर्ग",
+    "no_class_yet": "तुम्ही अजून कोणत्याही वर्गात नाही",
+    "no_class_yet_desc": "शिक्षकांकडून जॉइन कोड घ्या आणि वर्गात सामील व्हा — तुमचे नेमलेले मूल्यांकन आणि निकाल येथे दिसतील.",
+    "join_class": "वर्गात सामील व्हा",
+    "assigned_assessments": "नेमलेली मूल्यांकने",
+    "pending_count": "{{pending}} बाकी · {{done}} पूर्ण",
+    "no_assignments": "अजून काही नेमले गेलेले नाही",
+    "no_assignments_desc": "शिक्षक मूल्यांकन दिल्यावर ते येथे एका टॅपमध्ये सुरू करण्यासाठी दिसेल.",
+    "your_score": "तुमचा गुण",
+    "view_results": "निकाल पहा",
+    "start": "सुरू करा",
+    "could_not_load_classes": "वर्ग लोड होऊ शकले नाहीत",
+    "could_not_load_assignments": "नेमलेली मूल्यांकने लोड होऊ शकली नाहीत"
+  },
+  "classManager": {
+    "assigned_assessments": "नेमलेली मूल्यांकने",
+    "no_assignments_yet": "अजून कोणते मूल्यांकन नेमले गेलेले नाही",
+    "no_assignments_yet_desc": "खाली एक तयार करा — विद्यार्थ्यांना त्यांच्या माझा वर्ग पानावर लगेच दिसेल.",
+    "completed_count": "{{total}} पैकी {{done}} विद्यार्थ्यांनी पूर्ण केले",
+    "share": "शेअर"
+  },
+  "individualResults": {
+    "since_last_assessment": "मागील मूल्यांकनाच्या तुलनेत",
+    "attempt_history": "प्रयत्नांचा इतिहास",
+    "retake_assessment": "पुन्हा मूल्यांकन द्या"
+  },
+  "interviewReport": {
+    "session_transcript": "सेशन ट्रान्स्क्रिप्ट"
   }
 }

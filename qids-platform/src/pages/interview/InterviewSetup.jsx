@@ -4,9 +4,10 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { saveInterviewSession } from '../../services/interviewService';
+import { generateInterviewQuestions } from '../../services/groqService';
 import { RUBRIC_DIMENSIONS } from '../../core/data/interviewRubrics';
 import { useToast } from '../../components/Toast';
-import { FileText, Play, ChevronRight, Brain } from 'lucide-react';
+import { FileText, Play, ChevronRight, Brain, Sparkles } from 'lucide-react';
 export default function InterviewSetup() {
   const {
     t
@@ -24,6 +25,8 @@ export default function InterviewSetup() {
   const [role, setRole] = useState('');
   const [notes, setNotes] = useState('');
   const [saving, setSaving] = useState(false);
+  const [generating, setGenerating] = useState(false);
+  const [aiQuestions, setAiQuestions] = useState(true);
   const canSubmit = candidateName.trim().length > 0;
   const handleStart = async () => {
     if (!canSubmit || !user) return;
@@ -42,9 +45,30 @@ export default function InterviewSetup() {
       if (mode === 'live') {
         payload.liveQuestionIndex = 0;
         payload.liveResponses = [];
+        // Role-aware question generation. If the AI call fails, the live page
+        // transparently falls back to the standard bank — a session can always start.
+        if (aiQuestions) {
+          setGenerating(true);
+          try {
+            const generated = await generateInterviewQuestions({
+              role: role.trim(),
+              candidateName: candidateName.trim(),
+              notes: notes.trim(),
+            });
+            if (generated.length >= 4) {
+              payload.liveQuestions = generated;
+              payload.questionsSource = 'ai';
+            }
+          } catch (err) {
+            console.warn('AI question generation failed, using standard bank:', err?.message);
+          } finally {
+            setGenerating(false);
+          }
+        }
       }
       const sessionId = await saveInterviewSession(payload);
       toast('Session created', 'success');
+      if (payload.liveQuestions) toast(`${payload.liveQuestions.length} questions generated for this role`, 'success');
       if (mode === 'live') {
         navigate(`/app/interview/live/${sessionId}`);
       } else {
@@ -157,9 +181,15 @@ export default function InterviewSetup() {
                 </div>
               </>}
 
-            <button onClick={handleStart} disabled={!canSubmit || saving} className="btn-primary glow w-full mt-6">
-              {saving ? 'CREATING...' : mode === 'live' ? 'START LIVE SESSION' : 'CREATE SESSION'}
+            <button onClick={handleStart} disabled={!canSubmit || saving || generating} className="btn-primary glow w-full mt-6">
+              {generating ? 'GENERATING QUESTIONS…' : saving ? 'CREATING...' : mode === 'live' ? (aiQuestions ? 'GENERATE & START' : 'START LIVE SESSION') : 'CREATE SESSION'}
             </button>
+            {mode === 'live' && <label className="flex items-center gap-2.5 mt-3 cursor-pointer select-none">
+                <input type="checkbox" checked={aiQuestions} onChange={e => setAiQuestions(e.target.checked)} className="accent-[var(--primary)] cursor-pointer" />
+                <span className="text-body-sm font-body-sm text-on-surface-variant flex items-center gap-1.5">
+                  <Sparkles size={12} className="text-primary" />AI-generate questions for this role
+                </span>
+              </label>}
           </div>
         </div>
       </div>

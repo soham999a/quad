@@ -3,10 +3,10 @@ import usePageTitle from '../../lib/usePageTitle';
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { getClass, getClassStudents, createSchoolAssessment } from '../../services/schoolService';
+import { getClass, getClassStudents, createSchoolAssessment, getClassAssessments, getClassAttempts } from '../../services/schoolService';
 import { useToast } from '../../components/Toast';
 import EmptyState from '../../components/EmptyState';
-import { Users, Plus, ClipboardList, BarChart3, Copy, ChevronRight, CheckCircle, Trash2 } from 'lucide-react';
+import { Users, Plus, ClipboardList, BarChart3, Copy, ChevronRight, CheckCircle, Trash2, Send, Share2 } from 'lucide-react';
 export default function ClassManager() {
   const {
     t
@@ -27,14 +27,28 @@ export default function ClassManager() {
   const [assessmentTitle, setAssessmentTitle] = useState('');
   const [assessmentDesc, setAssessmentDesc] = useState('');
   const [creating, setCreating] = useState(false);
+  const [assignments, setAssignments] = useState([]);
+  const [attempts, setAttempts] = useState([]);
   useEffect(() => {
     if (!classId) return;
     setLoading(true);
-    Promise.all([getClass(classId), getClassStudents(classId)]).then(([c, s]) => {
+    Promise.all([getClass(classId), getClassStudents(classId), getClassAssessments(classId), getClassAttempts(classId)]).then(([c, s, a, at]) => {
       setCls(c);
       setStudents(s);
+      setAssignments(a);
+      setAttempts(at);
     }).catch(() => toast('Failed to load class', 'error')).finally(() => setLoading(false));
   }, [classId]);
+
+  const attemptsFor = (assessmentId) => attempts.filter(a => a.schoolAssessmentId === assessmentId);
+  const shareClass = async () => {
+    const url = `${window.location.origin}/login`;
+    const text = `Join my QiDS class — code: ${cls.classCode}`;
+    if (navigator.share) {
+      try { await navigator.share({ title: cls.name, text, url }); return; } catch { /* fell through */ }
+    }
+    try { await navigator.clipboard.writeText(`${text} → ${url}`); toast('Join link copied!', 'success'); } catch { /* noop */ }
+  };
   const copyCode = () => {
     if (cls?.classCode) {
       navigator.clipboard.writeText(cls.classCode);
@@ -52,6 +66,8 @@ export default function ClassManager() {
         description: assessmentDesc.trim(),
         mode: 'school'
       });
+      // refresh the list so the new assignment appears immediately
+      getClassAssessments(classId).then(setAssignments).catch(() => {});
       toast('Assessment created', 'success');
       setShowNewAssessment(false);
       setAssessmentTitle('');
@@ -89,8 +105,12 @@ export default function ClassManager() {
           <div className="text-technical-sm font-technical-sm text-surface-variant uppercase tracking-widest mb-1">{t("ClassManager.class_join_code")}</div>
           <div className="text-[28px] font-technical-sm text-primary tracking-widest">{cls.classCode}</div>
         </div>
-        <button onClick={copyCode} data-tour="class-code" className="btn-outline flex items-center gap-2">
-          <Copy size={14} />{t("ClassManager.copy_code")}</button>
+        <div className="flex gap-2 flex-wrap">
+          <button onClick={copyCode} data-tour="class-code" className="btn-outline flex items-center gap-2">
+            <Copy size={14} />{t("ClassManager.copy_code")}</button>
+          <button onClick={shareClass} className="btn-outline flex items-center gap-2">
+            <Share2 size={14} />{t("ClassManager.share")}</button>
+        </div>
       </div>
 
       {/* Students */}
@@ -108,6 +128,36 @@ export default function ClassManager() {
                 </div>
                 <CheckCircle size={14} className="text-success flex-shrink-0" />
               </div>)}
+          </div>}
+      </section>
+
+      {/* Assigned Assessments */}
+      <section className="mb-8">
+        <div className="flex items-center justify-between mb-4">
+          <span className="kicker">{t("ClassManager.assigned_assessments")}</span>
+        </div>
+        <div className="gradient-rule mb-4" />
+        {assignments.length === 0 ? <EmptyState icon={ClipboardList} title={t("ClassManager.no_assignments_yet")} description={t("ClassManager.no_assignments_yet_desc")} /> : <div className="flex flex-col">
+            {assignments.map((a, i) => {
+              const done = attemptsFor(a.id);
+              const pct = students.length > 0 ? Math.round(done.length / students.length * 100) : 0;
+              return <div key={a.id} className="card p-4 flex items-center gap-4 border-b-[0.5px] border-outline-variant">
+                <span className="text-technical-sm font-technical-sm text-surface-variant flex-shrink-0">{String(i + 1).padStart(2, '0')}</span>
+                <div className="min-w-0 flex-1">
+                  <div className="text-label-md font-label-md text-on-background truncate">{a.title}</div>
+                  <div className="text-technical-sm font-technical-sm text-surface-variant mt-0.5">
+                    {t("ClassManager.completed_count", { done: done.length, total: students.length })}
+                  </div>
+                  <div className="h-1 bg-surface-container-high mt-2 max-w-[240px]">
+                    <div className="h-full bg-primary transition-all" style={{ width: `${pct}%` }} />
+                  </div>
+                </div>
+                <span className="text-technical-sm font-technical-sm text-primary flex-shrink-0 tabular-nums">{pct}%</span>
+                <button onClick={() => navigate(`/app/school/class/${classId}/analytics`)} className="btn-outline flex-shrink-0 flex items-center gap-2 !py-2">
+                  <ChevronRight size={13} />
+                </button>
+              </div>;
+            })}
           </div>}
       </section>
 

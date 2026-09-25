@@ -331,3 +331,53 @@ Return JSON:
 
   return JSON.parse(content);
 }
+
+// ─── Generate interview questions for a specific candidate ───────────────────
+// Role-aware live-interview probes, balanced across the rubric dimensions.
+// Falls back to the static bank (LIVE_QUESTIONS) if the AI call fails, so a
+// session can always start.
+export async function generateInterviewQuestions({ role = '', candidateName = '', notes = '', ageGroup = '19-32', perDimension = 2 }) {
+  const dims = 'Communication, ProblemSolving, Leadership, EmotionalIntelligence, Adaptability, Teamwork, Integrity, CriticalThinking, Resilience';
+  const prompt = `Generate live structured-interview questions for a candidate interview.
+Candidate role/position: ${role || 'general'}.
+Candidate name: ${candidateName || 'unknown'}. Age group: ${ageGroup === '11-18' ? '11-18 (student)' : '19-32 (adult)'}.
+Interviewer preparation notes (context to probe into, if any): ${notes || 'none'}.
+
+Generate exactly ${perDimension} questions for EACH of these dimensions: ${dims}.
+Total: ${perDimension * 8} questions.
+
+Return JSON in this exact format:
+{
+  "questions": [
+    {
+      "dimension": "one of the dimension names listed above",
+      "text": "the interview question",
+      "context": "what this question assesses / what a strong answer looks like",
+      "followUp": "a suggested follow-up probe if the answer is shallow"
+    }
+  ]
+}
+
+Rules:
+- Behavioral/situational questions ("Tell me about a time...", "How would you...") — no trivia
+- Adjust seniority and vocabulary to the role and age group
+- If notes mention specifics, weave 2-3 questions around them naturally
+- Each question must map to exactly one dimension from the list`;
+
+  const content = await groqChat([
+    { role: 'system', content: QIDS_SYSTEM_PROMPT },
+    { role: 'user', content: prompt },
+  ], { jsonMode: true, temperature: 0.75, maxTokens: 2200 });
+
+  const parsed = JSON.parse(content);
+  const qs = Array.isArray(parsed.questions) ? parsed.questions : [];
+  return qs
+    .filter(q => q.text && q.dimension)
+    .map((q, i) => ({
+      id: `LQ-${String(i + 1).padStart(2, '0')}`,
+      text: String(q.text),
+      dimension: String(q.dimension),
+      context: q.context ? String(q.context) : '',
+      followUp: q.followUp ? String(q.followUp) : '',
+    }));
+}

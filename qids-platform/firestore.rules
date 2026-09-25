@@ -232,9 +232,24 @@ service cloud.firestore {
       allow update: if isSignedIn() && (
         resource.data.teacherUid == request.auth.uid || isAdmin()
       );
+    }
+
+    // Student completion records for assigned assessments — append-only.
+    // Students may only create attempts bearing their own uid; the attempt
+    // carries teacherUid/classId so teachers can read their class's attempts.
+    match /schoolAttempts/{attemptId} {
+      allow read: if isSignedIn() && (
+        resource.data.studentUid == request.auth.uid ||
+        resource.data.teacherUid == request.auth.uid ||
+        isAdmin()
+      );
+      allow create: if isSignedIn() &&
+        request.resource.data.studentUid == request.auth.uid;
+      allow update, delete: if false;
+    }
       allow delete: if isSignedIn() && (
         resource.data.teacherUid == request.auth.uid || isAdmin()
       );
     }
   }
-}
+
