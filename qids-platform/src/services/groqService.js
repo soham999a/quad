@@ -9,7 +9,7 @@ import { auth } from '../firebase';
 const GROQ_API_KEY = import.meta.env.VITE_GROQ_API_KEY;
 const GROQ_PROXY_URL = '/api/generate-questions';
 const GROQ_API_URL = 'https://api.groq.com/openai/v1/chat/completions';
-const MODEL = 'llama-3.3-70b-versatile';
+const MODEL = 'openai/gpt-oss-120b';
 
 // ─── Core API call ────────────────────────────────────────────────────────────
 let idTokenCache = { token: null, at: 0 };
@@ -36,7 +36,11 @@ async function groqChat(messages, options = {}) {
   // Sends the caller's Firebase ID token so the proxy can verify the user
   // and apply per-user rate limits.
   const token = await getIdToken();
+  // Hard timeout: a hung AI call must never wedge a student mid-assessment.
+  const timeoutCtl = new AbortController();
+  const timeoutId = setTimeout(() => timeoutCtl.abort(), 30_000);
   const res = await fetch(GROQ_PROXY_URL, {
+    signal: timeoutCtl.signal,
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -54,6 +58,7 @@ async function groqChat(messages, options = {}) {
     }
     if (!GROQ_API_KEY) throw new Error('VITE_GROQ_API_KEY not configured');
     const direct = await fetch(GROQ_API_URL, {
+      signal: timeoutCtl.signal,
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -72,11 +77,32 @@ async function groqChat(messages, options = {}) {
       throw new Error(derr.error?.message || `Groq API error ${direct.status}: ${JSON.stringify(derr)}`);
     }
     const ddata = await direct.json();
+    clearTimeout(timeoutId);
     return ddata.choices[0].message.content;
   }
 
   const data = await res.json();
+  clearTimeout(timeoutId);
   return data.choices[0].message.content;
+}
+
+// Tolerant JSON extraction: models occasionally wrap JSON in markdown fences
+// or prepend commentary — parse the first balanced {...} block instead of
+// trusting the raw string. Throws a descriptive error on total garbage.
+function parseModelJson(content) {
+  if (typeof content !== 'string' || !content.trim()) {
+    throw new Error('AI returned an empty response');
+  }
+  const cleaned = content.trim().replace(/^```(?:json)?/i, '').replace(/```$/, '').trim();
+  try {
+    return JSON.parse(cleaned);
+  } catch { /* fall through to brace extraction */ }
+  const start = cleaned.indexOf('{');
+  const end = cleaned.lastIndexOf('}');
+  if (start !== -1 && end > start) {
+    try { return JSON.parse(cleaned.slice(start, end + 1)); } catch { /* give up below */ }
+  }
+  throw new Error('AI returned malformed JSON');
 }
 
 // ─── QIDS System Prompt ───────────────────────────────────────────────────────
@@ -130,7 +156,7 @@ Rules:
     { role: 'user', content: prompt },
   ], { jsonMode: true, temperature: 0.8 });
 
-  const parsed = JSON.parse(content);
+  const parsed = parseModelJson(content);
   return parsed.questions || [];
 }
 
@@ -172,7 +198,7 @@ Rules:
     { role: 'user', content: prompt },
   ], { jsonMode: true, temperature: 0.75 });
 
-  const parsed = JSON.parse(content);
+  const parsed = parseModelJson(content);
   return parsed.statements || [];
 }
 
@@ -215,7 +241,7 @@ Rules:
     { role: 'user', content: prompt },
   ], { jsonMode: true, temperature: 0.8 });
 
-  const parsed = JSON.parse(content);
+  const parsed = parseModelJson(content);
   return parsed.questions || [];
 }
 
@@ -254,7 +280,7 @@ Rules:
     { role: 'user', content: prompt },
   ], { jsonMode: true, temperature: 0.75 });
 
-  const parsed = JSON.parse(content);
+  const parsed = parseModelJson(content);
   return parsed.questions || [];
 }
 
@@ -292,7 +318,7 @@ Return JSON only:
     { role: 'user', content: prompt },
   ], { jsonMode: true, temperature: 0.2, maxTokens: 900 });
 
-  const parsed = JSON.parse(content);
+  const parsed = parseModelJson(content);
   const out = {};
   for (const s of parsed.scores || []) {
     if (typeof s.index !== 'number') continue;
@@ -329,7 +355,7 @@ Return JSON:
     { role: 'user', content: prompt },
   ], { jsonMode: true, temperature: 0.6, maxTokens: 800 });
 
-  return JSON.parse(content);
+  return parseModelJson(content);
 }
 
 // ─── Generate interview questions for a specific candidate ───────────────────
@@ -369,7 +395,7 @@ Rules:
     { role: 'user', content: prompt },
   ], { jsonMode: true, temperature: 0.75, maxTokens: 2200 });
 
-  const parsed = JSON.parse(content);
+  const parsed = parseModelJson(content);
   const qs = Array.isArray(parsed.questions) ? parsed.questions : [];
   return qs
     .filter(q => q.text && q.dimension)

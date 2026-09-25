@@ -1,0 +1,8 @@
+User-agent: *
+Allow: /
+# Private per-user pages — no index value, keeps student data out of search
+Disallow: /app/
+Disallow: /credential/
+Disallow: /onboarding/
+
+Sitemap: https://qids.in/sitemap.xml

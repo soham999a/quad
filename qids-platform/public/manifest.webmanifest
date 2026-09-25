@@ -1,0 +1,15 @@
+{
+  "name": "QiDS — Quadrant Intelligence Diagnostic System",
+  "short_name": "QiDS",
+  "description": "Measure and grow four quotients — IQ, EQ, SQ, AQ — with verifiable credentials.",
+  "start_url": "/app/dashboard",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#0d0f12",
+  "theme_color": "#0d0f12",
+  "icons": [
+    { "src": "/favicon-light.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" },
+    { "src": "/favicon-dark.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "maskable" }
+  ]
+}
