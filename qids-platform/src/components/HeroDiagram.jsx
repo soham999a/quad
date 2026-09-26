@@ -55,7 +55,7 @@ export default function HeroDiagram({ className = '' }) {
         {/* center node */}
         <circle cx={C} cy={C} r="30" fill="var(--gold)" opacity="0.07" className="hero-pop" style={{ '--pop-delay': '0.3s' }} />
         <rect x={C - 6} y={C - 6} width="12" height="12" fill="var(--gold)" className="hero-pop" style={{ '--pop-delay': '0.45s' }} />
-        <text x={C} y={C + 28} textAnchor="middle" fill="var(--foreground)" fontFamily="var(--font-mono)" fontSize="9" letterSpacing="3" className="hero-fade" style={{ '--pop-delay': '0.6s' }}>QIDS</text>
+        <text x={C} y={C + 46} textAnchor="middle" fill="var(--foreground)" stroke="var(--background)" strokeWidth="5" paintOrder="stroke" fontFamily="var(--font-mono)" fontSize="9" letterSpacing="3" className="hero-fade" style={{ '--pop-delay': '0.6s' }}>QIDS</text>
         {/* spokes + stations — spokes draw outward, stations pop in sequence */}
         {STATIONS.map((s, i) => {
           const [x, y] = pt(s.angle, R_ORBIT);
@@ -68,11 +68,15 @@ export default function HeroDiagram({ className = '' }) {
             </g>
           );
         })}
-        {/* station labels — upright, just outside the orbit */}
+        {/* station labels — upright, just outside the orbit. Horizontal-axis
+            stations (Development/Practice) drop BELOW the axis: the wide
+            middle-anchored text otherwise parks under the station dot, and
+            lifting up instead would land on the AQ/EQ quotient labels. */}
         {STATIONS.map((s, i) => {
+          const onHorizontalAxis = s.angle % 180 === 0;
           const [x, y] = pt(s.angle, R_ORBIT + 22);
           return (
-            <text key={s.label} x={x} y={y + 3} textAnchor="middle" fill="var(--muted-foreground)" fontFamily="var(--font-mono)" fontSize="9" letterSpacing="1.5" style={{ textTransform: 'uppercase' }} className="hero-fade" >
+            <text key={s.label} x={x} y={y + (onHorizontalAxis ? 18 : 3)} textAnchor="middle" fill="var(--muted-foreground)" fontFamily="var(--font-mono)" fontSize="9" letterSpacing="1.5" style={{ textTransform: 'uppercase' }} className="hero-fade" >
               {s.label.toUpperCase()}
             </text>
           );

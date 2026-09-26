@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { ArrowRight, Menu, X } from 'lucide-react';
 import QidsMark from './QidsMark';
 import LanguageSwitcher from './LanguageSwitcher';
+import ThemeToggle from './ThemeToggle';
 const NAV_ITEMS = [{
   href: '#architecture',
   label: 'landing.nav_architecture',
@@ -54,6 +55,10 @@ export function PublicShell({
                 </a>)}
           </nav>
           <div className="flex items-center gap-3">
+            {/* Language + theme controls live on every public surface, so
+                visitors can set both before ever signing in. */}
+            <span className="hidden md:inline-flex" data-tour="theme"><ThemeToggle /></span>
+            <span className="hidden md:inline-flex"><LanguageSwitcher /></span>
             <Link to="/login" className="hidden sm:inline-flex text-[11px] font-mono uppercase tracking-[0.16em] text-muted-foreground hover:text-on-surface transition-colors no-underline">
               {t('auth.sign_in')}
             </Link>
@@ -69,13 +74,17 @@ export function PublicShell({
             <nav className="mx-auto flex max-w-[1440px] flex-col" aria-label={t("PublicShell.mobile_navigation")}>
               {NAV_ITEMS.map((item, index) => {
             const inner = <>
-                    <span>{String(index + 1).padStart(2, '0')} / {item.label}</span>
+                    <span>{String(index + 1).padStart(2, '0')} / {t(item.label)}</span>
                     <ArrowRight className="h-3.5 w-3.5" />
                   </>;
             const cls = "flex items-center justify-between border-b border-border py-4 text-[12px] font-mono uppercase tracking-[0.16em] text-muted-foreground hover:text-on-surface transition-colors no-underline";
             return item.to ? <Link key={item.label} to={item.to} onClick={() => setOpen(false)} className={cls}>{inner}</Link> : <a key={item.label} href={item.href} onClick={() => setOpen(false)} className={cls}>{inner}</a>;
           })}
               <div className="mt-4"><LanguageSwitcher expanded /></div>
+              <div className="mt-3 flex items-center justify-between border border-border px-4 py-3">
+                <span className="text-[11px] font-mono uppercase tracking-[0.16em] text-muted-foreground">{t('theme.label')}</span>
+                <ThemeToggle />
+              </div>
               <Link to="/mode" onClick={() => setOpen(false)} className="mt-3 inline-flex items-center justify-between bg-gold px-4 py-3 text-[11px] font-mono uppercase tracking-[0.16em] text-[var(--navy)] no-underline">
                 {t('landing.cta_begin')} <ArrowRight className="h-3.5 w-3.5" />
               </Link>

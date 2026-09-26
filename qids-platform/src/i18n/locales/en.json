@@ -198,6 +198,7 @@
     "go_home": "Go home"
   },
   "theme": {
+    "label": "Theme",
     "to_dark": "Switch to dark mode",
     "to_light": "Switch to light mode"
   },
