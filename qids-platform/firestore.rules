@@ -30,9 +30,13 @@ service cloud.firestore {
     }
 
     // Plan is a billing field: clients may keep it unchanged but never set it.
+    // Exception: a profile created before the plan field existed (or by signup,
+    // which omits it) may initialize it to 'free' exactly once — anything else
+    // (paid tiers) stays server-only.
     // (Server / billing integration writes plans in a later phase.)
     function planUnchanged() {
-      return request.resource.data.plan == resource.data.plan;
+      return request.resource.data.plan == resource.data.plan
+        || (!('plan' in resource.data) && request.resource.data.plan == 'free');
     }
 
     // ── Users (profiles) ───────────────────────────────────────────────────
@@ -95,10 +99,29 @@ service cloud.firestore {
     // { uid, assessmentId, name, unifiedScore, grade, pillarScores, skillShape,
     //   issuedAt, hash }. Readable by anyone (that's the point); writable only
     // by the profile owner.
+    // Creates are shape-validated (bounded strings, numeric scores, fixed
+    // surface) and the credential is immutable once issued: no updates, so a
+    // published result can never silently change after the fact.
+    function isValidCredential() {
+      return request.resource.data.uid == request.auth.uid
+        && request.resource.data.assessmentId is string
+        && request.resource.data.assessmentId.size() > 0
+        && request.resource.data.assessmentId.size() <= 128
+        && request.resource.data.name is string
+        && request.resource.data.name.size() > 0
+        && request.resource.data.name.size() <= 80
+        && (!('unifiedScore' in request.resource.data) || request.resource.data.unifiedScore is number)
+        && (!('grade' in request.resource.data) || request.resource.data.grade is string)
+        && (!('skillShape' in request.resource.data) || request.resource.data.skillShape is string)
+        && (!('pillarScores' in request.resource.data)
+            || (request.resource.data.pillarScores is map
+                && request.resource.data.pillarScores.size() <= 8));
+    }
     match /publicCredentials/{credId} {
       allow read: if true;
-      allow create, update: if isSignedIn() && request.resource.data.uid == request.auth.uid;
+      allow create: if isSignedIn() && isValidCredential();
       allow delete: if isSignedIn() && resource.data.uid == request.auth.uid;
+      allow update: if false;
     }
 
     // ── Reports ─────────────────────────────────────────────────────────────
@@ -243,21 +266,44 @@ service cloud.firestore {
         resource.data.teacherUid == request.auth.uid ||
         isAdmin()
       );
+      // Shape-validated creates: an attempt must carry a real class, teacher
+      // and assignment reference so the append-only roster can't be polluted
+      // with junk documents from a scripted client.
       allow create: if isSignedIn() &&
-        request.resource.data.studentUid == request.auth.uid;
+        request.resource.data.studentUid == request.auth.uid &&
+        request.resource.data.teacherUid is string &&
+        request.resource.data.teacherUid.size() > 0 &&
+        request.resource.data.classId is string &&
+        request.resource.data.classId.size() > 0 &&
+        request.resource.data.schoolAssessmentId is string &&
+        request.resource.data.schoolAssessmentId.size() > 0 &&
+        (!('studentName' in request.resource.data) ||
+          (request.resource.data.studentName is string &&
+           request.resource.data.studentName.size() <= 80));
       allow update, delete: if false;
     }
 
     // ── In-app notifications ─────────────────────────────────────────────
     // Per-user bell feed. Users read/mark their own; creation is allowed for
     // any signed-in user because peers legitimately notify peers (student →
-    // teacher on join, student → evaluator on assignment). Fields are trusted
-    // to carry the right uid; rules pin read/mark to the recipient.
+    // teacher on join, student → evaluator on assignment). Creates are
+    // shape-validated and bounded so the feed can't be used as a spam/junk
+    // sink; rules pin read/mark to the recipient.
     match /notifications/{notificationId} {
       allow read: if isSignedIn() && resource.data.uid == request.auth.uid;
       allow create: if isSignedIn() &&
         request.resource.data.uid is string &&
-        request.resource.data.type is string;
+        request.resource.data.uid.size() > 0 &&
+        request.resource.data.uid.size() <= 128 &&
+        request.resource.data.type is string &&
+        request.resource.data.type.size() <= 24 &&
+        request.resource.data.title is string &&
+        request.resource.data.title.size() > 0 &&
+        request.resource.data.title.size() <= 120 &&
+        (!('body' in request.resource.data) ||
+          (request.resource.data.body is string && request.resource.data.body.size() <= 280)) &&
+        (!('link' in request.resource.data) ||
+          (request.resource.data.link is string && request.resource.data.link.size() <= 200));
       allow update: if isSignedIn() &&
         resource.data.uid == request.auth.uid &&
         request.resource.data.diff(resource.data).affectedKeys().hasOnly(['read']);

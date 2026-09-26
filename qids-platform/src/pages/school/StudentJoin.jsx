@@ -36,7 +36,9 @@ export default function StudentJoin() {
           });
         }
       }).catch(() => {});
-      navigate(`/app/school/class/${classId}`);
+      // Students land on their own class page — /app/school/class/:id is a
+      // teacher-only route and would bounce them straight back out.
+      navigate('/app/my-class');
     } catch (e) {
       toast(e.message || 'Invalid class code', 'error');
     } finally {

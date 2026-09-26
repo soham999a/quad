@@ -5,7 +5,7 @@
 // block the action that caused it); readers use onSnapshot for live updates.
 
 import {
-  collection, addDoc, updateDoc, doc, query, where, orderBy, limit,
+  collection, addDoc, updateDoc, deleteDoc, doc, query, where, orderBy, limit,
   onSnapshot, getDocs, serverTimestamp,
 } from 'firebase/firestore';
 import { db } from '../firebase';
@@ -73,6 +73,30 @@ export async function markNotificationRead(notificationId) {
   try {
     await updateDoc(doc(db, NOTIFICATIONS, notificationId), { read: true });
   } catch { /* best-effort */ }
+}
+
+/**
+ * Bound the feed: delete the signed-in user's READ notifications older than 90
+ * days, capped at 200 docs per call so it can never become a heavy query.
+ * Old unread items are left alone (a real notification shouldn't vanish just
+ * because the user was away); the bell's capped queries keep reads bounded.
+ * Best-effort and silent on failure. Returns the number deleted.
+ */
+export async function cleanupOldNotifications(uid, maxAgeDays = 90) {
+  if (!uid) return 0;
+  try {
+    const cutoff = new Date(Date.now() - maxAgeDays * 24 * 60 * 60 * 1000);
+    const q = query(
+      collection(db, NOTIFICATIONS),
+      where('uid', '==', uid),
+      where('read', '==', true),
+      where('createdAt', '<', cutoff),
+      limit(200),
+    );
+    const snap = await getDocs(q);
+    await Promise.allSettled(snap.docs.map(d => deleteDoc(d.ref)));
+    return snap.size;
+  } catch { return 0; }
 }
 
 /** Mark all of the user's unread notifications read. */

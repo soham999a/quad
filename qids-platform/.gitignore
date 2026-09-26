@@ -29,3 +29,7 @@ dist-ssr
 .env.production
 tests/screenshots/
 tests/.smoke-out/
+
+# Playwright artifacts
+test-results/
+playwright-report/

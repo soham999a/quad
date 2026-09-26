@@ -1,6 +1,6 @@
 import {
   collection, doc, addDoc, setDoc, getDoc, getDocs,
-  updateDoc, deleteDoc, query, where, serverTimestamp, limit
+  updateDoc, deleteDoc, query, where, serverTimestamp, limit, onSnapshot
 } from 'firebase/firestore';
 import { db } from '../firebase';
 
@@ -61,6 +61,22 @@ export async function getUserAssessments(uid) {
     const snap = await getDocs(q);
     return sortByCreatedAt(snap.docs.map(d => ({ id: d.id, ...d.data() })));
   } catch (e) { console.warn('getUserAssessments failed:', e.message); return []; }
+}
+
+// Live variant: completed attempts (and their scores) appear on My Class the
+// moment submit lands, on any device. Mirrors getUserAssessments' shape.
+export function subscribeUserAssessments(uid, cb) {
+  const td = typeof window !== 'undefined' ? window.__FIRESTORE_DATA__ : null;
+  if (td?.assessments?.[uid]) { cb(td.assessments[uid]); return () => {}; }
+  const q = query(collection(db, 'assessments'), where('uid', '==', uid));
+  let cache = [];
+  return onSnapshot(q, (snap) => {
+    cache = sortByCreatedAt(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+    cb(cache);
+  }, (e) => {
+    console.warn('subscribeUserAssessments:', e.message);
+    cb(cache);
+  });
 }
 
 export async function getUserReports(uid) {
@@ -269,6 +285,16 @@ export async function removePublicEvaluator(uid) {
 // a viewer can confirm the record wasn't tampered with after issuance.
 
 export async function publishCredential(uid, assessment) {
+  const ref = doc(db, 'publicCredentials', assessment.id);
+  // Credentials are immutable once issued (rules: create-only). Re-sharing an
+  // already-published assessment must be idempotent — return the existing
+  // record instead of attempting an update the security rules deny.
+  const existing = await getDoc(ref);
+  if (existing.exists()) {
+    const d = existing.data();
+    if (d.uid !== uid) throw new Error('This credential id is already published by another account.');
+    return { id: existing.id, hash: d.hash || null };
+  }
   const pillarScores = assessment.pillarScores || {};
   const payload = {
     uid,
@@ -281,7 +307,6 @@ export async function publishCredential(uid, assessment) {
     skillShape: assessment.result?.skillShape ?? null,
   };
   const hash = await sha256Hex(JSON.stringify(payload));
-  const ref = doc(db, 'publicCredentials', assessment.id);
   await setDoc(ref, { ...payload, hash, issuedAt: serverTimestamp() });
   return { id: assessment.id, hash };
 }

@@ -1,12 +1,12 @@
 import usePageTitle from '../lib/usePageTitle';
 import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../context/AuthContext';
 import { getUserAssessments, getUserReports } from '../services/firestoreService';
 import { PILLARS, getGrade, computeWeightedScore } from '../data/qidsData';
 import { computeQidsPillarScores } from '../core/engine/qids';
-import { ClipboardList, TrendingUp, FileText, Activity, ChevronRight, ArrowRight, Sparkles } from 'lucide-react';
+import { ClipboardList, TrendingUp, FileText, Activity, ChevronRight, ArrowRight, Sparkles , ShieldAlert } from 'lucide-react';
 import SeedExampleData from '../components/SeedExampleData';
 import { getSkillShape } from '../core/engine/scoring';
 function StatCard({
@@ -41,6 +41,9 @@ export default function Dashboard() {
     userProfile
   } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+  // RoleRoute bounces unauthorized deep links here with the attempted path.
+  const deniedPath = location.state?.denied || null;
   const [assessments, setAssessments] = useState([]);
   const [reports, setReports] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -93,6 +96,14 @@ export default function Dashboard() {
           </div>
           <button onClick={() => navigate('/app/assessment')} className="btn-primary relative">{t("Dashboard.begin_assessment")}<ArrowRight size={15} />
           </button>
+        </section>}
+
+      {deniedPath && <section className="mb-8 border-[0.5px] border-[var(--status-warn)]/40 bg-[color-mix(in_srgb,var(--status-warn)_8%,transparent)] p-4 flex items-start gap-3">
+          <ShieldAlert size={16} className="text-[var(--status-warn)] flex-shrink-0 mt-0.5" />
+          <div>
+            <div className="text-label-sm font-label-sm text-on-background">{t("dash.area_restricted")}</div>
+            <div className="text-body-sm font-body-sm text-on-surface-variant mt-0.5">{t("dash.no_permission_for")} <span className="font-mono text-[12px]">{deniedPath}</span>.</div>
+          </div>
         </section>}
 
       {/* Stats Row */}

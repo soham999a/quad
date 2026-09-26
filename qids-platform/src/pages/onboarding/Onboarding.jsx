@@ -457,12 +457,14 @@ export default function Onboarding() {
     setSaving(true);
     setError('');
     try {
-      await updateProfileIfNeeded(state);
+      // Profile sync is best-effort — the completion marker is what frees the
+      // user from the gate; never let a denied profile patch block it.
+      await updateProfileIfNeeded(state).catch(() => {});
       await completeOnboarding(user.uid, state);
       logEvent(user.uid, 'onboarding_done', {
         persona: state.persona
       });
-      await refreshProfile();
+      refreshProfile().catch(() => {});
       navigate(postOnboardingDestination(state.persona, state.contextId), {
         replace: true
       });
@@ -495,9 +497,11 @@ export default function Onboarding() {
     };
     setSaving(true);
     try {
-      await updateProfileIfNeeded(next);
+      // Profile sync is best-effort — a denied/failed write must never stop
+      // the completion marker, or the user is stranded on the wizard forever.
+      await updateProfileIfNeeded(next).catch(() => {});
       await completeOnboarding(user.uid, next);
-      await refreshProfile();
+      refreshProfile().catch(() => {});
       navigate('/app/dashboard', {
         replace: true
       });

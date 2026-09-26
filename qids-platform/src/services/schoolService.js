@@ -1,6 +1,6 @@
 import {
   collection, addDoc, updateDoc, getDoc, getDocs,
-  query, where, doc, serverTimestamp, deleteDoc,
+  query, where, doc, serverTimestamp, deleteDoc, onSnapshot,
 } from 'firebase/firestore';
 import { db } from '../firebase';
 
@@ -37,6 +37,14 @@ export async function createClass(data) {
 
 export async function getClass(classId) {
   const snap = await getDoc(doc(db, CLASSES, classId));
+  if (!snap.exists()) return null;
+  return { id: snap.id, ...snap.data() };
+}
+
+// Authoritative source for the student → teacher attempt handoff. The
+// localStorage copy is a cache, never the source of truth.
+export async function getSchoolAssessment(assessmentId) {
+  const snap = await getDoc(doc(db, ASSESSMENTS, assessmentId));
   if (!snap.exists()) return null;
   return { id: snap.id, ...snap.data() };
 }
@@ -104,6 +112,28 @@ export async function getStudentClasses(studentUid) {
   return classes;
 }
 
+// Live variant: re-resolves the roster → classes whenever the student's
+// memberships change (teacher adds/removes, new join from another device).
+// cb always receives an array; errors degrade to [] and a console warn.
+export function subscribeStudentClasses(studentUid, cb) {
+  const q = query(collection(db, STUDENTS), where('studentUid', '==', studentUid));
+  let classCache = [];
+  return onSnapshot(q, async (snap) => {
+    const roster = sortByTimestamp(snap.docs.map(d => ({ id: d.id, ...d.data() })), 'joinedAt');
+    try {
+      const classes = (await Promise.all(roster.map(r => getClass(r.classId)))).filter(Boolean);
+      classCache = classes;
+      cb(classes);
+    } catch (e) {
+      console.warn('subscribeStudentClasses:', e.message);
+      cb(classCache);
+    }
+  }, (e) => {
+    console.warn('subscribeStudentClasses:', e.message);
+    cb(classCache);
+  });
+}
+
 // ─── School Assessments ──────────────────────────────────────────────────────
 
 export async function createSchoolAssessment(data) {
@@ -119,6 +149,17 @@ export async function getClassAssessments(classId) {
   const q = query(collection(db, ASSESSMENTS), where('classId', '==', classId));
   const snap = await getDocs(q);
   return sortByTimestamp(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+}
+
+// Live variant: a teacher's new assignment appears on My Class instantly.
+export function subscribeClassAssessments(classId, cb) {
+  const q = query(collection(db, ASSESSMENTS), where('classId', '==', classId));
+  return onSnapshot(q, (snap) => {
+    cb(sortByTimestamp(snap.docs.map(d => ({ id: d.id, ...d.data() }))));
+  }, (e) => {
+    console.warn('subscribeClassAssessments:', e.message);
+    cb([]);
+  });
 }
 
 export async function updateSchoolAssessment(assessmentId, updates) {
@@ -142,8 +183,14 @@ export async function recordSchoolAttempt({ schoolAssessmentId, classId, teacher
   });
 }
 
-export async function getClassAttempts(classId) {
-  const q = query(collection(db, 'schoolAttempts'), where('classId', '==', classId));
+export async function getClassAttempts(classId, teacherUid) {
+  // Filter by teacherUid, not classId — the security rule only proves reads
+  // through studentUid/teacherUid, so a classId-only query is rejected as
+  // permission-denied (which used to kill the whole class-manager load).
+  const q = query(collection(db, 'schoolAttempts'), where('teacherUid', '==', teacherUid));
   const snap = await getDocs(q);
-  return sortByTimestamp(snap.docs.map(d => ({ id: d.id, ...d.data() })), 'completedAt');
+  return sortByTimestamp(
+    snap.docs.map(d => ({ id: d.id, ...d.data() })).filter(a => a.classId === classId),
+    'completedAt',
+  );
 }

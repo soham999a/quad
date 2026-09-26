@@ -1,4 +1,5 @@
 const ROLE_DESTINATIONS = {
+  student: '/app/my-class',
   teacher: '/app/school',
   evaluator: '/app/evaluator',
   admin: '/app/admin',

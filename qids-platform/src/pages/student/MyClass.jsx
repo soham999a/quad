@@ -3,11 +3,10 @@ import usePageTitle from '../../lib/usePageTitle';
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { getStudentClasses, getClassAssessments } from '../../services/schoolService';
-import { getUserAssessments } from '../../services/firestoreService';
+import { subscribeStudentClasses, subscribeClassAssessments } from '../../services/schoolService';
+import { subscribeUserAssessments } from '../../services/firestoreService';
 import { getGrade, computeWeightedScore } from '../../data/qidsData';
 import { computeQidsPillarScores } from '../../core/engine/qids';
-import { useToast } from '../../components/Toast';
 import EmptyState from '../../components/EmptyState';
 import { Users, ClipboardList, ChevronRight, GraduationCap, BookOpen, CheckCircle2, Circle } from 'lucide-react';
 
@@ -29,7 +28,6 @@ export default function MyClass() {
   usePageTitle('My class');
   const { user, userProfile } = useAuth();
   const navigate = useNavigate();
-  const toast = useToast();
 
   const [classes, setClasses] = useState([]);
   const [activeClassId, setActiveClassId] = useState(null);
@@ -37,32 +35,31 @@ export default function MyClass() {
   const [myAttempts, setMyAttempts] = useState([]);
   const [loading, setLoading] = useState(true);
 
+  // Live data — every stream re-renders on its own Firestore trigger, so a
+  // teacher's new assignment or the student's own submit shows instantly,
+  // no refresh. Each effect owns exactly one subscription; all clean up.
   useEffect(() => {
-    if (!user) return;
-    setLoading(true);
-    getStudentClasses(user.uid)
-      .then(cls => {
-        setClasses(cls);
-        if (cls.length > 0) setActiveClassId(prev => prev || cls[0].id);
-      })
-      .catch(() => toast(t('myClass.could_not_load_classes'), 'error'))
-      .finally(() => setLoading(false));
-  }, [user, t, toast]);
+    if (!user) return undefined;
+    const unsub = subscribeStudentClasses(user.uid, (cls) => {
+      setClasses(cls);
+      if (cls.length > 0) setActiveClassId(prev => prev || cls[0].id);
+      else setActiveClassId(null);
+      setLoading(false); // first roster snapshot ends the initial skeleton
+    });
+    return unsub;
+  }, [user]);
 
   useEffect(() => {
-    if (!user || !activeClassId) return;
-    setLoading(true);
-    Promise.all([
-      getClassAssessments(activeClassId),
-      getUserAssessments(user.uid).catch(() => []),
-    ])
-      .then(([asg, mine]) => {
-        setAssignments(asg.filter(a => a.status !== 'archived'));
-        setMyAttempts(mine.filter(a => a.schoolAssessmentId));
-      })
-      .catch(() => toast(t('myClass.could_not_load_assignments'), 'error'))
-      .finally(() => setLoading(false));
-  }, [user, activeClassId, t, toast]);
+    if (!user || !activeClassId) return undefined;
+    const unsubAsg = subscribeClassAssessments(activeClassId, (asg) => {
+      setAssignments(asg.filter(a => a.status !== 'archived'));
+      setLoading(false);
+    });
+    const unsubMine = subscribeUserAssessments(user.uid, (mine) => {
+      setMyAttempts(mine.filter(a => a.schoolAssessmentId));
+    });
+    return () => { unsubAsg(); unsubMine(); };
+  }, [user, activeClassId]);
 
   const attemptFor = (assignmentId) =>
     myAttempts.find(a => a.schoolAssessmentId === assignmentId) || null;

@@ -65,6 +65,7 @@ const InterviewLive = lazy(() => import('./pages/interview/InterviewLive'));
 const InterviewReport = lazy(() => import('./pages/interview/InterviewReport'));
 const TeacherDashboard = lazy(() => import('./pages/school/TeacherDashboard'));
 const ClassManager = lazy(() => import('./pages/school/ClassManager'));
+const ClassCreate = lazy(() => import('./pages/school/ClassCreate'));
 const ClassAnalytics = lazy(() => import('./pages/school/ClassAnalytics'));
 const StudentJoin = lazy(() => import('./pages/school/StudentJoin'));
 const SchoolReports = lazy(() => import('./pages/school/SchoolReports'));
@@ -136,6 +137,9 @@ export function personaFor(role) {
   if (role === 'evaluator') return 'evaluator';
   if (role === 'employer') return 'employer';
   if (role === 'admin') return 'admin';
+  // 'student' gets its own persona: personal-assessment surfaces plus the
+  // SCHOOL section (My Class / Join Class). Anything unknown stays individual.
+  if (role === 'student') return 'student';
   return 'individual';
 }
 
@@ -148,29 +152,31 @@ function nav(id, groups) {
 const navKey = { PLATFORM: 'platform', KNOWLEDGE: 'knowledge', SCHOOL: 'school', ACCOUNT: 'account', EVALUATION: 'evaluation', TALENT: 'talent', ADMIN: 'admin' };
 
 const PERSONA_NAV = {
+  // Labels are i18n keys (nav.items.*) resolved at render time — switching
+  // language re-renders the shell instantly.
   individual: nav('individual', [
     {
       label: 'PLATFORM',
       items: [
-        { path: '/app/dashboard', label: 'Home', icon: Home },
-        { path: '/app/individual', label: 'My Assessment', icon: Sparkles },
-        { path: '/app/progress', label: 'Progress', icon: TrendingUp },
-        { path: '/app/report', label: 'Reports', icon: FileText },
+        { path: '/app/dashboard', label: 'nav.items.home', icon: Home },
+        { path: '/app/individual', label: 'nav.items.my_assessment', icon: Sparkles },
+        { path: '/app/progress', label: 'nav.items.progress', icon: TrendingUp },
+        { path: '/app/report', label: 'nav.items.reports', icon: FileText },
       ],
     },
     {
       label: 'KNOWLEDGE',
       items: [
-        { path: '/app/pillars', label: 'Four Pillars', icon: Brain },
-        { path: '/app/framework', label: 'Framework Guide', icon: Map },
-        { path: '/app/intervention-plan', label: 'Intervention Plan', icon: BookOpen, entitlement: 'interventionPlans' },
-        { path: '/app/my-evaluator', label: 'My Evaluator', icon: UserCheck },
+        { path: '/app/pillars', label: 'nav.items.four_pillars', icon: Brain },
+        { path: '/app/framework', label: 'nav.items.framework', icon: Map },
+        { path: '/app/intervention-plan', label: 'nav.items.intervention', icon: BookOpen, entitlement: 'interventionPlans' },
+        { path: '/app/my-evaluator', label: 'nav.items.my_evaluator', icon: UserCheck },
       ],
     },
     {
       label: 'ACCOUNT',
       items: [
-        { path: '/app/settings', label: 'Settings', icon: SettingsIcon },
+        { path: '/app/settings', label: 'nav.items.settings', icon: SettingsIcon },
       ],
     },
   ]),
@@ -178,17 +184,17 @@ const PERSONA_NAV = {
     {
       label: 'PLATFORM',
       items: [
-        { path: '/app/dashboard', label: 'Home', icon: Home },
-        { path: '/app/individual', label: 'My Assessment', icon: Sparkles },
-        { path: '/app/progress', label: 'Progress', icon: TrendingUp },
-        { path: '/app/report', label: 'Reports', icon: FileText },
+        { path: '/app/dashboard', label: 'nav.items.home', icon: Home },
+        { path: '/app/individual', label: 'nav.items.my_assessment', icon: Sparkles },
+        { path: '/app/progress', label: 'nav.items.progress', icon: TrendingUp },
+        { path: '/app/report', label: 'nav.items.reports', icon: FileText },
       ],
     },
     {
       label: 'SCHOOL',
       items: [
-        { path: '/app/my-class', label: 'My Class', icon: GraduationCap },
-        { path: '/app/school/join', label: 'Join Class', icon: BookOpen },
+        { path: '/app/my-class', label: 'nav.items.my_class', icon: GraduationCap },
+        { path: '/app/school/join', label: 'nav.items.join_class', icon: BookOpen },
       ],
     },
     {
@@ -200,9 +206,9 @@ const PERSONA_NAV = {
     {
       label: 'SCHOOL',
       items: [
-        { path: '/app/dashboard', label: 'Dashboard', icon: Home },
-        { path: '/app/school', label: 'Classes', icon: BookOpen },
-        { path: '/app/school/reports', label: 'Reports', icon: FileText },
+        { path: '/app/dashboard', label: 'nav.items.dashboard', icon: Home },
+        { path: '/app/school', label: 'nav.items.classes', icon: BookOpen },
+        { path: '/app/school/reports', label: 'nav.items.school_reports', icon: FileText },
       ],
     },
     {
@@ -214,9 +220,9 @@ const PERSONA_NAV = {
     {
       label: 'EVALUATION',
       items: [
-        { path: '/app/dashboard', label: 'Dashboard', icon: Home },
-        { path: '/app/evaluator', label: 'Evaluator Dashboard', icon: Users },
-        { path: '/app/interview', label: 'Interview Studio', icon: UserCheck },
+        { path: '/app/dashboard', label: 'nav.items.dashboard', icon: Home },
+        { path: '/app/evaluator', label: 'nav.items.evaluator_dashboard', icon: Users },
+        { path: '/app/interview', label: 'nav.items.interview_studio', icon: UserCheck },
       ],
     },
     {
@@ -228,9 +234,9 @@ const PERSONA_NAV = {
     {
       label: 'TALENT',
       items: [
-        { path: '/app/talent', label: 'Talent Console', icon: Users },
-        { path: '/app/enterprise', label: 'Deploy (QGRA+)', icon: Building2, entitlement: 'deployedBatteries' },
-        { path: '/app/role-fit', label: 'Role Fit', icon: Target, entitlement: 'roleFit' },
+        { path: '/app/talent', label: 'nav.items.talent_console', icon: Users },
+        { path: '/app/enterprise', label: 'nav.items.deploy', icon: Building2, entitlement: 'deployedBatteries' },
+        { path: '/app/role-fit', label: 'nav.items.role_fit', icon: Target, entitlement: 'roleFit' },
       ],
     },
     {
@@ -242,10 +248,10 @@ const PERSONA_NAV = {
     {
       label: 'ADMIN',
       items: [
-        { path: '/app/dashboard', label: 'Dashboard', icon: Home },
-        { path: '/app/admin', label: 'Admin Panel', icon: Shield },
-        { path: '/app/school', label: 'School', icon: BookOpen },
-        { path: '/app/evaluator', label: 'Evaluator', icon: Users },
+        { path: '/app/dashboard', label: 'nav.items.dashboard', icon: Home },
+        { path: '/app/admin', label: 'nav.items.admin_panel', icon: Shield },
+        { path: '/app/school', label: 'nav.items.school', icon: BookOpen },
+        { path: '/app/evaluator', label: 'nav.items.evaluator', icon: Users },
       ],
     },
     {
@@ -379,8 +385,14 @@ function Sidebar({ collapsed }) {
             {group.items.map(({ path, label: labelKey, icon: Icon, entitlement }) => {
               const locked = entitlement ? !can(plan, entitlement) : false;
               const label = t(labelKey);
+              // data-tour lets the first-run tour spotlight individual links
+              // (e.g. Classes for teachers, My Class / Join Class for students).
+              const tourTarget = /nav\.items\.(classes|my_class|join_class)$/.test(labelKey)
+                ? `nav-${labelKey.split('.').pop().replace('_', '-')}`
+                : null;
               return (
-                <NavLink key={path} to={path} end={path === '/app/dashboard'} className={navItemClass} title={locked ? `${label} · ${plan.name} plan` : label}>
+                <NavLink key={path} to={path} end={path === '/app/dashboard'} className={navItemClass} title={locked ? `${label} · ${plan.name} plan` : label}
+                  {...(tourTarget ? { 'data-tour': tourTarget } : {})}>
                   <Icon size={16} strokeWidth={1.5} className={locked ? 'opacity-50' : ''} />
                   {!collapsed && (
                     <span className={`truncate ${locked ? 'opacity-50' : ''}`}>{label}</span>
@@ -644,8 +656,8 @@ const SIDEBAR_KEY = 'qids-sidebar-collapsed';
 // First-run tour script, resolved per language at start time. Steps whose
 // selector doesn't exist at the current breakpoint fall back to a centered
 // card (mobile-safe).
-function tourSteps(t) {
-  return [
+function buildTourSteps(t, persona) {
+  const common = [
     {
       selector: '[data-tour="nav-rail"]',
       kicker: t('tour.rail_kicker'),
@@ -671,6 +683,35 @@ function tourSteps(t) {
       body: t('tour.theme_body'),
     },
   ];
+
+  // Persona-first steps: point each role at the workflow that defines it.
+  // Untranslated literals would leak English — every string is an i18n key.
+  const personaFirst = {
+    teacher: [
+      {
+        selector: '[data-tour="nav-classes"]',
+        kicker: t('tour.classes_kicker'),
+        title: t('tour.classes_title'),
+        body: t('tour.classes_body'),
+      },
+    ],
+    student: [
+      {
+        selector: '[data-tour="nav-my-class"]',
+        kicker: t('tour.my_class_kicker'),
+        title: t('tour.my_class_title'),
+        body: t('tour.my_class_body'),
+      },
+      {
+        selector: '[data-tour="nav-join-class"]',
+        kicker: t('tour.join_kicker'),
+        title: t('tour.join_title'),
+        body: t('tour.join_body'),
+      },
+    ],
+  };
+
+  return [...(personaFirst[persona] || []), ...common];
 }
 
 function AppShell() {
@@ -732,20 +773,33 @@ function AppShell() {
   }, []);
 
   // First-run tour: starts once per user, after the shell has rendered.
-  // Steps are re-resolved per language so a replay always speaks the
+  // Script is persona-aware (teachers get Classes-first, students get the
+  // school loop) and re-resolved per language so a replay always speaks the
   // user's current language.
+  const tourPersona = personaFor(userProfile?.role);
   useEffect(() => {
     if (!user || tourSteps !== null || isTourDone()) return;
-    const tid = setTimeout(() => setTourSteps(tourSteps(t)), 600);
+    if (userProfile) {
+      // Profile known — persona steps are correct; give the shell a beat.
+      // NOTE: call buildTourSteps — the `tourSteps` STATE below shadows the
+      // module function inside this component, so a bare `tourSteps(...)`
+      // call here throws "is not a function" and the first-run tour never
+      // shows. (That shadowing was exactly the old bug.)
+      const tid = setTimeout(() => setTourSteps(buildTourSteps(t, tourPersona)), 600);
+      return () => clearTimeout(tid);
+    }
+    // Profile still loading — never block the tour on a slow/failed fetch;
+    // fall back to the generic script after a short grace period.
+    const tid = setTimeout(() => setTourSteps(buildTourSteps(t, 'individual')), 2500);
     return () => clearTimeout(tid);
-  }, [user, tourSteps, t]);
+  }, [user, userProfile, tourSteps, t, tourPersona]);
 
   // "Replay tour" palette action re-arms the tour.
   useEffect(() => {
-    const onStart = () => { resetTour(); setTourSteps(tourSteps(t)); };
+    const onStart = () => { resetTour(); setTourSteps(buildTourSteps(t, tourPersona)); };
     window.addEventListener('qids:start-tour', onStart);
     return () => window.removeEventListener('qids:start-tour', onStart);
-  }, [t]);
+  }, [t, tourPersona]);
 
   useEffect(() => {
     if (!user) return;
@@ -896,7 +950,7 @@ function AppShell() {
               } />
               <Route path="school/create" element={
                 <RoleRoute roles={['teacher', 'admin']}>
-                  <PageSuspense><ClassManager /></PageSuspense>
+                  <PageSuspense><ClassCreate /></PageSuspense>
                 </RoleRoute>
               } />
               <Route path="school/class/:classId" element={

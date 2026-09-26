@@ -56,13 +56,28 @@ export default function Mode() {
   const [selected, setSelected] = useState('individual');
   const navigate = useNavigate();
   const {
-    user
+    user,
+    userProfile
   } = useAuth();
   const current = MODES.find(mode => mode.id === selected) ?? MODES[0];
   const isAvailable = current.status === 'CURRENT';
   const handleContinue = () => {
     if (!current.to) return;
-    navigate(user ? current.to : `/signup?context=${current.id}`);
+    if (!user) {
+      navigate(`/signup?context=${current.id}`);
+      return;
+    }
+    // Role-aware targets: the school surfaces are split by persona (teachers
+    // manage, students join). Dropping everyone on /app/school bounced
+    // students straight off a teacher-only guard.
+    const role = userProfile?.role || 'individual';
+    let target = current.to;
+    if (current.id === 'school') {
+      if (role === 'student') target = '/app/my-class';
+      else if (role === 'teacher' || role === 'admin') target = '/app/school';
+      else target = '/app/school/join';
+    }
+    navigate(target);
   };
   return <div className="min-h-screen bg-background text-on-surface">
       <header className="flex min-h-20 items-center justify-between border-b border-border px-6 lg:px-12">

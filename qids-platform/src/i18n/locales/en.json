@@ -41,7 +41,8 @@
       "assess": "Assess",
       "report": "Report",
       "pillars": "Pillars",
-      "more": "More"
+      "more": "More",
+      "my_class": "My Class"
     },
     "new_assessment": "New Assessment",
     "sign_out": "Sign Out",
@@ -107,12 +108,21 @@
     "finish": "Finish",
     "end": "End tour",
     "step": "STEP {{n}} OF {{total}}",
-    "dialog": "Product tour"
+    "dialog": "Product tour",
+    "classes_kicker": "YOUR CLASSES",
+    "classes_title": "Classes live here",
+    "classes_body": "Create a class, share its join code, assign assessments and watch progress fill in — all from this one section.",
+    "my_class_kicker": "YOUR CLASS",
+    "my_class_title": "My Class is home base",
+    "my_class_body": "Assessments your teacher assigns appear here automatically — no refresh needed. Start one and your score flows back to your teacher.",
+    "join_kicker": "ONE CODE",
+    "join_title": "Join your class with a code",
+    "join_body": "Your teacher gives you a 6-character code. Enter it once and you are in the class for the whole year."
   },
   "auth": {
     "brand_line1": "Quadrant Intelligence",
-    "brand_line2": "Diagnostic System",
-    "brand_full": "Quadrant Intelligence Diagnostic System",
+    "brand_line2": "Development System",
+    "brand_full": "Quadrant Intelligence Development System",
     "sign_in": "Sign In",
     "signing_in": "Authenticating...",
     "email": "Email Address",
@@ -177,7 +187,9 @@
     "greeting_morning": "Good morning",
     "greeting_afternoon": "Good afternoon",
     "greeting_evening": "Good evening",
-    "tagline": "STRUCTURE · CLARITY · DEPTH"
+    "tagline": "STRUCTURE · CLARITY · DEPTH",
+    "area_restricted": "That area is restricted",
+    "no_permission_for": "You don't have permission to open"
   },
   "err": {
     "title": "Something went wrong",
@@ -265,5 +277,23 @@
   "AdminPanel": {
     "recent_errors": "RECENT ERRORS",
     "no_errors_reported": "No errors reported — system healthy"
+  },
+  "classCreate": {
+    "back": "Back to classes",
+    "kicker": "SCHOOL",
+    "title": "Create a class",
+    "subtitle": "Set up your class in seconds — students join with the 6-character code you get next.",
+    "class_name": "Class name",
+    "class_name_ph": "e.g. Class 9-A",
+    "grade": "Grade level",
+    "grade_ph": "e.g. Grade 9",
+    "subject": "Subject",
+    "subject_ph": "e.g. Science",
+    "create": "Create class",
+    "creating": "Creating…",
+    "created": "Class created!",
+    "create_failed": "Could not create class — try again",
+    "cancel": "Cancel",
+    "code_note": "A unique join code is generated automatically — share it or the invite link from the class page."
   }
 }

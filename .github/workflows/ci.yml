@@ -32,6 +32,11 @@ jobs:
       - name: Engine smoke tests
         run: npm run test:engine
 
+      # Advisory: fails only on critical vulns in production deps, and even
+      # then doesn't block the pipeline (shown as an annotation for triage).
+      - name: Dependency audit (non-blocking)
+        run: npm audit --omit=dev --audit-level=critical || true
+
       # Playwright e2e smoke — public surfaces only (landing, auth, guards,
       # language switching). No project credentials needed, runs on every push.
       - name: Install Playwright browser
@@ -39,3 +44,35 @@ jobs:
 
       - name: E2E smoke tests
         run: npx playwright test
+
+  # Authenticated school-loop e2e (teacher → class → assignment → student join
+  # → start). Opt-in because it runs against a live Firebase project:
+  # enable by adding the repo secret VITE_FIREBASE_* set AND the repository
+  # variable RUN_SCHOOL_E2E=true, plus E2E_FIREBASE_* env vars in CI secrets.
+  school-loop-e2e:
+    if: vars.RUN_SCHOOL_E2E == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: qids-platform/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright browser
+        run: npx playwright install --with-deps chromium
+
+      - name: Restore dev env
+        run: |
+          cat > .env <<EOF
+          ${E2E_FIREBASE_ENV}
+          EOF
+        env:
+          E2E_FIREBASE_ENV: ${{ secrets.E2E_FIREBASE_ENV }}
+      - name: School loop e2e
+        run: E2E_RUN=1 npx playwright test school-loop

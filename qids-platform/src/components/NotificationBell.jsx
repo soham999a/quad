@@ -6,6 +6,7 @@ import {
   subscribeNotifications,
   markNotificationRead,
   markAllNotificationsRead,
+  cleanupOldNotifications,
 } from '../services/notificationService';
 import { Bell, ClipboardList, UserPlus, UserCheck, CheckCircle2 } from 'lucide-react';
 
@@ -38,6 +39,9 @@ export default function NotificationBell() {
 
   useEffect(() => {
     if (!user) return undefined;
+    // Opportunistic hygiene: retire old read notifications so long-lived
+    // accounts don't accumulate an unbounded feed.
+    cleanupOldNotifications(user.uid);
     return subscribeNotifications(user.uid, setItems);
   }, [user]);
 

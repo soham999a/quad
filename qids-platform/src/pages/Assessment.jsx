@@ -12,7 +12,7 @@ import { useApp } from '../context/AppContext';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { saveAssessment, getStudentEvaluator, listPublicEvaluators, assignEvaluator, removeAssignment } from '../services/firestoreService';
-import { recordSchoolAttempt } from '../services/schoolService';
+import { recordSchoolAttempt, getSchoolAssessment } from '../services/schoolService';
 import { notifyAttemptRecorded } from '../services/notificationService';
 import { logEvent } from '../lib/analytics';
 import { Save, ChevronRight, ChevronLeft, Check, CheckCircle, AlertCircle, ClipboardList, Brain, Heart, Users, Shield, ArrowRight } from 'lucide-react';
@@ -1384,15 +1384,23 @@ export default function Assessment() {
           // School-assigned flow: log the attempt so the teacher's roster and
           // the student's assignment card can reflect completion.
           if (classIdParam && schoolAssessmentIdParam) {
+            // Teacher context comes from the assignment doc (authoritative) —
+            // localStorage is only a fallback, so a student who cleared storage
+            // mid-assessment can never orphan the attempt's teacher link.
+            let ctx = assignmentCtx;
+            try {
+              const asg = await getSchoolAssessment(schoolAssessmentIdParam);
+              if (asg) ctx = { teacherUid: asg.teacherUid, title: asg.title };
+            } catch { /* offline — fall back to the cached ctx */ }
             recordSchoolAttempt({
               schoolAssessmentId: schoolAssessmentIdParam,
               classId: classIdParam,
-              teacherUid: assignmentCtx?.teacherUid || null,
+              teacherUid: ctx?.teacherUid || null,
               studentUid: user.uid,
               studentName: userProfile?.name || user.displayName || 'Student',
               assessmentId: savedId,
             }).catch(err => console.error('schoolAttempt log failed:', err));
-            notifyAttemptRecorded({ studentUid: user.uid, title: assignmentCtx?.title || 'class assessment' });
+            notifyAttemptRecorded({ studentUid: user.uid, title: ctx?.title || 'class assessment' });
           }
         } else {
           console.error('Save failed: saveAssessment returned null');

@@ -936,6 +936,20 @@ body.qids-focus .app-content {
   outline-offset: 2px;
 }
 
+/* HeroDiagram — slow orbital drift on pointer-fine devices; static otherwise */
+@keyframes heroOrbit {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+.hero-orbit {
+  transform-origin: 260px 260px;
+}
+@media (pointer: fine) and (prefers-reduced-motion: no-preference) {
+  .hero-orbit {
+    animation: heroOrbit 120s linear infinite;
+  }
+}
+
 /* Landing scroll reveal — sections rise gently into view. Applied via
    IntersectionObserver; reduced-motion users get static content instead. */
 .reveal {
@@ -950,6 +964,202 @@ body.qids-focus .app-content {
 @media (prefers-reduced-motion: reduce) {
   .reveal { opacity: 1; transform: none; transition: none; }
 }
+
+/* ─── Landing v2 — living-atlas motion system ────────────────────────────
+ * Every animation is gated behind prefers-reduced-motion: no-preference
+ * (or explicitly neutralized in the reduce block); the static fallback
+ * is simply the final visual state. */
+
+/* Hero: blueprint lines draw themselves in, nodes and labels pop after. */
+.hero-draw-svg line {
+  stroke-dasharray: 700;
+  stroke-dashoffset: 700;
+  animation: heroDraw 1.3s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  animation-delay: var(--draw-delay, 0.1s);
+}
+@keyframes heroDraw {
+  to { stroke-dashoffset: 0; }
+}
+.hero-pop {
+  opacity: 0;
+  transform: scale(0.3);
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: heroPop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+  animation-delay: var(--pop-delay, 1.2s);
+}
+@keyframes heroPop {
+  to { opacity: 1; transform: scale(1); }
+}
+.hero-fade {
+  opacity: 0;
+  animation: heroFade 0.9s ease forwards;
+  animation-delay: var(--pop-delay, 1.3s);
+}
+@keyframes heroFade {
+  to { opacity: 1; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .hero-draw-svg line { stroke-dashoffset: 0; animation: none; }
+  .hero-pop, .hero-fade { opacity: 1; transform: none; animation: none; }
+}
+
+/* Hero pointer parallax (transform applied directly via JS, no re-renders). */
+.hero-parallax {
+  transition: transform 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+  will-change: transform;
+}
+
+/* Atlas ticker — a slow marquee of the system's vocabulary. */
+@keyframes tickerScroll {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+.atlas-ticker {
+  overflow: hidden;
+  border-bottom: 1px solid var(--border);
+}
+.atlas-ticker-track {
+  display: flex;
+  width: max-content;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .atlas-ticker-track { animation: tickerScroll 38s linear infinite; }
+}
+.atlas-ticker:hover .atlas-ticker-track { animation-play-state: paused; }
+
+/* Pipeline pulse — a heartbeat traveling through the architecture chain. */
+@keyframes pipelinePulse {
+  0%, 100% { border-color: var(--border); }
+  50% { border-color: var(--gold); }
+}
+.pulse-box {
+  animation: pipelinePulse 2.8s ease-in-out infinite;
+  animation-delay: var(--pulse-delay, 0s);
+}
+@media (prefers-reduced-motion: reduce) {
+  .pulse-box { animation: none; }
+}
+
+/* Scroll progress — a 2px gold hairline under the header. */
+.scroll-progress {
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 2px;
+  width: 0%;
+  background: var(--gold);
+  z-index: 60;
+  pointer-events: none;
+}
+
+/* Section rail — instrument-style diamond markers, desktop only. */
+.section-rail {
+  position: fixed;
+  right: 22px;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 40;
+  display: none;
+  flex-direction: column;
+  gap: 16px;
+}
+@media (min-width: 1280px) {
+  .section-rail { display: flex; }
+}
+.rail-dot {
+  width: 9px;
+  height: 9px;
+  border: 1px solid var(--muted-foreground);
+  background: transparent;
+  transform: rotate(45deg);
+  transition: border-color 0.25s ease, background 0.25s ease, transform 0.25s ease;
+  cursor: pointer;
+  padding: 0;
+}
+.rail-dot:hover { border-color: var(--gold); }
+.rail-dot.active {
+  background: var(--gold);
+  border-color: var(--gold);
+  transform: rotate(45deg) scale(1.3);
+}
+
+/* Staggered children — grids cascade in when their section reveals. */
+.reveal-group > * {
+  opacity: 0;
+  transform: translateY(16px);
+  transition: opacity 0.6s cubic-bezier(0.22, 1, 0.36, 1), transform 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+  transition-delay: calc(var(--stagger-i, 0) * 70ms);
+}
+.reveal-visible .reveal-group > * {
+  opacity: 1;
+  transform: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .reveal-group > * { opacity: 1; transform: none; transition: none; }
+}
+
+/* Credential tilt — pointer-driven 3D lean on the sample credential card. */
+.tilt-card {
+  transition: transform 0.25s ease;
+  transform-style: preserve-3d;
+  will-change: transform;
+}
+@media (prefers-reduced-motion: reduce) {
+  .tilt-card { transition: none; }
+}
+
+/* ─── Landing v3 — signature interactions ─────────────────────────────── */
+
+/* Hero line-mask reveal — headline lines rise out of their baselines. */
+.mask-line { display: block; overflow: hidden; }
+.mask-line > span {
+  display: block;
+  transform: translateY(115%);
+  animation: lineUp 0.9s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  animation-delay: var(--d, 0s);
+}
+@keyframes lineUp { to { transform: translateY(0); } }
+@media (prefers-reduced-motion: reduce) {
+  .mask-line > span { transform: none; animation: none; }
+}
+
+/* Cursor companion — gold diamond + trailing hairline diamond (desktop only). */
+.cursor-dot, .cursor-ring {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 90;
+  pointer-events: none;
+  opacity: 0;
+}
+.cursor-dot {
+  width: 7px;
+  height: 7px;
+  background: var(--gold);
+  transform: rotate(45deg);
+}
+.cursor-ring {
+  width: 30px;
+  height: 30px;
+  border: 1px solid var(--gold-line, rgba(201, 160, 92, 0.45));
+  transform: rotate(45deg);
+  transition: width 0.2s ease, height 0.2s ease, border-color 0.2s ease;
+}
+.cursor-ring.grow { width: 46px; height: 46px; border-color: var(--gold); }
+
+/* FAQ — smooth height instead of a snap toggle. */
+.faq-a { display: grid; grid-template-rows: 0fr; transition: grid-template-rows 0.35s cubic-bezier(0.4, 0, 0.2, 1); }
+details[open] > .faq-a { grid-template-rows: 1fr; }
+.faq-a > div { overflow: hidden; min-height: 0; }
+
+/* Credential bars draw in when the card enters. */
+.bar-fill { transition: width 1.1s cubic-bezier(0.22, 1, 0.36, 1); }
+@media (prefers-reduced-motion: reduce) { .bar-fill { transition: none; } }
+
+/* Interactive radar — drag affordances. */
+.radar-live { touch-action: none; cursor: crosshair; outline: none; }
+.radar-live:focus-visible { outline: 1px solid var(--gold); outline-offset: 6px; }
 
 /* Tour spotlight ring — animated gold outline around the highlighted element. */
 .qids-tour-ring {
@@ -1083,4 +1293,84 @@ body.qids-focus .app-content {
 [data-theme="light"] ::selection {
   background: var(--gold-soft);
   color: var(--foreground);
+}
+
+/* ─── QidsMark — the traveling cube ──────────────────────────────────────────
+ * The gold cube departs its quadrant, drifts across the cross-hairlines
+ * (which pulse gold as it passes), and re-seats in the next one. One hop per
+ * cycle along the ring TR → TL → BL → BR; the departed cell keeps a faint
+ * afterglow. Pure CSS keyframes — the component only moves the origin/target
+ * CSS variables and remounts the cube each cycle so the animation restarts.
+ * Seamless: cycle N ends seated exactly where cycle N+1 begins.
+ */
+.qids-logo { position: relative; }
+
+/* The traveling cube — a free-floating element interpolated from the
+ * previous cell (--px/--py) to the next (--lx/--ly). It rests, lifts,
+ * crosses the center, overshoots the arrival and settles. The component
+ * remounts it each cycle with fresh coordinates, so `infinite` loops are
+ * seamless: cycle N ends seated exactly where cycle N+1 begins. */
+.qids-logo .qids-cube {
+  animation: qids-travel var(--qids-period, 4.2s) var(--qids-ease, cubic-bezier(0.65, 0, 0.35, 1)) infinite;
+  will-change: transform;
+}
+@keyframes qids-travel {
+  0%, 26% {                       /* rest at the origin seat */
+    transform: translate(var(--px), var(--py)) scale(1);
+  }
+  34% {                           /* depart: lift as it leaves the seat */
+    transform:
+      translate(calc(var(--px) + (var(--lx) - var(--px)) * 0.18),
+                calc(var(--py) + (var(--ly) - var(--py)) * 0.18))
+      scale(1.22);
+  }
+  58% {                           /* mid-crossing of the center */
+    transform:
+      translate(calc(var(--px) + (var(--lx) - var(--px)) * 0.5),
+                calc(var(--py) + (var(--ly) - var(--py)) * 0.5))
+      scale(0.94);
+  }
+  78% {                           /* arrive with a soft overshoot */
+    transform: translate(var(--lx), var(--ly)) scale(1.16);
+  }
+  86%, 100% {                     /* settle — the cycle ends seated */
+    transform: translate(var(--lx), var(--ly)) scale(1);
+  }
+}
+
+/* Afterglow where the cube just departed */
+.qids-logo .qids-ghost {
+  animation: qids-ghost var(--qids-period, 4.2s) var(--qids-ease, cubic-bezier(0.65, 0, 0.35, 1)) infinite;
+}
+@keyframes qids-ghost {
+  0%, 30%   { opacity: 0; }
+  40%       { opacity: 0.35; }
+  68%, 100% { opacity: 0; }
+}
+
+/* Cross-hairlines pulse gold as the cube crosses the center */
+.qids-logo .qids-cross-v,
+.qids-logo .qids-cross-h {
+  animation: qids-cross-pulse var(--qids-period, 4.2s) var(--qids-ease, cubic-bezier(0.65, 0, 0.35, 1)) infinite;
+}
+@keyframes qids-cross-pulse {
+  0%, 44%   { stroke: currentColor; opacity: 0.45; }
+  55%       { stroke: var(--gold); opacity: 0.95; }
+  70%, 100% { stroke: currentColor; opacity: 0.45; }
+}
+
+/* Reduced motion — the cube sits permanently in the top-right (the original
+ * brand position). The component renders that as a static rect; these rules
+ * are the belt-and-braces fallback if JS state ever disagrees. */
+@media (prefers-reduced-motion: reduce) {
+  .qids-logo .qids-cube,
+  .qids-logo .qids-ghost,
+  .qids-logo .qids-cross-v,
+  .qids-logo .qids-cross-h {
+    animation: none !important;
+  }
+  .qids-logo .qids-cube,
+  .qids-logo .qids-ghost { opacity: 0; }
+  .qids-logo .qids-cross-v,
+  .qids-logo .qids-cross-h { opacity: 0.45; stroke: currentColor; }
 }

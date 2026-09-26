@@ -34,13 +34,25 @@ export default function ClassManager() {
   useEffect(() => {
     if (!classId) return;
     setLoading(true);
-    Promise.all([getClass(classId), getClassStudents(classId), getClassAssessments(classId), getClassAttempts(classId)]).then(([c, s, a, at]) => {
+    // getClassAttempts previously threw permission-denied for every teacher
+    // (classId-only query vs uid-provable rules), failing Promise.all and
+    // rendering "Class not found" even when the class doc existed. The other
+    // three loads must never be masked by one optional surface failing.
+    Promise.all([
+      getClass(classId),
+      getClassStudents(classId),
+      getClassAssessments(classId),
+      getClassAttempts(classId, user?.uid).catch(e => {
+        console.warn('attempt log unavailable:', e?.code || e?.message);
+        return [];
+      }),
+    ]).then(([c, s, a, at]) => {
       setCls(c);
       setStudents(s);
       setAssignments(a);
       setAttempts(at);
     }).catch(() => toast('Failed to load class', 'error')).finally(() => setLoading(false));
-  }, [classId]);
+  }, [classId, user?.uid]);
 
   const attemptsFor = (assessmentId) => attempts.filter(a => a.schoolAssessmentId === assessmentId);
   const shareClass = async () => {
@@ -112,10 +124,10 @@ export default function ClassManager() {
       <div className="card p-6 mb-8 flex items-center justify-between">
         <div>
           <div className="text-technical-sm font-technical-sm text-surface-variant uppercase tracking-widest mb-1">{t("ClassManager.class_join_code")}</div>
-          <div className="text-[28px] font-technical-sm text-primary tracking-widest">{cls.classCode}</div>
+          <div data-tour="class-code" className="text-[28px] font-technical-sm text-primary tracking-widest">{cls.classCode}</div>
         </div>
         <div className="flex gap-2 flex-wrap">
-          <button onClick={copyCode} data-tour="class-code" className="btn-outline flex items-center gap-2">
+          <button onClick={copyCode} className="btn-outline flex items-center gap-2">
             <Copy size={14} />{t("ClassManager.copy_code")}</button>
           <button onClick={shareClass} className="btn-outline flex items-center gap-2">
             <Share2 size={14} />{t("ClassManager.share")}</button>

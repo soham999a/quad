@@ -1,15 +1,13 @@
 // Groq AI service — dynamic question generation for QIDS assessments
-// Uses llama-3.3-70b-versatile via a serverless proxy (/api/generate-questions)
-// so the API key stays server-side and never ships in the client bundle.
-// Falls back to a direct browser call when no proxy is available (local dev).
+// All calls go through the serverless proxy (/api/generate-questions) so the
+// API key stays server-side and never ships in the client bundle. There is
+// deliberately NO direct-browser fallback: a VITE_ prefixed key would be
+// compiled into the public JS bundle and harvestable by anyone.
 
 import { getAuth } from 'firebase/auth';
 import { auth } from '../firebase';
 
-const GROQ_API_KEY = import.meta.env.VITE_GROQ_API_KEY;
 const GROQ_PROXY_URL = '/api/generate-questions';
-const GROQ_API_URL = 'https://api.groq.com/openai/v1/chat/completions';
-const MODEL = 'openai/gpt-oss-120b';
 
 // ─── Core API call ────────────────────────────────────────────────────────────
 let idTokenCache = { token: null, at: 0 };
@@ -56,29 +54,14 @@ async function groqChat(messages, options = {}) {
     if (res.status !== 404 && res.status !== 405) {
       throw new Error(err.error?.message || `Groq proxy error ${res.status}: ${JSON.stringify(err)}`);
     }
-    if (!GROQ_API_KEY) throw new Error('VITE_GROQ_API_KEY not configured');
-    const direct = await fetch(GROQ_API_URL, {
-      signal: timeoutCtl.signal,
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${GROQ_API_KEY}`,
-      },
-      body: JSON.stringify({
-        model: MODEL,
-        messages,
-        temperature: payload.temperature,
-        max_tokens: payload.maxTokens,
-        response_format: payload.jsonMode ? { type: 'json_object' } : undefined,
-      }),
-    });
-    if (!direct.ok) {
-      const derr = await direct.json().catch(() => ({}));
-      throw new Error(derr.error?.message || `Groq API error ${direct.status}: ${JSON.stringify(derr)}`);
-    }
-    const ddata = await direct.json();
+    // 404/405 here means the proxy isn't deployed (plain `vite` dev server).
+    // Fail with a clear, actionable message instead of ever calling Groq from
+    // the browser — AI generation simply requires the deployed proxy.
     clearTimeout(timeoutId);
-    return ddata.choices[0].message.content;
+    throw new Error(
+      'AI generation is unavailable: the /api/generate-questions proxy is not deployed. '
+      + 'Run the app behind the serverless deployment (or mock the endpoint in dev).'
+    );
   }
 
   const data = await res.json();
