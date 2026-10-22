@@ -11,6 +11,7 @@
     "test:e2e:run": "node tests/visual_test.mjs",
     "test:engine": "tsc -p tests/tsconfig.smoke.json && node -e \"require('fs').writeFileSync('tests/.smoke-out/package.json', JSON.stringify({type:'commonjs'}))\" && node tests/.smoke-out/tests/engine-smoke.cjs",
     "test:runner": "node tests/runner_test.mjs",
+    "test:kids": "node tests/kids_walkthrough.mjs",
     "pretest:e2e": "echo 'Make sure dev server is running: npm run dev'",
     "test:e2e:pw": "playwright test"
   },

@@ -5,7 +5,7 @@ import {
   ChevronRight, Menu, LogOut, Home, BookOpen, X, Shield, Users, Sparkles, Building2, Target, Lock,
   PanelLeftClose, PanelLeftOpen,
   Settings as SettingsIcon,
-  Search, Sun, Moon, LayoutGrid, History, GraduationCap,
+  Search, Sun, Moon, LayoutGrid, History, GraduationCap, Puzzle,
 } from 'lucide-react';
 import { PILLARS, mergeEvaluationScores } from './data/qidsData';
 import QidsMark from './components/QidsMark';
@@ -70,6 +70,9 @@ const ClassAnalytics = lazy(() => import('./pages/school/ClassAnalytics'));
 const StudentJoin = lazy(() => import('./pages/school/StudentJoin'));
 const SchoolReports = lazy(() => import('./pages/school/SchoolReports'));
 const PublicCredential = lazy(() => import('./pages/credential/PublicCredential'));
+const KidsHome = lazy(() => import('./pages/kids/KidsHome'));
+const KidsStory = lazy(() => import('./pages/kids/KidsStory'));
+const KidsGuardian = lazy(() => import('./pages/kids/KidsGuardian'));
 
 function PageSuspense({ children }) {
   return (
@@ -149,7 +152,7 @@ function nav(id, groups) {
 
 // Sidebar/palette labels are translation keys, resolved at render time so a
 // language switch re-renders the shell instantly. Icons stay code-side.
-const navKey = { PLATFORM: 'platform', KNOWLEDGE: 'knowledge', SCHOOL: 'school', ACCOUNT: 'account', EVALUATION: 'evaluation', TALENT: 'talent', ADMIN: 'admin' };
+const navKey = { PLATFORM: 'platform', KNOWLEDGE: 'knowledge', MODULES: 'modules', SCHOOL: 'school', ACCOUNT: 'account', EVALUATION: 'evaluation', TALENT: 'talent', ADMIN: 'admin' };
 
 const PERSONA_NAV = {
   // Labels are i18n keys (nav.items.*) resolved at render time — switching
@@ -174,6 +177,12 @@ const PERSONA_NAV = {
       ],
     },
     {
+      label: 'MODULES',
+      items: [
+        { path: '/app/kids', label: 'nav.items.kids_practice', icon: Puzzle },
+      ],
+    },
+    {
       label: 'ACCOUNT',
       items: [
         { path: '/app/settings', label: 'nav.items.settings', icon: SettingsIcon },
@@ -195,6 +204,12 @@ const PERSONA_NAV = {
       items: [
         { path: '/app/my-class', label: 'nav.items.my_class', icon: GraduationCap },
         { path: '/app/school/join', label: 'nav.items.join_class', icon: BookOpen },
+      ],
+    },
+    {
+      label: 'MODULES',
+      items: [
+        { path: '/app/kids', label: 'nav.items.kids_practice', icon: Puzzle },
       ],
     },
     {
@@ -868,6 +883,11 @@ function AppShell() {
               <Route path="my-evaluator" element={<PageSuspense><MyEvaluator /></PageSuspense>} />
               <Route path="my-class" element={<PageSuspense><MyClass /></PageSuspense>} />
               <Route path="questionnaires" element={<PageSuspense><Questionnaires /></PageSuspense>} />
+
+              {/* Kids 4Q Practice — child sub-profiles under this account. */}
+              <Route path="kids" element={<PageSuspense><KidsHome /></PageSuspense>} />
+              <Route path="kids/story/:chapterId" element={<PageSuspense><KidsStory /></PageSuspense>} />
+              <Route path="kids/guardian" element={<PageSuspense><KidsGuardian /></PageSuspense>} />
 
               {/* Pro entitlement: intervention plans. */}
               <Route path="intervention-plan" element={

@@ -11,6 +11,12 @@ import { deployRoleTrack } from '../src/core/runner/deploy';
 import { evaluateQidsAssessment, computeQidsPillarScores } from '../src/core/engine/qids';
 import { irtScale, computePII, getSkillShape, getCareerProfile, bandFromTScore, integrityBand } from '../src/core/engine/scoring';
 import { computeRFI, evaluateRoleMatches } from '../src/core/engine/scoring';
+import { CHAPTERS } from '../src/data/kids/story';
+import {
+  emptyProgress, deriveState, startSession, recordChoice, completeSession,
+  currentScene, normalizeProgress, practiceEventFor,
+} from '../src/core/kids/progress';
+import type { KidsChapter } from '../src/core/kids/types';
 import type { EnterpriseItem, EnterpriseTier, AnswerValue } from '../src/core/types';
 
 const TIER: EnterpriseTier = 'QGRA';const DEPLOY: Record<EnterpriseTier, Record<string, number>> = {
@@ -261,6 +267,7 @@ function main() {
   rfiSmoke();
   riqSmoke();
   edgeCaseSmoke();
+  kidsSmoke();
 
   console.log(`\n${pass} passed, ${fail} failed`);
 
@@ -276,6 +283,98 @@ function main() {
   ));
 
   if (fail > 0) process.exit(1);
+}
+
+// ─── Kids 4Q Practice ─────────────────────────────────────────────────────────
+// The practice module is derived-state only: these checks prove the story
+// data is well-formed and that nodes/badges/tallies follow the choice record
+// (the mock hardcoded all three).
+function playChapter(
+  progress: ReturnType<typeof emptyProgress>,
+  chapter: KidsChapter,
+  pickIndex: number,
+  stamp: string,
+): ReturnType<typeof emptyProgress> {
+  progress = startSession(progress, chapter.id, stamp);
+  let guard = 0;
+  while (guard++ < 30) {
+    const open = progress.sessions.find(s => s.chapterId === chapter.id && !s.completedAt);
+    if (!open) break;
+    const { scene } = currentScene(chapter, open);
+    if (!scene) break;
+    const choice = scene.choices[Math.min(pickIndex, scene.choices.length - 1)];
+    progress = recordChoice(progress, chapter.id, scene.id, choice, stamp);
+  }
+  return completeSession(progress, chapter.id, stamp);
+}
+
+function kidsSmoke() {
+  // 1. Content shape: every chapter is playable and every choice is weighted.
+  check('kids: six chapters on the map', CHAPTERS.length === 6, CHAPTERS.length);
+  check('kids: chapter ids are unique', new Set(CHAPTERS.map(c => c.id)).size === CHAPTERS.length);
+  const shapeOk = CHAPTERS.every(c =>
+    c.scenes.length >= 3
+    && c.scenes.every(s => s.choices.length >= 2 && s.choices.length <= 3)
+    && c.scenes.every(s => s.choices.every(ch => ch.weight >= 0 && ch.weight <= 3 && !!ch.consequence))
+    && !!c.bonus,
+  );
+  check('kids: every scene has 2–3 weighted choices and a bonus', shapeOk);
+  const quotients = new Set(CHAPTERS.map(c => c.quotient));
+  check('kids: cover all four quotients', quotients.size === 4, [...quotients]);
+
+  // 2. Fresh progress: first chapter is today's mission, nothing completed.
+  let progress = emptyProgress('test-child');
+  let state = deriveState(progress);
+  check('kids: fresh progress starts at chapter 1', state.currentChapter?.id === CHAPTERS[0].id, state.currentChapter?.id);
+  check('kids: fresh progress has no badges', state.badges.every(b => !b.earned));
+  check('kids: path has start plus six nodes', state.nodes.length === 7, state.nodes.length);
+  check('kids: start node leads the path',
+    state.nodes[0].state === 'current'
+    && state.nodes[1].state === 'current'
+    && state.nodes.slice(2).every(n => n.state === 'locked'));
+
+  // 3. One chapter played: node done, badge derived, tally recorded.
+  progress = playChapter(progress, CHAPTERS[0], 0, '2026-01-01T10:00:00.000Z');
+  state = deriveState(progress);
+  check('kids: chapter marked complete', state.completedChapterIds.includes(CHAPTERS[0].id));
+  check('kids: bonus scene played when the choice unlocked it', progress.sessions[0].choices.length === 4, progress.sessions[0].choices.length);
+  check('kids: badge derived from completion',
+    state.badges.find(b => b.id === 'empathy')?.earned === true
+    && state.badges.find(b => b.id === 'first_light')?.earned === true);
+  check('kids: next mission advances to chapter 2', state.currentChapter?.id === CHAPTERS[1].id, state.currentChapter?.id);
+  check('kids: tally records practice points', state.tally.EQ + state.tally.SQ + state.tally.IQ + state.tally.AQ > 0, state.tally);
+
+  // 4. A choice without unlockBonus keeps the chapter to its three scenes.
+  const noBonus = playChapter(emptyProgress('t2'), CHAPTERS[1], 1, '2026-01-02T10:00:00.000Z');
+  check('kids: bonus skipped when not unlocked', noBonus.sessions[0].choices.length === 3, noBonus.sessions[0].choices.length);
+
+  // 5. Replay replaces the tallied session instead of farming points.
+  const beforeReplay = deriveState(progress).tally.EQ;
+  progress = playChapter(progress, CHAPTERS[0], 0, '2026-01-03T10:00:00.000Z');
+  check('kids: replay does not double-count practice points', deriveState(progress).tally.EQ === beforeReplay,
+    { before: beforeReplay, after: deriveState(progress).tally.EQ });
+
+  // 6. Full path: every chapter + the completion badges.
+  let full = emptyProgress('t3');
+  CHAPTERS.forEach((c, i) => { full = playChapter(full, c, 1, `2026-02-0${i + 1}T10:00:00.000Z`); });
+  const fullState = deriveState(full);
+  check('kids: all chapters complete', fullState.chaptersComplete === 6, fullState.chaptersComplete);
+  check('kids: no current chapter when finished', fullState.currentChapter === null);
+  check('kids: full-path badge earned', fullState.badges.find(b => b.id === 'full_path')?.earned === true);
+  check('kids: four-corners badge earned', fullState.badges.find(b => b.id === 'balanced')?.earned === true, fullState.tally);
+
+  // 7. Persistence round-trip keeps the record and the practice signal.
+  const session = full.sessions[full.sessions.length - 1];
+  const withEvent = { ...full, events: [practiceEventFor(session, '2026-02-07T10:00:00.000Z')] };
+  const revived = normalizeProgress(JSON.parse(JSON.stringify(withEvent)), 't3');
+  check('kids: progress round-trips through storage', revived.sessions.length === full.sessions.length, revived.sessions.length);
+  check('kids: practice event survives round-trip', (revived.events ?? []).length === 1);
+  check('kids: derived state survives round-trip', deriveState(revived).chaptersComplete === 6);
+
+  // 8. Malformed documents never throw, and only known chapters survive.
+  const broken = normalizeProgress({ sessions: [{ chapterId: 'nope' }, null, { chapterId: 'logic' }] }, 't4');
+  check('kids: malformed sessions are dropped defensively',
+    broken.sessions.length === 1 && broken.sessions[0].chapterId === 'logic', broken.sessions.length);
 }
 
 main();

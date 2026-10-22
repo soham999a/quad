@@ -140,6 +140,33 @@ service cloud.firestore {
       allow delete: if isOwner(resource.data.uid) || isAdmin();
     }
 
+    // ── Kids 4Q Practice ────────────────────────────────────────────────────
+    // Child sub-profiles under a guardian/teacher account: no separate child
+    // login exists, so every document is owned by the signed-in adult's uid.
+    // Profiles are bounded strings only — no free-form child data.
+    match /kidsProfiles/{childId} {
+      allow read, update, delete: if isOwner(resource.data.uid) || isAdmin();
+      allow create: if isSignedIn()
+        && request.resource.data.uid == request.auth.uid
+        && request.resource.data.name is string
+        && request.resource.data.name.size() > 0
+        && request.resource.data.name.size() <= 40
+        && request.resource.data.avatar is string
+        && request.resource.data.avatar.size() <= 8
+        && request.resource.data.ageBand in ['8-10', '11-14'];
+    }
+
+    // Practice progress: sessions + derived-at-read telemetry. The doc id is
+    // pinned to `<uid>_<childId>` so one account cannot address another's log.
+    match /kidsProgress/{docId} {
+      allow read, update, delete: if isOwner(resource.data.uid) || isAdmin();
+      allow create: if isSignedIn()
+        && request.resource.data.uid == request.auth.uid
+        && docId == request.auth.uid + '_' + request.resource.data.childId
+        && request.resource.data.sessions is list
+        && request.resource.data.sessions.size() <= 200;
+    }
+
     // ── Evaluator Assignments ──────────────────────────────────────────────
     match /evaluatorAssignments/{assignmentId} {
       allow read: if isSignedIn() && (
