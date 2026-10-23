@@ -131,8 +131,12 @@ function PageSkeleton() {
  */
 function RouteEffects() {
   const { pathname, hash } = useLocation();
-  const firstRender = useRef(true);
+  // Compared rather than a "first render" flag: StrictMode runs mount effects
+  // twice in development, which would otherwise focus the page on first load.
+  const lastPath = useRef(pathname);
   useEffect(() => {
+    const navigated = lastPath.current !== pathname;
+    lastPath.current = pathname;
     if (hash) {
       const target = document.getElementById(hash.slice(1));
       if (target) { target.scrollIntoView({ block: 'start' }); return; }
@@ -142,7 +146,7 @@ function RouteEffects() {
     if (main) main.scrollTop = 0;
 
     // Leave focus alone on first paint; only announce real navigations.
-    if (firstRender.current) { firstRender.current = false; return; }
+    if (!navigated) return;
     const page = main || document.querySelector('main');
     if (page) {
       page.setAttribute('tabindex', '-1');
