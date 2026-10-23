@@ -40,7 +40,8 @@ export function computeClassAnalytics(
   for (const a of assessments) {
     const ps = a.pillarScores || { IQ: 0, EQ: 0, SQ: 0, AQ: 0 };
     for (const p of Object.values(PILLARS)) {
-      avgPillarScores[p.id] += ps[p.id] || 0;
+      const pid = p.id as PillarId;
+      avgPillarScores[pid] += ps[pid] || 0;
     }
     const score = a.unifiedScore || 0;
     totalUnified += score;
@@ -59,7 +60,8 @@ export function computeClassAnalytics(
   }
 
   for (const p of Object.values(PILLARS)) {
-    avgPillarScores[p.id] = Math.round(avgPillarScores[p.id] / count);
+    const pid = p.id as PillarId;
+    avgPillarScores[pid] = Math.round(avgPillarScores[pid] / count);
   }
 
   performers.sort((a, b) => b.score - a.score);
