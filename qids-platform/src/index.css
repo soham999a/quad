@@ -1185,6 +1185,13 @@ details[open] > .faq-a { grid-template-rows: 1fr; }
   top: 12px;
 }
 
+/* The page container receives programmatic focus on route changes so screen
+   readers announce the new page; it is not an interactive control, so it
+   should not paint a focus ring. */
+#qids-main:focus {
+  outline: none;
+}
+
 /* print CSS */
 @media print {
   body { background: white !important; color: black !important; }

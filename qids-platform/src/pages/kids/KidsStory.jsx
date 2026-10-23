@@ -1,9 +1,10 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { ArrowLeft, ArrowRight, Award, Check, Clock, Sparkles } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Award, Check, Clock, Sparkles, Volume2, VolumeX } from 'lucide-react';
 import usePageTitle from '../../lib/usePageTitle';
 import useKidsChild from '../../lib/useKidsChild';
+import { logEvent } from '../../lib/analytics';
 import { CHAPTERS, getChapter } from '../../data/kids/story';
 import {
   QUOTIENT_LABEL,
@@ -25,9 +26,12 @@ export default function KidsStory() {
   const chapter = useMemo(() => getChapter(chapterId), [chapterId]);
   usePageTitle(chapter ? chapter.title : 'Kids practice');
 
-  const { progress, commit, child, loading } = useKidsChild();
+  const { uid, progress, commit, child, loading } = useKidsChild();
   const [picked, setPicked] = useState(null);
+  const [speaking, setSpeaking] = useState(false);
   const completingRef = useRef(false);
+  const startedRef = useRef(false);
+  const stateRef = useRef({ choices: 0, completed: false, chapterId: null });
 
   const openSession = useMemo(() => {
     if (!progress || !chapter) return null;
@@ -43,6 +47,16 @@ export default function KidsStory() {
     () => (chapter ? currentScene(chapter, openSession) : { scene: null, index: 0, total: 0 }),
     [chapter, openSession],
   );
+
+  // Record a decision. Declared before the effects so keyboard handling can
+  // reuse the exact same path as a click.
+  const choose = (choice) => {
+    if (!chapter || !sceneState.scene || !progress) return;
+    const now = new Date().toISOString();
+    commit(recordChoice(progress, chapter.id, sceneState.scene.id, choice, now));
+    logEvent(uid, 'kids_choice', { chapterId: chapter.id, choiceId: choice.id, quotient: choice.quotient });
+    setPicked(choice);
+  };
 
   // A chapter is done when its ordered scene path runs out. Complete it once,
   // and emit the practice event the report layer can read later.
@@ -61,10 +75,70 @@ export default function KidsStory() {
       ? { ...completed, events: [...(completed.events || []), practiceEventFor(finished, now)] }
       : completed;
     commit(next);
-  }, [chapter, progress, openSession, commit, picked]);
+    logEvent(uid, 'kids_chapter_completed', {
+      chapterId: chapter.id,
+      decisions: openSession.choices.length,
+      bonus: openSession.bonusUnlocked,
+    });
+  }, [chapter, progress, openSession, commit, picked, uid]);
 
-  // Reset the completion guard when the chapter changes (route param swap).
-  useEffect(() => { completingRef.current = false; setPicked(null); }, [chapterId]);
+  // Reset per-chapter state when the route param changes.
+  useEffect(() => {
+    completingRef.current = false;
+    startedRef.current = false;
+    setPicked(null);
+    setSpeaking(false);
+    try { window.speechSynthesis?.cancel(); } catch { /* unsupported */ }
+  }, [chapterId]);
+
+  // Keep the abandon signal current without re-registering listeners.
+  useEffect(() => {
+    stateRef.current = {
+      chapterId: chapter?.id || null,
+      choices: openSession?.choices.length || 0,
+      completed: !!alreadyCompleted,
+    };
+  }, [chapter, openSession, alreadyCompleted]);
+
+  // A chapter "started" the moment a real decision is recorded.
+  useEffect(() => {
+    if (startedRef.current || !uid || !chapter || !openSession) return;
+    startedRef.current = true;
+    logEvent(uid, 'kids_chapter_started', { chapterId: chapter.id, quotient: chapter.quotient });
+  }, [uid, chapter, openSession]);
+
+  // Leaving mid-chapter is the most useful funnel signal we have.
+  useEffect(() => () => {
+    const s = stateRef.current;
+    if (!s.chapterId || !s.choices || s.completed) return;
+    logEvent(uid, 'kids_chapter_abandoned', { chapterId: s.chapterId, decisions: s.choices });
+    try { window.speechSynthesis?.cancel(); } catch { /* unsupported */ }
+  }, [uid]);
+
+  // Keyboard play: 1–3 chooses, Enter continues. Same path as a click, so a
+  // child who cannot use a mouse loses no functionality.
+  useEffect(() => {
+    const onKey = (e) => {
+      const tag = (e.target?.tagName || '').toLowerCase();
+      if (tag === 'input' || tag === 'textarea' || e.metaKey || e.ctrlKey || e.altKey) return;
+      if (picked) {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          setPicked(null);
+        }
+        return;
+      }
+      const scene = sceneState.scene;
+      if (!scene) return;
+      const index = Number(e.key) - 1;
+      if (index >= 0 && index < scene.choices.length) {
+        e.preventDefault();
+        choose(scene.choices[index]);
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  });
 
   if (!chapter) {
     return (
@@ -91,16 +165,33 @@ export default function KidsStory() {
   const path = scenePath(chapter, openSession);
   const done = !openSession && alreadyCompleted;
 
-  const choose = (choice) => {
-    if (!sceneState.scene) return;
-    const next = recordChoice(progress, chapter.id, sceneState.scene.id, choice);
-    commit(next);
-    setPicked(choice);
-  };
-
   const replay = () => {
     completingRef.current = false;
+    startedRef.current = false;
     commit(startSession(progress, chapter.id));
+  };
+
+  const stopSpeaking = () => {
+    try { window.speechSynthesis?.cancel(); } catch { /* unsupported */ }
+    setSpeaking(false);
+  };
+
+  // Read-aloud matters for the younger band: an 8-year-old who reads slowly
+  // should still be able to play a chapter about judgement.
+  const speak = () => {
+    if (!sceneState.scene || typeof window === 'undefined' || !('speechSynthesis' in window)) return;
+    if (speaking) { stopSpeaking(); return; }
+    const utterance = new SpeechSynthesisUtterance(
+      `${sceneState.scene.narration} ${sceneState.scene.prompt}`,
+    );
+    utterance.rate = child?.ageBand === '8-10' ? 0.9 : 1;
+    utterance.onend = () => setSpeaking(false);
+    utterance.onerror = () => setSpeaking(false);
+    try {
+      window.speechSynthesis.cancel();
+      window.speechSynthesis.speak(utterance);
+      setSpeaking(true);
+    } catch { /* unsupported */ }
   };
 
   const nextChapter = CHAPTERS.find(c => !derived.completedChapterIds.includes(c.id)) || null;
@@ -220,26 +311,59 @@ export default function KidsStory() {
 
       {!done && !picked && sceneState.scene && (
         <div className="card p-6 md:p-8">
-          <p className="text-[16px] leading-[1.75] text-on-surface mb-6">{sceneState.scene.narration}</p>
+          <div className="flex justify-end mb-2">
+            <button
+              type="button"
+              onClick={speak}
+              aria-pressed={speaking}
+              className="inline-flex items-center gap-1.5 text-[10px] font-mono uppercase tracking-[0.12em] text-muted-foreground hover:text-gold bg-transparent border-none cursor-pointer"
+            >
+              {speaking ? <VolumeX size={13} /> : <Volume2 size={13} />}
+              {speaking ? t('kids.stop_reading') : t('kids.read_aloud')}
+            </button>
+          </div>
+
+          <p
+            className={`text-on-surface mb-6 ${
+              child?.ageBand === '8-10' ? 'text-[17px] leading-[1.9]' : 'text-[16px] leading-[1.75]'
+            }`}
+          >
+            {sceneState.scene.narration}
+          </p>
           <p className="text-[13px] font-mono uppercase tracking-[0.14em] text-muted-foreground mb-4">
             {sceneState.scene.prompt}
           </p>
           <div className="flex flex-col gap-2.5">
-            {sceneState.scene.choices.map(choice => (
+            {sceneState.scene.choices.map((choice, i) => (
               <button
                 key={choice.id}
                 type="button"
                 onClick={() => choose(choice)}
-                className="group w-full text-left border border-border hover:border-gold bg-transparent px-4 py-3.5 text-[14px] leading-snug text-on-surface cursor-pointer transition-colors flex items-center gap-3"
+                className={`group w-full text-left border border-border hover:border-gold bg-transparent px-4 py-3.5 leading-snug text-on-surface cursor-pointer transition-colors flex items-center gap-3 ${
+                  child?.ageBand === '8-10' ? 'text-[15px]' : 'text-[14px]'
+                }`}
               >
-                <span className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: QUOTIENT_COLOR[choice.quotient] }} />
+                {/* Letter as well as colour — colour alone excludes colour-blind children. */}
+                <span
+                  className="w-5 h-5 flex-shrink-0 flex items-center justify-center text-[9px] font-mono border"
+                  style={{ color: QUOTIENT_COLOR[choice.quotient], borderColor: QUOTIENT_COLOR[choice.quotient] }}
+                  aria-hidden="true"
+                >
+                  {i + 1}
+                </span>
                 <span className="flex-1">{choice.text}</span>
+                <span
+                  className="text-[9px] font-mono uppercase tracking-[0.1em] flex-shrink-0"
+                  style={{ color: QUOTIENT_COLOR[choice.quotient] }}
+                >
+                  {choice.quotient}
+                </span>
                 <ArrowRight size={14} className="opacity-0 group-hover:opacity-60 transition-opacity text-gold flex-shrink-0" />
               </button>
             ))}
           </div>
           <p className="text-[10px] font-mono uppercase tracking-[0.12em] text-muted-foreground mt-4">
-            {t('kids.scene_of', { n: sceneState.index + 1, total: sceneState.total })}
+            {t('kids.scene_of', { n: sceneState.index + 1, total: sceneState.total })} · {t('kids.keyboard_hint')}
           </p>
         </div>
       )}

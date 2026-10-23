@@ -82,13 +82,38 @@ export interface KidsProgress {
 
 export type AgeBand = '8-10' | '11-14';
 
+/**
+ * Guardian attestation recorded when the profile is created. Children's data is
+ * personal data: production requires knowing who consented and when.
+ */
+export interface GuardianConsent {
+  attestedAt: string;
+  attestedBy?: string;
+  version: string;
+}
+
 export interface KidsProfile {
   id: string;
   uid?: string;
   name: string;
   avatar: string;
   ageBand: AgeBand;
+  consent?: GuardianConsent;
   createdAt?: string;
+}
+
+/**
+ * What the practice module is allowed to tell the report layer: activity, not
+ * ability. `selfReported` is part of the contract so it can never be rendered
+ * as a validated score by accident.
+ */
+export interface PracticeEvidence {
+  selfReported: true;
+  chaptersCompleted: number;
+  totalChapters: number;
+  practiceMix: Record<Quotient, number>;
+  streakDays: number;
+  lastActivityAt: string | null;
 }
 
 export type NodeState = 'done' | 'current' | 'locked';

@@ -1,4 +1,4 @@
-import React, { useState, createContext, useContext, useEffect, Suspense, lazy } from 'react';
+import React, { useState, createContext, useContext, useEffect, useRef, Suspense, lazy } from 'react';
 import { BrowserRouter, Routes, Route, NavLink, useNavigate, Navigate, useLocation, Outlet } from 'react-router-dom';
 import {
   Brain, Map, ClipboardList, TrendingUp, FileText, UserCheck,
@@ -120,10 +120,35 @@ function PageSkeleton() {
   );
 }
 
-/** Scrolls to top on every route change. */
-function ScrollToTop() {
-  const { pathname } = useLocation();
-  useEffect(() => { window.scrollTo(0, 0); }, [pathname]);
+/**
+ * Route effects: reset scroll and move focus on navigation.
+ *
+ * The app shell scrolls <main>, not the window, so resetting window.scrollTo
+ * alone left pages opening halfway down when you came from a long one. Focus
+ * moves to the page container so keyboard and screen-reader users start at the
+ * top of the new page instead of on the link they just left.
+ * A hash link (#section) still scrolls to that section.
+ */
+function RouteEffects() {
+  const { pathname, hash } = useLocation();
+  const firstRender = useRef(true);
+  useEffect(() => {
+    if (hash) {
+      const target = document.getElementById(hash.slice(1));
+      if (target) { target.scrollIntoView({ block: 'start' }); return; }
+    }
+    window.scrollTo(0, 0);
+    const main = document.getElementById('qids-main');
+    if (main) main.scrollTop = 0;
+
+    // Leave focus alone on first paint; only announce real navigations.
+    if (firstRender.current) { firstRender.current = false; return; }
+    const page = main || document.querySelector('main');
+    if (page) {
+      page.setAttribute('tabindex', '-1');
+      page.focus({ preventScroll: true });
+    }
+  }, [pathname, hash]);
   return null;
 }
 
@@ -849,7 +874,7 @@ function AppShell() {
         <Sidebar collapsed={collapsed} />
         <div className={`app-content ${collapsed ? 'sidebar-collapsed' : ''}`}>
           <TopBar onMenuOpen={() => setMobileMenuOpen(true)} collapsed={collapsed} onToggleSidebar={() => setCollapsed(c => !c)} onOpenPalette={() => setPaletteOpen(true)} onOpenGuide={() => setGuideOpen(true)} />
-          <main id="qids-main" className="flex-1 min-h-0 overflow-y-auto overflow-x-clip">
+          <main id="qids-main" tabIndex={-1} className="flex-1 min-h-0 overflow-y-auto overflow-x-clip">
             <Routes>
               <Route index element={<PersonaHome />} />
               <Route path="dashboard" element={<PageSuspense><Dashboard /></PageSuspense>} />
@@ -884,10 +909,23 @@ function AppShell() {
               <Route path="my-class" element={<PageSuspense><MyClass /></PageSuspense>} />
               <Route path="questionnaires" element={<PageSuspense><Questionnaires /></PageSuspense>} />
 
-              {/* Kids 4Q Practice — child sub-profiles under this account. */}
-              <Route path="kids" element={<PageSuspense><KidsHome /></PageSuspense>} />
-              <Route path="kids/story/:chapterId" element={<PageSuspense><KidsStory /></PageSuspense>} />
-              <Route path="kids/guardian" element={<PageSuspense><KidsGuardian /></PageSuspense>} />
+              {/* Kids 4Q Practice — child sub-profiles under this account.
+                  Free on individual/school plans; not sold to talent/employer. */}
+              <Route path="kids" element={
+                <EntitlementRoute entitlement="kidsPractice" feature="Kids practice">
+                  <PageSuspense><KidsHome /></PageSuspense>
+                </EntitlementRoute>
+              } />
+              <Route path="kids/story/:chapterId" element={
+                <EntitlementRoute entitlement="kidsPractice" feature="Kids practice">
+                  <PageSuspense><KidsStory /></PageSuspense>
+                </EntitlementRoute>
+              } />
+              <Route path="kids/guardian" element={
+                <EntitlementRoute entitlement="kidsPractice" feature="Kids practice">
+                  <PageSuspense><KidsGuardian /></PageSuspense>
+                </EntitlementRoute>
+              } />
 
               {/* Pro entitlement: intervention plans. */}
               <Route path="intervention-plan" element={
@@ -1024,7 +1062,7 @@ export default function App() {
   return (
     <AuthProvider>
       <BrowserRouter>
-        <ScrollToTop />
+        <RouteEffects />
         <ToastProvider>            <Routes>
               <Route path="/" element={<Landing />} />
               <Route path="/mode" element={<Mode />} />

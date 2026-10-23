@@ -3,11 +3,12 @@
 // The kids module is a set of child sub-profiles under the signed-in adult
 // account, so no new auth surface exists: the uid here is the guardian's.
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import {
   AVATARS,
   createKidsProfile,
+  exportKidsData,
   loadKidsProfiles,
   loadKidsProgress,
   peekKidsProfiles,
@@ -31,6 +32,9 @@ export default function useKidsChild() {
   const [childId, setChildId] = useState(() => readActive());
   const [progress, setProgress] = useState(null);
   const [loading, setLoading] = useState(true);
+  // Latest committed progress, so a save can append only newly finished
+  // sessions without depending on a stale closure.
+  const progressRef = useRef(null);
 
   // Load profiles (local paint first, then the network).
   useEffect(() => {
@@ -60,20 +64,32 @@ export default function useKidsChild() {
   // reconcile with the network copy. Without the instant paint the dashboard
   // would briefly render "nothing left to play" on every visit.
   useEffect(() => {
-    if (!childId) { setProgress(null); return; }
+    if (!childId) { setProgress(null); progressRef.current = null; return; }
     let alive = true;
-    setProgress(peekKidsProgress(childId));
+    const cached = peekKidsProgress(childId);
+    setProgress(cached);
+    progressRef.current = cached;
     loadKidsProgress(uid, childId)
-      .then(p => { if (alive) setProgress(p); })
-      .catch(() => { if (alive) setProgress(emptyProgress(childId)); });
+      .then(p => {
+        if (!alive) return;
+        setProgress(p);
+        progressRef.current = p;
+      })
+      .catch(() => {
+        if (!alive) return;
+        const fallback = emptyProgress(childId);
+        setProgress(fallback);
+        progressRef.current = fallback;
+      });
     return () => { alive = false; };
   }, [uid, childId]);
 
-  const addChild = useCallback(async ({ name, avatar, ageBand }) => {
-    const profile = await createKidsProfile(uid, { name, avatar, ageBand });
+  const addChild = useCallback(async ({ name, avatar, ageBand, consent }) => {
+    const profile = await createKidsProfile(uid, { name, avatar, ageBand, consent });
     setProfiles(prev => [...prev, profile]);
     setChildId(profile.id);
     setProgress(emptyProgress(profile.id));
+    progressRef.current = emptyProgress(profile.id);
     return profile;
   }, [uid]);
 
@@ -89,10 +105,18 @@ export default function useKidsChild() {
   /** Write-through: UI updates immediately, storage follows. */
   const commit = useCallback((next) => {
     const normalized = normalizeProgress(next, next?.childId || childId);
+    const prev = progressRef.current;
     setProgress(normalized);
-    saveKidsProgress(uid, normalized);
+    progressRef.current = normalized;
+    saveKidsProgress(uid, normalized, prev);
     return normalized;
   }, [uid, childId]);
+
+  /** Guardian data request: returns the full record as JSON. */
+  const exportChild = useCallback(
+    (id) => exportKidsData(uid, id || childId),
+    [uid, childId],
+  );
 
   const child = profiles.find(p => p.id === childId) || null;
 
@@ -108,6 +132,7 @@ export default function useKidsChild() {
     commit,
     addChild,
     removeChild,
+    exportChild,
     loading,
     avatars: AVATARS,
   };

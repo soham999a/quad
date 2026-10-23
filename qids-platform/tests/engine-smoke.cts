@@ -14,8 +14,9 @@ import { computeRFI, evaluateRoleMatches } from '../src/core/engine/scoring';
 import { CHAPTERS } from '../src/data/kids/story';
 import {
   emptyProgress, deriveState, startSession, recordChoice, completeSession,
-  currentScene, normalizeProgress, practiceEventFor,
+  currentScene, normalizeProgress, practiceEventFor, practiceEvidence, activeSession,
 } from '../src/core/kids/progress';
+import { validateChapters } from '../src/core/kids/validate';
 import type { KidsChapter } from '../src/core/kids/types';
 import type { EnterpriseItem, EnterpriseTier, AnswerValue } from '../src/core/types';
 
@@ -375,6 +376,37 @@ function kidsSmoke() {
   const broken = normalizeProgress({ sessions: [{ chapterId: 'nope' }, null, { chapterId: 'logic' }] }, 't4');
   check('kids: malformed sessions are dropped defensively',
     broken.sessions.length === 1 && broken.sessions[0].chapterId === 'logic', broken.sessions.length);
+
+  // 9. Content validation: the shipped story is clean, and the validator
+  //    actually catches the failures that would strand a child.
+  const issues = validateChapters(CHAPTERS);
+  check('kids: shipped story passes schema validation', issues.length === 0,
+    issues.map(i => `${i.chapterId}/${i.sceneId ?? ''}: ${i.message}`));
+
+  const brokenChapter = {
+    ...CHAPTERS[0],
+    scenes: [{ id: 'dead-end', narration: '', prompt: '', choices: [] }],
+    bonus: undefined,
+  } as unknown as KidsChapter;
+  const brokenIssues = validateChapters([brokenChapter]);
+  check('kids: validator catches an empty scene and bad weights',
+    brokenIssues.some(i => i.message.includes('at least two choices'))
+    && brokenIssues.some(i => i.message.includes('no narration')),
+    brokenIssues.map(i => i.message));
+
+  // 10. Report contract: practice is activity, always marked self-reported.
+  const evidence = practiceEvidence(full);
+  check('kids: evidence is self-reported and counts activity only',
+    evidence.selfReported === true
+    && evidence.chaptersCompleted === 6
+    && evidence.lastActivityAt !== null,
+    evidence);
+
+  // 11. An interrupted chapter is addressable without counting as progress.
+  const midChapter = startSession(emptyProgress('t5'), 'logic', '2026-03-01T10:00:00.000Z');
+  check('kids: an open session is exposed for resume',
+    activeSession(midChapter)?.chapterId === 'logic'
+    && deriveState(midChapter).chaptersComplete === 0);
 }
 
 main();

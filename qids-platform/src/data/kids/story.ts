@@ -8,6 +8,7 @@
 // Ages 8–14: short sentences, concrete images, no scores shown as a percentage.
 
 import type { KidsChapter } from '../../core/kids/types';
+import { assertStoryValid } from '../../core/kids/validate';
 
 export const CHAPTERS: KidsChapter[] = [
   {
@@ -832,3 +833,6 @@ export function chaptersByQuotient(): Record<string, KidsChapter[]> {
   for (const c of CHAPTERS) out[c.quotient].push(c);
   return out;
 }
+
+// Content is data; validate it where developers will actually see the failure.
+assertStoryValid(CHAPTERS);

@@ -18,6 +18,7 @@ import type {
   KidsSession,
   PathNode,
   PracticeEvent,
+  PracticeEvidence,
   Quotient,
 } from './types';
 
@@ -279,6 +280,31 @@ export function deriveState(progress: KidsProgress): DerivedState {
 /** The chapter a child should play today (first unfinished), or null when done. */
 export function nextChapter(progress: KidsProgress): KidsChapter | null {
   return deriveState(progress).currentChapter;
+}
+
+/** The single in-progress session, if the child left a chapter mid-way. */
+export function activeSession(progress: KidsProgress): KidsSession | null {
+  return progress.sessions.find(s => !s.completedAt) || null;
+}
+
+/**
+ * The report-facing contract. Deliberately weak: activity counts, clearly
+ * marked self-reported, so no report can mistake practice for a measurement.
+ */
+export function practiceEvidence(progress: KidsProgress): PracticeEvidence {
+  const state = deriveState(progress);
+  const completed = progress.sessions
+    .filter(s => s.completedAt)
+    .map(s => s.completedAt as string)
+    .sort();
+  return {
+    selfReported: true,
+    chaptersCompleted: state.chaptersComplete,
+    totalChapters: state.totalChapters,
+    practiceMix: state.tally,
+    streakDays: state.streakDays,
+    lastActivityAt: completed.length ? completed[completed.length - 1] : null,
+  };
 }
 
 /** Completion ratio 0–1, used by the path header. */

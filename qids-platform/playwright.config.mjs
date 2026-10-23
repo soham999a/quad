@@ -10,7 +10,9 @@ export default defineConfig({
   retries: process.env.CI ? 1 : 0,
   reporter: process.env.CI ? 'github' : 'list',
   use: {
-    baseURL: process.env.E2E_BASE_URL || 'http://localhost:5173',
+    // Must match the webServer below: when E2E_BASE_URL is unset we start the
+    // app on 5199, so that is where the tests have to look.
+    baseURL: process.env.E2E_BASE_URL || 'http://localhost:5199',
     trace: 'retain-on-failure',
   },
   webServer: process.env.E2E_BASE_URL ? undefined : {

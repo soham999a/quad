@@ -25,6 +25,8 @@ export interface PlanTier {
     roleFit: boolean;
     pipReport: boolean;
     deployedBatteries: boolean;
+    /** Kids 4Q Practice — development, not assessment. Unlocked on free. */
+    kidsPractice: boolean;
   };
 }
 
@@ -48,6 +50,7 @@ export const PLANS: Record<PlanId, PlanTier> = {
       roleFit: false,
       pipReport: false,
       deployedBatteries: false,
+      kidsPractice: true,
     },
   },
   pro: {
@@ -69,6 +72,7 @@ export const PLANS: Record<PlanId, PlanTier> = {
       roleFit: true,
       pipReport: true,
       deployedBatteries: false,
+      kidsPractice: true,
     },
   },
   school: {
@@ -90,6 +94,7 @@ export const PLANS: Record<PlanId, PlanTier> = {
       roleFit: false,
       pipReport: false,
       deployedBatteries: false,
+      kidsPractice: true,
     },
   },
   talent: {
@@ -111,6 +116,7 @@ export const PLANS: Record<PlanId, PlanTier> = {
       roleFit: true,
       pipReport: true,
       deployedBatteries: true,
+      kidsPractice: false,
     },
   },
 };

@@ -143,7 +143,8 @@ service cloud.firestore {
     // ── Kids 4Q Practice ────────────────────────────────────────────────────
     // Child sub-profiles under a guardian/teacher account: no separate child
     // login exists, so every document is owned by the signed-in adult's uid.
-    // Profiles are bounded strings only — no free-form child data.
+    // Profiles are bounded strings only, and creation requires a recorded
+    // guardian attestation — this is a child's personal data.
     match /kidsProfiles/{childId} {
       allow read, update, delete: if isOwner(resource.data.uid) || isAdmin();
       allow create: if isSignedIn()
@@ -153,18 +154,40 @@ service cloud.firestore {
         && request.resource.data.name.size() <= 40
         && request.resource.data.avatar is string
         && request.resource.data.avatar.size() <= 8
-        && request.resource.data.ageBand in ['8-10', '11-14'];
+        && request.resource.data.ageBand in ['8-10', '11-14']
+        && request.resource.data.consent is map
+        && request.resource.data.consent.attestedAt is string
+        && request.resource.data.consent.version is string;
     }
 
-    // Practice progress: sessions + derived-at-read telemetry. The doc id is
-    // pinned to `<uid>_<childId>` so one account cannot address another's log.
+    // Progress parent doc: only the single in-progress chapter is mutable.
+    // The doc id is pinned to `<uid>_<childId>` so one account cannot address
+    // another family's log.
     match /kidsProgress/{docId} {
       allow read, update, delete: if isOwner(resource.data.uid) || isAdmin();
       allow create: if isSignedIn()
         && request.resource.data.uid == request.auth.uid
-        && docId == request.auth.uid + '_' + request.resource.data.childId
-        && request.resource.data.sessions is list
-        && request.resource.data.sessions.size() <= 200;
+        && docId == request.auth.uid + '_' + request.resource.data.childId;
+
+      // Finished chapters are immutable: created once, never rewritten. That
+      // is what keeps a practice record honest without a server in the loop.
+      // Delete stays available to the owner for erasure requests.
+      match /sessions/{sessionId} {
+        allow read:
+          if isOwner(get(/databases/$(database)/documents/kidsProgress/$(docId)).data.uid)
+          || isAdmin();
+        allow create: if isSignedIn()
+          && get(/databases/$(database)/documents/kidsProgress/$(docId)).data.uid == request.auth.uid
+          && sessionId == request.resource.data.id
+          && request.resource.data.completedAt is string
+          && request.resource.data.chapterId is string
+          && request.resource.data.choices is list
+          && request.resource.data.choices.size() <= 20;
+        allow update: if false;
+        allow delete:
+          if isOwner(get(/databases/$(database)/documents/kidsProgress/$(docId)).data.uid)
+          || isAdmin();
+      }
     }
 
     // ── Evaluator Assignments ──────────────────────────────────────────────

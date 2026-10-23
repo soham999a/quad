@@ -12,6 +12,15 @@ export default function ErrorBoundary({ children, message }) {
   return <BoundaryInner t={t} message={message}>{children}</BoundaryInner>;
 }
 
+// A tab left open across a deploy requests chunks that no longer exist. That
+// is not a code bug — it needs a reload, not an error card. Detect it, reload
+// once per URL, and fall back to the card only if the reload didn't help.
+const CHUNK_ERROR = /failed to fetch dynamically imported module|importing a module script failed|loading chunk|chunkloaderror/i;
+
+function isStaleChunkError(error) {
+  return error?.name === 'ChunkLoadError' || CHUNK_ERROR.test(String(error?.message || ''));
+}
+
 class BoundaryInner extends React.Component {
   constructor(props) {
     super(props);
@@ -25,6 +34,16 @@ class BoundaryInner extends React.Component {
   componentDidCatch(error, info) {
     console.error('UI error boundary caught:', error, info?.componentStack);
     reportError(error, { componentStack: info?.componentStack, kind: 'boundary' });
+
+    if (isStaleChunkError(error)) {
+      const here = window.location.pathname + window.location.search;
+      let alreadyTried = null;
+      try { alreadyTried = sessionStorage.getItem('qids-chunk-reload'); } catch { /* private mode */ }
+      if (alreadyTried !== here) {
+        try { sessionStorage.setItem('qids-chunk-reload', here); } catch { /* private mode */ }
+        window.location.reload();
+      }
+    }
   }
 
   render() {

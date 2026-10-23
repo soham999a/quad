@@ -1,9 +1,10 @@
 import { useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { ArrowLeft, ArrowRight, Award, Check, Clock, Lock } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Award, Check, Clock, Download, Lock } from 'lucide-react';
 import usePageTitle from '../../lib/usePageTitle';
 import useKidsChild from '../../lib/useKidsChild';
+import { logEvent } from '../../lib/analytics';
 import { CHAPTERS } from '../../data/kids/story';
 import { QUOTIENT_LABEL, deriveState } from '../../core/kids/progress';
 
@@ -12,10 +13,27 @@ const QUOTIENT_COLOR = { IQ: 'var(--iq)', EQ: 'var(--eq)', SQ: 'var(--sq)', AQ: 
 export default function KidsGuardian() {
   const { t } = useTranslation();
   usePageTitle('Kids progress');
-  const { profiles, child, childId, setChildId, progress, progressReady, loading } = useKidsChild();
+  const {
+    uid, profiles, child, childId, setChildId, progress, progressReady,
+    loading, exportChild, removeChild,
+  } = useKidsChild();
 
   const derived = useMemo(() => (progress ? deriveState(progress) : null), [progress]);
   const maxTally = derived ? Math.max(1, ...Object.values(derived.tally)) : 1;
+
+  const downloadExport = async () => {
+    if (!child) return;
+    const data = await exportChild(child.id);
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `qids-kids-${child.name.toLowerCase().replace(/[^a-z0-9]+/g, '-')}.json`;
+    link.click();
+    // Revoking immediately can cancel the download in some browsers.
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    logEvent(uid, 'kids_data_exported', { childId: child.id });
+  };
 
   if (loading || (profiles.length > 0 && !progressReady)) {
     return (
@@ -187,11 +205,46 @@ export default function KidsGuardian() {
             </div>
           </section>
 
-          <div className="border border-border p-5">
+          <div className="border border-border p-5 mb-4">
             <div className="text-[10px] font-mono uppercase tracking-[0.18em] text-muted-foreground mb-2">
               {t('kids.not_a_test_title')}
             </div>
             <p className="text-[12px] leading-relaxed text-surface-variant">{t('kids.not_a_test_body')}</p>
+          </div>
+
+          <div className="border border-border p-5">
+            <div className="text-[10px] font-mono uppercase tracking-[0.18em] text-muted-foreground mb-2">
+              {t('kids.privacy_title')}
+            </div>
+            <p className="text-[12px] leading-relaxed text-surface-variant mb-3">{t('kids.privacy_body')}</p>
+            {child.consent?.attestedAt && (
+              <p className="text-[11px] text-muted-foreground mb-4">
+                {t('kids.consent_recorded', {
+                  date: new Date(child.consent.attestedAt).toLocaleDateString(),
+                  version: child.consent.version || '',
+                })}
+              </p>
+            )}
+            <div className="flex flex-wrap items-center gap-3">
+              <button
+                type="button"
+                onClick={downloadExport}
+                className="btn-outline inline-flex items-center gap-2"
+              >
+                <Download size={13} /> {t('kids.export_data')}
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  if (window.confirm(t('kids.remove_confirm'))) {
+                    removeChild(child.id).then(() => window.location.assign('/app/kids'));
+                  }
+                }}
+                className="text-[10px] font-mono uppercase tracking-[0.12em] text-muted-foreground hover:text-status-err bg-transparent border-none cursor-pointer"
+              >
+                {t('kids.remove_child')}
+              </button>
+            </div>
           </div>
         </>
       )}

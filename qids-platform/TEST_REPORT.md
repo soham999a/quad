@@ -71,6 +71,40 @@
 
 ---
 
-## 7. Verdict
+## 7. 2026-10-23 — deployed rules + routing pass
+
+**Rules are verified against the live project, not just the file.** No Java means
+no emulator, so `npm run test:rules:live` (`tests/rules-live.mjs`) drives the
+deployed ruleset through the Firebase Auth + Firestore REST APIs with two
+throwaway accounts, then deletes every document and both accounts.
+
+| Check group | Result |
+|---|---|
+| Anonymous + cross-account read/write denial | ✅ |
+| Child profile rejected without guardian consent | ✅ |
+| Progress doc id pinned to `<uid>_<childId>` | ✅ |
+| Finished session append-only (create ok, update denied) | ✅ |
+| Erasure still allowed (session, progress, profile delete) | ✅ |
+| Cannot self-grant `admin` role or a paid plan | ✅ |
+| **Total** | ✅ **17 / 17**, project `quad-3c3b9` |
+
+**Routing e2e** (`tests/e2e/routing.spec.mjs`, 6 tests): unknown `/app/*`
+renders a 404 inside the shell, role guard blocks deep links, entitlement gate
+holds on the URL, free plan opens kids practice, navigation resets the shell's
+scroll container and moves focus to `#qids-main`, public credential route needs
+no account.
+
+**Current totals:** engine 134/134 · Playwright 18 passed, 5 skipped (live-
+Firebase school loop) · production build clean.
+
+**Fixed in this pass:** route scroll reset (the shell scrolls `<main>`, so
+`window.scrollTo` never did it), focus management on navigation, one-shot
+chunk reload after a deploy invalidates a tab's lazy imports, onboarding now
+returns to the deep link it interrupted, and kids sessions stranded by a failed
+summary write are re-appended on the next load.
+
+---
+
+## 8. Verdict
 
 The software is functionally correct end-to-end: public funnel, auth, onboarding, the individual loop, the full school loop (verified with real accounts against live Firebase), i18n across 4 languages, mobile layout, and the command palette all pass. One regression was found during this pass (signup hook order) and fixed immediately. **Ready to commit and push.**

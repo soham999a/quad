@@ -1,24 +1,35 @@
 // ─── Kids 4Q Practice — persistence ──────────────────────────────────────────
-// Local-first by design: the module must work on localhost (and offline) even
-// before Firestore rules are deployed. Every read falls back to localStorage,
-// every write goes to localStorage first and then syncs to Firestore when the
-// user is signed in. A failed sync never loses the child's session.
+// Local-first, append-only. A child's finished chapter is an immutable session
+// document; only the single in-progress chapter lives on the mutable parent doc.
+// That removes three production problems at once:
 //
-// Documents:
-//   kidsProfiles/{childId}            → { uid, name, avatar, ageBand, createdAt }
-//   kidsProgress/{uid_childId}        → { uid, childId, sessions[], events[] }
+//   * no session-array cap that silently stops syncing,
+//   * no last-write-wins erasing a chapter played on another device,
+//   * no way to rewrite a completed session after the fact.
 //
-// Progress stores only what happened. Nodes, badges and tallies are derived in
-// core/kids/progress.ts.
+// Firestore shape:
+//   kidsProfiles/{childId}
+//     { uid, name, avatar, ageBand, consent:{attestedAt, attestedBy, version} }
+//   kidsProgress/{uid_childId}
+//     { uid, childId, active: KidsSession | null, schema: 2, updatedAt }
+//   kidsProgress/{uid_childId}/sessions/{sessionId}   (create-only)
+//     { ...KidsSession, recordedAt: serverTimestamp }
+//
+// Everything derived (nodes, badges, tally, streak) is computed in
+// core/kids/progress.ts — never stored.
 
 import {
   collection, doc, setDoc, getDoc, getDocs, query, where, deleteDoc,
+  serverTimestamp,
 } from 'firebase/firestore';
 import { db } from '../firebase';
-import { normalizeProgress } from '../core/kids/progress';
+import { normalizeProgress, practiceEvidence } from '../core/kids/progress';
 
 const PROFILES_KEY = 'qids-kids-profiles';
 const PROGRESS_KEY = 'qids-kids-progress';
+
+/** Bump when the attestation wording changes — consent is versioned. */
+export const CONSENT_VERSION = '2026-10-01';
 
 function readJSON(key, fallback) {
   try {
@@ -41,7 +52,28 @@ function newId() {
   return `kid_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
 }
 
-export const AVATARS = ['🦊', '🐼', '🦉', '🐙', '🦁', '🐢', '🦄', '🐝', '🐳', '🦋'];
+function progressPath(uid, childId) {
+  return `${uid}_${childId}`;
+}
+
+/**
+ * Union of two session lists by id, keeping the version that has more recorded
+ * decisions. This is what makes an offline chapter and a synced chapter merge
+ * instead of one overwriting the other.
+ */
+function mergeSessions(a, b) {
+  const map = new Map();
+  for (const session of [...a, ...b]) {
+    const prev = map.get(session.id);
+    if (!prev) { map.set(session.id, session); continue; }
+    const richer = (session.choices?.length || 0) >= (prev.choices?.length || 0) ? session : prev;
+    map.set(session.id, {
+      ...richer,
+      completedAt: session.completedAt || prev.completedAt,
+    });
+  }
+  return [...map.values()];
+}
 
 // ── Profiles ─────────────────────────────────────────────────────────────────
 
@@ -52,11 +84,19 @@ export async function loadKidsProfiles(uid) {
     const snap = await getDocs(query(collection(db, 'kidsProfiles'), where('uid', '==', uid)));
     const remote = snap.docs.map(d => ({ id: d.id, ...d.data() }));
     if (!remote.length) return local;
-    // Remote wins on id collision; keep local-only profiles (created offline).
     const byId = new Map(local.map(p => [p.id, p]));
     for (const p of remote) byId.set(p.id, p);
-    const merged = [...byId.values()].filter(p => !p.deleted);
+    const merged = [...byId.values()];
     writeJSON(PROFILES_KEY, merged);
+
+    // Profiles created while offline exist only locally: push them up so the
+    // account — not the browser — is the source of truth.
+    const remoteIds = new Set(remote.map(p => p.id));
+    for (const profile of merged) {
+      if (remoteIds.has(profile.id) || !profile.consent) continue;
+      setDoc(doc(db, 'kidsProfiles', profile.id), { uid, ...profile })
+        .catch(e => console.warn('loadKidsProfiles: pending profile sync failed:', e.message));
+    }
     return merged;
   } catch (e) {
     console.warn('loadKidsProfiles fell back to local:', e.message);
@@ -64,14 +104,27 @@ export async function loadKidsProfiles(uid) {
   }
 }
 
-export async function createKidsProfile(uid, { name, avatar, ageBand }) {
+/**
+ * Creating a child profile requires an explicit guardian attestation — the
+ * profile is children's personal data, and the attestation is the record that
+ * an adult accepted responsibility for it.
+ */
+export async function createKidsProfile(uid, { name, avatar, ageBand, consent }) {
+  if (!consent) throw new Error('guardian consent is required to create a child profile');
+
   const profile = {
     id: newId(),
     name: String(name || '').trim().slice(0, 40) || 'Explorer',
-    avatar: avatar || AVATARS[0],
+    avatar: avatar || '🦊',
     ageBand: ageBand === '8-10' ? '8-10' : '11-14',
+    consent: {
+      attestedAt: new Date().toISOString(),
+      attestedBy: uid || null,
+      version: CONSENT_VERSION,
+    },
     createdAt: new Date().toISOString(),
   };
+
   const local = readJSON(PROFILES_KEY, []);
   writeJSON(PROFILES_KEY, [...local, profile]);
 
@@ -86,79 +139,152 @@ export async function createKidsProfile(uid, { name, avatar, ageBand }) {
 }
 
 export async function removeKidsProfile(uid, childId) {
-  const local = readJSON(PROFILES_KEY, []).filter(p => p.id !== childId);
-  writeJSON(PROFILES_KEY, local);
-  const progress = readJSON(PROGRESS_KEY, {});
-  delete progress[childId];
-  writeJSON(PROGRESS_KEY, progress);
+  writeJSON(PROFILES_KEY, readJSON(PROFILES_KEY, []).filter(p => p.id !== childId));
+  const store = readJSON(PROGRESS_KEY, {});
+  delete store[childId];
+  writeJSON(PROGRESS_KEY, store);
 
-  if (uid) {
-    try {
-      await deleteDoc(doc(db, 'kidsProfiles', childId));
-    } catch (e) {
-      console.warn('removeKidsProfile sync failed:', e.message);
-    }
-    try {
-      await deleteDoc(doc(db, 'kidsProgress', `${uid}_${childId}`));
-    } catch { /* progress doc may not exist */ }
+  if (!uid) return;
+  const path = progressPath(uid, childId);
+  try {
+    // Erasure must remove every session document, not just the summary.
+    const sessions = await getDocs(collection(db, 'kidsProgress', path, 'sessions'));
+    await Promise.all(sessions.docs.map(s => deleteDoc(s.ref).catch(() => {})));
+  } catch (e) {
+    console.warn('removeKidsProfile: session cleanup failed:', e.message);
   }
+  try { await deleteDoc(doc(db, 'kidsProgress', path)); } catch { /* may not exist */ }
+  try { await deleteDoc(doc(db, 'kidsProfiles', childId)); } catch { /* may not exist */ }
 }
 
 // ── Progress ─────────────────────────────────────────────────────────────────
 
 export async function loadKidsProgress(uid, childId) {
   if (!childId) return normalizeProgress(null, 'unknown');
-  const local = readJSON(PROGRESS_KEY, {})[childId];
-  if (!uid) return normalizeProgress(local, childId);
+
+  const local = normalizeProgress(readJSON(PROGRESS_KEY, {})[childId], childId);
+  if (!uid) return local;
+
+  const path = progressPath(uid, childId);
   try {
-    const snap = await getDoc(doc(db, 'kidsProgress', `${uid}_${childId}`));
-    if (snap.exists()) {
-      const remote = normalizeProgress({ ...snap.data(), childId }, childId);
-      // Prefer the longer session log — covers writes made before the sync failed.
-      const localP = normalizeProgress(local, childId);
-      const chosen = remote.sessions.length >= localP.sessions.length ? remote : localP;
-      const store = readJSON(PROGRESS_KEY, {});
-      store[childId] = chosen;
-      writeJSON(PROGRESS_KEY, store);
-      return chosen;
+    const [parentSnap, sessionsSnap] = await Promise.all([
+      getDoc(doc(db, 'kidsProgress', path)),
+      getDocs(collection(db, 'kidsProgress', path, 'sessions')),
+    ]);
+
+    const remoteSessions = sessionsSnap.docs.map(d => ({ ...d.data(), id: d.id }));
+    const active = parentSnap.exists() ? parentSnap.data().active : null;
+    if (active) remoteSessions.push(active);
+
+    if (!parentSnap.exists() && !remoteSessions.length) return local;
+
+    // Self-healing append: a chapter finished while the summary write failed
+    // (offline, flaky link) still lives on this device. Push anything the
+    // server doesn't have yet so it can never be stranded locally forever.
+    const remoteIds = new Set(remoteSessions.map(s => s.id));
+    for (const session of local.sessions) {
+      if (!session.completedAt || remoteIds.has(session.id)) continue;
+      setDoc(doc(db, 'kidsProgress', path, 'sessions', session.id), {
+        ...session,
+        recordedAt: serverTimestamp(),
+      }).catch(e => console.warn('loadKidsProgress: pending session sync failed:', e.message));
     }
-    return normalizeProgress(local, childId);
+
+    const merged = normalizeProgress(
+      {
+        childId,
+        sessions: mergeSessions(local.sessions, remoteSessions),
+        updatedAt: parentSnap.exists() ? parentSnap.data().updatedAt || null : local.updatedAt,
+      },
+      childId,
+    );
+
+    const store = readJSON(PROGRESS_KEY, {});
+    store[childId] = merged;
+    writeJSON(PROGRESS_KEY, store);
+    return merged;
   } catch (e) {
     console.warn('loadKidsProgress fell back to local:', e.message);
-    return normalizeProgress(local, childId);
+    return local;
   }
 }
 
-export async function saveKidsProgress(uid, progress) {
-  if (!progress?.childId) return;
+/**
+ * Persist after a decision, a chapter start, or a completion.
+ * `prev` lets us append only the sessions that finished in this write.
+ */
+export async function saveKidsProgress(uid, next, prev = null) {
+  if (!next?.childId) return;
+
   const store = readJSON(PROGRESS_KEY, {});
-  store[progress.childId] = progress;
+  store[next.childId] = next;
   writeJSON(PROGRESS_KEY, store);
 
   if (!uid) return;
+
+  const path = progressPath(uid, next.childId);
+  const previousIds = new Set(
+    (prev?.sessions || []).filter(s => s.completedAt).map(s => s.id),
+  );
+  const active = next.sessions.find(s => !s.completedAt) || null;
+  const finished = next.sessions.filter(s => s.completedAt && !previousIds.has(s.id));
+
   try {
     await setDoc(
-      doc(db, 'kidsProgress', `${uid}_${progress.childId}`),
+      doc(db, 'kidsProgress', path),
       {
         uid,
-        childId: progress.childId,
-        sessions: progress.sessions,
-        events: progress.events || [],
-        updatedAt: progress.updatedAt || new Date().toISOString(),
+        childId: next.childId,
+        active,
+        schema: 2,
+        updatedAt: next.updatedAt || new Date().toISOString(),
       },
       { merge: true },
     );
   } catch (e) {
-    console.warn('saveKidsProgress sync failed (kept locally):', e.message);
+    // Keep going: the session documents are the durable record, and a failed
+    // summary write must not block them. The next load re-appends anything
+    // still missing from the server.
+    console.warn('saveKidsProgress: summary sync failed (kept locally):', e.message);
+  }
+
+  // Finished chapters are immutable documents: created once, never rewritten.
+  for (const session of finished) {
+    try {
+      await setDoc(doc(db, 'kidsProgress', path, 'sessions', session.id), {
+        ...session,
+        recordedAt: serverTimestamp(),
+      });
+    } catch (e) {
+      console.warn('saveKidsProgress: session append failed:', e.message);
+    }
   }
 }
 
-/** Local-only read, used to paint instantly before the network answers. */
+// ── Data rights ──────────────────────────────────────────────────────────────
+
+/** Everything stored about one child, for a guardian data request. */
+export async function exportKidsData(uid, childId) {
+  const profiles = readJSON(PROFILES_KEY, []);
+  const profile = profiles.find(p => p.id === childId) || null;
+  const progress = await loadKidsProgress(uid, childId);
+  return {
+    exportedAt: new Date().toISOString(),
+    childId,
+    profile,
+    progress,
+    evidence: practiceEvidence(progress),
+  };
+}
+
+// ── Local-only reads (instant paint) ─────────────────────────────────────────
+
 export function peekKidsProgress(childId) {
-  const local = readJSON(PROGRESS_KEY, {})[childId];
-  return normalizeProgress(local, childId);
+  return normalizeProgress(readJSON(PROGRESS_KEY, {})[childId], childId);
 }
 
 export function peekKidsProfiles() {
   return readJSON(PROFILES_KEY, []);
 }
+
+export const AVATARS = ['🦊', '🐼', '🦉', '🐙', '🦁', '🐢', '🦄', '🐝', '🐳', '🦋'];

@@ -1,7 +1,7 @@
 import { useTranslation } from 'react-i18next';
 import usePageTitle from '../../lib/usePageTitle';
 import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { ArrowRight, ArrowLeft, Check, Sparkles, GraduationCap, Briefcase, Users, Target, Building2, Microscope } from 'lucide-react';
 import { Wordmark } from '../../components/PublicShell';
 import { logEvent } from '../../lib/analytics';
@@ -390,6 +390,16 @@ export default function Onboarding() {
     updateUserFields
   } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+  // OnboardingGate stashes the page the user was actually heading for. Without
+  // this, following a deep link (an emailed /app/kids/guardian, say) dropped
+  // them on the persona home after signing up.
+  const returnTo = (() => {
+    const from = location.state?.from;
+    return typeof from === 'string' && /^\/app(\/|$)/.test(from) && !from.startsWith('//')
+      ? from
+      : null;
+  })();
   const [state, setState] = useState(ONBOARDING_DEFAULT);
   const [step, setStep] = useState(0);
   const [ready, setReady] = useState(false);
@@ -465,7 +475,7 @@ export default function Onboarding() {
         persona: state.persona
       });
       refreshProfile().catch(() => {});
-      navigate(postOnboardingDestination(state.persona, state.contextId), {
+      navigate(returnTo || postOnboardingDestination(state.persona, state.contextId), {
         replace: true
       });
     } catch (e) {
@@ -502,7 +512,7 @@ export default function Onboarding() {
       await updateProfileIfNeeded(next).catch(() => {});
       await completeOnboarding(user.uid, next);
       refreshProfile().catch(() => {});
-      navigate('/app/dashboard', {
+      navigate(returnTo || '/app/dashboard', {
         replace: true
       });
     } catch (e) {

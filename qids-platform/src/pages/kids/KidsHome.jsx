@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 import usePageTitle from '../../lib/usePageTitle';
 import useKidsChild from '../../lib/useKidsChild';
+import { logEvent } from '../../lib/analytics';
 import { chaptersByQuotient } from '../../data/kids/story';
 import { QUOTIENT_LABEL, currentScene, deriveState } from '../../core/kids/progress';
 
@@ -37,13 +38,16 @@ function AddChildForm({ onAdd, onCancel, avatars, t }) {
   const [name, setName] = useState('');
   const [avatar, setAvatar] = useState(avatars[0]);
   const [ageBand, setAgeBand] = useState('11-14');
+  const [consent, setConsent] = useState(false);
   const [saving, setSaving] = useState(false);
+
+  const canSave = name.trim() && consent && !saving;
 
   const submit = async (e) => {
     e.preventDefault();
-    if (!name.trim() || saving) return;
+    if (!canSave) return;
     setSaving(true);
-    try { await onAdd({ name, avatar, ageBand }); } finally { setSaving(false); }
+    try { await onAdd({ name, avatar, ageBand, consent }); } finally { setSaving(false); }
   };
 
   return (
@@ -104,7 +108,19 @@ function AddChildForm({ onAdd, onCancel, avatars, t }) {
         ))}
       </div>
 
-      <button type="submit" disabled={!name.trim() || saving} className="btn-primary inline-flex items-center gap-2">
+      <label className="flex items-start gap-2.5 mb-5 cursor-pointer">
+        <input
+          type="checkbox"
+          checked={consent}
+          onChange={e => setConsent(e.target.checked)}
+          className="mt-[3px] accent-[var(--gold)] flex-shrink-0"
+        />
+        <span className="text-[11px] leading-relaxed text-muted-foreground">
+          {t('kids.consent_label')}
+        </span>
+      </label>
+
+      <button type="submit" disabled={!canSave} className="btn-primary inline-flex items-center gap-2">
         {t('kids.save_child')} <ArrowRight className="w-3.5 h-3.5" />
       </button>
     </form>
@@ -115,7 +131,7 @@ export default function KidsHome() {
   const { t } = useTranslation();
   usePageTitle('Kids practice');
   const {
-    profiles, child, childId, setChildId, progress, progressReady, addChild, removeChild, loading, avatars,
+    uid, profiles, child, childId, setChildId, progress, progressReady, addChild, removeChild, loading, avatars,
   } = useKidsChild();
   const [adding, setAdding] = useState(false);
 
@@ -178,7 +194,12 @@ export default function KidsHome() {
       {adding && (
         <div className="mb-8">
           <AddChildForm
-            onAdd={async (data) => { await addChild(data); setAdding(false); }}
+            onAdd={async (data) => {
+              const profile = await addChild(data);
+              logEvent(uid, 'kids_profile_created', { ageBand: data.ageBand, hasAvatar: !!data.avatar });
+              setAdding(false);
+              return profile;
+            }}
             onCancel={() => setAdding(false)}
             avatars={avatars}
             t={t}
