@@ -9,6 +9,24 @@ import type {
 import { TIER_SCALING } from '../types';
 import { BAND_T_SCORES, INTEGRATOR_ARCHETYPE, ARCHETYPES, PII_BANDS, RFI_THRESHOLDS, ROLE_PROFILES } from '../data/enterprise';
 import { ROLE_TRACKS } from '../data/roleTracks';
+// The QIDS individual/school maths lives in one dependency-free module so the
+// browser and /api/submit-assessment cannot drift apart. Everything below
+// delegates to it; see shared/scoring/qids.js.
+import {
+  GRADE_BANDS as SHARED_GRADE_BANDS,
+  WEIGHTS as SHARED_WEIGHTS,
+  MAX_WEIGHT_SUM as SHARED_MAX_WEIGHT_SUM,
+  IQ_MAX_SCORE as SHARED_IQ_MAX_SCORE,
+  CAREER_PROFILES as SHARED_CAREER_PROFILES,
+  computeStandardized as sharedComputeStandardized,
+  mapAQLikert as sharedMapAQLikert,
+  computePillarScore as sharedComputePillarScore,
+  computeWeightedScore as sharedComputeWeightedScore,
+  getGrade as sharedGetGrade,
+  isCritical as sharedIsCritical,
+  getSkillShape as sharedGetSkillShape,
+  getCareerProfile as sharedGetCareerProfile,
+} from '../../../shared/scoring/qids.js';
 
 const TRACK_LABELS: Record<string, string> = {};
 for (const track of ROLE_TRACKS) {
@@ -17,110 +35,58 @@ for (const track of ROLE_TRACKS) {
 
 // ── QIDS grade bands ──────────────────────────────────────────────────────────
 
-export const GRADE_BANDS = [
-  { grade: 'A', label: 'Excellent', min: 90, max: 100, color: '#10b981' },
-  { grade: 'B', label: 'Very Good', min: 75, max: 89, color: '#06b6d4' },
-  { grade: 'C', label: 'Good', min: 60, max: 74, color: '#f59e0b' },
-  { grade: 'D', label: 'Satisfactory', min: 45, max: 59, color: '#f97316' },
-  { grade: 'E', label: 'Needs Improvement', min: 0, max: 44, color: '#ef4444' },
-];
+export interface GradeBand {
+  grade: string;
+  label: string;
+  min: number;
+  max: number;
+  color: string;
+}
 
-export const WEIGHTS: Record<PillarId, number> = { IQ: 1.0, EQ: 2.0, SQ: 2.0, AQ: 1.28 };
-export const MAX_WEIGHT_SUM = Object.values(WEIGHTS).reduce((a, b) => a + b, 0); // 6.28
+export const GRADE_BANDS: GradeBand[] = SHARED_GRADE_BANDS;
 
-export const IQ_MAX_SCORE = 125;
+export const WEIGHTS: Record<PillarId, number> = SHARED_WEIGHTS;
+export const MAX_WEIGHT_SUM: number = SHARED_MAX_WEIGHT_SUM; // 6.28
+
+export const IQ_MAX_SCORE: number = SHARED_IQ_MAX_SCORE;
 export const IQ_STATIC_MAX = 100;
 export const IQ_AI_MAX = 16;
 export const IQ_VISUAL_MAX = 9;
 
 export function computeStandardized(raw: number, max: number): number {
-  if (!max) return 0;
-  return Math.round((raw / max) * 100);
+  return sharedComputeStandardized(raw, max);
 }
 
 export function mapAQLikert(val: number): number {
-  if (val <= 2) return 0;
-  if (val === 3) return 1;
-  if (val === 4) return 2;
-  return 3;
+  return sharedMapAQLikert(val);
 }
 
 /** Normalise raw pillar section scores to 0–100 (IQ normalises /125). */
 export function computePillarScore(pillarId: PillarId, scores: Record<string, number>): number {
-  if (pillarId === 'IQ') {
-    const totalRaw =
-      (scores.verbal || 0) + (scores.quantitative || 0) +
-      (scores.psychometric || 0) + (scores.performance || 0);
-    const aiBonus = scores._aiBonus || 0;
-    const visualBonus = scores._visualBonus || 0;
-    return Math.min(totalRaw + aiBonus + visualBonus, IQ_MAX_SCORE);
-  }
-  if (pillarId === 'EQ') {
-    const comps = ['SA', 'ER', 'SM', 'E', 'IS'];
-    const totalRaw = comps.reduce((s, c) => s + (scores[c] || 0), 0);
-    return computeStandardized(totalRaw, 50);
-  }
-  if (pillarId === 'SQ') {
-    const totalRaw = (scores.ACE || 0) + (scores.CSI || 0) + (scores.PBA || 0);
-    return computeStandardized(totalRaw, 50);
-  }
-  if (pillarId === 'AQ') {
-    const weights = { SA: 1.5, PM: 1.0, RR: 1.0, RC: 1.5 };
-    const AQ_RD_MAX = 95;
-    const rdScore = Object.entries(weights).reduce((sum, [comp, w]) => sum + (scores[comp] || 0) * w, 0);
-    return Math.round((rdScore / AQ_RD_MAX) * 100);
-  }
-  return 0;
+  return sharedComputePillarScore(pillarId, scores);
 }
 
 /** Context-weighted unified score (0–100). */
 export function computeWeightedScore(pillarScores: PillarScores): number {
-  const iqNormalized = Math.min(Math.round(((pillarScores.IQ || 0) / IQ_MAX_SCORE) * 100), 100);
-  const weighted =
-    iqNormalized * WEIGHTS.IQ +
-    (pillarScores.EQ || 0) * WEIGHTS.EQ +
-    (pillarScores.SQ || 0) * WEIGHTS.SQ +
-    (pillarScores.AQ || 0) * WEIGHTS.AQ;
-  return Math.round(weighted / MAX_WEIGHT_SUM);
+  return sharedComputeWeightedScore(pillarScores);
 }
 
-export function getGrade(score: number) {
-  return GRADE_BANDS.find(b => score >= b.min && score <= b.max) ?? GRADE_BANDS[4];
+export function getGrade(score: number): GradeBand {
+  return sharedGetGrade(score);
 }
 
-export function isCritical(score: number): boolean { return score < 60; }
+export function isCritical(score: number): boolean { return sharedIsCritical(score); }
 
 // ── Skill shape & career profile (QIDS) ───────────────────────────────────────
 
 export function getSkillShape(pillarScores: PillarScores): 'T' | 'I' | 'X' | 'M' {
-  const vals = Object.values(pillarScores);
-  const max = Math.max(...vals);
-  const min = Math.min(...vals);
-  const avg = vals.reduce((a, b) => a + b, 0) / vals.length;
-  const highCount = vals.filter(v => v >= 75).length;
-  if (highCount >= 3) return 'M';
-  if (max - min < 15 && avg >= 70) return 'X';
-  if (highCount === 1) return 'I';
-  return 'T';
+  return sharedGetSkillShape(pillarScores);
 }
 
-export const CAREER_PROFILES = [
-  { id: 'specialist', label: 'Specialist / Technical Track', condition: 'High IQ + Lower AQ', roles: ['Research Scientist', 'Software Engineer', 'Data Analyst', 'Financial Analyst'] },
-  { id: 'leader', label: 'Leadership / People-Facing Track', condition: 'High EQ + High SQ', roles: ['HR Director', 'Counselor', 'Team Lead', 'Customer Success Manager'] },
-  { id: 'versatile', label: 'Versatile / Multidisciplinary Path', condition: 'Balanced High Scores', roles: ['Entrepreneur', 'Consultant', 'Product Manager', 'General Manager'] },
-  { id: 'resilient', label: 'Resilience-Heavy / Adaptive Track', condition: 'Strong AQ', roles: ['Crisis Manager', 'Emergency Services', 'Military Officer', 'Startup Founder'] },
-  { id: 'creative', label: 'Creative / Innovation Track', condition: 'High IQ + High EQ', roles: ['UX Designer', 'Creative Director', 'Innovation Lead', 'Architect'] },
-];
+export const CAREER_PROFILES = SHARED_CAREER_PROFILES;
 
 export function getCareerProfile(pillarScores: PillarScores) {
-  const { IQ, EQ, SQ, AQ } = pillarScores;
-  if (EQ >= 75 && SQ >= 75) return CAREER_PROFILES[1];
-  if (IQ >= 75 && AQ < 60) return CAREER_PROFILES[0];
-  if (AQ >= 75) return CAREER_PROFILES[3];
-  if (IQ >= 75 && EQ >= 75) return CAREER_PROFILES[4];
-  const avg = (IQ + EQ + SQ + AQ) / 4;
-  if (avg >= 70) return CAREER_PROFILES[2];
-  return CAREER_PROFILES[0];
+  return sharedGetCareerProfile(pillarScores);
 }
 
 // ── Enterprise: IRT-lite scaling ──────────────────────────────────────────────

@@ -3,6 +3,7 @@
 // Run: npx tsc -p tests/tsconfig.smoke.json && node <outDir>/tests/engine-smoke.js
 // (build with tsc, then execute the compiled CJS output)
 
+import { readFileSync } from 'node:fs';
 import { ITEM_BANKS, getItemBank } from '../src/core/data/itemBanks/index';
 import { ROLE_TRACKS, getRoleTrack, getTrackForProfile } from '../src/core/data/roleTracks/index';
 import { buildDeployList } from '../src/core/engine/adaptive';
@@ -407,6 +408,21 @@ function kidsSmoke() {
   check('kids: an open session is exposed for resume',
     activeSession(midChapter)?.chapterId === 'logic'
     && deriveState(midChapter).chaptersComplete === 0);
+
+  // 12. Server parity: the browser path must still reproduce the golden
+  //     fixtures captured before the scorer moved to shared/scoring/qids.js.
+  const golden = JSON.parse(readFileSync('tests/fixtures/qids-golden.json', 'utf8'));
+  let goldenMismatches = 0;
+  for (const entry of golden.cases.slice(0, 60)) {
+    const out = evaluateQidsAssessment({ rawScores: entry.rawScores, intake: {}, mode: 'qids' });
+    if (out.result.unifiedScore !== entry.result.unifiedScore
+      || out.result.grade?.grade !== entry.result.grade
+      || out.result.skillShape !== entry.result.skillShape
+      || JSON.stringify(out.pillarScores) !== JSON.stringify(entry.result.pillarScores)) {
+      goldenMismatches += 1;
+    }
+  }
+  check('scoring: browser path reproduces the golden fixtures', goldenMismatches === 0, goldenMismatches);
 }
 
 main();

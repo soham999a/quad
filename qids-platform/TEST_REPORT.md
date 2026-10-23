@@ -105,6 +105,45 @@ summary write are re-appended on the next load.
 
 ---
 
-## 8. Verdict
+## 8. 2026-10-23 — trust layer, slice 1 (server-side scoring, shadow)
+
+Scoring moved to a single dependency-free module, `shared/scoring/qids.js`,
+loaded by both the browser (via `src/core/engine/scoring.ts` wrappers) and the
+new endpoint. Golden fixtures captured **before** the move lock the numbers.
+
+| Check | Result |
+|---|---|
+| Golden parity (605 answer sheets × 6 fields) | ✅ **3,637 checks**, 0 failed |
+| Engine suite (incl. client-path golden check) | ✅ **135 passed** |
+| Submission core (validation, forged scores, hashing) | ✅ **24 checks** |
+| Live rules (incl. shadow collection denied to clients) | ✅ **19/19** |
+| Full Playwright suite | ✅ **18 passed, 5 skipped** |
+| Production build | ✅ clean |
+
+**What was added**
+
+- `shared/scoring/qids.js` — the canonical QIDS maths, plus instrument bounds
+  and `validateRawScores`.
+- `tests/fixtures/qids-golden.json` — 605 cases from the pre-move engine
+  (`npm run test:scoring:golden` regenerates; every changed expectation is a
+  changed user score, so review the diff).
+- `api/submit-assessment.js` + `api/_lib/submitCore.js` — authenticated,
+  rate-limited, idempotent (`submissionId` is the document id) and validates
+  the sheet before scoring. Writes to `scoringShadow`, **server-only** by rule.
+- `src/services/scoringService.js` — fire-and-forget shadow post; failures are
+  silent and never block submission.
+- `firestore.rules` — `scoringShadow` denied to all clients.
+- Playwright workers capped at 2: six workers cold-compiling the dev server
+  caused 60s timeouts that had nothing to do with the code.
+
+**Deliberately not done yet (slice 2)**
+
+`rawScores` is still computed in the browser, so this slice makes the
+*derivation* server-authoritative but not the *answers*. The shadow record is
+written with `shadow: true` and nothing reads it. Switching the app's source of
+truth, locking `assessments` to server-only writes and gating credentials on
+`scoredBy: 'server'` all wait for the parity number from real traffic.
+
+## 9. Verdict
 
 The software is functionally correct end-to-end: public funnel, auth, onboarding, the individual loop, the full school loop (verified with real accounts against live Firebase), i18n across 4 languages, mobile layout, and the command palette all pass. One regression was found during this pass (signup hook order) and fixed immediately. **Ready to commit and push.**

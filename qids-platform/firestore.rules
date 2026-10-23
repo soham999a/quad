@@ -222,6 +222,14 @@ service cloud.firestore {
       allow delete: if isOwner(resource.data.uid) || isAdmin();
     }
 
+    // ── Server scoring shadow records ──────────────────────────────────────
+    // Written only by /api/submit-assessment through the Admin SDK. Clients
+    // can neither read their own record nor forge/alter one, so the server's
+    // derivation stays the only copy that matters.
+    match /scoringShadow/{submissionId} {
+      allow read, write: if false;
+    }
+
     // ── Product analytics (funnel events) ──────────────────────────────────
     // Create-only for any signed-in user (append-only telemetry: users can add
     // their own events but never read anyone's or modify existing ones).

@@ -7,6 +7,9 @@ export default defineConfig({
   testDir: './tests/e2e',
   timeout: 30_000,
   fullyParallel: true,
+  // The dev server compiles routes on demand. Six workers requesting six cold
+  // routes starved each other into 60s timeouts, so keep parallelism modest.
+  workers: 2,
   retries: process.env.CI ? 1 : 0,
   reporter: process.env.CI ? 'github' : 'list',
   use: {

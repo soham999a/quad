@@ -211,6 +211,21 @@ async function main() {
       token: b.idToken, fields: sessionFields,
     })));
 
+  // ── Server-scoring records are server-only ────────────────────────────────
+  // The collection has an explicit deny-all rule; even if the rule were
+  // removed, Firestore denies unmatched paths, so these must hold either way.
+  const shadowPath = `scoringShadow/shadow-${Date.now()}`;
+  const shadowFields = {
+    uid: s(a.uid),
+    submissionId: s('shadow-test'),
+    scoredBy: s('server'),
+    result: map({ unifiedScore: '100' }),
+  };
+  check('a client cannot forge a server-scored record',
+    isDenied(await fsRequest('PATCH', shadowPath, { token: a.idToken, fields: shadowFields })));
+  check('a client cannot read server-scoring records',
+    isDenied(await fsRequest('GET', shadowPath, { token: a.idToken })));
+
   // ── Privilege escalation ──────────────────────────────────────────────────
   check('a user cannot create a profile with role=admin',
     isDenied(await fsRequest('PATCH', `users/${b.uid}`, {

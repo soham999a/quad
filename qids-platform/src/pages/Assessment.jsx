@@ -12,6 +12,7 @@ import { useApp } from '../context/AppContext';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { saveAssessment, getStudentEvaluator, listPublicEvaluators, assignEvaluator, removeAssignment } from '../services/firestoreService';
+import { newSubmissionId, submitAssessmentShadow } from '../services/scoringService';
 import { recordSchoolAttempt, getSchoolAssessment } from '../services/schoolService';
 import { notifyAttemptRecorded } from '../services/notificationService';
 import { logEvent } from '../lib/analytics';
@@ -1005,6 +1006,11 @@ export default function Assessment() {
   const checkpointRef = useRef(null);
   const [resumeState, setResumeState] = useState(null);
 
+  // Shadow scoring (slice 1): one stable id per attempt makes the server write
+  // idempotent, and the start time gives the integrity signal.
+  const shadowRef = useRef(null);
+  if (!shadowRef.current) shadowRef.current = { id: newSubmissionId(), startedAt: Date.now() };
+
   // Focus mode: while answering (not intake/review/submitted), hide the shell
   // chrome so the assessment is the only thing on screen.
   useEffect(() => {
@@ -1414,6 +1420,23 @@ export default function Assessment() {
       toast('Saved locally — sync failed. Check connection.', 'error');
     }
     setSaving(false);
+
+    // Shadow scoring: the server re-derives the result from the same answer
+    // sheet and keeps its own record. Fire-and-forget by design — the UI never
+    // waits for it and never reads it (slice 1).
+    if (user) {
+      submitAssessmentShadow(user, {
+        submissionId: shadowRef.current.id,
+        clientAssessmentId: savedId,
+        rawScores,
+        intake,
+        ageGroup: intake.ageGroup,
+        mode: mode === 'school' ? 'school' : 'qids',
+        startedAt: new Date(shadowRef.current.startedAt).toISOString(),
+        durationMs: Date.now() - shadowRef.current.startedAt,
+      });
+    }
+
     if (user && !savedId) return;
     clearCheckpoint('qids', user?.uid);
     if (classIdParam && schoolAssessmentIdParam) {
@@ -1453,6 +1476,7 @@ export default function Assessment() {
           setEqScores({});
           setSqScores({});
           setAqScores({});
+          shadowRef.current = { id: newSubmissionId(), startedAt: Date.now() };
         }} className="px-8 py-4 border-[0.5px] border-outline-variant text-on-surface-variant text-label-md font-label-md hover:text-primary hover:border-primary transition-all cursor-pointer bg-transparent uppercase tracking-widest">{t("Assessment.new_assessment")}</button>
         </div>
       </div>;
