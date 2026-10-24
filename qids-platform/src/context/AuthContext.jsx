@@ -38,7 +38,29 @@ export function AuthProvider({ children }) {
       if (firebaseUser) {
         try {
           const snap = await getDoc(doc(db, 'users', firebaseUser.uid));
-          if (snap.exists()) setUserProfile(snap.data());
+          if (snap.exists()) {
+            setUserProfile(snap.data());
+            // Self-heal the public evaluator directory: accounts that signed
+            // up as evaluators before directory sync existed never got an
+            // entry (entries were only written on later role *changes*), so
+            // they were invisible to students. Read-guarded: one extra read
+            // for evaluators on sign-in, a write only when the entry is
+            // actually missing.
+            const p = snap.data();
+            if (p.role === 'evaluator') {
+              try {
+                const dirSnap = await getDoc(doc(db, 'publicEvaluators', firebaseUser.uid));
+                if (!dirSnap.exists()) {
+                  await upsertPublicEvaluator(firebaseUser.uid, {
+                    name: p.name || '',
+                    email: p.email || '',
+                  });
+                }
+              } catch (e) {
+                console.warn('Evaluator directory self-heal:', e.message);
+              }
+            }
+          }
         } catch (e) {
           console.warn('Could not load user profile:', e.message);
         }
@@ -58,6 +80,13 @@ export function AuthProvider({ children }) {
       await setDoc(doc(db, 'users', cred.user.uid), profile);
     } catch (e) {
       console.warn('Could not save user profile:', e.message);
+    }
+    // Directory entry at birth. Signup is a role-creation moment the sync
+    // used to miss (entries were only written on later role *changes*), so a
+    // fresh signup-as-evaluator stayed invisible to students. Best-effort:
+    // the service logs failures; signup must not block on it.
+    if (role === 'evaluator') {
+      await upsertPublicEvaluator(cred.user.uid, { name, email });
     }
     setUserProfile(profile);
     return { user: cred.user, profile };
@@ -89,6 +118,11 @@ export function AuthProvider({ children }) {
           role, context, createdAt: serverTimestamp(),
         };
         await setDoc(doc(db, 'users', u.uid), profile);
+        // Directory entry at birth, same reason as in signup(): a first-time
+        // Google profile with the evaluator role used to skip the directory.
+        if (role === 'evaluator') {
+          await upsertPublicEvaluator(u.uid, { name: profile.name, email: profile.email });
+        }
         setUserProfile(profile);
       } else {
         setUserProfile(snap.data());
@@ -106,16 +140,22 @@ export function AuthProvider({ children }) {
   const updateUserRole = async (uid, role) => {
     try {
       await updateDoc(doc(db, 'users', uid), { role, updatedAt: serverTimestamp() });
-      // Keep the public evaluator directory in sync with role changes.
-      if (role === 'evaluator') {
+      // Keep the public evaluator directory in sync with role changes — but
+      // only for the account holder's own change. Name/email here resolve to
+      // the *acting* user's data; when an admin changes someone else's role,
+      // the caller (AdminPanel) does the directory write with that user's
+      // real name/email, so this context must not overwrite it with the
+      // admin's.
+      const isSelf = user?.uid === uid;
+      if (isSelf && role === 'evaluator') {
         await upsertPublicEvaluator(uid, {
           name: userProfile?.name || user?.displayName || '',
           email: userProfile?.email || user?.email || '',
         });
-      } else {
+      } else if (isSelf && role !== 'evaluator') {
         await removePublicEvaluator(uid);
       }
-      if (user?.uid === uid) {
+      if (isSelf) {
         setUserProfile(prev => prev ? { ...prev, role } : prev);
       }
     } catch (e) {
@@ -129,6 +169,21 @@ export function AuthProvider({ children }) {
     Object.entries(fields || {}).forEach(([k, v]) => { if (v != null && v !== '') clean[k] = v; });
     try {
       await updateDoc(doc(db, 'users', uid), { ...clean, updatedAt: serverTimestamp() });
+      // This is the path onboarding uses to commit the chosen persona, so it
+      // must keep the evaluator directory in sync too: a student switching to
+      // the evaluator persona here is a role *creation* just like Settings.
+      // Name/email changes refresh the entry so it never goes stale.
+      if ('role' in clean || 'name' in clean || 'email' in clean) {
+        const nextProfile = { ...userProfile, ...clean };
+        if (nextProfile.role === 'evaluator') {
+          await upsertPublicEvaluator(uid, {
+            name: nextProfile.name || user?.displayName || '',
+            email: nextProfile.email || user?.email || '',
+          });
+        } else if ('role' in clean) {
+          await removePublicEvaluator(uid);
+        }
+      }
       if (typeof clean.name === 'string' && auth.currentUser) {
         await updateProfile(auth.currentUser, { displayName: clean.name });
       }
