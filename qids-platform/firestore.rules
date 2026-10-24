@@ -222,11 +222,26 @@ service cloud.firestore {
       allow delete: if isOwner(resource.data.uid) || isAdmin();
     }
 
-    // ── Server scoring shadow records ──────────────────────────────────────
-    // Written only by /api/submit-assessment through the Admin SDK. Clients
-    // can neither read their own record nor forge/alter one, so the server's
-    // derivation stays the only copy that matters.
+    // ── Server scoring shadow records (pre-1.1, superseded) ────────────────
+    // Kept denied so historical shadow documents stay opaque. New submissions
+    // go to assessmentRecords below.
     match /scoringShadow/{submissionId} {
+      allow read, write: if false;
+    }
+
+    // ── Server-scored submissions ──────────────────────────────────────────
+    // The audit trail: item-level answers, derived scores, input hash. Written
+    // only by /api/submit-assessment through the Admin SDK, so a client can
+    // neither read its own answers back nor forge a score. Nothing in the app
+    // needs client access — the credential reads via /api/verification.
+    match /assessmentRecords/{submissionId} {
+      allow read, write: if false;
+    }
+
+    // The compact summary a credential is checked against. Also Admin-only:
+    // /api/verification decides who may see it (owner, or anyone once the
+    // credential is published) and strips the uid before responding.
+    match /assessmentVerifications/{assessmentId} {
       allow read, write: if false;
     }
 
