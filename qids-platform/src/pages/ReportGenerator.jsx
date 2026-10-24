@@ -27,7 +27,7 @@ export default function ReportGenerator() {
   const intake = assessmentData?.intake || {};
   const hasEvalScores = mergedPillarScores !== null && evaluations?.length > 0;
   if (!assessmentData && !hasEvalScores) {
-    return <div className="page-pad max-w-[1000px] mx-auto animate-fade flex flex-col items-center justify-center min-h-[60vh] text-center">
+    return <div className="page-pad max-w-[960px] mx-auto animate-fade flex flex-col items-center justify-center min-h-[60vh] text-center">
         <h1 className="text-headline-md font-headline-md text-on-background mb-3">{t("ReportGenerator.report_generator")}</h1>
         <AlertTriangle size={28} className="text-primary mb-4 opacity-60" />
         <p className="text-label-md font-label-md text-on-surface-variant mb-6">{t("ReportGenerator.no_assessment_data_found")}</p>
@@ -48,7 +48,7 @@ export default function ReportGenerator() {
   const skillShapeData = SKILL_SHAPES.find(s => s.id === skillShape);
   const ctx = CONTEXTS.find(c => c.id === context) || CONTEXTS[0];
   const handlePrint = () => window.print();
-  return <div className="page-pad max-w-[1000px] mx-auto animate-fade">
+  return <div className="page-pad max-w-[960px] mx-auto animate-fade">
       {/* Page header */}
       <div className="flex justify-between items-start mb-8">
         <div>
@@ -148,7 +148,7 @@ export default function ReportGenerator() {
                   <div className="text-technical-sm font-technical-sm text-surface-variant mt-1">/ {displayMax} | Grade {grade.grade}</div>
                   {isIQ && <div className="text-[10px] font-technical-sm text-primary mt-1">{t("inter.normalized", { x: normalizedPost })}</div>}
                   <div className="text-technical-sm font-technical-sm text-surface-variant mt-1">Pre: {pre} | Δ {post - pre > 0 ? '+' : ''}{post - pre}</div>
-                  <div className="h-[3px] bg-surface-variant/30 mt-3">
+                  <div className="h-[3px] bg-outline-variant/50 mt-3">
                     <div className="h-full transition-all duration-500" style={{
                   width: `${pct}%`,
                   backgroundColor: pillar.color
@@ -247,7 +247,7 @@ export default function ReportGenerator() {
                     <span className="text-label-md font-label-md min-w-[30px]" style={{
                   color: pillar.color
                 }}>{id}</span>
-                    <div className="flex-1 h-[5px] bg-surface-variant/30">
+                    <div className="flex-1 h-[5px] bg-outline-variant/50">
                       <div className="h-full transition-all duration-500" style={{
                     width: `${score}%`,
                     backgroundColor: pillar.color

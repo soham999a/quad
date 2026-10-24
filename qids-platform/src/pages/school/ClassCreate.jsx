@@ -48,7 +48,7 @@ export default function ClassCreate() {
 
   const inputClass = "w-full h-12 px-4 bg-background border-[0.5px] border-outline-variant rounded-xl text-on-surface placeholder:text-surface-variant font-technical-sm transition-all outline-none focus:border-primary focus:shadow-[0_0_0_1px_var(--gold)]";
 
-  return <div className="page-pad max-w-[560px] mx-auto animate-fade">
+  return <div className="page-pad max-w-[640px] mx-auto animate-fade">
     <button onClick={() => navigate('/app/school')} className="text-technical-sm font-technical-sm text-surface-variant hover:text-primary transition-colors cursor-pointer bg-transparent border-none p-0 mb-6 flex items-center gap-1">
       <ChevronRight size={13} className="rotate-180" />{t('classCreate.back')}
     </button>

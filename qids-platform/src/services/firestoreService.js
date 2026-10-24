@@ -156,17 +156,55 @@ export async function getFunnelSummary(windowDays = 30) {
     const snap = await getDocs(collection(db, 'analytics_events'));
     const counts = {};
     let total = 0;
+
+    // Per-step assessment funnel: who reached each step, who stopped there, and
+    // on which device. Unique users, not events, or a retry would look like
+    // progress.
+    const reached = new Map();   // step index -> Set(uid)
+    const stopped = new Map();   // step index -> Set(uid)
+    const deviceStart = {};
+    const deviceComplete = {};
+
+    const addTo = (map, key, uid) => {
+      if (!map.has(key)) map.set(key, new Set());
+      if (uid) map.get(key).add(uid);
+    };
+
     snap.forEach(d => {
       const ev = d.data();
       const ts = ev.ts?.toDate?.() || (ev.ts ? new Date(ev.ts) : null);
       if (ts && ts < since) return; // outside the window
       counts[ev.name] = (counts[ev.name] || 0) + 1;
       total += 1;
+
+      const device = ev.props?.device || 'unknown';
+      if (ev.name === 'assessment_step_completed' && Number.isInteger(ev.props?.step)) {
+        addTo(reached, ev.props.step, ev.uid);
+      } else if (ev.name === 'assessment_abandoned' && Number.isInteger(ev.props?.step)) {
+        addTo(stopped, ev.props.step, ev.uid);
+      } else if (ev.name === 'assessment_started') {
+        deviceStart[device] = (deviceStart[device] || 0) + 1;
+      } else if (ev.name === 'assessment_complete') {
+        deviceComplete[device] = (deviceComplete[device] || 0) + 1;
+      }
     });
-    return { counts, total, windowDays };
+
+    const steps = Array.from({ length: 6 }, (_, index) => ({
+      index,
+      reached: reached.get(index)?.size || 0,
+      abandoned: stopped.get(index)?.size || 0,
+    }));
+
+    const devices = Object.keys({ ...deviceStart, ...deviceComplete }).map(device => ({
+      device,
+      started: deviceStart[device] || 0,
+      completed: deviceComplete[device] || 0,
+    })).sort((a, b) => b.started - a.started);
+
+    return { counts, total, windowDays, steps, devices };
   } catch (e) {
     console.warn('getFunnelSummary failed:', e.message);
-    return { counts: {}, total: 0, windowDays };
+    return { counts: {}, total: 0, windowDays, steps: [], devices: [] };
   }
 }
 

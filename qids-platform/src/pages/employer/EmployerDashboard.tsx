@@ -221,7 +221,7 @@ export default function EmployerDashboard() {
     if (!q) return ROLE_PROFILES;
     return ROLE_PROFILES.filter(r => r.label.toLowerCase().includes(q) || r.id.includes(q) || r.description.toLowerCase().includes(q));
   }, [query]);
-  return <div className="page-pad max-w-[1520px] mx-auto animate-fade pb-24 md:pb-16">
+  return <div className="page-pad max-w-[1280px] mx-auto animate-fade pb-24 md:pb-16">
       <section className="mb-10 md:mb-14">
         <div className="kicker mb-3">{t("EmployerDashboard.employer_intelligence")}</div>
         <h1 className="text-headline-md font-headline-md text-on-background page-headline">{t("EmployerDashboard.talent_intelligence_console")}</h1>

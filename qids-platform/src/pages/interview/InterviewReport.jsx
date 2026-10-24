@@ -54,7 +54,7 @@ export default function InterviewReport() {
     }).catch(() => setError(t("InterviewReport.failed_to_load"))).finally(() => setLoading(false));
   }, [sessionId]);
   if (loading) {
-    return <div className="page-pad max-w-[1100px] mx-auto animate-fade py-16">
+    return <div className="page-pad max-w-[960px] mx-auto animate-fade py-16">
         <div className="card p-8">
           <div className="skeleton h-6 w-48 mb-4" />
           <div className="skeleton h-64 w-full" />
@@ -62,7 +62,7 @@ export default function InterviewReport() {
       </div>;
   }
   if (error || !session) {
-    return <div className="page-pad max-w-[1100px] mx-auto animate-fade py-16 text-center">
+    return <div className="page-pad max-w-[960px] mx-auto animate-fade py-16 text-center">
         <AlertCircle size={32} className="text-surface-variant mx-auto mb-4" />
         <div className="text-body-md font-body-md text-surface-variant mb-6">{error || 'Session not found'}</div>
         <button onClick={() => navigate('/app/interview')} className="btn-primary">{t("InterviewReport.back_to_dashboard")}</button>
@@ -92,7 +92,7 @@ export default function InterviewReport() {
       angle: i / RUBRIC_DIMENSIONS.length * 2 * Math.PI - Math.PI / 2
     };
   });
-  return <div className="page-pad max-w-[1100px] mx-auto animate-fade">
+  return <div className="page-pad max-w-[960px] mx-auto animate-fade">
       {/* Hero */}
       <section className="card-gold p-8 md:p-12 mb-8 text-center">
         <div className="kicker mb-3">{t("InterviewReport.interview_assessment_report")}</div>

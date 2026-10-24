@@ -253,6 +253,9 @@ export default function FrameworkMap() {
     }
   };
   return <div className="flex flex-col lg:flex-row lg:h-full animate-fade">
+      {/* Split-pane layout: the visible titles are per-node, so the page keeps
+          its own heading for the document outline and screen-reader users. */}
+      <h1 className="sr-only">{t("nav.items.framework")}</h1>
       {/* Left: Tree */}
       <div className="w-full lg:w-[340px] lg:border-r border-outline-variant p-6 overflow-y-auto bg-surface-container-low">
         <h2 className="text-base font-bold mb-1">{t("FrameworkMap.framework_architecture")}</h2>

@@ -6,6 +6,7 @@
 // shows everything.
 
 import { auth } from '../firebase';
+import { RELEASE, deviceClass } from './release';
 
 const ENDPOINT = '/api/log-error';
 const FLUSH_INTERVAL = 15_000;
@@ -60,6 +61,10 @@ export function reportError(error, context = {}) {
       userAgent: typeof navigator !== 'undefined' ? navigator.userAgent.slice(0, 200) : '',
       uid: auth?.currentUser?.uid || null,
       lang: typeof localStorage !== 'undefined' ? localStorage.getItem('i18nextLng') || 'en' : 'en',
+      // Release + device: an error is only actionable if you know which deploy
+      // produced it and on what kind of device.
+      release: RELEASE,
+      device: deviceClass(),
       sessionSeq: ++sessionSeq,
       ts: new Date().toISOString(),
     };

@@ -62,7 +62,7 @@ export default function EvaluatorDashboard() {
     return pillarEvals[pillar] || null;
   };
   if (loading) {
-    return <div className="page-pad max-w-[1200px] mx-auto animate-fade text-center pt-20">
+    return <div className="page-pad max-w-[1280px] mx-auto animate-fade text-center pt-20">
         <div className="text-technical-sm font-technical-sm text-surface-variant">{t("EvaluatorDashboard.loading_your_dashboard")}</div>
       </div>;
   }
@@ -74,7 +74,7 @@ export default function EvaluatorDashboard() {
         <div className="text-technical-sm font-technical-sm text-on-surface-variant">{t("EvaluatorDashboard.you_don_t_have")}</div>
       </div>;
   }
-  return <div className="page-pad max-w-[1200px] mx-auto animate-fade">
+  return <div className="page-pad max-w-[1280px] mx-auto animate-fade">
       {/* Header */}
       <section className="flex justify-between items-start mb-10 md:mb-16">
         <div>

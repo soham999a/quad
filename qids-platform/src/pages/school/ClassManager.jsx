@@ -7,6 +7,7 @@ import { getClass, getClassStudents, createSchoolAssessment, getClassAssessments
 import { notifyClassAssignment } from '../../services/notificationService';
 import { useToast } from '../../components/Toast';
 import EmptyState from '../../components/EmptyState';
+import { reportError } from '../../lib/errorReport';
 import { Users, Plus, ClipboardList, BarChart3, Copy, ChevronRight, CheckCircle, Trash2, Send, Share2 } from 'lucide-react';
 export default function ClassManager() {
   const {
@@ -81,7 +82,7 @@ export default function ClassManager() {
         mode: 'school'
       });
       // refresh the list so the new assignment appears immediately
-      getClassAssessments(classId).then(setAssignments).catch(() => {});
+      getClassAssessments(classId).then(setAssignments).catch(e => reportError(e, { kind: 'class-refresh' }));
       // notify every student in the class (fire-and-forget)
       notifyClassAssignment({
         classId,

@@ -44,10 +44,15 @@
 
   --color-secondary: oklch(0.22 0.006 250);
   --color-on-secondary: oklch(0.92 0.005 90);
-  --color-error: oklch(0.55 0.18 28);
+  --color-error: oklch(0.64 0.17 28);
   --color-on-error: oklch(0.98 0.003 90);
   --color-error-container: oklch(0.55 0.18 28 / 20%);
-  --color-surface-variant: oklch(0.36 0.008 250);
+  /* Secondary/quiet TEXT. Despite the legacy name this token is used as a
+   * text colour 430 times across the app (never as a surface since the
+   * progress tracks moved to --color-outline-variant). It must hold 4.5:1
+   * on every surface, so it mirrors muted-foreground instead of the old
+   * dark surface value (oklch 0.36 = 1.8:1, effectively invisible). */
+  --color-surface-variant: oklch(0.7 0.01 90);
 
   /* ── Sidebar (inverted: contrasts the dark canvas with a light bone rail) ── */
   --color-sidebar: oklch(0.98 0.008 82);
@@ -1253,14 +1258,26 @@ details[open] > .faq-a { grid-template-rows: 1fr; }
   --color-border-strong: oklch(0.72 0.02 82);
   --color-muted-foreground: oklch(0.45 0.02 255);
 
-  --color-primary: oklch(0.62 0.115 80);
+  --color-primary: oklch(0.52 0.115 80);
   --color-on-primary: oklch(0.14 0.005 250);
   --color-primary-container: oklch(0.62 0.115 80 / 14%);
   --color-on-primary-container: oklch(0.2 0.02 255);
+  /* --color-gold was never remapped for light theme (only the raw --gold var
+   * was), so text-gold rendered at 1.8:1 on bone across 83 call sites. */
+  --color-gold: oklch(0.52 0.115 80);
+  --color-gold-soft: oklch(0.52 0.115 80 / 14%);
 
   --color-secondary: oklch(0.9 0.015 82);
   --color-on-secondary: oklch(0.2 0.02 255);
-  --color-surface-variant: oklch(0.72 0.02 82);
+  --color-surface-variant: oklch(0.45 0.02 255);
+
+  /* Status/accent text re-tuned for the bone canvas. The dark-theme values
+   * (lightness 0.68–0.80) are mixed for a navy background and land at
+   * 1.7–2.6:1 on bone — unreadable as text. These keep the hue and drop the
+   * lightness until each clears 4.5:1 on every light surface. */
+  --color-success: oklch(0.45 0.13 155);
+  --color-warning: oklch(0.48 0.13 80);
+  --color-error: oklch(0.48 0.18 28);
 
   /* Sidebar (inverted: dark navy rail against the light bone canvas) */
   --color-sidebar: oklch(0.13 0.005 250);

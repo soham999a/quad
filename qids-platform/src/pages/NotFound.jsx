@@ -21,7 +21,7 @@ export default function NotFound({
     </div>;
   if (inline) {
     // Rendered inside the app shell for unknown /app/* routes.
-    return <div className="page-pad max-w-[720px] mx-auto animate-fade">{body}</div>;
+    return <div className="page-pad max-w-[640px] mx-auto animate-fade">{body}</div>;
   }
   return <div className="min-h-screen bg-background text-on-surface flex flex-col">
       <header className="flex min-h-20 items-center justify-between border-b border-border px-6 lg:px-12">

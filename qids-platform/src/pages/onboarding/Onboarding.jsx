@@ -5,6 +5,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { ArrowRight, ArrowLeft, Check, Sparkles, GraduationCap, Briefcase, Users, Target, Building2, Microscope } from 'lucide-react';
 import { Wordmark } from '../../components/PublicShell';
 import { logEvent } from '../../lib/analytics';
+import { reportError } from '../../lib/errorReport';
 import { useAuth } from '../../context/AuthContext';
 import { getOnboarding, saveOnboarding, completeOnboarding, ONBOARDING_DEFAULT } from '../../services/onboardingService';
 import { postOnboardingDestination } from '../../lib/flow';
@@ -469,12 +470,12 @@ export default function Onboarding() {
     try {
       // Profile sync is best-effort — the completion marker is what frees the
       // user from the gate; never let a denied profile patch block it.
-      await updateProfileIfNeeded(state).catch(() => {});
+      await updateProfileIfNeeded(state).catch(e => reportError(e, { kind: 'onboarding-profile' }));
       await completeOnboarding(user.uid, state);
       logEvent(user.uid, 'onboarding_done', {
         persona: state.persona
       });
-      refreshProfile().catch(() => {});
+      refreshProfile().catch(e => reportError(e, { kind: 'onboarding-refresh' }));
       navigate(returnTo || postOnboardingDestination(state.persona, state.contextId), {
         replace: true
       });
@@ -509,9 +510,9 @@ export default function Onboarding() {
     try {
       // Profile sync is best-effort — a denied/failed write must never stop
       // the completion marker, or the user is stranded on the wizard forever.
-      await updateProfileIfNeeded(next).catch(() => {});
+      await updateProfileIfNeeded(next).catch(e => reportError(e, { kind: 'onboarding-profile' }));
       await completeOnboarding(user.uid, next);
-      refreshProfile().catch(() => {});
+      refreshProfile().catch(e => reportError(e, { kind: 'onboarding-refresh' }));
       navigate(returnTo || '/app/dashboard', {
         replace: true
       });

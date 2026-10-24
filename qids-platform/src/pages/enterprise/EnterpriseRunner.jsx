@@ -201,7 +201,7 @@ export default function EnterpriseRunner({
   // ── SETUP ───────────────────────────────────────────────────────────────────
   if (phase === 'setup') {
     const Icon = MODE_ICONS[mode] || Building2;
-    return <div className="page-pad max-w-[1400px] mx-auto animate-fade pb-24 md:pb-16">
+    return <div className="page-pad max-w-[1280px] mx-auto animate-fade pb-24 md:pb-16">
         <section className="mb-12 fade-up">
           <div className="flex items-center gap-3 mb-3">
             <Icon size={14} className="text-primary" />
@@ -434,7 +434,7 @@ export default function EnterpriseRunner({
           setStepIndex(i);
         }} aria-label={`${step.label}${done ? ' complete' : ''}`} aria-current={current ? 'step' : undefined} title={step.label} style={{
           background: done ? 'linear-gradient(90deg, var(--gold-bright), var(--gold))' : undefined
-        }} className={`flex items-center justify-center gap-1 h-7 flex-1 rounded-full transition-all duration-300 cursor-pointer border-none p-0 text-technical-sm font-technical-sm ${done ? 'text-on-primary' : current ? 'bg-primary/20 text-primary ring-1 ring-primary/60' : 'bg-surface-container-high text-surface-variant hover:bg-surface-variant/50'}`}>
+        }} className={`flex items-center justify-center gap-1 h-7 flex-1 rounded-full transition-all duration-300 cursor-pointer border-none p-0 text-technical-sm font-technical-sm ${done ? 'text-on-primary' : current ? 'bg-primary/20 text-primary ring-1 ring-primary/60' : 'bg-surface-container-high text-surface-variant hover:bg-surface-container-highest'}`}>
               {done ? <Check size={11} /> : i + 1}
             </button>;
       })}
@@ -452,7 +452,7 @@ export default function EnterpriseRunner({
       <div className="gradient-rule mt-5" />
     </section>;
   if (phase === 'review') {
-    return <div className="page-pad max-w-[1360px] mx-auto animate-fade pb-24 md:pb-16">
+    return <div className="page-pad max-w-[1280px] mx-auto animate-fade pb-24 md:pb-16">
         {header}
         {allComplete && <div className="mb-6 flex items-center gap-2 px-4 py-3 rounded-full border-[0.5px] border-emerald-500/40 bg-emerald-500/10 text-technical-sm font-technical-sm text-emerald-400">
             <Check size={14} /> All {totalItems} items answered — ready to submit.
@@ -501,7 +501,7 @@ export default function EnterpriseRunner({
   }
 
   // running
-  return <div className="page-pad max-w-[1360px] mx-auto animate-fade pb-24 md:pb-16">
+  return <div className="page-pad max-w-[1280px] mx-auto animate-fade pb-24 md:pb-16">
       {header}
       <RunnerItems module={currentModule} items={currentItems} answers={answers} onChange={onChange} />
       <div className="mt-10 flex items-center justify-between">

@@ -1,6 +1,6 @@
 import { useTranslation } from 'react-i18next';
 import usePageTitle from '../lib/usePageTitle';
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useId } from 'react';
 import { PILLARS, EQ_QUESTIONS, SQ_QUESTIONS, IQ_QUESTIONS, AQ_QUESTIONS, mapAQLikert } from '../data/qidsData';
 import { useBankText } from '../data/banks';
 import { evaluateQidsAssessment, getGrade } from '../core/engine/qids';
@@ -12,10 +12,12 @@ import { useApp } from '../context/AppContext';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { saveAssessment, getStudentEvaluator, listPublicEvaluators, assignEvaluator, removeAssignment } from '../services/firestoreService';
-import { newSubmissionId, submitAssessmentShadow } from '../services/scoringService';
+import { newSubmissionId, submitAssessmentForVerification } from '../services/scoringService';
+import ReviewStep from '../components/assessment/ReviewStep';
+import { deriveRawScores } from '../../shared/scoring/answers.js';
 import { recordSchoolAttempt, getSchoolAssessment } from '../services/schoolService';
 import { notifyAttemptRecorded } from '../services/notificationService';
-import { logEvent } from '../lib/analytics';
+import { logEvent, queueEvent, flushQueuedEvents, ASSESSMENT_STEPS } from '../lib/analytics';
 import { Save, ChevronRight, ChevronLeft, Check, CheckCircle, AlertCircle, ClipboardList, Brain, Heart, Users, Shield, ArrowRight } from 'lucide-react';
 import { useToast } from '../components/Toast';
 import { loadCheckpoint, saveCheckpoint, clearCheckpoint, loadRemoteCheckpoint, saveRemoteCheckpoint } from '../lib/checkpoint';
@@ -52,14 +54,18 @@ function MCQQuestion({
   color
 }) {
   const tq = useBankText();
+  const gid = useId();
+  const labelId = `${gid}-label`;
   return <div className="mb-4 p-3 md:p-4 bg-surface-container-low border-[0.5px] border-outline-variant">
-      <div className="text-technical-sm font-technical-sm text-on-surface mb-3 leading-relaxed">
+      <div id={labelId} className="text-technical-sm font-technical-sm text-on-surface mb-3 leading-relaxed">
         <span className="text-surface-variant mr-2">Q{index + 1}.</span>{tq(q.q)}
       </div>
-      <div className="flex flex-col gap-2">
+      {/* Every option is a toggle button: aria-pressed is what makes the
+          current selection audible, since colour alone conveys it otherwise. */}
+      <div role="group" aria-labelledby={labelId} className="flex flex-col gap-2">
         {q.options.map((opt, i) => {
         const isSelected = selected === i;
-        return <button key={i} onClick={() => onSelect(i)} className={`flex items-center gap-3 px-3 md:px-4 py-3 md:py-3 text-left text-technical-sm font-technical-sm transition-all cursor-pointer border-[0.5px] touch-target ${isSelected ? 'border-primary bg-primary/10 text-on-surface' : 'border-outline-variant bg-transparent text-on-surface-variant hover:border-primary hover:text-primary'}`}>
+        return <button key={i} type="button" aria-pressed={isSelected} onClick={() => onSelect(i)} className={`flex items-center gap-3 px-3 md:px-4 py-3 md:py-3 text-left text-technical-sm font-technical-sm transition-all cursor-pointer border-[0.5px] touch-target ${isSelected ? 'border-primary bg-primary/10 text-on-surface' : 'border-outline-variant bg-transparent text-on-surface-variant hover:border-primary hover:text-primary'}`}>
               <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${isSelected ? 'border-primary bg-primary' : 'border-outline-variant'}`}>
                 {isSelected && <div className="w-2 h-2 rounded-full bg-on-primary"></div>}
               </div>
@@ -94,15 +100,23 @@ function LikertQuestion({
   color
 }) {
   const tq = useBankText();
-  const labels = ['Never', 'Rarely', 'Sometimes', 'Often', 'Always'];
+  const gid = useId();
+  const labelId = `${gid}-label`;
+  const labels = [
+    tq('Never'),
+    tq('Rarely'),
+    tq('Sometimes'),
+    tq('Often'),
+    tq('Always')
+  ];
   return <div className="mb-4 p-3 md:p-4 bg-surface-container-low border-[0.5px] border-outline-variant">
-      <div className="text-technical-sm font-technical-sm text-on-surface mb-4 leading-relaxed">
+      <div id={labelId} className="text-technical-sm font-technical-sm text-on-surface mb-4 leading-relaxed">
         <span className="text-surface-variant mr-2">{index + 1}.</span>{tq(q)}
       </div>
-      <div className="flex gap-1.5 md:gap-2 items-stretch">
-        {[1, 2, 3, 4, 5].map(n => <button key={n} onClick={() => onChange(n)} className={`flex-1 px-1 md:px-2 py-3 md:py-4 cursor-pointer transition-all border-[0.5px] flex flex-col items-center gap-1 touch-target ${value === n ? 'border-primary bg-primary/15 text-primary' : 'border-outline-variant bg-transparent text-surface-variant hover:border-primary hover:text-primary'}`}>
+      <div role="group" aria-labelledby={labelId} className="flex gap-1.5 md:gap-2 items-stretch">
+        {[1, 2, 3, 4, 5].map(n => <button key={n} type="button" aria-pressed={value === n} aria-label={`${labels[n - 1]} (${n} of 5)`} onClick={() => onChange(n)} className={`flex-1 px-1 md:px-2 py-3 md:py-4 cursor-pointer transition-all border-[0.5px] flex flex-col items-center gap-1 touch-target ${value === n ? 'border-primary bg-primary/15 text-primary' : 'border-outline-variant bg-transparent text-surface-variant hover:border-primary hover:text-primary'}`}>
             <span className="text-sm md:text-base font-bold">{n}</span>
-            <span className="text-[8px] md:text-[9px] font-normal text-center leading-tight">{tq(labels[n - 1])}</span>
+            <span className="text-[8px] md:text-[9px] font-normal text-center leading-tight">{labels[n - 1]}</span>
           </button>)}
       </div>
     </div>;
@@ -116,18 +130,20 @@ function RubricScorer({
   color
 }) {
   const { t } = useTranslation();
+  const gid = useId();
+  const labelId = `${gid}-label`;
   return <div className="mb-3 p-4 bg-surface-container-low border-[0.5px] border-outline-variant">
       <div className="flex justify-between items-start mb-3">
         <div className="flex-1">
-          <div className="text-technical-sm font-technical-sm text-on-surface">{criterion}</div>
+          <div id={labelId} className="text-technical-sm font-technical-sm text-on-surface">{criterion}</div>
           <div className="text-[11px] text-surface-variant leading-relaxed mt-1">{desc}</div>
         </div>
         <div className="text-[11px] text-surface-variant flex-shrink-0 ml-3">{t("inter.max_n", { n: marks })}</div>
       </div>
-      <div className="flex gap-1.5">
+      <div role="group" aria-labelledby={labelId} className="flex gap-1.5">
         {Array.from({
         length: marks + 1
-      }, (_, i) => <button key={i} onClick={() => onChange(i)} className={`w-9 h-9 cursor-pointer transition-all border-[0.5px] text-sm font-bold ${value === i ? 'border-primary bg-primary/20 text-primary' : 'border-outline-variant bg-transparent text-surface-variant hover:border-primary hover:text-primary'}`}>{i}</button>)}
+      }, (_, i) => <button key={i} type="button" aria-pressed={value === i} aria-label={`${i} / ${marks}`} onClick={() => onChange(i)} className={`w-9 h-9 cursor-pointer transition-all border-[0.5px] text-sm font-bold ${value === i ? 'border-primary bg-primary/20 text-primary' : 'border-outline-variant bg-transparent text-surface-variant hover:border-primary hover:text-primary'}`}>{i}</button>)}
       </div>
     </div>;
 }
@@ -152,17 +168,17 @@ function IntakeStep({
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
         {[{
         key: 'name',
-        label: 'Full Name',
-        placeholder: 'Enter full name'
+        label: t("IntakeStep.full_name"),
+        placeholder: t("IntakeStep.enter_full_name")
       }, {
         key: 'age',
-        label: 'Age',
-        placeholder: 'Enter age',
+        label: t("IntakeStep.age"),
+        placeholder: t("IntakeStep.enter_age"),
         type: 'number'
       }, {
         key: 'institution',
-        label: 'Institution / Organization',
-        placeholder: 'Enter institution name'
+        label: t("IntakeStep.institution_organization"),
+        placeholder: t("IntakeStep.enter_institution_name")
       }].map(({
         key,
         label,
@@ -175,10 +191,10 @@ function IntakeStep({
         <div className="flex flex-col gap-2">
           <span className={labelClass}>{t("Assessment.evaluator")}</span>
           {currentEv ? <div className="flex items-center gap-2 px-4 py-3 border-[0.5px] border-primary/50 bg-primary/5 h-12 text-technical-sm font-technical-sm text-primary">
-              <span className="flex-1">{currentEv.name || currentEv.email || 'Assigned Evaluator'}</span>
+              <span className="flex-1">{currentEv.name || currentEv.email || t("IntakeStep.assigned_evaluator")}</span>
               <button onClick={onRemove} disabled={loadingEv} className="px-3 py-1 border-[0.5px] border-error/50 text-error text-technical-sm font-technical-sm hover:bg-error/10 cursor-pointer bg-transparent">{t("Assessment.remove")}</button>
             </div> : <select className={inputClass} value="" onChange={e => onAssign(e.target.value)} disabled={loadingEv}>
-              <option value="">{loadingEv ? 'Loading...' : evaluators.length === 0 ? 'No evaluators available' : 'Select an evaluator...'}</option>
+              <option value="">{loadingEv ? t("IntakeStep.loading") : evaluators.length === 0 ? t("IntakeStep.no_evaluators_available") : t("IntakeStep.select_an_evaluator")}</option>
               {evaluators.map(ev => <option key={ev.uid} value={ev.uid}>{ev.name || ev.email}</option>)}
             </select>}
         </div>
@@ -189,13 +205,13 @@ function IntakeStep({
         <div className="flex gap-3">
           {[{
           id: '11-18',
-          label: '11–18 Years',
-          desc: 'School / Youth'
+          label: t("IntakeStep.age_11_18"),
+          desc: t("IntakeStep.age_11_18_desc")
         }, {
           id: '19-32',
-          label: '19–32 Years',
-          desc: 'College / Professional'
-        }].map(ag => <button key={ag.id} type="button" onClick={() => onChange('ageGroup', ag.id)} className={`flex-1 py-4 px-4 border-[0.5px] text-left cursor-pointer transition-all bg-transparent ${data.ageGroup === ag.id ? 'border-primary bg-primary/10 text-on-surface' : 'border-outline-variant text-on-surface-variant hover:border-primary'}`}>
+          label: t("IntakeStep.age_19_32"),
+          desc: t("IntakeStep.age_19_32_desc")
+        }].map(ag => <button key={ag.id} type="button" aria-pressed={data.ageGroup === ag.id} onClick={() => onChange('ageGroup', ag.id)} className={`flex-1 py-4 px-4 border-[0.5px] text-left cursor-pointer transition-all bg-transparent ${data.ageGroup === ag.id ? 'border-primary bg-primary/10 text-on-surface' : 'border-outline-variant text-on-surface-variant hover:border-primary'}`}>
               <div className="text-label-md font-label-md">{ag.label}</div>
               <div className="text-technical-sm font-technical-sm text-surface-variant mt-1">{ag.desc}</div>
             </button>)}
@@ -873,77 +889,6 @@ function AQStep({
 }
 
 // ─── REVIEW STEP ──────────────────────────────────────────────────────────────
-function ReviewStep({
-  intake,
-  rawScores
-}) {
-  const {
-    t
-  } = useTranslation();
-  const {
-    result,
-    pillarScores
-  } = evaluateQidsAssessment({
-    rawScores,
-    intake
-  });
-  const unified = result.unifiedScore ?? 0;
-  const grade = result.grade ?? getGrade(unified);
-  return <div>
-      {/* Intake summary */}
-      <div className="text-technical-sm font-technical-sm text-primary mb-6">{t("Assessment.vi_review_submit")}</div>
-      <div className="grid grid-cols-2 gap-3 mb-5">
-        {Object.entries(intake).filter(([k]) => !['consent', 'purpose'].includes(k)).map(([k, v]) => <div key={k} className="p-3 bg-surface-container-low border-[0.5px] border-outline-variant">
-            <div className="text-technical-sm font-technical-sm text-surface-variant uppercase tracking-widest mb-1">{k.replace(/([A-Z])/g, ' $1').trim()}</div>
-            <div className="text-label-md font-label-md text-on-surface">{String(v) || '—'}</div>
-          </div>)}
-      </div>
-
-      {/* Pillar scores */}
-      <div className="grid grid-cols-4 gap-3 mb-5">
-        {Object.entries(PILLARS).map(([id, pillar]) => {
-        
-        const score = pillarScores[id];
-        const isIQ = id === 'IQ';
-        const displayMax = isIQ ? 125 : 100;
-        const pct = Math.min(Math.round(score / displayMax * 100), 100);
-        const g = getGrade(isIQ ? Math.round(score / 125 * 100) : score);
-        return <div key={id} className="p-4 bg-surface-container-low border-[0.5px] text-center" style={{
-          borderColor: pillar.color + '30'
-        }}>
-              <div className="text-technical-sm font-technical-sm mb-2" style={{
-            color: pillar.color
-          }}>{pillar.short}</div>
-              <div className="text-[32px] font-label-md leading-none text-on-surface">{score}</div>
-              <div className="text-technical-sm font-technical-sm text-surface-variant mt-1">/ {displayMax} | Grade {g.grade}</div>
-              {isIQ && <div className="text-[9px] font-technical-sm text-primary mt-1">{t("Assessment.incl_ai_visual_bonus")}</div>}
-              <div className="h-1 bg-surface-variant/20 mt-3">
-                <div className="h-full transition-all duration-500" style={{
-              width: `${pct}%`,
-              backgroundColor: g.color
-            }} />
-              </div>
-            </div>;
-      })}
-      </div>
-
-      {/* Unified score */}
-      <div className="p-6 border-[0.5px] text-center" style={{
-      borderColor: grade.color + '40',
-      backgroundColor: grade.color + '10'
-    }}>
-        <div className="text-technical-sm font-technical-sm text-surface-variant mb-2 uppercase tracking-widest">{t("Assessment.unified_qids_score")}</div>
-        <div className="text-[56px] font-label-md leading-none" style={{
-        color: grade.color
-      }}>{unified}</div>
-        <div className="text-label-md font-label-md mt-2" style={{
-        color: grade.color
-      }}>Grade {grade.grade}: {grade.label}</div>
-        <div className="text-technical-sm font-technical-sm text-surface-variant mt-3">{t("Assessment.weighted_iq_125_100")}</div>
-      </div>
-    </div>;
-}
-
 // ─── MAIN ASSESSMENT PAGE ─────────────────────────────────────────────────────
 export default function Assessment() {
   const {
@@ -1006,10 +951,43 @@ export default function Assessment() {
   const checkpointRef = useRef(null);
   const [resumeState, setResumeState] = useState(null);
 
-  // Shadow scoring (slice 1): one stable id per attempt makes the server write
-  // idempotent, and the start time gives the integrity signal.
+  // Server scoring: one stable id per attempt makes the write idempotent, and
+  // the start time gives the integrity signal.
   const shadowRef = useRef(null);
   if (!shadowRef.current) shadowRef.current = { id: newSubmissionId(), startedAt: Date.now() };
+
+  // ── Funnel measurement ─────────────────────────────────────────────────────
+  // Where people stop is the only question this funnel has to answer, so the
+  // step they reached and the time spent on it are both recorded.
+  const stepStartRef = useRef(Date.now());
+  const maxStepRef = useRef(0);
+  useEffect(() => {
+    stepStartRef.current = Date.now();
+    maxStepRef.current = Math.max(maxStepRef.current, step);
+  }, [step]);
+
+  // A previous visit may have left an abandonment event it could not deliver.
+  useEffect(() => { flushQueuedEvents(); }, []);
+
+  const answeredCount = () =>
+    Object.keys(iqScores || {}).length + Object.keys(eqScores || {}).length +
+    Object.keys(sqScores || {}).length + Object.keys(aqScores || {}).length;
+
+  useEffect(() => {
+    if (submitted) return undefined;
+    const onLeave = () => {
+      // Only a real start counts as an abandonment; opening the page is not.
+      if (maxStepRef.current < 1) return;
+      queueEvent(user?.uid, 'assessment_abandoned', {
+        step: maxStepRef.current,
+        stepName: ASSESSMENT_STEPS[maxStepRef.current] || 'unknown',
+        elapsedMs: Date.now() - shadowRef.current.startedAt,
+        answered: answeredCount(),
+      });
+    };
+    window.addEventListener('pagehide', onLeave);
+    return () => window.removeEventListener('pagehide', onLeave);
+  });
 
   // Focus mode: while answering (not intake/review/submitted), hide the shell
   // chrome so the assessment is the only thing on screen.
@@ -1063,6 +1041,10 @@ export default function Assessment() {
   }, [step, intake, iqScores, eqScores, sqScores, aqScores, submitted, user]);
   const resumeAssessment = () => {
     if (!resumeState) return;
+    logEvent(user?.uid, 'assessment_resumed', {
+      step: resumeState.step ?? 0,
+      savedHoursAgo: Math.round((Date.now() - (resumeState.savedAt || Date.now())) / 3_600_000),
+    });
     setStep(resumeState.step ?? 0);
     setIntake(prev => ({
       ...prev,
@@ -1220,101 +1202,59 @@ export default function Assessment() {
       }));
     }
   };
-  const buildRawScores = () => {
-    const iqRaw = {};
-    ['verbal', 'quantitative', 'psychometric', 'performance'].forEach(sec => {
-      const secScores = iqScores[sec] || {};
-      const secData = IQ_QUESTIONS[sec];
-      let total = 0;
-      secData.sections.forEach((section, si) => {
-        section.questions.forEach((q, qi) => {
-          const globalIdx = si * 5 + qi;
-          const val = secScores[globalIdx];
-          const qType = section.type === 'mixed' ? q.type || 'open' : section.type;
-          if (qType === 'mcq' && val === q.answer) total += 1;else if (qType === 'open' && val && val.trim()) {
-            if (q.answer !== undefined) {
-              if (String(val).trim().toLowerCase() === String(q.answer).toLowerCase()) total += 1;
-            } else {
-              total += 1;
-            }
-          }
-        });
-      });
-      iqRaw[sec] = Math.min(total, 25);
-    });
-    let aiBonus = 0;
-    const aiMcqSections = ['quantitative', 'psychometric'];
-    const aiOpenSections = ['verbal', 'performance'];
-    aiMcqSections.forEach(sec => {
-      const aiData = iqScores['ai_' + sec];
-      if (aiData?.answers && aiData?.questions) {
-        const correct = Object.entries(aiData.answers).filter(([idx, val]) => {
-          const q = aiData.questions[Number(idx)];
-          return q?.answer !== undefined && val === q.answer;
-        }).length;
-        aiBonus += Math.min(correct * 2, 4);
-      }
-    });
-    aiOpenSections.forEach(sec => {
-      const aiData = iqScores['ai_' + sec];
-      if (aiData?.answers) {
-        const answered = Object.values(aiData.answers).filter(v => v !== undefined && v !== '').length;
-        aiBonus += Math.min(answered * 2, 4);
-      }
-    });
-    iqRaw._aiBonus = Math.min(aiBonus, 16);
+  // ── Answer sheet ─────────────────────────────────────────────────────────────
+  // What we submit is the item-level answer sheet, never its totals. Section
+  // scores are derived from it by shared/scoring/answers.js, the same module the
+  // API runs, so the server can re-derive our numbers instead of trusting them.
+  const buildAnswers = () => {
+    const iq = {
+      verbal: iqScores.verbal || {},
+      quantitative: iqScores.quantitative || {},
+      psychometric: iqScores.psychometric || {},
+      performance: iqScores.performance || {}
+    };
+
+    // AI-generated items are graded in the tab — their key never leaves it — so
+    // only per-section counts travel; the server caps each contribution.
+    const countCorrect = aiData => {
+      if (!aiData?.answers || !aiData?.questions) return 0;
+      return Object.entries(aiData.answers).filter(([idx, val]) => {
+        const q = aiData.questions[Number(idx)];
+        return q?.answer !== undefined && val === q.answer;
+      }).length;
+    };
+    const countAnswered = aiData => {
+      if (!aiData?.answers) return 0;
+      return Object.values(aiData.answers).filter(v => v !== undefined && v !== '').length;
+    };
     const diagramAnswers = iqScores._diagramAnswers?.[0] || {};
     const storedQs = iqScores._diagramQuestions?.[0] || [];
     const diagramQuestions = Array.isArray(storedQs) ? storedQs : Object.values(storedQs).flat().filter(Boolean);
-    const correctDiagrams = Object.entries(diagramAnswers).filter(([qId, ans]) => {
+    const visualCorrect = Object.entries(diagramAnswers).filter(([qId, ans]) => {
       const q = diagramQuestions.find(dq => dq.id === qId);
       return q && q.answer === ans;
     }).length;
-    iqRaw._visualBonus = Math.min(correctDiagrams, 9);
-    const eqRaw = {};
-    ['SA', 'ER', 'SM', 'E', 'IS'].forEach(comp => {
-      const partAScores = eqScores.partA?.[comp] || {};
-      const partARaw = Object.values(partAScores).reduce((s, v) => s + (v || 0), 0);
-      const partANorm = Math.round(partARaw / 25 * 5);
-      const actId = `B${['SA', 'ER', 'SM', 'E', 'IS'].indexOf(comp) + 1}`;
-      const partBScores = eqScores.partB?.[actId] || {};
-      const partBTotal = Object.values(partBScores).reduce((s, v) => s + (v || 0), 0);
-      eqRaw[comp] = Math.min(partANorm + partBTotal, 10);
-    });
-    const aceTotal = SQ_QUESTIONS.component1_ACE.exercises.reduce((sum, ex) => {
-      const exS = sqScores.ACE?.[ex.id] || {};
-      return sum + ex.rubric.reduce((s, r) => s + (exS[r.criterion] || 0), 0);
-    }, 0);
-    const csiTotal = SQ_QUESTIONS.component2_CSI.questions.reduce((sum, q) => {
-      const sel = sqScores.CSI?.[q.id];
-      return sum + (sel !== undefined ? q.options[sel]?.marks || 0 : 0);
-    }, 0);
-    const pbaTotal = (sqScores.selectedPBAs || []).reduce((sum, pbaId) => {
-      const act = SQ_QUESTIONS.component3_PBA.activities.find(a => a.id === pbaId);
-      if (!act) return sum;
-      const pbaS = sqScores.PBA?.[pbaId] || {};
-      return sum + act.rubric.reduce((s, r) => s + (pbaS[r.criterion] || 0), 0);
-    }, 0);
-    const sqRaw = {
-      ACE: aceTotal,
-      CSI: csiTotal,
-      PBA: pbaTotal
+    iq.agentGraded = {
+      mcq: {
+        quantitative: countCorrect(iqScores.ai_quantitative),
+        psychometric: countCorrect(iqScores.ai_psychometric)
+      },
+      open: {
+        verbal: countAnswered(iqScores.ai_verbal),
+        performance: countAnswered(iqScores.ai_performance)
+      },
+      visualCorrect
     };
-    const aqRaw = {};
-    ['SA', 'PM', 'RR', 'RC'].forEach(comp => {
-      const partAScores = aqScores[comp]?.partA || {};
-      const partAMarks = Object.values(partAScores).reduce((s, v) => s + mapAQLikert(v || 0), 0);
-      const partBScores = aqScores[comp]?.partB || {};
-      const partBMarks = Object.values(partBScores).reduce((s, v) => s + (v || 0), 0);
-      aqRaw[comp] = Math.min(partAMarks + partBMarks, 19);
-    });
     return {
-      IQ: iqRaw,
-      EQ: eqRaw,
-      SQ: sqRaw,
-      AQ: aqRaw
+      IQ: iq,
+      EQ: eqScores,
+      SQ: sqScores,
+      AQ: aqScores
     };
   };
+  const buildRawScores = () => deriveRawScores(buildAnswers(), {
+    ageGroup: intake.ageGroup
+  }).rawScores;
   const handleNext = () => {
     if (step === 0) {
       if (!intake.consent) {
@@ -1334,6 +1274,12 @@ export default function Assessment() {
       });
       logEvent(user?.uid, 'assessment_started');
     }
+    logEvent(user?.uid, 'assessment_step_completed', {
+      step,
+      stepName: ASSESSMENT_STEPS[step] || 'unknown',
+      durationMs: Date.now() - stepStartRef.current,
+      answered: answeredCount(),
+    });
     setStep(s => s + 1);
   };
   const handleSubmit = async () => {
@@ -1421,13 +1367,14 @@ export default function Assessment() {
     }
     setSaving(false);
 
-    // Shadow scoring: the server re-derives the result from the same answer
-    // sheet and keeps its own record. Fire-and-forget by design — the UI never
-    // waits for it and never reads it (slice 1).
+    // Server scoring: the endpoint derives the same numbers from the answer
+    // sheet and keeps its own record, which is what a credential verifies
+    // against. Fire-and-forget — a failed call costs the badge, not the result.
     if (user) {
-      submitAssessmentShadow(user, {
+      submitAssessmentForVerification(user, {
         submissionId: shadowRef.current.id,
         clientAssessmentId: savedId,
+        answers: buildAnswers(),
         rawScores,
         intake,
         ageGroup: intake.ageGroup,
@@ -1443,13 +1390,17 @@ export default function Assessment() {
       try { window.localStorage.removeItem('qids-school-assignment'); } catch { /* noop */ }
     }
     logEvent(user.uid, 'assessment_complete', {
-      grade: data.grade,
-      mode
+      grade: data.grade?.grade ?? data.grade,
+      mode,
+      steps: maxStepRef.current + 1,
+      durationMs: Date.now() - shadowRef.current.startedAt,
+      answered: answeredCount(),
+      attested: true,
     });
     setSubmitted(true);
   };
   if (submitted) {
-    return <div className="page-pad py-12 md:py-24 max-w-[600px] mx-auto animate-fade text-center">
+    return <div className="page-pad py-12 md:py-24 max-w-[640px] mx-auto animate-fade text-center">
         <div className="border-[0.5px] border-primary/50 bg-primary/10 w-20 h-20 flex items-center justify-center mx-auto mb-8">
           <CheckCircle size={36} className="text-primary" />
         </div>

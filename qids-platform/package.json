@@ -9,7 +9,7 @@
     "preview": "vite preview",
     "test:e2e": "node tests/visual_test.mjs",
     "test:e2e:run": "node tests/visual_test.mjs",
-    "test:engine": "tsc -p tests/tsconfig.smoke.json && node -e \"require('fs').writeFileSync('tests/.smoke-out/package.json', JSON.stringify({type:'commonjs'}))\" && node tests/.smoke-out/tests/engine-smoke.cjs && node tests/scoring-parity.mjs && node tests/submit-core.test.mjs",
+    "test:engine": "tsc -p tests/tsconfig.smoke.json && node -e \"require('fs').writeFileSync('tests/.smoke-out/package.json', JSON.stringify({type:'commonjs'}))\" && node tests/.smoke-out/tests/engine-smoke.cjs && node tests/scoring-parity.mjs && node tests/submit-core.test.mjs && node tests/answer-parity.mjs && node tests/reliability.test.mjs",
     "test:scoring": "node tests/scoring-parity.mjs",
     "test:api": "node tests/submit-core.test.mjs",
     "test:scoring:golden": "tsc -p tests/tsconfig.golden.json && node -e \"require('fs').writeFileSync('tests/.golden-out/package.json', JSON.stringify({type:'commonjs'}))\" && node tests/.golden-out/tests/make-golden.cjs",
@@ -17,6 +17,9 @@
     "test:kids": "playwright test kids",
     "test:routing": "playwright test routing",
     "test:rules:live": "node tests/rules-live.mjs",
+    "test:e2e:emulator": "E2E_RUN=1 npx --yes firebase-tools emulators:exec --project demo-qids --only auth,firestore \"npx playwright test --config playwright.emulator.config.mjs\"",
+    "test:reliability": "node tests/reliability.test.mjs",
+    "test:parity": "node tests/answer-parity.mjs",
     "pretest:e2e": "echo 'Make sure dev server is running: npm run dev'",
     "test:e2e:pw": "playwright test"
   },
@@ -46,7 +49,6 @@
     "react-dom": "^19.2.4",
     "react-i18next": "^17.0.15",
     "react-router-dom": "^7.18.4",
-    "recharts": "^3.8.0",
     "tailwindcss": "^4.3.1"
   }
 }

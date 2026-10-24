@@ -8,6 +8,8 @@ import { PILLARS, getGrade, computeWeightedScore } from '../data/qidsData';
 import { computeQidsPillarScores } from '../core/engine/qids';
 import { ClipboardList, TrendingUp, FileText, Activity, ChevronRight, ArrowRight, Sparkles , ShieldAlert } from 'lucide-react';
 import SeedExampleData from '../components/SeedExampleData';
+import { ErrorState } from '../components/EmptyState';
+import { reportError } from '../lib/errorReport';
 import { getSkillShape } from '../core/engine/scoring';
 function StatCard({
   icon: Icon,
@@ -47,12 +49,18 @@ export default function Dashboard() {
   const [assessments, setAssessments] = useState([]);
   const [reports, setReports] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(null);
   useEffect(() => {
     if (!user) return;
+    setLoadError(null);
     Promise.all([getUserAssessments(user.uid), getUserReports(user.uid)]).then(([a, r]) => {
       setAssessments(a);
       setReports(r);
-    }).catch(() => {}).finally(() => setLoading(false));
+    }).catch(e => {
+      // A dead backend must not render as an empty account.
+      setLoadError(e);
+      reportError(e, { kind: 'dashboard-load' });
+    }).finally(() => setLoading(false));
   }, [user]);
   const preAssessments = assessments.filter(a => a.phase === 'pre');
   const postAssessments = assessments.filter(a => a.phase === 'post');
@@ -77,7 +85,7 @@ export default function Dashboard() {
   const totalAssessments = preAssessments.length;
   const totalReports = reports.length;
   const avgScore = preAssessments.length > 0 ? Math.round(preAssessments.reduce((sum, a) => sum + (getResult(a).unified || 0), 0) / preAssessments.length) : '--';
-  return <div className="page-pad max-w-[1520px] mx-auto animate-fade">
+  return <div className="page-pad max-w-[1280px] mx-auto animate-fade">
       {/* Page Header */}
       <section className="mb-10 md:mb-14">
         <div className="kicker mb-3">{t("Dashboard.dashboard")}</div>
@@ -168,13 +176,20 @@ export default function Dashboard() {
           </>}
       </section>
 
-      {/* Seed Data */}
-      {!loading && preAssessments.length === 0 && <div className="mb-8 md:mb-12">
+      {/* Seed Data — or, if the load failed, say that instead of offering seed data */}
+      {!loading && loadError && <div className="mb-8 md:mb-12">
+          <ErrorState
+            title={t('Dashboard.could_not_load', 'Could not load your dashboard')}
+            description={t('Dashboard.load_failed_detail', 'Your assessments could not be fetched. Nothing has been lost — try again.')}
+            onRetry={() => { setLoading(true); setLoadError(null); Promise.all([getUserAssessments(user.uid), getUserReports(user.uid)]).then(([a, r]) => { setAssessments(a); setReports(r); }).catch(e => { setLoadError(e); reportError(e, { kind: 'dashboard-load' }); }).finally(() => setLoading(false)); }}
+          />
+        </div>}
+      {!loading && !loadError && preAssessments.length === 0 && <div className="mb-8 md:mb-12">
           <SeedExampleData onDone={() => {
         Promise.all([getUserAssessments(user.uid), getUserReports(user.uid)]).then(([a, r]) => {
           setAssessments(a);
           setReports(r);
-        }).catch(() => {});
+        }).catch(e => reportError(e, { kind: 'dashboard-refresh' }));
       }} />
         </div>}
 

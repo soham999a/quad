@@ -12,6 +12,7 @@ import QidsMark from './components/QidsMark';
 import CommandPalette from './components/CommandPalette';
 import EmptyState from './components/EmptyState';
 import { computePillarScore } from './core/engine/qids';
+import { reportError } from './lib/errorReport';
 import { getPlan, can } from './core/plans';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { AppContext, useApp } from './context/AppContext';
@@ -70,6 +71,7 @@ const ClassAnalytics = lazy(() => import('./pages/school/ClassAnalytics'));
 const StudentJoin = lazy(() => import('./pages/school/StudentJoin'));
 const SchoolReports = lazy(() => import('./pages/school/SchoolReports'));
 const PublicCredential = lazy(() => import('./pages/credential/PublicCredential'));
+const Methodology = lazy(() => import('./pages/Methodology'));
 const KidsHome = lazy(() => import('./pages/kids/KidsHome'));
 const KidsStory = lazy(() => import('./pages/kids/KidsStory'));
 const KidsGuardian = lazy(() => import('./pages/kids/KidsGuardian'));
@@ -847,8 +849,10 @@ function AppShell() {
 
   useEffect(() => {
     if (!user) return;
-    getLatestAssessment(user.uid).then(a => { if (a) setAssessmentData(a); }).catch(() => {});
-    getLatestPostAssessment(user.uid).then(p => { if (p) setPostData(p); }).catch(() => {});
+    // Shell-level loads: a failure here silently empties every page that reads
+    // the app context, so it is reported rather than swallowed.
+    getLatestAssessment(user.uid).then(a => { if (a) setAssessmentData(a); }).catch(e => reportError(e, { kind: 'shell-latest-assessment' }));
+    getLatestPostAssessment(user.uid).then(p => { if (p) setPostData(p); }).catch(e => reportError(e, { kind: 'shell-latest-post' }));
   }, [user]);
 
   useEffect(() => {
@@ -868,7 +872,7 @@ function AppShell() {
       } else {
         setMergedPillarScores(null);
       }
-    }).catch(() => {});
+    }).catch(e => reportError(e, { kind: 'shell-evaluations' }));
   }, [assessmentData?.id]);
 
   return (
@@ -1074,6 +1078,8 @@ export default function App() {
               <Route path="/signup" element={<PageSuspense><Signup /></PageSuspense>} />
               {/* Public credential — no auth, by design (the growth loop). */}
               <Route path="/credential/:id" element={<PageSuspense><PublicCredential /></PageSuspense>} />
+              {/* The measurement case behind every credential — public. */}
+              <Route path="/methodology" element={<PageSuspense><Methodology /></PageSuspense>} />
               <Route path="/onboarding" element={
                 <ProtectedRoute>
                   <PageSuspense><Onboarding /></PageSuspense>

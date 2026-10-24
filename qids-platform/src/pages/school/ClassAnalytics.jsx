@@ -69,11 +69,11 @@ export default function ClassAnalytics() {
     })();
   }, [classId]);
   if (loading) {
-    return <div className="page-pad max-w-[1100px] mx-auto animate-fade py-16">
+    return <div className="page-pad max-w-[960px] mx-auto animate-fade py-16">
         <div className="card p-8"><div className="skeleton h-6 w-48 mb-4" /><div className="skeleton h-64 w-full" /></div>
       </div>;
   }
-  return <div className="page-pad max-w-[1100px] mx-auto animate-fade">
+  return <div className="page-pad max-w-[960px] mx-auto animate-fade">
       <div className="mb-6">
         <button onClick={() => navigate(`/app/school/class/${classId}`)} className="flex items-center gap-2 text-technical-sm font-technical-sm text-surface-variant hover:text-primary transition-colors cursor-pointer bg-transparent border-none p-0">
           <ChevronLeft size={14} />

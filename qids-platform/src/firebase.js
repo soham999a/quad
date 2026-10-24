@@ -1,12 +1,23 @@
 import { initializeApp } from "firebase/app";
-import { getAuth } from "firebase/auth";
+import { getAuth, connectAuthEmulator } from "firebase/auth";
 import {
   initializeFirestore,
+  connectFirestoreEmulator,
   persistentLocalCache, persistentMultipleTabManager,
 } from "firebase/firestore";
 
+// ── Local emulator mode ───────────────────────────────────────────────────
+// When VITE_FIREBASE_EMULATOR=1 in a dev build, the app talks to the local
+// Firebase emulators instead of the project in .env. This is what lets the
+// authed e2e suite (tests/e2e/school-loop.spec.mjs) run without real accounts:
+//   npm run test:e2e:emulator
+// Production builds can never take this branch (import.meta.env.DEV is false).
+const EMULATOR = import.meta.env.DEV && import.meta.env.VITE_FIREBASE_EMULATOR === '1';
+
 const required = (key) => {
   const val = import.meta.env[key];
+  // The emulator accepts any credentials, so a real project is not required.
+  if (!val && EMULATOR) return 'demo-qids';
   if (!val) throw new Error(`Missing Firebase config: ${key} in .env`);
   return val;
 };
@@ -32,6 +43,11 @@ export const auth = getAuth(app);
 export const db = initializeFirestore(app, {
   localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() }),
 });
+
+if (EMULATOR) {
+  connectAuthEmulator(auth, 'http://127.0.0.1:9099', { disableWarnings: true });
+  connectFirestoreEmulator(db, '127.0.0.1', 8080);
+}
 
 // ── App Check (opt-in) ────────────────────────────────────────────────────
 // Enabled only when VITE_RECAPTCHA_SITE_KEY is configured, so dev/test/CI are

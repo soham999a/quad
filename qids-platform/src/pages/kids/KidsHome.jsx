@@ -143,7 +143,7 @@ export default function KidsHome() {
   // "map complete" state.
   if (loading || (profiles.length > 0 && !progressReady)) {
     return (
-      <div className="page-pad max-w-[1100px] mx-auto" aria-busy="true">
+      <div className="page-pad max-w-[960px] mx-auto" aria-busy="true">
         <div className="skeleton h-3 w-40 mb-4" />
         <div className="skeleton h-9 w-80 max-w-full mb-8" />
         <div className="skeleton h-40 w-full" />
@@ -152,7 +152,7 @@ export default function KidsHome() {
   }
 
   return (
-    <div className="page-pad max-w-[1100px] mx-auto animate-fade">
+    <div className="page-pad max-w-[960px] mx-auto animate-fade">
       <div className="label-eyebrow-gold mb-3">MODULE · KIDS 4Q PRACTICE · AGES 8–14</div>
       <h1 className="text-headline-md font-extrabold mb-2">{t('kids.title')}</h1>
       <p className="text-label-md text-surface-variant mb-6 max-w-[620px]">{t('kids.subtitle')}</p>

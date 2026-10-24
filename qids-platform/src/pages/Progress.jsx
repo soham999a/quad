@@ -8,15 +8,14 @@ import { useApp } from '../context/AppContext';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { getUserAssessments } from '../services/firestoreService';
-import { LineChart as ReLine, Line } from 'recharts';
-import { TrendingUp as TrendIcon } from 'lucide-react';
+import { GroupedBars } from '../components/charts';
+import { Heatmap, GrowthTrendPanel } from '../components/progress/Panels';
 import { savePostAssessment } from '../services/firestoreService';
 import ProcessNode, { NodeDetailPanel } from '../components/ProcessNode';
 import ScoreCard from '../components/ScoreCard';
 import QIDSRadar from '../components/RadarChart';
 import { useToast } from '../components/Toast';
 import { AlertTriangle, CheckCircle, Check, Info, TrendingUp, TrendingDown, Minus, ArrowRight, Calendar, Clock, Package, Plus, ChevronDown, ChevronUp, Save, Download, ClipboardList, BarChart3 } from 'lucide-react';
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Legend } from 'recharts';
 const PHASES = [{
   id: 'pre',
   label: 'Pre-Intervention',
@@ -37,139 +36,6 @@ const PHASES = [{
   desc: 'Progress evaluation, outcome synthesis, and final development roadmap.'
 }];
 const alpha = (color, pct) => `color-mix(in srgb, ${color} ${pct}%, transparent)`;
-function Heatmap({
-  pillarScores,
-  rawScores
-}) {
-  const {
-    t
-  } = useTranslation();
-  return <div>
-      <h4 className="text-[13px] font-[600] mb-3">{t("Progress.sub_parameter_heatmap")}</h4>
-      <div className="flex flex-col gap-1.5">
-        {Object.entries(PILLARS).map(([pid, pillar]) => <div key={pid}>
-            <div className="text-[11px] font-[600] mb-1" style={{
-          color: pillar.color
-        }}>{pillar.short}</div>
-            <div className="flex gap-1 flex-wrap">
-              {pillar.subParams.map(sp => {
-            const raw = rawScores[pid]?.[sp.id] || 0;
-            const pct = sp.max > 0 ? Math.round(raw / sp.max * 100) : 0;
-            const bg = pct >= 75 ? 'var(--status-ok)' : pct >= 60 ? 'var(--status-warn)' : 'var(--status-err)';
-            return <div key={sp.id} title={`${sp.label}: ${pct}%`} className="px-2 py-1 text-[10px] font-[600] cursor-default" style={{
-              borderRadius: 6,
-              background: `${bg}20`,
-              border: `1px solid ${bg}40`,
-              color: bg
-            }}>
-                    {sp.label.split(' ')[0]} {pct}%
-                  </div>;
-          })}
-            </div>
-          </div>)}
-      </div>
-    </div>;
-}
-
-/**
- * GrowthTrendPanel — pillar trajectories across assessment attempts.
- * Blueprints' Reassess step made visible: one line per pillar over every
- * recorded attempt. Hidden entirely when there is only one attempt —
- * a trend of one point is noise, not insight.
- */
-function GrowthTrendPanel({
-  uid,
-  currentId
-}) {
-  const { t } = useTranslation();
-  const [attempts, setAttempts] = useState(null);
-  useEffect(() => {
-    if (!uid) return;
-    let alive = true;
-    getUserAssessments(uid).then(list => {
-      if (!alive) return;
-      const pts = (list || []).filter(a => a?.pillarScores && Object.keys(a.pillarScores).length > 0).map(a => ({
-        date: a.timestamp || a.createdAt?.toDate?.()?.toISOString?.() || null,
-        ...Object.fromEntries(Object.entries(a.pillarScores).map(([k, v]) => [k, Math.round(v)]))
-      })).filter(p => p.date).sort((a, b) => new Date(a.date) - new Date(b.date));
-      setAttempts(pts);
-    }).catch(() => setAttempts([]));
-    return () => {
-      alive = false;
-    };
-  }, [uid]);
-  if (attempts === null || attempts.length < 2) return null;
-  const deltas = ['IQ', 'EQ', 'SQ', 'AQ'].map(id => {
-    const first = attempts[0][id];
-    const last = attempts[attempts.length - 1][id];
-    return last != null && first != null ? last - first : 0;
-  });
-  const net = deltas.reduce((s, d) => s + d, 0);
-  const fmtDate = iso => new Date(iso).toLocaleDateString(undefined, {
-    month: 'short',
-    day: 'numeric'
-  });
-  return <div data-tour="prog-trend" className="mb-4 border-[0.5px] border-outline-variant rounded-3xl bg-surface-container-lowest p-4 md:p-5 animate-fade">
-      <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
-        <div className="flex items-center gap-2">
-          <TrendIcon size={14} className="text-primary" />
-          <span className="text-[11px] uppercase tracking-widest text-surface-variant">{t("inter.growth_n", { n: attempts.length })}</span>
-        </div>
-        <span className="text-[11px] font-[600]" style={{
-        color: net > 0 ? 'var(--status-ok)' : net < 0 ? 'var(--status-err)' : 'var(--neutral-ink-500)'
-      }}>
-          Net {net > 0 ? `+${net}` : net} since first assessment
-        </span>
-      </div>
-      <div style={{
-      width: '100%',
-      height: 200
-    }}>
-        <ResponsiveContainer>
-          <ReLine data={attempts} margin={{
-          top: 4,
-          right: 8,
-          bottom: 0,
-          left: -18
-        }}>
-            <XAxis dataKey="date" tickFormatter={fmtDate} tick={{
-            fontSize: 10,
-            fill: 'var(--neutral-ink-500)'
-          }} stroke="var(--outline-variant)" />
-            <YAxis domain={[0, 100]} tick={{
-            fontSize: 10,
-            fill: 'var(--neutral-ink-500)'
-          }} stroke="var(--outline-variant)" />
-            <Tooltip contentStyle={{
-            background: 'var(--surface-1)',
-            border: '0.5px solid var(--outline-variant)',
-            borderRadius: 8,
-            fontSize: 12
-          }} labelStyle={{
-            color: 'var(--neutral-ink-500)'
-          }} labelFormatter={fmtDate} />
-            {['IQ', 'EQ', 'SQ', 'AQ'].map((id, i) => <Line key={id} type="monotone" dataKey={id} stroke={PILLARS[id].color} strokeWidth={2} dot={{
-            r: 3
-          }} activeDot={{
-            r: 5
-          }} isAnimationActive={false} />)}
-          </ReLine>
-        </ResponsiveContainer>
-      </div>
-      <div className="flex gap-4 mt-3 flex-wrap">
-        {['IQ', 'EQ', 'SQ', 'AQ'].map((id, i) => <span key={id} className="flex items-center gap-1.5 text-[11px] text-surface-variant">
-            <span className="w-2 h-2 rounded-full" style={{
-          background: PILLARS[id].color
-        }} />{id}
-            <span className="font-[600]" style={{
-          color: deltas[i] > 0 ? 'var(--status-ok)' : deltas[i] < 0 ? 'var(--status-err)' : 'inherit'
-        }}>
-              {deltas[i] > 0 ? `+${deltas[i]}` : deltas[i]}
-            </span>
-          </span>)}
-      </div>
-    </div>;
-}
 function PreSection({
   pillarScores,
   rawScores,
@@ -189,14 +55,14 @@ function PreSection({
       <GrowthTrendPanel uid={user?.uid} />
       <div className="mb-6">
         <div className="flex items-center gap-2.5 mb-3">
-          <div className="px-2.5 py-0.5 text-[11px] font-[600] rounded-full" style={{
+          <div className="px-2.5 py-0.5 text-[11px] font-medium rounded-full" style={{
           background: 'var(--phase-pre-tint)',
           border: '1px solid var(--phase-pre-line)',
           color: 'var(--phase-pre-soft)'
         }}>{t("Progress.phase_1")}</div>
-          <span className="text-[14px] font-bold">{t("Progress.standardize_score")}</span>
+          <span className="text-[14px] font-medium">{t("Progress.standardize_score")}</span>
         </div>
-        <div className="rounded-2xl p-4 overflow-x-auto" style={{
+        <div className="rounded-md p-4 overflow-x-auto" style={{
         background: 'var(--phase-pre-fill)',
         border: '1px solid var(--phase-pre-line)'
       }}>
@@ -211,11 +77,11 @@ function PreSection({
       </div>
 
       <div className="responsive-grid-2 gap-4 mb-5">
-        <div className="bg-surface-container-low border border-outline-variant rounded-2xl p-5" style={{
+        <div className="bg-surface-container-low border border-outline-variant rounded-md p-5" style={{
         background: overallGrade.bg
       }}>
           <div className="text-technical-sm text-surface-variant mb-1">{t("Progress.unified_qids_score")}</div>
-          <div className="text-[48px] font-[800] leading-none" style={{
+          <div className="text-[48px] font-medium leading-none" style={{
           color: overallGrade.color
         }}>{unifiedScore}</div>
           <div className="text-[13px] text-on-surface-variant mt-1">/ 100 — Grade {overallGrade.grade}: {overallGrade.label}</div>
@@ -230,7 +96,7 @@ function PreSection({
           </div>
         </div>
 
-        <div className="bg-surface-container-low border border-outline-variant rounded-2xl p-5">
+        <div className="bg-surface-container-low border border-outline-variant rounded-md p-5">
           <div className="text-technical-sm text-surface-variant mb-3">{t("Progress.dynamic_weightage")}</div>
           {Object.entries(WEIGHTS).map(([k, w]) => <div key={k} className="flex justify-between items-center mb-2">
               <div className="flex items-center gap-2">
@@ -241,7 +107,7 @@ function PreSection({
               </div>
               <div className="flex items-center gap-2">
                 <span className="text-technical-sm text-surface-variant">×{w.toFixed(2)}</span>
-                <span className="text-[13px] font-[600]" style={{
+                <span className="text-[13px] font-medium" style={{
               color: PILLARS[k].color
             }}>{Math.round(pillarScores[k] * w)}</span>
               </div>
@@ -249,13 +115,13 @@ function PreSection({
         </div>
       </div>
 
-      {criticalPillars.length > 0 && <div className="mb-5 p-4 rounded-2xl" style={{
+      {criticalPillars.length > 0 && <div className="mb-5 p-4 rounded-md" style={{
       background: 'var(--status-err-panel)',
       border: '1px solid var(--status-err-line)'
     }}>
           <div className="flex items-center gap-2 mb-2.5">
             <AlertTriangle size={14} color="var(--status-err)" />
-            <span className="text-[13px] font-bold text-[var(--status-err-soft)]">{t("Progress.critical_priority_flags")}</span>
+            <span className="text-[13px] font-medium text-[var(--status-err-soft)]">{t("Progress.critical_priority_flags")}</span>
           </div>
           <div className="flex gap-2 flex-wrap">
             {criticalPillars.map(([id, score]) => <div key={id} className="px-3 py-1.5 text-technical-sm text-[var(--status-err-soft)] rounded-lg" style={{
@@ -267,21 +133,21 @@ function PreSection({
           </div>
         </div>}
 
-      <div className="bg-surface-container-low border border-outline-variant rounded-xl p-4 mb-5">
+      <div className="bg-surface-container-low border border-outline-variant rounded-sm p-4 mb-5">
         <Heatmap pillarScores={pillarScores} rawScores={rawScores} />
       </div>
 
-      <div className="bg-surface-container-low border border-outline-variant rounded-xl p-4">
-        <h4 className="text-[13px] font-[600] mb-3">{t("Progress.grade_band_reference")}</h4>
+      <div className="bg-surface-container-low border border-outline-variant rounded-sm p-4">
+        <h4 className="text-[13px] font-medium mb-3">{t("Progress.grade_band_reference")}</h4>
         <div className="flex flex-wrap gap-2">
           {GRADE_BANDS.map(b => <div key={b.grade} className="flex-1 px-2 py-2.5 text-center rounded-lg" style={{
           background: b.bg,
           border: `1px solid ${b.color}40`
         }}>
-              <div className="text-[18px] font-[800]" style={{
+              <div className="text-[18px] font-medium" style={{
             color: b.color
           }}>{b.grade}</div>
-              <div className="text-[10px] font-[600]" style={{
+              <div className="text-[10px] font-medium" style={{
             color: b.color
           }}>{b.label}</div>
               <div className="text-[10px] text-surface-variant mt-0.5">{b.min}–{b.max}</div>
@@ -301,7 +167,7 @@ function PreRightPanel({
       <div className="mb-4">
         <div className="flex items-center gap-1.5 mb-2">
           <Info size={12} color="var(--phase-pre-soft)" />
-          <span className="text-technical-sm font-[600] text-[var(--phase-pre-soft)]">{t("Progress.unique_iq_measurement_model")}</span>
+          <span className="text-technical-sm font-medium text-[var(--phase-pre-soft)]">{t("Progress.unique_iq_measurement_model")}</span>
         </div>
         {['Four-parameter model: Verbal, Quantitative, Psychometric, Performance IQ', 'Equal weighting (25 marks each) for balanced assessment', 'Integration of standardized tests with performance-based tasks', 'Age and culture-adjusted scoring algorithms'].map(item => <div key={item} className="flex gap-1.5 mb-1.5">
             <CheckCircle size={11} color="var(--status-ok)" className="mt-0.5 flex-shrink-0" />
@@ -312,7 +178,7 @@ function PreRightPanel({
       <div className="border-t-[0.5px] border-outline-variant my-3" />
 
       <div className="mb-4">
-        <div className="text-technical-sm font-[600] text-[var(--phase-pre-soft)] mb-2">{t("Progress.standardization_algorithm")}</div>
+        <div className="text-technical-sm font-medium text-[var(--phase-pre-soft)] mb-2">{t("Progress.standardization_algorithm")}</div>
         <div className="font-technical-sm text-[11px] p-2.5 rounded-md text-on-surface leading-relaxed" style={{
         background: 'var(--tint-scrim)'
       }}>{t("Progress.standardized_score")}<br />{t("Progress.raw_score_max_score")}</div>
@@ -325,14 +191,14 @@ function PreRightPanel({
       <div className="border-t-[0.5px] border-outline-variant my-3" />
 
       <div>
-        <div className="text-technical-sm font-[600] text-[var(--phase-pre-soft)] mb-2">{t("Progress.dynamic_weightage_algorithm_dwa")}</div>
+        <div className="text-technical-sm font-medium text-[var(--phase-pre-soft)] mb-2">{t("Progress.dynamic_weightage_algorithm_dwa")}</div>
         <p className="text-[11px] text-on-surface-variant leading-relaxed">{t("Progress.context_sensitive_weight_computation")}</p>
       </div>
 
       <div className="border-t-[0.5px] border-outline-variant my-3" />
 
       <div>
-        <div className="text-technical-sm font-[600] mb-2">{t("Progress.quotient_profile")}</div>
+        <div className="text-technical-sm font-medium mb-2">{t("Progress.quotient_profile")}</div>
         <QIDSRadar data={pillarScores} size={200} />
       </div>
     </>;
@@ -351,7 +217,7 @@ function ModuleCard({
       onToggle();
     }
   };
-  return <div className="rounded-3xl overflow-hidden mb-2" style={{
+  return <div className="rounded-md overflow-hidden mb-2" style={{
     background: 'var(--neutral-carbon)',
     border: `1px solid ${pillar.color}25`
   }}>
@@ -360,8 +226,8 @@ function ModuleCard({
           <div className="w-2 h-2 rounded-full flex-shrink-0" style={{
           background: pillar.color
         }} />
-          <span className="text-[13px] font-[600]">{module.label}</span>
-          <span className="px-2 py-0.5 text-[10px] font-[600] rounded-full" style={{
+          <span className="text-[13px] font-medium">{module.label}</span>
+          <span className="px-2 py-0.5 text-[10px] font-medium rounded-full" style={{
           background: `${priorityColor}15`,
           color: priorityColor,
           border: `1px solid ${priorityColor}30`
@@ -386,7 +252,7 @@ function ModuleCard({
               <span className="text-[11px] text-surface-variant">{module.sessions} sessions</span>
             </div>
           </div>
-          <button onClick={() => setAssigned(true)} disabled={assigned} className="mt-2.5 px-3 py-1.5 text-[11px] font-[500] rounded-md cursor-pointer disabled:opacity-70 disabled:cursor-default" style={{
+          <button onClick={() => setAssigned(true)} disabled={assigned} className="mt-2.5 px-3 py-1.5 text-[11px] font-normal rounded-md cursor-pointer disabled:opacity-70 disabled:cursor-default" style={{
         background: `${pillar.color}15`,
         border: `1px solid ${pillar.color}30`,
         color: pillar.color
@@ -409,10 +275,10 @@ function RoadmapCalendar() {
     'Month 6': ['IQ: Critical Thinking Workshop', 'Integration & Review Sessions']
   };
   return <div>
-      <h4 className="text-[13px] font-[600] mb-3">{t("Progress.6_month_development_roadmap")}</h4>
+      <h4 className="text-[13px] font-medium mb-3">{t("Progress.6_month_development_roadmap")}</h4>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5">
-        {['Month 1', 'Month 2', 'Month 3', 'Month 4', 'Month 5', 'Month 6'].map((month, i) => <div key={month} className="bg-surface-container-low border border-outline-variant rounded-3xl p-3">
-            <div className="text-[11px] font-bold text-[var(--phase-int-soft)] mb-2">{month}</div>
+        {['Month 1', 'Month 2', 'Month 3', 'Month 4', 'Month 5', 'Month 6'].map((month, i) => <div key={month} className="bg-surface-container-low border border-outline-variant rounded-md p-3">
+            <div className="text-[11px] font-medium text-[var(--phase-int-soft)] mb-2">{month}</div>
             {(modulesByMonth[month] || []).map(m => <div key={m} className="px-2 py-1 mb-1 text-[11px] text-on-surface-variant rounded-md" style={{
           background: 'var(--phase-int-panel)',
           border: '1px solid var(--phase-int-line)'
@@ -436,14 +302,14 @@ function InterventionSection({
   return <div className="flex-1 overflow-y-auto p-4 md:p-6">
       <div className="mb-6">
         <div className="flex items-center gap-2.5 mb-3">
-          <div className="px-2.5 py-0.5 text-[11px] font-[600] rounded-full" style={{
+          <div className="px-2.5 py-0.5 text-[11px] font-medium rounded-full" style={{
           background: 'var(--phase-int-tint)',
           border: '1px solid var(--phase-int-line)',
           color: 'var(--phase-int-soft)'
         }}>{t("Progress.phase_2")}</div>
-          <span className="text-[14px] font-bold">{t("Progress.strategic_intervention")}</span>
+          <span className="text-[14px] font-medium">{t("Progress.strategic_intervention")}</span>
         </div>
-        <div className="rounded-2xl p-4 overflow-x-auto" style={{
+        <div className="rounded-md p-4 overflow-x-auto" style={{
         background: 'var(--phase-int-fill)',
         border: '1px solid var(--phase-int-line)'
       }}>
@@ -453,14 +319,14 @@ function InterventionSection({
         </div>
       </div>
 
-      <div className="flex gap-1 mb-5 bg-surface-container-low p-1 rounded-3xl w-fit">
-        {['modules', 'roadmap', 'eq-practice'].map(t => <button key={t} onClick={() => setActiveTab(t)} className={`px-4 py-[7px] rounded-xl cursor-pointer text-[13px] font-[500] capitalize transition-all duration-150 border-none ${activeTab === t ? 'bg-[var(--phase-int)] text-on-primary' : 'bg-transparent text-on-surface-variant'}`}>{t.replace('-', ' ')}</button>)}
+      <div className="flex gap-1 mb-5 bg-surface-container-low p-1 rounded-md w-fit">
+        {['modules', 'roadmap', 'eq-practice'].map(t => <button key={t} onClick={() => setActiveTab(t)} className={`px-4 py-[7px] rounded-sm cursor-pointer text-[13px] font-normal capitalize transition-all duration-150 border-none ${activeTab === t ? 'bg-[var(--phase-int)] text-on-primary' : 'bg-transparent text-on-surface-variant'}`}>{t.replace('-', ' ')}</button>)}
       </div>
 
       {activeTab === 'modules' && <div>
           <div className="flex justify-between items-center mb-4">
-            <h3 className="text-[15px] font-bold">{t("Progress.recommended_intervention_modules")}</h3>
-            <button onClick={() => toast('Custom modules are coming in a future release.', 'info')} className="px-3 py-1.5 bg-surface-container-low text-on-surface text-[13px] font-[500] rounded-lg border border-outline-variant cursor-pointer hover:opacity-90 transition-all flex items-center gap-1.5"><Plus size={12} />{t("Progress.add_custom_module")}</button>
+            <h3 className="text-[15px] font-medium">{t("Progress.recommended_intervention_modules")}</h3>
+            <button onClick={() => toast('Custom modules are coming in a future release.', 'info')} className="px-3 py-1.5 bg-surface-container-low text-on-surface text-[13px] font-normal rounded-lg border border-outline-variant cursor-pointer hover:opacity-90 transition-all flex items-center gap-1.5"><Plus size={12} />{t("Progress.add_custom_module")}</button>
           </div>
           <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
             {priorityPillars.map(pid => <div key={pid}>
@@ -473,10 +339,10 @@ function InterventionSection({
                   <div className="w-2 h-2 rounded-full flex-shrink-0" style={{
               background: PILLARS[pid].color
             }} />
-                  <span className="text-[13px] font-bold" style={{
+                  <span className="text-[13px] font-medium" style={{
               color: PILLARS[pid].color
             }}>{PILLARS[pid].label}</span>
-                  {isCritical(pillarScores[pid]) && <span className="px-1.5 py-0.5 text-[10px] font-[600] text-[var(--status-err)] rounded" style={{
+                  {isCritical(pillarScores[pid]) && <span className="px-1.5 py-0.5 text-[10px] font-medium text-[var(--status-err)] rounded" style={{
               background: 'var(--status-err-tint)',
               border: '1px solid var(--status-err-line)'
             }}>{t("Progress.critical")}</span>}
@@ -490,7 +356,7 @@ function InterventionSection({
       {activeTab === 'roadmap' && <RoadmapCalendar />}
 
       {activeTab === 'eq-practice' && <div>
-          <h3 className="text-[15px] font-bold mb-4">{t("Progress.dynamic_eq_integration_the")}</h3>
+          <h3 className="text-[15px] font-medium mb-4">{t("Progress.dynamic_eq_integration_the")}</h3>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
             {[{
           step: 'STOP',
@@ -508,21 +374,21 @@ function InterventionSection({
           step,
           desc,
           color
-        }) => <div key={step} className="p-5 text-center rounded-2xl" style={{
+        }) => <div key={step} className="p-5 text-center rounded-md" style={{
           background: alpha(color, 10),
           border: `1px solid ${alpha(color, 30)}`
         }}>
-                <div className="text-[18px] font-[800] mb-2" style={{
+                <div className="text-[18px] font-medium mb-2" style={{
             color
           }}>{step}</div>
                 <p className="text-technical-sm text-on-surface-variant leading-relaxed">{desc}</p>
               </div>)}
           </div>
-          <div className="mt-5 p-4 rounded-2xl" style={{
+          <div className="mt-5 p-4 rounded-md" style={{
         background: 'var(--status-ok-panel)',
         border: '1px solid var(--status-ok-line)'
       }}>
-            <div className="text-[13px] font-[600] text-[var(--status-ok)] mb-1.5">{t("Progress.integration_across_all_sessions")}</div>
+            <div className="text-[13px] font-medium text-[var(--status-ok)] mb-1.5">{t("Progress.integration_across_all_sessions")}</div>
             <p className="text-[13px] text-on-surface-variant leading-relaxed">{t("Progress.the_stop_think_act")}</p>
           </div>
         </div>}
@@ -535,9 +401,9 @@ function InterventionRightPanel({
     t
   } = useTranslation();
   return <>
-      <div className="text-technical-sm font-[600] text-[var(--phase-int-soft)] mb-3">{t("Progress.module_categories")}</div>
+      <div className="text-technical-sm font-medium text-[var(--phase-int-soft)] mb-3">{t("Progress.module_categories")}</div>
       {Object.entries(INTERVENTION_MODULES).map(([pid, mods]) => <div key={pid} className="mb-3">
-          <div className="text-[11px] font-[600] mb-1.5" style={{
+          <div className="text-[11px] font-medium mb-1.5" style={{
         color: PILLARS[pid].color
       }}>{pid}</div>
           {mods.map(m => <div key={m.id} className="px-2 py-1.5 mb-0.5 text-[11px] text-on-surface-variant rounded-[2px]" style={{
@@ -550,7 +416,7 @@ function InterventionRightPanel({
 
       <div className="border-t-[0.5px] border-outline-variant my-3" />
 
-      <div className="text-technical-sm font-[600] mb-2">{t("Progress.session_tracking")}</div>
+      <div className="text-technical-sm font-medium mb-2">{t("Progress.session_tracking")}</div>
       {[{
       label: 'Scheduled Sessions',
       val: 24,
@@ -569,20 +435,20 @@ function InterventionRightPanel({
       color
     }) => <div key={label} className="flex justify-between mb-1.5">
           <span className="text-technical-sm text-on-surface-variant">{label}</span>
-          <span className="text-technical-sm font-bold" style={{
+          <span className="text-technical-sm font-medium" style={{
         color
       }}>{val}</span>
         </div>)}
 
       <div className="border-t-[0.5px] border-outline-variant my-3" />
 
-      <div className="p-3 rounded-3xl mb-4" style={{
+      <div className="p-3 rounded-md mb-4" style={{
       background: 'var(--phase-int-panel)',
       border: '1px solid var(--phase-int-line)'
     }}>
-        <div className="text-[11px] font-[600] text-[var(--phase-int-soft)] mb-1.5">{t("Progress.content_library")}</div>
+        <div className="text-[11px] font-medium text-[var(--phase-int-soft)] mb-1.5">{t("Progress.content_library")}</div>
         <p className="text-[11px] text-surface-variant leading-relaxed">{t("Progress.upload_questionnaires_rubrics_and")}</p>
-        <button onClick={() => toast('The content library is coming in a future release.', 'info')} className="mt-2 w-full justify-center px-3 py-1.5 bg-surface-container-low text-on-surface text-[13px] font-[500] rounded-lg border border-outline-variant cursor-pointer hover:opacity-90 transition-all flex items-center gap-1.5">
+        <button onClick={() => toast('The content library is coming in a future release.', 'info')} className="mt-2 w-full justify-center px-3 py-1.5 bg-surface-container-low text-on-surface text-[13px] font-normal rounded-lg border border-outline-variant cursor-pointer hover:opacity-90 transition-all flex items-center gap-1.5">
           <Package size={11} />{t("Progress.open_library")}</button>
       </div>
 
@@ -591,7 +457,7 @@ function InterventionRightPanel({
             <span className="text-technical-sm" style={{
           color: PILLARS[id].color
         }}>{id}</span>
-            <span className="text-technical-sm font-[600]" style={{
+            <span className="text-technical-sm font-medium" style={{
           color: isCritical(score) ? 'var(--status-err)' : 'var(--status-ok)'
         }}>{score}</span>
           </div>
@@ -651,11 +517,16 @@ function PostAssessmentForm({
     });
     setSaving(false);
   };
-  return <div className="p-6 max-w-[900px] mx-auto">
+  return <div className="page-pad max-w-[960px] mx-auto">
+      <section className="mb-8 md:mb-10">
+        <div className="kicker mb-3">{t("Progress.outcome_summary")}</div>
+        <h1 className="text-headline-md font-headline-md text-on-background page-headline">{t("nav.items.progress")}</h1>
+        <div className="gradient-rule mt-6" />
+      </section>
       <div className="flex items-center gap-2.5 mb-5">
         <ClipboardList size={18} color="var(--phase-post)" />
-        <h2 className="text-[18px] font-[800] m-0">{t("Progress.post_intervention_assessment")}</h2>
-        <div className="ml-auto px-3 py-1 text-[11px] font-[600] rounded-full" style={{
+        <h2 className="text-[18px] font-medium m-0">{t("Progress.post_intervention_assessment")}</h2>
+        <div className="ml-auto px-3 py-1 text-[11px] font-medium rounded-full" style={{
         background: 'var(--phase-post-tint)',
         border: '1px solid var(--phase-post-line)',
         color: 'var(--phase-post-soft)'
@@ -663,7 +534,7 @@ function PostAssessmentForm({
       </div>
       <p className="text-[13px] text-surface-variant mb-6">{t("Progress.re_assess_all_four")}</p>
 
-      {Object.entries(PILLARS).map(([pid, pillar]) => <div key={pid} className="mb-5 bg-surface-container-low rounded-2xl p-5" style={{
+      {Object.entries(PILLARS).map(([pid, pillar]) => <div key={pid} className="mb-5 bg-surface-container-low rounded-md p-5" style={{
       border: `1px solid ${pillar.color}25`
     }}>
           <div className="flex items-center gap-2.5 mb-4">
@@ -671,7 +542,7 @@ function PostAssessmentForm({
           background: pillar.color,
           boxShadow: `0 0 8px ${pillar.color}`
         }} />
-            <span className="text-[14px] font-bold" style={{
+            <span className="text-[14px] font-medium" style={{
           color: pillar.color
         }}>{pillar.label}</span>
             <span className="text-technical-sm text-surface-variant">— {pillar.framework}</span>
@@ -687,11 +558,11 @@ function PostAssessmentForm({
           }}>
                   <div className="flex justify-between mb-1.5">
                     <div>
-                      <div className="text-[13px] font-[600]">{sp.label}</div>
+                      <div className="text-[13px] font-medium">{sp.label}</div>
                       <div className="text-[11px] text-surface-variant">Pre: {preVal}/{sp.max}</div>
                     </div>
                     <div className="text-right">
-                      <div className="text-[18px] font-bold" style={{
+                      <div className="text-[18px] font-medium" style={{
                   color: pillar.color
                 }}>{val}</div>
                       <div className="text-[10px] text-surface-variant">/ {sp.max}</div>
@@ -702,7 +573,7 @@ function PostAssessmentForm({
             }} />
                   <div className="flex justify-between mt-1">
                     <span className="text-[10px] text-surface-variant">0</span>
-                    <span className="text-[10px] font-[600]" style={{
+                    <span className="text-[10px] font-medium" style={{
                 color: pct >= 60 ? 'var(--status-ok)' : 'var(--status-err)'
               }}>{pct}%</span>
                     <span className="text-[10px] text-surface-variant">{sp.max}</span>
@@ -712,7 +583,7 @@ function PostAssessmentForm({
           </div>
         </div>)}
 
-      <button onClick={handleSubmit} disabled={saving} className="w-full justify-center py-[14px] text-label-md font-label-md rounded-xl bg-[var(--phase-post)] text-on-primary hover:opacity-90 transition-all border-none cursor-pointer flex items-center gap-2 disabled:opacity-50">
+      <button onClick={handleSubmit} disabled={saving} className="w-full justify-center py-[14px] text-label-md font-label-md rounded-sm bg-[var(--phase-post)] text-on-primary hover:opacity-90 transition-all border-none cursor-pointer flex items-center gap-2 disabled:opacity-50">
         {saving ? 'Saving...' : <><Save size={14} />{t("Progress.submit_post_assessment")}</>}
       </button>
     </div>;
@@ -743,14 +614,14 @@ function PostSection({
   return <div className="flex-1 overflow-y-auto p-4 md:p-6">
       <div className="mb-6">
         <div className="flex items-center gap-2.5 mb-3">
-          <div className="px-2.5 py-0.5 text-[11px] font-[600] rounded-full" style={{
+          <div className="px-2.5 py-0.5 text-[11px] font-medium rounded-full" style={{
           background: 'var(--phase-post-tint)',
           border: '1px solid var(--phase-post-line)',
           color: 'var(--phase-post-soft)'
         }}>{t("Progress.phase_3")}</div>
-          <span className="text-[14px] font-bold">{t("Progress.post_intervention_evaluation")}</span>
+          <span className="text-[14px] font-medium">{t("Progress.post_intervention_evaluation")}</span>
         </div>
-        <div className="rounded-2xl p-4 overflow-x-auto" style={{
+        <div className="rounded-md p-4 overflow-x-auto" style={{
         background: 'var(--phase-post-fill)',
         border: '1px solid var(--phase-post-line)'
       }}>
@@ -783,11 +654,11 @@ function PostSection({
         color,
         grade,
         isDelta
-      }) => <div key={label} className="bg-surface-container-low text-center rounded-2xl p-5" style={{
+      }) => <div key={label} className="bg-surface-container-low text-center rounded-md p-5" style={{
         border: `1px solid ${alpha(color, 30)}`
       }}>
             <div className="text-[11px] text-surface-variant mb-1">{label}</div>
-            <div className="text-[40px] font-[800] leading-none" style={{
+            <div className="text-[40px] font-medium leading-none" style={{
           color
         }}>
               {isDelta ? delta >= 0 ? `+${delta}` : delta : val}
@@ -799,61 +670,36 @@ function PostSection({
           </div>)}
       </div>
 
-      <div className="flex gap-1 mb-5 bg-surface-container-low p-1 rounded-3xl w-fit">
-        {['comparison', 'radar', 'career', 'idp'].map(t => <button key={t} onClick={() => setActiveTab(t)} className={`px-4 py-[7px] rounded-xl cursor-pointer text-[13px] font-[500] capitalize transition-all duration-150 border-none ${activeTab === t ? 'bg-[var(--phase-post)] text-on-primary' : 'bg-transparent text-on-surface-variant'}`}>{t}</button>)}
+      <div className="flex gap-1 mb-5 bg-surface-container-low p-1 rounded-md w-fit">
+        {['comparison', 'radar', 'career', 'idp'].map(t => <button key={t} onClick={() => setActiveTab(t)} className={`px-4 py-[7px] rounded-sm cursor-pointer text-[13px] font-normal capitalize transition-all duration-150 border-none ${activeTab === t ? 'bg-[var(--phase-post)] text-on-primary' : 'bg-transparent text-on-surface-variant'}`}>{t}</button>)}
       </div>
 
       {activeTab === 'comparison' && <div>
-          <h3 className="text-[15px] font-bold mb-4">{t("Progress.before_vs_after_comparison")}</h3>
-          <div className="bg-surface-container-low border border-outline-variant rounded-2xl p-5 mb-4">
-            <ResponsiveContainer width="100%" height={240}>
-              <BarChart data={comparisonData} barGap={4}>
-                <CartesianGrid strokeDasharray="3 3" stroke="var(--tint-soft)" />
-                <XAxis dataKey="name" tick={{
-              fill: 'var(--neutral-mid)',
-              fontSize: 12
-            }} />
-                <YAxis domain={[0, 100]} tick={{
-              fill: 'var(--neutral-dim)',
-              fontSize: 11
-            }} />
-                <Tooltip contentStyle={{
-              background: 'var(--bone-panel)',
-              border: '1px solid var(--bone-line)',
-              borderRadius: 2,
-              color: 'var(--neutral-dark)',
-              fontSize: 12
-            }} />
-                <Legend wrapperStyle={{
-              fontSize: 12,
-              color: 'var(--neutral-mid)'
-            }} />
-                <Bar dataKey="Pre" fill="var(--phase-pre)" fillOpacity={0.7} radius={[4, 4, 0, 0]} />
-                <Bar dataKey="Post" fill="var(--phase-post)" fillOpacity={0.9} radius={[4, 4, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
+          <h3 className="text-[15px] font-medium mb-4">{t("Progress.before_vs_after_comparison")}</h3>
+          <div className="bg-surface-container-low border border-outline-variant rounded-md p-5 mb-4">
+            <GroupedBars data={comparisonData} height={240} />
           </div>
 
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5">
             {Object.entries(PILLARS).map(([id, pillar]) => {
           const d = postScores[id] - preScores[id];
           const pct = preScores[id] > 0 ? Math.round(d / preScores[id] * 100) : 0;
-          return <div key={id} className="bg-surface-container-low rounded-2xl p-3.5" style={{
+          return <div key={id} className="bg-surface-container-low rounded-md p-3.5" style={{
             border: `1px solid ${pillar.color}25`
           }}>
-                  <div className="text-[11px] font-[600] mb-1.5" style={{
+                  <div className="text-[11px] font-medium mb-1.5" style={{
               color: pillar.color
             }}>{pillar.short}</div>
                   <div className="flex justify-between mb-1.5">
                     <span className="text-technical-sm text-surface-variant">{preScores[id]}</span>
                     <ArrowRight size={12} className="text-surface-variant" />
-                    <span className="text-[14px] font-bold" style={{
+                    <span className="text-[14px] font-medium" style={{
                 color: pillar.color
               }}>{postScores[id]}</span>
                   </div>
                   <div className="flex items-center gap-1">
                     {d > 0 ? <TrendingUp size={12} color="var(--status-ok)" /> : d < 0 ? <TrendingDown size={12} color="var(--status-err)" /> : <Minus size={12} className="text-surface-variant" />}
-                    <span className="text-technical-sm font-[600]" style={{
+                    <span className="text-technical-sm font-medium" style={{
                 color: d > 0 ? 'var(--status-ok)' : d < 0 ? 'var(--status-err)' : 'var(--neutral-ink-500)'
               }}>
                       {d > 0 ? `+${d}` : d} pts ({pct > 0 ? '+' : ''}{pct}%)
@@ -865,34 +711,34 @@ function PostSection({
         </div>}
 
       {activeTab === 'radar' && <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-          <div className="bg-surface-container-low border border-outline-variant rounded-xl p-4">
-            <h4 className="text-[13px] font-[600] mb-3">{t("Progress.pre_vs_post_radar")}</h4>
+          <div className="bg-surface-container-low border border-outline-variant rounded-sm p-4">
+            <h4 className="text-[13px] font-medium mb-3">{t("Progress.pre_vs_post_radar")}</h4>
             <QIDSRadar data={preScores} compare={postScores} size={280} />
           </div>
-          <div className="bg-surface-container-low border border-outline-variant rounded-xl p-4">
-            <h4 className="text-[13px] font-[600] mb-3">{t("Progress.skill_shape_topology")}</h4>
+          <div className="bg-surface-container-low border border-outline-variant rounded-sm p-4">
+            <h4 className="text-[13px] font-medium mb-3">{t("Progress.skill_shape_topology")}</h4>
             <div className="text-center p-5">
-              <div className="text-[72px] font-[900] mb-3 leading-none" style={{
+              <div className="text-[72px] font-semibold mb-3 leading-none" style={{
             background: 'linear-gradient(135deg, var(--phase-pre), var(--phase-post))',
             WebkitBackgroundClip: 'text',
             WebkitTextFillColor: 'transparent'
           }}>{skillShape}</div>
-              <div className="text-body-md font-bold mb-2">{skillShapeData?.label}</div>
+              <div className="text-body-md font-medium mb-2">{skillShapeData?.label}</div>
               <p className="text-[13px] text-on-surface-variant leading-relaxed">{skillShapeData?.desc}</p>
             </div>
           </div>
         </div>}
 
       {activeTab === 'career' && <div>
-          <h3 className="text-[15px] font-bold mb-4">{t("Progress.career_guidance_recommendations")}</h3>
-          <div className="p-6 rounded-3xl mb-4" style={{
+          <h3 className="text-[15px] font-medium mb-4">{t("Progress.career_guidance_recommendations")}</h3>
+          <div className="p-6 rounded-md mb-4" style={{
         background: 'var(--phase-pre-panel)',
         border: '1px solid var(--phase-pre-line)'
       }}>
             <div className="flex items-start gap-4">
               <div>
                 <div className="text-[11px] text-surface-variant mb-1">{t("Progress.recommended_track")}</div>
-                <h3 className="text-[18px] font-[800] mb-1.5">{careerProfile.label}</h3>
+                <h3 className="text-[18px] font-medium mb-1.5">{careerProfile.label}</h3>
                 <div className="text-technical-sm text-[var(--phase-pre-soft)] mb-2">{t("inter.condition", { x: careerProfile.condition })}</div>
                 <p className="text-[13px] text-on-surface-variant leading-relaxed mb-3">{careerProfile.desc}</p>
                 <div className="flex flex-wrap gap-1.5">
@@ -905,15 +751,15 @@ function PostSection({
             </div>
           </div>
 
-          <h4 className="text-[13px] font-[600] mb-3">{t("Progress.all_career_profiles")}</h4>
+          <h4 className="text-[13px] font-medium mb-3">{t("Progress.all_career_profiles")}</h4>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-            {CAREER_PROFILES.map(cp => <div key={cp.id} className="p-3.5 rounded-3xl" style={{
+            {CAREER_PROFILES.map(cp => <div key={cp.id} className="p-3.5 rounded-md" style={{
           background: cp.id === careerProfile.id ? 'color-mix(in srgb, var(--phase-pre) 10%, transparent)' : 'var(--neutral-carbon)',
           border: `1px solid ${cp.id === careerProfile.id ? 'color-mix(in srgb, var(--phase-pre) 40%, transparent)' : 'var(--bone-line)'}`
         }}>
                 <div className="flex gap-2 items-start">
                   <div>
-                    <div className="text-technical-sm font-[600] mb-0.5">{cp.label}</div>
+                    <div className="text-technical-sm font-medium mb-0.5">{cp.label}</div>
                     <div className="text-[11px] text-surface-variant">{cp.condition}</div>
                   </div>
                 </div>
@@ -922,10 +768,10 @@ function PostSection({
         </div>}
 
       {activeTab === 'idp' && <div>
-          <h3 className="text-[15px] font-bold mb-4">{t("Progress.individual_development_plan_idp")}</h3>
+          <h3 className="text-[15px] font-medium mb-4">{t("Progress.individual_development_plan_idp")}</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="bg-surface-container-low border border-outline-variant rounded-xl p-4">
-              <h4 className="text-[13px] font-[600] text-[var(--phase-post)] mb-3">{t("Progress.achieved_milestones")}</h4>
+            <div className="bg-surface-container-low border border-outline-variant rounded-sm p-4">
+              <h4 className="text-[13px] font-medium text-[var(--phase-post)] mb-3">{t("Progress.achieved_milestones")}</h4>
               {Object.entries(PILLARS).filter(([id]) => postScores[id] > preScores[id]).map(([id, p]) => <div key={id} className="flex gap-2 mb-2">
                   <div className="w-4 h-4 rounded-full flex items-center justify-center flex-shrink-0" style={{
               background: 'var(--status-ok-line)',
@@ -936,8 +782,8 @@ function PostSection({
                   <span className="text-[13px] text-on-surface-variant">{p.label}: {preScores[id]} {'>'} {postScores[id]} (+{postScores[id] - preScores[id]})</span>
                 </div>)}
             </div>
-            <div className="bg-surface-container-low border border-outline-variant rounded-xl p-4">
-              <h4 className="text-[13px] font-[600] text-[var(--status-warn)] mb-3">{t("Progress.maintenance_roadmap")}</h4>
+            <div className="bg-surface-container-low border border-outline-variant rounded-sm p-4">
+              <h4 className="text-[13px] font-medium text-[var(--status-warn)] mb-3">{t("Progress.maintenance_roadmap")}</h4>
               {['Monthly self-assessment check-ins', 'Quarterly facilitator review sessions', 'Annual full QIDS reassessment', 'Ongoing EQ practice (Stop-Think-Act)', 'Peer accountability partnerships'].map(item => <div key={item} className="flex gap-2 mb-2">
                   <div className="w-1.5 h-1.5 rounded-full bg-[var(--status-warn)] mt-1.5 flex-shrink-0" />
                   <span className="text-technical-sm text-on-surface-variant">{item}</span>
@@ -960,26 +806,26 @@ function PostRightPanel({
   const skillShape = getSkillShape(postScores);
   const skillShapeData = SKILL_SHAPES.find(s => s.id === skillShape);
   return <>
-      <div className="text-technical-sm font-[600] text-[var(--phase-post-soft)] mb-3">{t("Progress.outcome_summary")}</div>
-      <div className="p-3.5 rounded-3xl mb-4" style={{
+      <div className="text-technical-sm font-medium text-[var(--phase-post-soft)] mb-3">{t("Progress.outcome_summary")}</div>
+      <div className="p-3.5 rounded-md mb-4" style={{
       background: 'var(--phase-post-panel)',
       border: '1px solid var(--phase-post-line)'
     }}>
         <div className="text-[11px] text-surface-variant mb-1">{t("Progress.unified_score_change")}</div>
-        <div className="text-[28px] font-[800] text-[var(--phase-post)] leading-none">{preUnified} {'>'} {postUnified}</div>
-        <div className="text-technical-sm font-[600]" style={{
+        <div className="text-[28px] font-medium text-[var(--phase-post)] leading-none">{preUnified} {'>'} {postUnified}</div>
+        <div className="text-technical-sm font-medium" style={{
         color: delta >= 0 ? 'var(--status-ok)' : 'var(--status-err)'
       }}>{delta >= 0 ? `+${delta}` : delta} points ({preUnified > 0 ? Math.round(delta / preUnified * 100) : 0}%)</div>
       </div>
 
       <div className="border-t-[0.5px] border-outline-variant my-3" />
 
-      <div className="text-technical-sm font-[600] mb-2.5">{t("Progress.skill_shape")}</div>
-      <div className="p-3 text-center rounded-3xl mb-4" style={{
+      <div className="text-technical-sm font-medium mb-2.5">{t("Progress.skill_shape")}</div>
+      <div className="p-3 text-center rounded-md mb-4" style={{
       background: 'var(--phase-pre-panel)',
       border: '1px solid var(--phase-pre-line)'
     }}>
-        <div className="text-[36px] font-[900] text-[var(--phase-pre-soft)] leading-none">{skillShape}</div>
+        <div className="text-[36px] font-semibold text-[var(--phase-pre-soft)] leading-none">{skillShape}</div>
         <div className="text-technical-sm text-on-surface-variant">{skillShapeData?.label}</div>
       </div>
 
@@ -1042,7 +888,7 @@ export default function Progress() {
       <div className="hide-desktop p-3 border-b-[0.5px] border-outline-variant bg-surface-container-lowest flex gap-1 overflow-x-auto">
         {PHASES.map(phase => {
         const active = activePhase === phase.id;
-        return <button key={phase.id} onClick={() => setActivePhase(phase.id)} className={`flex-1 px-3 py-2 rounded-lg text-[11px] font-[600] cursor-pointer border-none whitespace-nowrap transition-all ${active ? 'text-on-primary' : 'text-surface-variant bg-transparent'}`} style={{
+        return <button key={phase.id} onClick={() => setActivePhase(phase.id)} className={`flex-1 px-3 py-2 rounded-lg text-[11px] font-medium cursor-pointer border-none whitespace-nowrap transition-all ${active ? 'text-on-primary' : 'text-surface-variant bg-transparent'}`} style={{
           background: active ? phase.color : 'transparent'
         }}>
               {phase.label}
@@ -1056,10 +902,10 @@ export default function Progress() {
         background: `${pillar.color}15`,
         border: `1px solid ${pillar.color}30`
       }}>
-            <span className="text-[11px] font-bold" style={{
+            <span className="text-[11px] font-medium" style={{
           color: pillar.color
         }}>{id}</span>
-            <span className="text-[13px] font-[800]" style={{
+            <span className="text-[13px] font-medium" style={{
           color: isCritical(preScores[id]) ? 'var(--status-err)' : 'var(--status-ok)'
         }}>{preScores[id]}</span>
           </div>)}
@@ -1067,7 +913,7 @@ export default function Progress() {
 
       {/* Left sidebar - hidden on mobile */}
       <div data-tour="prog-phases" className="w-[220px] border-r-[0.5px] border-outline-variant bg-surface-container-lowest p-5 overflow-y-auto flex-shrink-0 hide-mobile">
-        <h3 className="text-[15px] font-bold mb-1">{t("Progress.progress_timeline")}</h3>
+        <h3 className="text-[15px] font-medium mb-1">{t("Progress.progress_timeline")}</h3>
         <p className="text-technical-sm text-surface-variant mb-5">{t("Progress.track_your_journey_through")}</p>
 
         <div className="flex flex-col gap-2 mb-5">
@@ -1077,7 +923,7 @@ export default function Progress() {
           return <button key={phase.id} onClick={() => {
             if (phase.id === 'post' && !postData && !submitted) {/* stay or show form */}
             setActivePhase(phase.id);
-          }} className="flex items-center gap-2.5 px-3 py-2.5 rounded-3xl cursor-pointer text-left transition-all duration-150" style={{
+          }} className="flex items-center gap-2.5 px-3 py-2.5 rounded-md cursor-pointer text-left transition-all duration-150" style={{
             background: active ? alpha(phase.color, 15) : 'transparent',
             border: `1px solid ${active ? phase.color : 'transparent'}`
           }}>
@@ -1086,7 +932,7 @@ export default function Progress() {
               boxShadow: active ? `0 0 8px ${phase.color}` : 'none'
             }} />
                 <div className="flex-1">
-                  <div className="text-technical-sm font-[600]" style={{
+                  <div className="text-technical-sm font-medium" style={{
                 color: active ? phase.color : 'var(--neutral-warm)'
               }}>
                     {phase.label}
@@ -1108,7 +954,7 @@ export default function Progress() {
         background: activeNode?.id === node.id ? 'var(--phase-pre-tint)' : 'transparent',
         border: `1px solid ${activeNode?.id === node.id ? 'var(--phase-pre)' : 'transparent'}`
       }}>
-            <div className="text-technical-sm font-[500]">{node.label}</div>
+            <div className="text-technical-sm font-normal">{node.label}</div>
           </div>)}
 
         {activePhase === 'intervention' && <div className="text-[11px] text-surface-variant uppercase tracking-wide mb-2.5">{t("Progress.process_nodes")}</div>}
@@ -1121,7 +967,7 @@ export default function Progress() {
         background: activeNode?.id === node.id ? 'var(--phase-int-tint)' : 'transparent',
         border: `1px solid ${activeNode?.id === node.id ? 'var(--phase-int)' : 'transparent'}`
       }}>
-            <div className="text-technical-sm font-[500]">{node.label}</div>
+            <div className="text-technical-sm font-normal">{node.label}</div>
           </div>)}
 
         {activePhase === 'post' && !showPostForm && <>
@@ -1134,10 +980,10 @@ export default function Progress() {
             }}>{id}</span>
                   <div className="flex items-center gap-1">
                     <span className="text-technical-sm text-surface-variant">{preScores[id]} {'>'}</span>
-                    <span className="text-technical-sm font-bold" style={{
+                    <span className="text-technical-sm font-medium" style={{
                 color: pillar.color
               }}>{postScores[id]}</span>
-                    <span className="text-[11px] font-[600]" style={{
+                    <span className="text-[11px] font-medium" style={{
                 color: d > 0 ? 'var(--status-ok)' : d < 0 ? 'var(--status-err)' : 'var(--neutral-ink-500)'
               }}>
                       {d > 0 ? `+${d}` : d}
@@ -1156,7 +1002,7 @@ export default function Progress() {
           background: activeNode?.id === node.id ? 'var(--phase-post-tint)' : 'transparent',
           border: `1px solid ${activeNode?.id === node.id ? 'var(--phase-post)' : 'transparent'}`
         }}>
-                <div className="text-technical-sm font-[500]">{node.label}</div>
+                <div className="text-technical-sm font-normal">{node.label}</div>
               </div>)}
           </>}
       </div>
@@ -1171,11 +1017,11 @@ export default function Progress() {
         {activePhase === 'pre' && <PreRightPanel pillarScores={preScores} />}
         {activePhase === 'intervention' && <InterventionRightPanel pillarScores={preScores} />}
         {activePhase === 'post' && !showPostForm && <PostRightPanel preScores={preScores} postScores={postScores} />}
-        {showPostForm && <div className="p-3.5 rounded-3xl" style={{
+        {showPostForm && <div className="p-3.5 rounded-md" style={{
         background: 'var(--phase-post-panel)',
         border: '1px solid var(--phase-post-line)'
       }}>
-            <div className="text-technical-sm font-[600] text-[var(--phase-post-soft)] mb-2">{t("Progress.instructions")}</div>
+            <div className="text-technical-sm font-medium text-[var(--phase-post-soft)] mb-2">{t("Progress.instructions")}</div>
             <p className="text-technical-sm text-on-surface-variant leading-relaxed">{t("Progress.fill_in_the_post")}</p>
           </div>}
         {!showPostForm && <button className="w-full justify-center mt-3 px-3 py-1.5 bg-primary text-on-primary text-label-md font-label-md hover:opacity-90 transition-all cursor-pointer border-none flex items-center gap-1.5" onClick={() => navigate('/app/report')}>

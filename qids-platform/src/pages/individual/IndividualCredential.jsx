@@ -5,9 +5,13 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../components/Toast';
 import { logEvent } from '../../lib/analytics';
-import { RadarChart as ReRadar, Radar, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer } from 'recharts';
+import { RadarSvg } from '../../components/charts';
 import { ArrowLeft, Printer, Download, Shield } from 'lucide-react';
 import { getAssessment, publishCredential } from '../../services/firestoreService';
+import { fetchVerification, verificationState } from '../../services/verificationService';
+import VerificationBadge from '../../components/VerificationBadge';
+import { ErrorState } from '../../components/EmptyState';
+import { reportError } from '../../lib/errorReport';
 import { Share2, Check } from 'lucide-react';
 import { computeQidsPillarScores, getGrade, computeWeightedScore, getSkillShape } from '../../core/engine/qids';
 const PILLAR_SHORT = {
@@ -21,24 +25,9 @@ function MiniRadar({
 }) {
   const data = Object.entries(pillarScores).map(([k, v]) => ({
     subject: PILLAR_SHORT[k] || k,
-    A: v,
-    fullMark: 100
+    A: v
   }));
-  return <ResponsiveContainer width="100%" height={220}>
-      <ReRadar data={data} outerRadius="72%">
-        <PolarGrid stroke="var(--gold-grid)" />
-        <PolarAngleAxis dataKey="subject" tick={{
-        fill: 'var(--neutral-mid)',
-        fontSize: 11,
-        fontWeight: 600
-      }} />
-        <PolarRadiusAxis angle={90} domain={[0, 100]} tick={false} axisLine={false} />
-        <Radar dataKey="A" stroke="var(--gold)" fill="var(--gold)" fillOpacity={0.2} strokeWidth={2} dot={{
-        fill: 'var(--gold)',
-        r: 2
-      }} />
-      </ReRadar>
-    </ResponsiveContainer>;
+  return <RadarSvg data={data} max={100} height={220} color="var(--gold)" gridColor="var(--gold-grid)" />;
 }
 export default function IndividualCredential() {
   const {
@@ -55,29 +44,66 @@ export default function IndividualCredential() {
   const toast = useToast();
   const [assessment, setAssessment] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(null);
   const [publishState, setPublishState] = useState('idle');
-  useEffect(() => {
+  const [verification, setVerification] = useState(null);
+  const load = React.useCallback(() => {
     if (!id) {
       setLoading(false);
       return;
     }
-    getAssessment(id).then(setAssessment).catch(() => {}).finally(() => setLoading(false));
+    setLoading(true);
+    setLoadError(null);
+    getAssessment(id).then(setAssessment).catch(e => {
+      // A failed load is not "no such credential" — say so and offer a retry.
+      setLoadError(e);
+      reportError(e, { kind: 'credential-load' });
+    }).finally(() => setLoading(false));
   }, [id]);
+  useEffect(load, [load]);
+
+  // The server's own record, fetched separately: the stored document says what
+  // the holder claims, this says what the server computed.
+  useEffect(() => {
+    let cancelled = false;
+    if (!id) return undefined;
+    fetchVerification(id, user).then(result => {
+      if (!cancelled) setVerification(result);
+    });
+    return () => { cancelled = true; };
+  }, [id, user]);
   if (loading) {
-    return <div className="page-pad max-w-[800px] mx-auto animate-fade pb-24 md:pb-16">
+    return <div className="page-pad max-w-[640px] mx-auto animate-fade pb-24 md:pb-16">
         <div className="skeleton h-96" />
       </div>;
   }
+  if (loadError) {
+    return <div className="page-pad max-w-[640px] mx-auto animate-fade pb-24 md:pb-16">
+        <ErrorState
+          title={t('IndividualCredential.could_not_load')}
+          description={t('IndividualCredential.load_failed_detail')}
+          onRetry={load}
+        />
+      </div>;
+  }
   if (!assessment) {
-    return <div className="page-pad max-w-[800px] mx-auto animate-fade pb-24 md:pb-16 text-center py-20">
+    return <div className="page-pad max-w-[640px] mx-auto animate-fade pb-24 md:pb-16 text-center py-20">
         <div className="text-body-md text-surface-variant mb-4">{t("IndividualCredential.assessment_not_found")}</div>
         <button onClick={() => navigate('/app/dashboard')} className="btn-primary glow">{t("IndividualCredential.back_to_dashboard")}</button>
       </div>;
   }
-  const pillarScores = assessment.pillarScores || computeQidsPillarScores(assessment.rawScores || {});
-  const unified = assessment.result?.unifiedScore ?? computeWeightedScore(pillarScores) ?? 0;
-  const grade = assessment.result?.grade ?? getGrade(unified);
-  const skillShape = getSkillShape(pillarScores);
+  // What the stored document says, and what the server computed. When they
+  // disagree the badge says so and both numbers are shown; a credential that
+  // silently picked one would defeat the point of verifying it.
+  const storedPillars = assessment.pillarScores || computeQidsPillarScores(assessment.rawScores || {});
+  const storedUnified = assessment.result?.unifiedScore ?? computeWeightedScore(storedPillars) ?? 0;
+  const serverRecord = verification?.status === 'found' ? verification.verification : null;
+  const badgeState = verificationState(verification, storedUnified, storedPillars);
+  const useServerNumbers = Boolean(serverRecord?.attested);
+  const pillarScores = useServerNumbers && serverRecord.pillarScores ? serverRecord.pillarScores : storedPillars;
+  const unified = useServerNumbers && typeof serverRecord.unifiedScore === 'number' ? serverRecord.unifiedScore : storedUnified;
+  const grade = getGrade(unified);
+  const skillShape = (useServerNumbers && serverRecord.skillShape) || getSkillShape(pillarScores);
   const name = assessment.intake?.name || 'Candidate';
   const date = assessment.createdAt?.toDate ? assessment.createdAt.toDate().toLocaleDateString('en-US', {
     month: 'long',
@@ -88,13 +114,31 @@ export default function IndividualCredential() {
     day: 'numeric',
     year: 'numeric'
   });
-  return <div className="page-pad max-w-[800px] mx-auto animate-fade pb-24 md:pb-16 print:p-0 print:max-w-none">
+  return <div className="page-pad max-w-[640px] mx-auto animate-fade pb-24 md:pb-16 print:p-0 print:max-w-none">
       <section className="mb-6 fade-up no-print">
         <button onClick={() => navigate(-1)} className="flex items-center gap-2 text-technical-sm font-technical-sm text-surface-variant hover:text-primary transition-colors cursor-pointer bg-transparent border-none">
           <ArrowLeft size={14} />{t("IndividualCredential.back")}</button>
       </section>
 
       <div className="bg-surface-container-lowest border-[0.5px] border-outline-variant p-8 md:p-12 print:p-12 print:border-none print:bg-white" id="credential">
+        {/* What this score actually is */}
+        <div className="mb-8">
+          <VerificationBadge state={badgeState} verification={serverRecord} />
+          {badgeState === 'mismatch' && serverRecord && (
+            <div className="mt-2 px-4 py-3 border-[0.5px] border-error/40 bg-error-container/40">
+              <div className="text-technical-sm font-technical-sm text-error">
+                {t('Verification.stored_vs_server', {
+                  stored: Math.round(storedUnified),
+                  server: Math.round(serverRecord.unifiedScore),
+                })}
+              </div>
+              <div className="text-technical-sm font-technical-sm text-surface-variant mt-1">
+                {t('Verification.fields_disagree', { count: serverRecord.mismatchCount || 0 })}
+              </div>
+            </div>
+          )}
+        </div>
+
         {/* Header */}
         <div className="text-center mb-8 pb-8 border-b-[0.5px] border-outline-variant">
           <div className="flex items-center justify-center gap-2 mb-3">

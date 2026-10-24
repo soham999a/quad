@@ -268,6 +268,9 @@ export default function InterventionPlan() {
   const band = BANDS[activeBand];
   const modules = PLAN[activePillar]?.[activeBand] || [];
   return <div className="flex h-full animate-fade">
+      {/* Split-pane layout: the visible titles are per-pillar, so the page keeps
+          its own heading for the document outline and screen-reader users. */}
+      <h1 className="sr-only">{t("nav.items.intervention")}</h1>
       {/* Sidebar - hidden on mobile */}
       <div className="w-[220px] border-r border-outline-variant bg-surface-container p-5 overflow-y-auto shrink-0 hide-mobile">
         <div className="flex items-center gap-2 mb-4">

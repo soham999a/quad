@@ -2,10 +2,12 @@ import { useTranslation } from 'react-i18next';
 import usePageTitle from '../../lib/usePageTitle';
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { RadarChart as ReRadar, Radar, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer, Tooltip } from 'recharts';
+import { RadarSvg } from '../../components/charts';
 import { Sparkles, ArrowLeft, TrendingUp, TrendingDown, Target, Brain, Award, FileText, Download, CheckCircle2, AlertTriangle } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { getAssessment, getUserAssessments } from '../../services/firestoreService';
+import { ErrorState } from '../../components/EmptyState';
+import { reportError } from '../../lib/errorReport';
 import { computeQidsPillarScores, getGrade, computeWeightedScore, getSkillShape, getCareerProfile } from '../../core/engine/qids';
 const PILLAR_META = {
   IQ: {
@@ -133,28 +135,7 @@ function PillarRadar({
           <Download size={13} />{t("IndividualResults.png")}</button>
       </div>
       <div ref={wrapRef}>
-        <ResponsiveContainer width="100%" height={300}>
-        <ReRadar data={data} outerRadius="68%">
-          <PolarGrid stroke="color-mix(in srgb, var(--gold) 15%, transparent)" />
-          <PolarAngleAxis dataKey="subject" tick={{
-            fill: 'var(--neutral-mid)',
-            fontSize: 12,
-            fontWeight: 600
-          }} />
-          <PolarRadiusAxis angle={90} domain={[0, 100]} tick={false} axisLine={false} />
-          <Radar dataKey="A" stroke="var(--gold)" fill="var(--gold)" fillOpacity={0.22} strokeWidth={2} dot={{
-            fill: 'var(--gold)',
-            r: 3
-          }} />
-          <Tooltip contentStyle={{
-            background: 'var(--neutral-carbon-deep)',
-            border: '1px solid color-mix(in srgb, var(--gold) 25%, transparent)',
-            borderRadius: 8,
-            color: 'var(--neutral-warm)',
-            fontSize: 12
-          }} />
-        </ReRadar>
-      </ResponsiveContainer>
+        <RadarSvg data={data} max={100} height={300} color="var(--gold)" gridColor="color-mix(in srgb, var(--gold) 15%, transparent)" />
       </div>
     </div>;
 }
@@ -201,25 +182,41 @@ export default function IndividualResults() {
   const [assessment, setAssessment] = useState(null);
   const [allAttempts, setAllAttempts] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(null);
   useEffect(() => {
     if (!id) {
       setLoading(false);
       return;
     }
-    getAssessment(id).then(setAssessment).catch(() => {}).finally(() => setLoading(false));
+    setLoadError(null);
+    getAssessment(id).then(setAssessment).catch(e => {
+      // "Could not load" and "no such result" are different answers.
+      setLoadError(e);
+      reportError(e, { kind: 'results-load' });
+    }).finally(() => setLoading(false));
     if (user) {
+      // History is supplementary: a failure here must not blank the result.
       getUserAssessments(user.uid).then(list => {
         setAllAttempts((list || []).filter(a => a.phase !== 'post').sort((a, b) => new Date(a.timestamp || a.createdAt?.toDate?.() || 0) - new Date(b.timestamp || b.createdAt?.toDate?.() || 0)));
-      }).catch(() => {});
+      }).catch(e => reportError(e, { kind: 'results-history' }));
     }
   }, [id, user]);
   if (loading) {
-    return <div className="page-pad max-w-[1100px] mx-auto animate-fade pb-24 md:pb-16">
+    return <div className="page-pad max-w-[960px] mx-auto animate-fade pb-24 md:pb-16">
         <div className="space-y-6">
           <div className="skeleton h-8 w-64 mb-4" />
           <div className="card p-8"><div className="skeleton h-48 w-48 mx-auto rounded-full" /></div>
           <div className="card p-6"><div className="skeleton h-64" /></div>
         </div>
+      </div>;
+  }
+  if (loadError) {
+    return <div className="page-pad max-w-[960px] mx-auto animate-fade pb-24 md:pb-16">
+        <ErrorState
+          title={t('IndividualResults.could_not_load', 'Could not load this result')}
+          description={t('IndividualResults.load_failed_detail', 'The assessment could not be fetched. Nothing has been lost — try again.')}
+          onRetry={() => window.location.reload()}
+        />
       </div>;
   }
   if (!assessment) {
@@ -244,7 +241,7 @@ export default function IndividualResults() {
   const sorted = Object.entries(pillarScores).sort((a, b) => b[1] - a[1]);
   const strengths = sorted.slice(0, 2);
   const development = sorted.slice(-2).reverse();
-  return <div className="page-pad max-w-[1100px] mx-auto animate-fade pb-24 md:pb-16">
+  return <div className="page-pad max-w-[960px] mx-auto animate-fade pb-24 md:pb-16">
       <section className="mb-8 md:mb-10 fade-up">
         <button onClick={() => navigate('/app/dashboard')} className="flex items-center gap-2 text-technical-sm font-technical-sm text-surface-variant hover:text-primary transition-colors cursor-pointer bg-transparent border-none mb-6">
           <ArrowLeft size={14} />{t("IndividualResults.back_to_dashboard")}</button>

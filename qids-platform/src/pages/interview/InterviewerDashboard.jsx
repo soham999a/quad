@@ -7,6 +7,7 @@ import { getEvaluatorSessions } from '../../services/interviewService';
 import { ClipboardList, Users, Clock, CheckCircle, Plus, ChevronRight, Play, FileText, Filter, Trash2 } from 'lucide-react';
 import { deleteInterviewSession } from '../../services/interviewService';
 import SeedInterviewData from '../../components/SeedInterviewData';
+import { reportError } from '../../lib/errorReport';
 const STATUS_STYLES = {
   scheduled: {
     bg: 'var(--gold-tint)',
@@ -138,7 +139,7 @@ export default function InterviewerDashboard() {
               <div className="skeleton h-8 w-24" />
             </div>)}
         </div> : filtered.length === 0 && filter === 'all' ? <SeedInterviewData onDone={() => {
-      getEvaluatorSessions(user.uid).then(setSessions).catch(() => {});
+      getEvaluatorSessions(user.uid).then(setSessions).catch(e => reportError(e, { kind: 'interviewer-refresh' }));
     }} /> : <div className="flex flex-col">
           {filtered.map(session => {
         

@@ -142,7 +142,7 @@ export default function KidsStory() {
 
   if (!chapter) {
     return (
-      <div className="page-pad max-w-[720px] mx-auto">
+      <div className="page-pad max-w-[640px] mx-auto">
         <h1 className="text-headline-md font-extrabold mb-3">{t('kids.chapter_missing')}</h1>
         <Link to="/app/kids" className="text-gold text-[12px] font-mono uppercase tracking-[0.12em] no-underline">
           ← {t('kids.back_to_map')}
@@ -153,7 +153,7 @@ export default function KidsStory() {
 
   if (loading || !progress) {
     return (
-      <div className="page-pad max-w-[720px] mx-auto" aria-busy="true">
+      <div className="page-pad max-w-[640px] mx-auto" aria-busy="true">
         <div className="skeleton h-3 w-32 mb-4" />
         <div className="skeleton h-8 w-72 mb-6" />
         <div className="skeleton h-56 w-full" />
@@ -197,7 +197,7 @@ export default function KidsStory() {
   const nextChapter = CHAPTERS.find(c => !derived.completedChapterIds.includes(c.id)) || null;
 
   return (
-    <div className="page-pad max-w-[760px] mx-auto animate-fade">
+    <div className="page-pad max-w-[640px] mx-auto animate-fade">
       <div className="flex items-center justify-between mb-6">
         <Link
           to="/app/kids"

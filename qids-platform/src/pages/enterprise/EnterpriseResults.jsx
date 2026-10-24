@@ -1,7 +1,7 @@
 import { useTranslation } from 'react-i18next';
 import usePageTitle from '../../lib/usePageTitle';
 import React, { useState, useMemo } from 'react';
-import { RadarChart as ReRadar, Radar, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer, Tooltip } from 'recharts';
+import { RadarSvg } from '../../components/charts';
 import { Shield, Target, Zap, Brain, ArrowLeft, FileText } from 'lucide-react';
 import { BAND_COLOR, thresholdMeta, INTEGRITY_META, AGILITY_META } from '../../core/runner/format';
 import { buildPipReport } from '../../core/report/pip';
@@ -38,28 +38,7 @@ function WorkStyleRadar({
     fullMark: 10
   }));
   return <div className="card p-5 md:p-6">
-      <ResponsiveContainer width="100%" height={300}>
-        <ReRadar data={data} outerRadius="68%">
-          <PolarGrid stroke="var(--gold-grid)" />
-          <PolarAngleAxis dataKey="subject" tick={{
-          fill: 'var(--neutral-mid)',
-          fontSize: 12,
-          fontWeight: 600
-        }} />
-          <PolarRadiusAxis angle={90} domain={[0, 10]} tick={false} axisLine={false} />
-          <Radar dataKey="A" stroke="var(--gold)" fill="var(--gold)" fillOpacity={0.22} strokeWidth={2} dot={{
-          fill: 'var(--gold)',
-          r: 3
-        }} />
-          <Tooltip contentStyle={{
-          background: 'var(--neutral-carbon-deep)',
-          border: '1px solid var(--gold-line)',
-          borderRadius: 8,
-          color: 'var(--neutral-warm)',
-          fontSize: 12
-        }} />
-        </ReRadar>
-      </ResponsiveContainer>
+      <RadarSvg data={data} max={10} height={300} color="var(--gold)" gridColor="var(--gold-grid)" />
     </div>;
 }
 function ModuleBars({
@@ -159,7 +138,7 @@ export default function EnterpriseResults({
   const moduleScores = result?.moduleScores || {};
   const integrityMeta = integrity ? INTEGRITY_META[integrity.band] : null;
   const pip = useMemo(() => deployed && answers ? buildPipReport(result, deployed, answers) : null, [result, deployed, answers]);
-  return <div className="page-pad max-w-[1520px] mx-auto animate-fade pb-24 md:pb-16">
+  return <div className="page-pad max-w-[1280px] mx-auto animate-fade pb-24 md:pb-16">
       <section className="mb-10 md:mb-14">
         <div className="flex items-center gap-4">
           <button onClick={onRestart} className="flex items-center gap-2 text-technical-sm font-technical-sm text-surface-variant hover:text-primary transition-colors cursor-pointer bg-transparent border-none">

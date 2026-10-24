@@ -1,14 +1,15 @@
-// ─── Server-side scoring (shadow mode, slice 1) ──────────────────────────────
-// Sends the answer sheet to /api/submit-assessment, which scores it with the
-// shared engine and stores its own record. Nothing reads that record yet: this
-// exists to prove the server and the browser agree on real traffic before the
-// app switches its source of truth.
+// ─── Server-side scoring ────────────────────────────────────────────────────
+// Sends item-level answers to /api/submit-assessment, which derives the section
+// totals itself and stores its own record. The server's numbers are the ones a
+// credential can point at; the tab's numbers are for immediate display.
 //
-// The call is fire-and-forget. It must never block submission, never surface an
-// error to the user, and never throw.
+// The call never blocks submission and never throws. A network failure costs
+// the verification badge, not the assessment.
+
+import { reportError } from '../lib/errorReport';
 
 const ENDPOINT = '/api/submit-assessment';
-const TIMEOUT_MS = 8000;
+const TIMEOUT_MS = 12000;
 
 /** Stable id per attempt, so a retry can never double-score. */
 export function newSubmissionId() {
@@ -23,16 +24,26 @@ export function newSubmissionId() {
  * @param {{
  *   submissionId: string,
  *   clientAssessmentId?: string | null,
- *   rawScores: object,
+ *   answers: object,
+ *   rawScores?: object,
  *   intake: object,
  *   ageGroup?: string,
  *   mode?: 'qids' | 'school',
  *   startedAt?: string,
  *   durationMs?: number,
  * }} payload
- * @returns {Promise<{ ok: boolean, duplicate?: boolean, status?: number, reason?: string }>}
+ * @returns {Promise<{
+ *   ok: boolean,
+ *   duplicate?: boolean,
+ *   attested?: boolean,
+ *   mismatches?: string[],
+ *   result?: object,
+ *   shares?: object,
+ *   status?: number,
+ *   reason?: string,
+ * }>}
  */
-export async function submitAssessmentShadow(user, payload) {
+export async function submitAssessmentForVerification(user, payload) {
   if (!user?.getIdToken) return { ok: false, reason: 'signed-out' };
 
   const controller = new AbortController();
@@ -48,7 +59,7 @@ export async function submitAssessmentShadow(user, payload) {
     });
 
     if (!res.ok) {
-      if (import.meta.env.DEV) console.info('[scoring] shadow submit rejected:', res.status);
+      if (import.meta.env.DEV) console.info('[scoring] submission rejected:', res.status);
       return { ok: false, status: res.status };
     }
 
@@ -56,15 +67,23 @@ export async function submitAssessmentShadow(user, payload) {
     // rather than a success we cannot confirm.
     const data = await res.json().catch(() => null);
     if (!data?.ok) {
-      if (import.meta.env.DEV) console.info('[scoring] shadow submit: unexpected response');
+      if (import.meta.env.DEV) console.info('[scoring] submission: unexpected response');
       return { ok: false, reason: 'bad-response' };
     }
-    return { ok: true, duplicate: !!data.duplicate };
+    return {
+      ok: true,
+      duplicate: !!data.duplicate,
+      attested: !!data.attested,
+      mismatches: data.mismatches || [],
+      result: data.result,
+      shares: data.shares,
+    };
   } catch (e) {
-    if (import.meta.env.DEV) {
-      console.info('[scoring] shadow submit skipped:', e?.name === 'AbortError' ? 'timeout' : 'network');
-    }
-    return { ok: false, reason: e?.name === 'AbortError' ? 'timeout' : 'network' };
+    const reason = e?.name === 'AbortError' ? 'timeout' : 'network';
+    if (import.meta.env.DEV) console.info('[scoring] submission skipped:', reason);
+    // Only a genuine anomaly (not an offline tab) is worth a report.
+    if (reason === 'timeout') reportError(e, { kind: 'scoring-timeout' });
+    return { ok: false, reason };
   } finally {
     clearTimeout(timer);
   }

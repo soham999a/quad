@@ -1,22 +1,22 @@
-// ─── Server-side scoring endpoint (shadow mode) ──────────────────────────────
-// The browser posts an answer sheet; the server scores it with the same engine
-// the UI uses (shared/scoring/qids.js) and stores its own result.
+// ─── Server-side scoring endpoint ────────────────────────────────────────────
+// The browser posts an answer sheet at item level; the server derives the
+// section totals itself, scores them with the shared engine
+// (shared/scoring/qids.js) and records its own result.
 //
-// Slice 1 writes to `scoringShadow`, not `assessments`. Nothing reads it yet —
-// that is the point: it lets us compare server and client results on real
-// traffic before switching the app's source of truth and locking the
-// assessments collection to server-only writes.
+// Two documents are written, both server-only:
+//   assessmentRecords/{submissionId}        full audit trail (answers, hashes)
+//   assessmentVerifications/{assessmentId}  compact summary a credential reads
 //
 // Auth:  Firebase ID token (same pattern as /api/generate-questions).
-// Write: Admin SDK only. Firestore rules deny clients all access to the
-//        collection, so a shadow record cannot be forged or edited.
+// Write: Admin SDK only — Firestore rules deny clients all access to both
+//        collections, so a record cannot be forged or edited after scoring.
 //
 // Env (Vercel): FIREBASE_PROJECT_ID, optional SUBMIT_RATE_LIMIT_PER_HOUR.
 
 import { initializeApp, getApps, getApp } from 'firebase-admin/app';
 import { getAuth } from 'firebase-admin/auth';
 import { getFirestore, FieldValue } from 'firebase-admin/firestore';
-import { buildShadowRecord, SubmissionError, MAX_BODY_BYTES } from './_lib/submitCore.js';
+import { buildSubmissionRecord, buildVerificationSummary, SubmissionError, MAX_BODY_BYTES } from './_lib/submitCore.js';
 
 function fbAdmin() {
   if (getApps().length === 0) {
@@ -75,14 +75,14 @@ export default async function handler(req, res) {
     return res.status(429).json({ error: { message: `Submission limit reached (${RATE_LIMIT}/hour).` } });
   }
 
-  // ── Score ────────────────────────────────────────────────────────────────
+  // ── Derive + score ────────────────────────────────────────────────────────
   let prepared;
   try {
     const body = readBody(req);
     if (Buffer.byteLength(JSON.stringify(body), 'utf8') > MAX_BODY_BYTES) {
       throw new SubmissionError('Payload too large', 413);
     }
-    prepared = buildShadowRecord({ body, uid });
+    prepared = buildSubmissionRecord({ body, uid });
   } catch (e) {
     if (e instanceof SubmissionError) {
       return res.status(e.status).json({ error: { message: e.message, details: e.details } });
@@ -91,18 +91,52 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: { message: 'Invalid submission' } });
   }
 
+  const { record, submissionId, mismatches } = prepared;
+  const db = getFirestore(fbAdmin());
+
   // ── Persist (idempotent: the submission id is the document id) ────────────
-  const ref = getFirestore(fbAdmin()).collection('scoringShadow').doc(prepared.submissionId);
+  const ref = db.collection('assessmentRecords').doc(submissionId);
   try {
-    await ref.create({ ...prepared.record, receivedAt: FieldValue.serverTimestamp() });
-    return res.status(201).json({ ok: true, submissionId: prepared.submissionId, scoredBy: 'server' });
+    await ref.create({ ...record, receivedAt: FieldValue.serverTimestamp() });
   } catch (e) {
     // 6 / already-exists: the client retried the same submission. That is a
     // success, not an error — the first attempt already scored it.
     if (e?.code === 6 || e?.code === 'already-exists') {
-      return res.status(200).json({ ok: true, submissionId: prepared.submissionId, duplicate: true });
+      return res.status(200).json({ ok: true, submissionId, duplicate: true });
     }
     console.error('submit-assessment write failed:', e?.message);
     return res.status(500).json({ error: { message: 'Could not record the submission. Retry.' } });
   }
+
+  // The compact copy exists so a credential can be verified with one read.
+  if (record.clientAssessmentId) {
+    try {
+      await db.collection('assessmentVerifications').doc(record.clientAssessmentId).set(
+        { ...buildVerificationSummary(prepared), uid, updatedAt: FieldValue.serverTimestamp() },
+        { merge: true },
+      );
+    } catch (e) {
+      // The audit record is already safe; a missing summary only downgrades the
+      // credential badge, so this must not fail the submission.
+      console.error('verification summary write failed:', e?.message);
+    }
+  }
+
+  if (mismatches.length) {
+    console.warn('submit-assessment sheet mismatch:', submissionId, mismatches.join(','));
+  }
+
+  return res.status(201).json({
+    ok: true,
+    submissionId,
+    scoredBy: 'server',
+    attested: record.attested,
+    mismatches,
+    result: {
+      unifiedScore: record.result.unifiedScore,
+      grade: record.result.grade,
+      pillarScores: record.result.pillarScores,
+    },
+    shares: record.shares,
+  });
 }

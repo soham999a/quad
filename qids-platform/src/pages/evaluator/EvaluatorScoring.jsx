@@ -244,7 +244,7 @@ export default function EvaluatorScoring() {
     })();
   }, [assessmentId]);
   if (!assessment || !student) {
-    return <div className="page-pad max-w-[1200px] mx-auto animate-fade pt-[60px] text-center">
+    return <div className="page-pad max-w-[960px] mx-auto animate-fade pt-[60px] text-center">
         <AlertCircle size={32} className="text-outline mb-3 mx-auto" />
         <div className="text-label-md font-label-md text-on-surface-variant mb-4">{t("EvaluatorScoring.assessment_data_not_available")}</div>
         <button onClick={() => navigate('/app/evaluator')} className="px-4 py-2 border-[0.5px] border-primary text-primary text-technical-sm font-technical-sm uppercase tracking-wider cursor-pointer bg-transparent hover:bg-primary/10 transition-all" style={{
@@ -287,7 +287,7 @@ export default function EvaluatorScoring() {
     setSaving(false);
   };
   const studentName = student?.name || student?.email || 'this student';
-  return <div className="page-pad max-w-[1200px] mx-auto animate-fade">
+  return <div className="page-pad max-w-[960px] mx-auto animate-fade">
       <button onClick={() => navigate('/app/evaluator')} className="inline-flex items-center gap-1.5 mb-6 px-3 py-1.5 border-[0.5px] border-outline-variant text-on-surface-variant hover:text-primary hover:border-primary text-technical-sm font-technical-sm uppercase tracking-wider cursor-pointer bg-transparent transition-all" style={{
       borderRadius: '8px'
     }}>

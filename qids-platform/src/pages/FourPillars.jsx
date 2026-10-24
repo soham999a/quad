@@ -261,7 +261,7 @@ export default function FourPillars() {
   const navigate = useNavigate();
   const [active, setActive] = useState(pillarId || 'IQ');
   const pillar = PILLARS[active];
-  return <div className="page-pad max-w-[1100px] mx-auto animate-fade">
+  return <div className="page-pad max-w-[960px] mx-auto animate-fade">
       <h1 className="text-headline-md font-extrabold mb-1">{t("FourPillars.the_four_pillars_of")}</h1>
       <p className="text-label-md text-surface-variant mb-7">{t("FourPillars.each_pillar_represents_a")}</p>
 

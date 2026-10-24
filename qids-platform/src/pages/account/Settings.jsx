@@ -117,7 +117,7 @@ export default function Settings() {
       });
     }
   };
-  return <div className="page-pad max-w-[1100px] mx-auto animate-fade">
+  return <div className="page-pad max-w-[960px] mx-auto animate-fade">
       <section className="mb-10">
         <div className="kicker mb-3">{t("Settings.account")}</div>
         <h1 className="text-headline-md font-headline-md text-on-background page-headline">{t("Settings.settings")}</h1>

@@ -1,6 +1,6 @@
 import { useTranslation } from 'react-i18next';
 import React from 'react';
-import { RadarChart as ReRadar, Radar, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer, Tooltip } from 'recharts';
+import { RadarSvg } from '../../components/charts';
 import { Printer, FileText, TrendingUp, TrendingDown, Target, Zap, Shield, Download, ArrowLeft, CheckCircle2, AlertTriangle } from 'lucide-react';
 import type { PipReportData, Insight } from '../../core/report/pip';
 import { BAND_COLOR, thresholdMeta, AGILITY_META } from '../../core/runner/format';
@@ -146,7 +146,7 @@ function Page1({
               <div className="text-technical-sm font-technical-sm text-surface-variant">{t("PipReport.learning_agility_index")}</div>
               <div className="text-label-md font-label-md text-on-background">{AGILITY_META[p.learningAgility.label]?.label || p.learningAgility.label} · {p.learningAgility.score}/10</div>
             </div>
-            <div className="h-[6px] bg-surface-variant/20 overflow-hidden">
+            <div className="h-[6px] bg-outline-variant/40 overflow-hidden">
               <div className="h-full" style={{
               width: `${p.learningAgility.score * 10}%`,
               background: 'var(--phase-pre)'
@@ -226,29 +226,14 @@ function DimensionalRadar({
     Candidate: pt.score,
     'Peer Norm': norm[pt.dimension]
   }));
-  return <ResponsiveContainer width="100%" height={360}>
-      <ReRadar data={data} outerRadius="70%">
-        <PolarGrid stroke="color-mix(in srgb, var(--slate-muted) 20%, transparent)" />
-        <PolarAngleAxis dataKey="subject" tick={{
-        fill: 'var(--slate-muted)',
-        fontSize: 11,
-        fontWeight: 600
-      }} />
-        <PolarRadiusAxis angle={90} domain={[0, 100]} tick={false} axisLine={false} />
-        <Radar dataKey="Candidate" stroke="var(--gold)" fill="var(--gold)" fillOpacity={0.28} strokeWidth={2} dot={{
-        fill: 'var(--gold)',
-        r: 3
-      }} />
-        <Radar dataKey="Peer Norm" stroke="var(--slate-deep)" fill="var(--slate-deep)" fillOpacity={0.06} strokeWidth={1.5} strokeDasharray="4 4" />
-        <Tooltip contentStyle={{
-        background: 'var(--ink)',
-        border: '1px solid color-mix(in srgb, var(--slate-muted) 20%, transparent)',
-        borderRadius: 8,
-        color: 'var(--neutral-warm)',
-        fontSize: 12
-      }} />
-      </ReRadar>
-    </ResponsiveContainer>;
+  return <RadarSvg
+      data={data}
+      max={100}
+      height={360}
+      color="var(--gold)"
+      gridColor="color-mix(in srgb, var(--slate-muted) 20%, transparent)"
+      series={[{ key: "Peer Norm", color: "var(--slate-muted)", fillOpacity: 0.12 }, { key: "Candidate", color: "var(--gold)", fillOpacity: 0.2 }]}
+    />;
 }
 function Page2({
   p

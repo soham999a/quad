@@ -7,6 +7,7 @@ import { joinClass } from '../../services/schoolService';
 import { notifyStudentJoined } from '../../services/notificationService';
 import { useToast } from '../../components/Toast';
 import { BookOpen, Users, ArrowRight } from 'lucide-react';
+import { reportError } from '../../lib/errorReport';
 export default function StudentJoin() {
   const {
     t
@@ -35,7 +36,7 @@ export default function StudentJoin() {
             className: cls.name || 'your class',
           });
         }
-      }).catch(() => {});
+      }).catch(e => reportError(e, { kind: 'join-notify' }));
       // Students land on their own class page — /app/school/class/:id is a
       // teacher-only route and would bounce them straight back out.
       navigate('/app/my-class');
@@ -45,7 +46,7 @@ export default function StudentJoin() {
       setJoining(false);
     }
   };
-  return <div className="page-pad max-w-[480px] mx-auto animate-fade py-16 md:py-24">
+  return <div className="page-pad max-w-[640px] mx-auto animate-fade py-16 md:py-24">
       <div className="text-center mb-10">
         <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-6">
           <BookOpen size={28} className="text-primary" />

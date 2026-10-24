@@ -34,7 +34,10 @@ export function ToastProvider({
   };
   return <ToastContext.Provider value={toast}>
       {children}
-      <div className="toast-container" style={{
+      {/* Live region: every toast is appended here, so assistive tech announces
+          saves, errors and confirmations instead of staying silent. Errors get
+          role="alert" and interrupt; everything else is polite. */}
+      <div className="toast-container" role="status" aria-live="polite" aria-atomic="false" style={{
       position: 'fixed',
       bottom: 80,
       right: 16,
@@ -67,7 +70,7 @@ export function ToastProvider({
           }
         }[toast.type] || {};
         const Icon = toast.type === 'success' ? CheckCircle : toast.type === 'error' ? AlertCircle : Info;
-        return <div key={toast.id} style={{
+        return <div key={toast.id} role={toast.type === 'error' ? 'alert' : undefined} style={{
           display: 'flex',
           alignItems: 'center',
           gap: 10,

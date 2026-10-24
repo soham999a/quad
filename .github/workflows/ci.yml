@@ -46,12 +46,16 @@ jobs:
         run: npx playwright test
 
   # Authenticated school-loop e2e (teacher → class → assignment → student join
-  # → start). Opt-in because it runs against a live Firebase project:
-  # enable by adding the repo secret VITE_FIREBASE_* set AND the repository
-  # variable RUN_SCHOOL_E2E=true, plus E2E_FIREBASE_* env vars in CI secrets.
+  # → start), run against the Firebase emulator instead of a live project: no
+  # credentials, no secrets, no production data at risk. Java comes with
+  # ubuntu-latest, which is all the Firestore emulator needs.
+  #
+  # Advisory (continue-on-error) until it has run green on a couple of pushes —
+  # the emulator wiring has not been exercised in this environment. Drop the
+  # flag once it is trusted; it then blocks like the other jobs.
   school-loop-e2e:
-    if: vars.RUN_SCHOOL_E2E == 'true'
     runs-on: ubuntu-latest
+    continue-on-error: true
     steps:
       - uses: actions/checkout@v4
 
@@ -67,12 +71,5 @@ jobs:
       - name: Install Playwright browser
         run: npx playwright install --with-deps chromium
 
-      - name: Restore dev env
-        run: |
-          cat > .env <<EOF
-          ${E2E_FIREBASE_ENV}
-          EOF
-        env:
-          E2E_FIREBASE_ENV: ${{ secrets.E2E_FIREBASE_ENV }}
-      - name: School loop e2e
-        run: E2E_RUN=1 npx playwright test school-loop
+      - name: School loop e2e (emulator)
+        run: npm run test:e2e:emulator

@@ -37,7 +37,7 @@ export default function KidsGuardian() {
 
   if (loading || (profiles.length > 0 && !progressReady)) {
     return (
-      <div className="page-pad max-w-[900px] mx-auto" aria-busy="true">
+      <div className="page-pad max-w-[960px] mx-auto" aria-busy="true">
         <div className="skeleton h-3 w-36 mb-4" />
         <div className="skeleton h-8 w-72 max-w-full mb-8" />
         <div className="skeleton h-32 w-full" />
@@ -46,7 +46,7 @@ export default function KidsGuardian() {
   }
 
   return (
-    <div className="page-pad max-w-[900px] mx-auto animate-fade">
+    <div className="page-pad max-w-[960px] mx-auto animate-fade">
       <Link
         to="/app/kids"
         className="inline-flex items-center gap-2 text-[11px] font-mono uppercase tracking-[0.14em] text-muted-foreground hover:text-on-surface no-underline mb-6"

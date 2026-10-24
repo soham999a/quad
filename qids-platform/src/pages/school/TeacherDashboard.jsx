@@ -6,6 +6,7 @@ import { useAuth } from '../../context/AuthContext';
 import { getTeacherClasses } from '../../services/schoolService';
 import { Users, BookOpen, Plus, ChevronRight, ClipboardList, BarChart3 } from 'lucide-react';
 import SeedSchoolData from '../../components/SeedSchoolData';
+import { ErrorState } from '../../components/EmptyState';
 export default function TeacherDashboard() {
   const {
     t
@@ -18,10 +19,22 @@ export default function TeacherDashboard() {
   const navigate = useNavigate();
   const [classes, setClasses] = useState([]);
   const [loading, setLoading] = useState(true);
-  useEffect(() => {
+  // A failed fetch must not render as "no classes yet" — that reads as an empty
+  // account during an outage. Kept separate from `classes` so the two states
+  // stay distinguishable.
+  const [loadError, setLoadError] = useState(false);
+  const load = () => {
     if (!user) return;
     setLoading(true);
-    getTeacherClasses(user.uid).then(setClasses).catch(() => setClasses([])).finally(() => setLoading(false));
+    setLoadError(false);
+    getTeacherClasses(user.uid).then(setClasses).catch(() => {
+      setLoadError(true);
+      setClasses([]);
+    }).finally(() => setLoading(false));
+  };
+  useEffect(() => {
+    load();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
   return <div className="page-pad max-w-[1280px] mx-auto animate-fade">
       <section className="mb-10 md:mb-14">
@@ -68,7 +81,12 @@ export default function TeacherDashboard() {
       </div>
 
       {/* Classes List */}
-      {loading ? <div className="space-y-3">
+      {loadError ? <ErrorState
+        title={t("TeacherDashboard.load_failed", "Could not load your classes")}
+        description={t("TeacherDashboard.load_failed_body", "The class list could not be fetched. Your classes are safe — retry, or reload the page.")}
+        retryLabel={t("common.retry", "Try again")}
+        onRetry={load}
+      /> : loading ? <div className="space-y-3">
           {[0, 1].map(i => <div key={i} className="card p-6 flex items-center justify-between">
               <div className="flex items-center gap-4">
                 <div className="skeleton h-10 w-10" />
@@ -80,7 +98,7 @@ export default function TeacherDashboard() {
               <div className="skeleton h-8 w-24" />
             </div>)}
         </div> : classes.length === 0 ? <SeedSchoolData onDone={() => {
-      getTeacherClasses(user.uid).then(setClasses).catch(() => {});
+      getTeacherClasses(user.uid).then(setClasses).catch(() => setLoadError(true));
     }} /> : <div className="flex flex-col">
           {classes.map(cls => <div key={cls.id} onClick={() => navigate(`/app/school/class/${cls.id}`)} className="card p-5 md:p-6 flex items-center justify-between hover:bg-surface-container-low transition-colors cursor-pointer border-b-[0.5px] border-outline-variant">
               <div className="flex items-center gap-4 md:gap-6">

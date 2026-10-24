@@ -421,6 +421,9 @@ export default function Questionnaires() {
     AQ: null
   };
   return <div className="flex h-full animate-fade">
+      {/* Split-pane layout: the visible titles are per-pillar, so the page keeps
+          its own heading for the document outline and screen-reader users. */}
+      <h1 className="sr-only">{t("Questionnaires.page_title", "Questionnaires")}</h1>
       {/* Sidebar - hidden on mobile */}
       <div className="w-[230px] border-r border-outline-variant bg-surface-container-lowest p-5 overflow-y-auto shrink-0 hide-mobile">
         <div className="flex items-center gap-2 mb-4">

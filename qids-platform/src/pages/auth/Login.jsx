@@ -168,7 +168,7 @@ export default function Login() {
                 </div>
               </div>
 
-              <button type="submit" disabled={loading} className="flex h-12 w-full cursor-pointer items-center justify-center rounded-sm border-none bg-on-surface font-label-md text-label-md uppercase tracking-widest text-background transition-colors hover:bg-gold hover:text-ink active:scale-[0.99] disabled:opacity-40">
+              <button type="submit" disabled={loading} className="flex h-12 w-full cursor-pointer items-center justify-center rounded-sm border-none bg-on-surface font-label-md text-label-md uppercase tracking-widest text-background transition-colors hover:bg-gold hover:text-background active:scale-[0.99] disabled:opacity-40">
                 {loading ? t('auth.signing_in') : t('auth.sign_in')}
               </button>
             </form>

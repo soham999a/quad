@@ -1,17 +1,28 @@
 // ─── Submission core (pure) ──────────────────────────────────────────────────
 // Everything the submit endpoint does that is worth testing without a network:
-// validate the payload, score it with the shared engine, hash the input, and
-// assemble the record written to Firestore.
+// validate the payload, derive the score sheet from item-level answers, score
+// it with the shared engine, hash the input, and assemble the records written
+// to Firestore.
+//
+// Trust model, stated plainly:
+//   * The client may send `answers` — item-level choices — and nothing else.
+//   * The server derives the raw section totals itself and compares them with
+//     whatever totals the client claims. Disagreement is recorded, never
+//     silently accepted, and the derived numbers are the ones that count.
+//   * A payload with no `answers` is still accepted (older deployed clients),
+//     but it is marked `attested: false` and its credential cannot claim
+//     server derivation.
 //
 // No Firebase, no HTTP. api/submit-assessment.js is the thin transport around
 // this module, and tests/submit-core.test.mjs exercises it directly.
 
 import { createHash } from 'node:crypto';
-import { buildQidsResult, validateRawScores } from '../../shared/scoring/qids.js';
+import { buildQidsResult, validateRawScores, PILLAR_IDS } from '../../shared/scoring/qids.js';
+import { deriveRawScores } from '../../shared/scoring/answers.js';
 
 export const ENGINE_ID = 'qids';
-export const ENGINE_VERSION = '1.0.0';
-export const MAX_BODY_BYTES = 64 * 1024;
+export const ENGINE_VERSION = '1.1.0';
+export const MAX_BODY_BYTES = 128 * 1024;
 export const MAX_INTAKE_BYTES = 4 * 1024;
 export const MAX_ANSWERS = 500;
 
@@ -41,25 +52,47 @@ function stableStringify(value) {
   return `{${keys.map(k => `${JSON.stringify(k)}:${stableStringify(value[k])}`).join(',')}}`;
 }
 
+/** Reject payloads whose answer sheet is not a bounded object of primitives. */
+function validateAnswers(answers) {
+  if (answers == null) return null;
+  if (typeof answers !== 'object' || Array.isArray(answers)) {
+    throw new SubmissionError('answers must be an object');
+  }
+  let leaves = 0;
+  const walk = (node, depth) => {
+    if (depth > 6) throw new SubmissionError('answers are nested too deeply');
+    if (node === null || typeof node !== 'object') return;
+    for (const [key, value] of Object.entries(node)) {
+      if (key.length > 64) throw new SubmissionError('answers contain an oversized key');
+      if (value !== null && typeof value === 'object') {
+        if (Array.isArray(value)) {
+          leaves += value.length;
+          if (leaves > MAX_ANSWERS) throw new SubmissionError('answers contain too many values');
+          continue;
+        }
+        walk(value, depth + 1);
+      } else {
+        leaves += 1;
+        if (leaves > MAX_ANSWERS) throw new SubmissionError('answers contain too many values');
+        if (typeof value === 'string' && value.length > 2000) {
+          throw new SubmissionError('an answer text is too long');
+        }
+      }
+    }
+  };
+  walk(answers, 0);
+  return answers;
+}
+
 /**
  * @param {unknown} body
- * @returns {{
- *   submissionId: string,
- *   clientAssessmentId: string | null,
- *   rawScores: Record<string, any>,
- *   intake: Record<string, any>,
- *   ageGroup: string | null,
- *   mode: 'qids' | 'school',
- *   startedAt: string | null,
- *   durationMs: number | null,
- * }}
  */
 export function validateSubmission(body) {
   if (!body || typeof body !== 'object' || Array.isArray(body)) {
     throw new SubmissionError('Body must be a JSON object');
   }
 
-  const { submissionId, clientAssessmentId, rawScores, intake, ageGroup, mode, startedAt, durationMs } = /** @type {any} */ (body);
+  const { submissionId, clientAssessmentId, rawScores, answers, intake, ageGroup, mode, startedAt, durationMs } = /** @type {any} */ (body);
 
   if (typeof submissionId !== 'string' || !SUBMISSION_ID.test(submissionId)) {
     throw new SubmissionError('submissionId must be 8–64 characters of [A-Za-z0-9_-]');
@@ -68,9 +101,18 @@ export function validateSubmission(body) {
     throw new SubmissionError('clientAssessmentId must be a string of at most 128 characters');
   }
 
-  const sheet = validateRawScores(rawScores);
-  if (!sheet.ok) {
-    throw new SubmissionError('rawScores do not match the instrument', 400, sheet.errors);
+  const cleanAnswers = validateAnswers(answers);
+
+  // Without answers the sheet is still checked against the instrument bounds,
+  // but it is a claim rather than a derivation.
+  if (!cleanAnswers && rawScores === undefined) {
+    throw new SubmissionError('answers or rawScores is required');
+  }
+  if (!cleanAnswers) {
+    const sheet = validateRawScores(rawScores);
+    if (!sheet.ok) {
+      throw new SubmissionError('rawScores do not match the instrument', 400, sheet.errors);
+    }
   }
 
   const cleanIntake = intake == null ? {} : intake;
@@ -97,9 +139,10 @@ export function validateSubmission(body) {
   return {
     submissionId,
     clientAssessmentId: clientAssessmentId ?? null,
-    rawScores,
+    rawScores: cleanAnswers ? null : rawScores,
+    answers: cleanAnswers,
     intake: cleanIntake,
-    ageGroup: ageGroup ?? null,
+    ageGroup: ageGroup ?? '11-18',
     mode: mode ?? 'qids',
     startedAt: startedAt ?? null,
     durationMs: durationMs ?? null,
@@ -110,7 +153,8 @@ export function validateSubmission(body) {
 export function canonicalHash(input) {
   return createHash('sha256')
     .update(stableStringify({
-      rawScores: input.rawScores,
+      answers: input.answers ?? null,
+      rawScores: input.rawScores ?? null,
       intake: input.intake,
       ageGroup: input.ageGroup,
       mode: input.mode,
@@ -119,44 +163,81 @@ export function canonicalHash(input) {
 }
 
 /**
- * Validate → score → assemble the record. The result written here is the
- * server's own derivation; nothing score-like is taken from the request.
+ * Compare the derived sheet with whatever the client claimed. Returns the list
+ * of fields that disagree — empty when the client told the truth.
+ */
+export function compareSheets(derived, claimed) {
+  if (!claimed || typeof claimed !== 'object') return [];
+  const diffs = [];
+  for (const pillar of PILLAR_IDS) {
+    const d = derived[pillar] || {};
+    const c = claimed[pillar];
+    if (c === undefined) continue;
+    if (!c || typeof c !== 'object') { diffs.push(pillar); continue; }
+    for (const key of new Set([...Object.keys(d), ...Object.keys(c)])) {
+      const dv = d[key] ?? 0;
+      const cv = typeof c[key] === 'number' ? c[key] : 0;
+      if (Math.abs(dv - cv) > 1e-6) diffs.push(`${pillar}.${key}`);
+    }
+  }
+  return diffs;
+}
+
+/**
+ * Validate → derive → score → assemble the record.
  *
  * @param {{ body: unknown, uid: string, now?: string }} args
  */
-export function buildShadowRecord({ body, uid, now }) {
+export function buildSubmissionRecord({ body, uid, now }) {
   if (typeof uid !== 'string' || !uid) {
     throw new SubmissionError('Authenticated user is required', 401);
   }
   const input = validateSubmission(body);
+  const claimed = /** @type {any} */ (body).rawScores ?? null;
   const scoredAt = now ?? new Date().toISOString();
 
+  const derived = input.answers
+    ? deriveRawScores(input.answers, { ageGroup: input.ageGroup })
+    : null;
+
+  const rawScores = derived ? derived.rawScores : input.rawScores;
+  const mismatches = derived ? compareSheets(rawScores, claimed) : [];
+
   const { result, pillarScores } = buildQidsResult({
-    rawScores: input.rawScores,
+    rawScores,
     intake: input.intake,
-    ageGroup: input.ageGroup ?? undefined,
+    ageGroup: input.ageGroup,
     mode: input.mode,
     now: scoredAt,
   });
 
+  const attested = Boolean(derived) && mismatches.length === 0;
+
   return {
     submissionId: input.submissionId,
+    mismatches,
     record: {
       uid,
       submissionId: input.submissionId,
       clientAssessmentId: input.clientAssessmentId,
-      shadow: true,
       scoredBy: 'server',
+      attested,
       engine: { id: ENGINE_ID, version: ENGINE_VERSION },
       inputHash: canonicalHash(input),
       input: {
-        rawScores: input.rawScores,
+        answers: input.answers,
+        rawScores,
+        claimedRawScores: claimed,
         intake: input.intake,
         ageGroup: input.ageGroup,
         mode: input.mode,
         startedAt: input.startedAt,
         durationMs: input.durationMs,
       },
+      provenance: derived?.provenance ?? null,
+      shares: derived?.shares ?? null,
+      completeness: derived?.completeness ?? null,
+      mismatches,
       result: {
         mode: result.mode,
         pillarScores,
@@ -167,5 +248,31 @@ export function buildShadowRecord({ body, uid, now }) {
       },
       scoredAt,
     },
+  };
+}
+
+/**
+ * The compact record a credential can point at. Public-safe: no answers, no
+ * intake, no uid — just what a verifier needs to check the badge.
+ *
+ * @param {ReturnType<typeof buildSubmissionRecord>} submission
+ */
+export function buildVerificationSummary(submission) {
+  const r = submission.record;
+  return {
+    submissionId: r.submissionId,
+    clientAssessmentId: r.clientAssessmentId,
+    engine: r.engine,
+    inputHash: r.inputHash,
+    attested: r.attested,
+    mismatchCount: r.mismatches.length,
+    unifiedScore: r.result.unifiedScore,
+    grade: r.result.grade,
+    pillarScores: r.result.pillarScores,
+    skillShape: r.result.skillShape,
+    shares: r.shares,
+    completeness: r.completeness,
+    durationMs: r.input.durationMs,
+    scoredAt: r.scoredAt,
   };
 }

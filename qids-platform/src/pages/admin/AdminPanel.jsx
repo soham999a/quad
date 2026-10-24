@@ -4,7 +4,9 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { getAllUsers, assignEvaluator, removeAssignment, getEvaluatorAssignments, updateUserRole, upsertPublicEvaluator, removePublicEvaluator, getFunnelSummary, getRecentErrorReports } from '../../services/firestoreService';
 import { useToast } from '../../components/Toast';
-import { Shield, UserCheck, UserX, Users, Search, RefreshCw, ChevronDown, ChevronUp, TrendingUp, AlertTriangle } from 'lucide-react';
+import { Shield, UserCheck, UserX, Users, Search, RefreshCw, ChevronDown, ChevronUp, TrendingUp, AlertTriangle, Filter } from 'lucide-react';
+import { ASSESSMENT_STEPS } from '../../lib/analytics';
+import { reportError } from '../../lib/errorReport';
 import EmptyState from '../../components/EmptyState';
 export default function AdminPanel() {
   const {
@@ -23,6 +25,7 @@ export default function AdminPanel() {
   const [expandedStudent, setExpandedStudent] = useState(null);
   const [funnel, setFunnel] = useState(null);
   const [errors, setErrors] = useState([]);
+  const [opsError, setOpsError] = useState(null);
   const role = userProfile?.role || 'individual';
   if (role !== 'admin') {
     return <div className="flex items-center justify-center min-h-[60vh] flex-col gap-3">
@@ -47,8 +50,9 @@ export default function AdminPanel() {
       });
     }
     setAssignments(assignMap);
-    getFunnelSummary(30).then(setFunnel).catch(() => {});
-    getRecentErrorReports(20).then(setErrors).catch(() => {});
+    // Ops data failing to load must not look like "nothing happened".
+    getFunnelSummary(30).then(setFunnel).catch(e => { setOpsError(e); reportError(e, { kind: 'admin-funnel' }); });
+    getRecentErrorReports(20).then(setErrors).catch(e => { setOpsError(e); reportError(e, { kind: 'admin-errors' }); });
     setLoading(false);
   };
   const students = allUsers.filter(u => u.role === 'student' || u.role === 'individual');
@@ -109,7 +113,7 @@ export default function AdminPanel() {
     if (!evUid) return null;
     return allUsers.find(u => u.uid === evUid);
   };
-  return <div className="page-pad max-w-[1200px] mx-auto animate-fade">
+  return <div className="page-pad max-w-[1280px] mx-auto animate-fade">
       {/* Header */}
       <section className="flex justify-between items-start mb-10 md:mb-16">
         <div>
@@ -139,6 +143,10 @@ export default function AdminPanel() {
             <div className="text-[24px] md:text-[28px] font-technical-sm text-primary">{String(stat.count).padStart(2, '0')}</div>
           </div>)}
       </section>
+
+      {opsError && <div role="alert" className="mb-6 md:mb-10 border-[0.5px] border-error/40 bg-error-container/40 px-4 py-3 text-technical-sm font-technical-sm text-error">
+        {t('AdminPanel.ops_load_failed', 'Funnel and error data could not be loaded. Counts below may be incomplete.')}
+      </div>}
 
       {/* Funnel (last 30 days) — acquisition → activation. */}
       <section className="border-y-[0.5px] border-outline-variant mb-10 md:mb-16">
@@ -197,6 +205,62 @@ export default function AdminPanel() {
               {(funnel?.total ?? 0) === 0 && <div className="text-technical-sm font-technical-sm text-surface-variant pt-2">{t("AdminPanel.no_events_yet_funnel")}</div>}
             </div>;
       })()}
+      </section>
+
+      {/* Step drop-off — where the assessment loses people, and on what. */}
+      <section className="border-y-[0.5px] border-outline-variant mb-10 md:mb-16">
+        <div className="flex items-center gap-2 py-6 md:py-8">
+          <Filter size={14} className="text-primary" />
+          <div className="text-technical-sm font-technical-sm text-surface-variant uppercase tracking-widest">
+            {t('AdminPanel.step_dropoff', 'Assessment steps — where people stop')}
+          </div>
+        </div>
+        {(() => {
+          const steps = funnel?.steps || [];
+          const devices = funnel?.devices || [];
+          const anyData = steps.some(s => s.reached > 0 || s.abandoned > 0);
+          if (!anyData) {
+            return <div className="pb-6 md:pb-8 text-technical-sm font-technical-sm text-surface-variant">
+              {t('AdminPanel.no_step_events', 'No step events in this window yet.')}
+            </div>;
+          }
+          return <div className="pb-6 md:pb-8">
+            <div className="grid grid-cols-[1fr_auto_auto_auto] gap-x-6 gap-y-2 items-center max-w-[560px]">
+              <div className="text-[10px] font-mono uppercase tracking-[0.14em] text-surface-variant">
+                {t('AdminPanel.col_step', 'Step')}
+              </div>
+              <div className="text-[10px] font-mono uppercase tracking-[0.14em] text-surface-variant text-right">
+                {t('AdminPanel.col_reached', 'Reached')}
+              </div>
+              <div className="text-[10px] font-mono uppercase tracking-[0.14em] text-surface-variant text-right">
+                {t('AdminPanel.col_stopped', 'Stopped')}
+              </div>
+              <div className="text-[10px] font-mono uppercase tracking-[0.14em] text-surface-variant text-right">
+                {t('AdminPanel.col_drop', 'Drop')}
+              </div>
+              {steps.map((s, i) => {
+                const prev = i > 0 ? steps[i - 1].reached : s.reached;
+                const drop = prev > 0 ? Math.round(((prev - s.reached) / prev) * 100) : 0;
+                return [
+                  <div key={`n${s.index}`} className="text-technical-sm font-technical-sm text-on-surface">
+                    {String(s.index + 1).padStart(2, '0')} · {ASSESSMENT_STEPS[s.index] || 'step'}
+                  </div>,
+                  <div key={`r${s.index}`} className="text-technical-sm font-technical-sm tabular-nums text-right text-on-surface">{s.reached}</div>,
+                  <div key={`a${s.index}`} className="text-technical-sm font-technical-sm tabular-nums text-right" style={{ color: s.abandoned > 0 ? 'var(--status-warn)' : 'var(--muted-foreground)' }}>{s.abandoned}</div>,
+                  <div key={`d${s.index}`} className="text-technical-sm font-technical-sm tabular-nums text-right" style={{ color: drop > 25 ? 'var(--status-err)' : 'var(--muted-foreground)' }}>
+                    {i === 0 || prev === 0 ? '—' : `${drop}%`}
+                  </div>,
+                ];
+              })}
+            </div>
+            {devices.length > 0 && <div className="mt-6 flex flex-wrap gap-x-8 gap-y-2">
+              {devices.map(d => <div key={d.device} className="text-technical-sm font-technical-sm text-surface-variant">
+                <span className="text-on-surface">{d.device}</span> · {d.started} started · {d.completed} completed
+                {d.started > 0 ? ` · ${Math.round((d.completed / d.started) * 100)}%` : ''}
+              </div>)}
+            </div>}
+          </div>;
+        })()}
       </section>
 
       {/* Recent error reports (ops) — what broke in the wild, newest first. */}

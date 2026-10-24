@@ -5,6 +5,8 @@ import { Link, useParams } from 'react-router-dom';
 import QidsMark from '../../components/QidsMark';
 import { BadgeCheck, ShieldAlert, ShieldCheck, ShieldQuestion } from 'lucide-react';
 import { getPublicCredential } from '../../services/firestoreService';
+import { fetchVerification, verificationState } from '../../services/verificationService';
+import VerificationBadge from '../../components/VerificationBadge';
 import { getGrade, computeWeightedScore } from '../../core/engine/qids';
 const PILLAR_SHORT = {
   IQ: 'IQ',
@@ -32,6 +34,7 @@ export default function PublicCredential() {
   } = useParams();
   const [cred, setCred] = useState(undefined); // undefined = loading
   const [verify, setVerify] = useState('pending'); // pending | valid | invalid
+  const [verification, setVerification] = useState(null);
 
   useEffect(() => {
     if (!id) {
@@ -49,8 +52,27 @@ export default function PublicCredential() {
     } = cred;
     sha256Hex(JSON.stringify(payload)).then(h => setVerify(h === hash ? 'valid' : 'invalid'));
   }, [cred]);
-  const unified = cred?.unifiedScore ?? (cred?.pillarScores ? computeWeightedScore(cred.pillarScores) : 0);
-  const grade = cred?.grade ?? (unified ? getGrade(unified) : null);
+
+  // Independently of the publication hash, ask the server what it scored. The
+  // hash proves the shared payload was not edited after issuance; this proves
+  // the numbers came from the server at all.
+  useEffect(() => {
+    let cancelled = false;
+    if (!id) return undefined;
+    fetchVerification(id, null).then(result => {
+      if (!cancelled) setVerification(result);
+    });
+    return () => { cancelled = true; };
+  }, [id]);
+
+  const storedPillars = cred?.pillarScores || null;
+  const storedUnified = cred?.unifiedScore ?? (storedPillars ? computeWeightedScore(storedPillars) : 0);
+  const serverRecord = verification?.status === 'found' ? verification.verification : null;
+  const badgeState = verificationState(verification, storedUnified, storedPillars);
+  const useServerNumbers = Boolean(serverRecord?.attested);
+  const unified = useServerNumbers && typeof serverRecord.unifiedScore === 'number' ? serverRecord.unifiedScore : storedUnified;
+  const pillarScores = useServerNumbers && serverRecord.pillarScores ? serverRecord.pillarScores : storedPillars;
+  const grade = getGrade(unified) ?? cred?.grade ?? null;
   return <div className="min-h-screen bg-background text-on-surface flex flex-col">
       <header className="flex min-h-20 items-center justify-between border-b border-border px-6 lg:px-12">
         <Link to="/" className="inline-flex items-center gap-3 no-underline">
@@ -88,6 +110,10 @@ export default function PublicCredential() {
                 </span>
               </div>
 
+              <div className="px-6 pt-4 pb-0">
+                <VerificationBadge state={badgeState} verification={serverRecord} />
+              </div>
+
               <div className="p-8 md:p-12">
                 {/* Header */}
                 <div className="text-center mb-8 pb-8 border-b-[0.5px] border-outline-variant">
@@ -122,7 +148,7 @@ export default function PublicCredential() {
                 <div className="mb-8 pb-8 border-b-[0.5px] border-outline-variant">
                   <div className="text-technical-sm font-technical-sm text-primary uppercase tracking-widest mb-4">{t("PublicCredential.dimensional_scores")}</div>
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    {Object.entries(cred.pillarScores || {}).map(([pid, score]) => <div key={pid} className="text-center">
+                    {Object.entries(pillarScores || {}).map(([pid, score]) => <div key={pid} className="text-center">
                         <div className="text-headline-md font-headline-md text-on-background">{Math.round(score)}</div>
                         <div className="text-technical-sm font-technical-sm text-surface-variant">{PILLAR_SHORT[pid] || pid}</div>
                       </div>)}
@@ -132,7 +158,7 @@ export default function PublicCredential() {
                 <div className="flex items-center justify-between">
                   <div>
                     <div className="text-technical-sm font-technical-sm text-surface-variant">{t("PublicCredential.skill_shape")}</div>
-                    <div className="text-label-md font-label-md text-on-background">{cred.skillShape || '—'}-Shaped Profile</div>
+                    <div className="text-label-md font-label-md text-on-background">{(useServerNumbers && serverRecord.skillShape) || cred.skillShape || '—'}-Shaped Profile</div>
                   </div>
                   <div className="text-right">
                     <div className="text-technical-sm font-technical-sm text-surface-variant">{t("PublicCredential.assessment")}</div>
@@ -143,6 +169,11 @@ export default function PublicCredential() {
             </div>}
 
           <p className="text-center text-technical-sm font-technical-sm text-muted-foreground mt-8 leading-relaxed">{t("PublicCredential.credentials_are_issued_by")}<br />{t("PublicCredential.run_your_own_assessment")}</p>
+          <p className="text-center mt-4">
+            <Link to="/methodology" className="text-[11px] font-mono uppercase tracking-[0.14em] text-muted-foreground hover:text-on-surface transition-colors no-underline border-b-[0.5px] border-outline-variant pb-0.5">
+              {t('Methodology.link_from_credential', 'How this score is produced')}
+            </Link>
+          </p>
         </div>
       </main>
 
