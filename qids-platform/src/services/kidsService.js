@@ -24,6 +24,7 @@ import {
 } from 'firebase/firestore';
 import { db } from '../firebase';
 import { normalizeProgress, practiceEvidence } from '../core/kids/progress';
+import { CHAPTER_BY_ID } from '../data/kids/story';
 
 const PROFILES_KEY = 'qids-kids-profiles';
 const PROGRESS_KEY = 'qids-kids-progress';
@@ -258,6 +259,21 @@ export async function saveKidsProgress(uid, next, prev = null) {
     } catch (e) {
       console.warn('saveKidsProgress: session append failed:', e.message);
     }
+    // Guardian bell: a completed chapter is the guardian's payoff moment and
+    // it used to be visible only by opening the app. Notify for each newly
+    // finished session (replayed chapters never re-enter `finished`, so
+    // replays cannot farm the feed). Dynamic import keeps the services
+    // decoupled; a failed notification is always a no-op.
+    try {
+      const { notifyChapterCompleted } = await import('./notificationService');
+      const chapter = CHAPTER_BY_ID[session.chapterId];
+      const child = (readJSON(PROFILES_KEY, []) || []).find(p => p.id === next.childId);
+      notifyChapterCompleted({
+        guardianUid: uid,
+        childName: child?.name || '',
+        chapterTitle: chapter?.title || '',
+      });
+    } catch { /* best-effort */ }
   }
 }
 

@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { listPublicEvaluators, getStudentEvaluator, assignEvaluator, removeAssignment, getUserAssessments, getAllEvaluations } from '../../services/firestoreService';
-import { notifyEvaluatorAssigned } from '../../services/notificationService';
+import { notifyEvaluatorAssigned, notifyEvaluatorLinked } from '../../services/notificationService';
 import { Check } from 'lucide-react';
 import { useToast } from '../../components/Toast';
 import { PILLARS } from '../../data/qidsData';
@@ -46,7 +46,7 @@ export default function MyEvaluator() {
         const enriched = [];
         for (const a of asms) {
           if (a.id) {
-            const evals = await getAllEvaluations(a.id).catch(() => []);
+            const evals = await getAllEvaluations(a.id, { studentUid: user.uid }).catch(() => []);
             enriched.push({
               ...a,
               evaluations: evals
@@ -66,10 +66,17 @@ export default function MyEvaluator() {
   const handleAssign = async evaluatorUid => {
     setAssigning(true);
     try {
-      await assignEvaluator(evaluatorUid, user.uid);
+      await assignEvaluator(evaluatorUid, user.uid, userProfile?.name || user.displayName || '');
+      const chosen = evaluators.find(e => e.uid === evaluatorUid);
+      // Both sides of the pairing now hear about it: the evaluator gets work,
+      // and the person gets a durable record of who is reading their results.
       notifyEvaluatorAssigned({
         evaluatorUid,
         studentName: userProfile?.name || user.displayName || 'A student',
+      });
+      notifyEvaluatorLinked({
+        studentUid: user.uid,
+        evaluatorName: chosen?.name || 'Your evaluator',
       });
       const ev = evaluators.find(e => e.uid === evaluatorUid);
       setCurrentEvaluator(ev || null);

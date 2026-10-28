@@ -16,7 +16,7 @@ import { newSubmissionId, submitAssessmentForVerification } from '../services/sc
 import ReviewStep from '../components/assessment/ReviewStep';
 import { deriveRawScores } from '../../shared/scoring/answers.js';
 import { recordSchoolAttempt, getSchoolAssessment } from '../services/schoolService';
-import { notifyAttemptRecorded } from '../services/notificationService';
+import { notifyAttemptRecorded, notifyEvaluatorLinked, notifyEvaluatorAssigned, notifyEvaluatorStudentActivity } from '../services/notificationService';
 import { logEvent, queueEvent, flushQueuedEvents, ASSESSMENT_STEPS } from '../lib/analytics';
 import { Save, ChevronRight, ChevronLeft, Check, CheckCircle, AlertCircle, ClipboardList, Brain, Heart, Users, Shield, ArrowRight } from 'lucide-react';
 import { useToast } from '../components/Toast';
@@ -1064,7 +1064,7 @@ export default function Assessment() {
   const handleAssignEvaluator = async evUid => {
     setLoadingEv(true);
     try {
-      await assignEvaluator(evUid, user.uid);
+      await assignEvaluator(evUid, user.uid, userProfile?.name || user.displayName || '');
       const ev = evaluators.find(e => e.uid === evUid);
       setCurrentEv(ev || null);
       setIntake(prev => ({
@@ -1072,6 +1072,13 @@ export default function Assessment() {
         evaluator: ev?.name || 'Assigned Evaluator',
         _evUid: evUid
       }));
+      // Both parties get a bell: the evaluator gets the work, the person gets a
+      // durable record of who can now read (and re-score) their results.
+      notifyEvaluatorAssigned({
+        evaluatorUid: evUid,
+        studentName: userProfile?.name || user.displayName || 'A student',
+      });
+      notifyEvaluatorLinked({ studentUid: user.uid, evaluatorName: ev?.name || 'Your evaluator' });
       toast('Evaluator assigned', 'success');
     } catch (e) {
       toast('Failed to assign evaluator', 'error');
@@ -1351,9 +1358,22 @@ export default function Assessment() {
               studentUid: user.uid,
               studentName: userProfile?.name || user.displayName || 'Student',
               assessmentId: savedId,
+              title: ctx?.title,
             }).catch(err => console.error('schoolAttempt log failed:', err));
             notifyAttemptRecorded({ studentUid: user.uid, title: ctx?.title || 'class assessment' });
           }
+          // The evaluator's half of the loop: a submitted result is now visible
+          // in their console, so tell them instead of waiting for a refresh.
+          try {
+            const linked = await getStudentEvaluator(user.uid);
+            if (linked?.evaluatorUid) {
+              notifyEvaluatorStudentActivity({
+                evaluatorUid: linked.evaluatorUid,
+                studentName: userProfile?.name || user.displayName || 'Your student',
+                detail: 'A new assessment is on their record — review it and score the pending rubrics.',
+              });
+            }
+          } catch { /* best-effort */ }
         } else {
           console.error('Save failed: saveAssessment returned null');
           toast('Saved locally — sync failed. Check connection.', 'error');

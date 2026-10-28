@@ -1,13 +1,14 @@
 import { useTranslation } from 'react-i18next';
 import usePageTitle from '../../lib/usePageTitle';
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { saveInterviewSession } from '../../services/interviewService';
+import { notifyInterviewInvited } from '../../services/notificationService';
 import { generateInterviewQuestions } from '../../services/groqService';
 import { RUBRIC_DIMENSIONS } from '../../core/data/interviewRubrics';
 import { useToast } from '../../components/Toast';
-import { FileText, Play, ChevronRight, Brain, Sparkles } from 'lucide-react';
+import { FileText, Play, ChevronRight, Brain, Sparkles, UserCheck } from 'lucide-react';
 export default function InterviewSetup() {
   const {
     t
@@ -18,9 +19,15 @@ export default function InterviewSetup() {
     userProfile
   } = useAuth();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  // Launched from the evaluator dashboard: this session is FOR a real
+  // platform user (candidateUid), which unlocks the whole two-screen flow —
+  // ready-up gate, live sync and the merged 60/40 result.
+  const candidateUid = (searchParams.get('candidateUid') || '').trim();
+  const pinnedCandidateName = (searchParams.get('candidateName') || '').trim();
   const toast = useToast();
   const [mode, setMode] = useState('post');
-  const [candidateName, setCandidateName] = useState('');
+  const [candidateName, setCandidateName] = useState(pinnedCandidateName);
   const [candidateEmail, setCandidateEmail] = useState('');
   const [role, setRole] = useState('');
   const [notes, setNotes] = useState('');
@@ -39,9 +46,12 @@ export default function InterviewSetup() {
         role: role.trim(),
         evaluatorName: userProfile?.name || user.displayName || 'Evaluator',
         evaluatorUid: user.uid,
-        status: mode === 'live' ? 'in_progress' : 'scheduled',
         notes: notes.trim()
       };
+      if (candidateUid) payload.candidateUid = candidateUid;
+      payload.status = mode === 'live'
+        ? (candidateUid ? 'invited' : 'in_progress')
+        : 'scheduled';
       if (mode === 'live') {
         payload.liveQuestionIndex = 0;
         payload.liveResponses = [];
@@ -67,6 +77,17 @@ export default function InterviewSetup() {
         }
       }
       const sessionId = await saveInterviewSession(payload);
+      // The candidate is a real platform user: bell them immediately (fire-
+      // and-forget; the dashboard modal is the real gate, the bell is the
+      // trail when they weren't online).
+      if (candidateUid) {
+        notifyInterviewInvited({
+          candidateUid,
+          evaluatorName: payload.evaluatorName,
+          sessionId,
+          mode,
+        });
+      }
       toast('Session created', 'success');
       if (payload.liveQuestions) toast(`${payload.liveQuestions.length} questions generated for this role`, 'success');
       if (mode === 'live') {
@@ -122,6 +143,14 @@ export default function InterviewSetup() {
           </div>
 
           {/* Candidate Info */}
+          {candidateUid && (
+            <div className="mb-4 flex items-center gap-2.5 border-[0.5px] border-gold/30 bg-gold/5 px-3.5 py-2.5" style={{ borderRadius: '6px' }}>
+              <UserCheck size={13} className="text-gold flex-shrink-0" />
+              <span className="text-technical-sm font-technical-sm text-on-surface-variant">
+                Interview for <strong className="text-on-background">{pinnedCandidateName || 'platform user'}</strong> — they'll confirm on their dashboard before anything starts.
+              </span>
+            </div>
+          )}
           <div className="space-y-4">
             <div className="text-technical-sm font-technical-sm text-surface-variant uppercase tracking-widest">{t("InterviewSetup.candidate_details")}</div>
             <div>
@@ -167,7 +196,7 @@ export default function InterviewSetup() {
 
             <div className="text-technical-sm font-technical-sm text-surface-variant uppercase tracking-widest mb-3">{t("InterviewSetup.you_ll_receive")}</div>
             <div className="space-y-2 mb-6">
-              {['Per-dimension scores (1–5 scale)', 'QIDS pillar scores (IQ, EQ, SQ, AQ)', 'Unified score + grade', 'Skill shape classification', 'Career alignment profile', 'Downloadable credential'].map(item => <div key={item} className="flex items-start gap-2">
+              {['Per-dimension scores (1–5 scale)', 'QIDS pillar scores (IQ, EQ, SQ, AQ)', 'Unified score + grade', 'Skill shape classification', 'Career alignment profile', 'Print-ready report (PDF)'].map(item => <div key={item} className="flex items-start gap-2">
                   <ChevronRight size={12} className="text-primary mt-0.5 flex-shrink-0" />
                   <div className="text-body-sm font-body-sm text-on-surface-variant">{item}</div>
                 </div>)}
@@ -177,7 +206,8 @@ export default function InterviewSetup() {
                 <div className="gradient-rule mb-6" />
                 <div className="bg-surface-container-low p-4 border-[0.5px] border-outline-variant">
                   <div className="text-body-sm font-body-sm text-on-surface-variant">
-                    <strong className="text-on-surface">{t("InterviewSetup.post_interview_mode")}</strong>{t("InterviewSetup.the_candidate_will_complete")}</div>
+                    <strong className="text-on-surface">After the interview:</strong> you score all rubric dimensions from your notes — checklist-style, dimension by dimension, with a note per score. Drafts save anytime; the report is generated once everything is scored.
+                  </div>
                 </div>
               </>}
 

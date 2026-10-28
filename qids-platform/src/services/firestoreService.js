@@ -208,11 +208,16 @@ export async function getFunnelSummary(windowDays = 30) {
   }
 }
 
-export async function assignEvaluator(evaluatorUid, studentUid) {
+export async function assignEvaluator(evaluatorUid, studentUid, studentName = '') {
   try {
     const id = `${evaluatorUid}_${studentUid}`;
+    // studentName travels on the assignment because /users is owner-or-admin
+    // read only (by design) — without it the evaluator console can only show
+    // "Student" for every row.
     await setDoc(doc(db, 'evaluatorAssignments', id), {
-      evaluatorUid, studentUid, active: true, createdAt: serverTimestamp(),
+      evaluatorUid, studentUid,
+      ...(studentName ? { studentName: String(studentName).slice(0, 80) } : {}),
+      active: true, createdAt: serverTimestamp(),
     });
     return true;
   } catch (e) { console.warn('assignEvaluator failed:', e.message); return false; }
@@ -267,14 +272,43 @@ export async function getEvaluation(assessmentId, pillar) {
   } catch (e) { console.warn('getEvaluation failed:', e.message); return null; }
 }
 
-export async function getAllEvaluations(assessmentId) {
+export async function getAllEvaluations(assessmentId, scope = {}) {
   const td = typeof window !== 'undefined' ? window.__FIRESTORE_DATA__ : null;
   if (td?.evaluations?.[assessmentId]) return td.evaluations[assessmentId];
   try {
-    const q = query(collection(db, 'evaluations'), where('assessmentId', '==', assessmentId));
-    const snap = await getDocs(q);
+    // `evaluations` is readable only by the recorder, the student it belongs
+    // to, or an admin. A query filtered by assessmentId alone can't prove any
+    // of those to Firestore, so it fails with permission-denied — which is why
+    // the evaluator's rubric ticks and the student's merged report stayed
+    // empty. Callers pass the scope they're entitled to; both filters are
+    // equality-only, so no composite index is needed.
+    const constraints = [where('assessmentId', '==', assessmentId)];
+    if (scope.evaluatorUid) constraints.push(where('evaluatorUid', '==', scope.evaluatorUid));
+    if (scope.studentUid) constraints.push(where('studentUid', '==', scope.studentUid));
+    const snap = await getDocs(query(collection(db, 'evaluations'), ...constraints));
     return snap.docs.map(d => ({ id: d.id, ...d.data() }));
   } catch (e) { console.warn('getAllEvaluations failed:', e.message); return []; }
+}
+
+/**
+ * Live evaluations for one assessment, scoped to what the caller may read.
+ * The student's merged report and the evaluator's rubric ticks update the
+ * moment a score lands instead of on the next page load.
+ */
+export function subscribeEvaluations(assessmentId, scope = {}, callback, onError = () => {}) {
+  if (!assessmentId) return () => {};
+  const constraints = [where('assessmentId', '==', assessmentId)];
+  if (scope.evaluatorUid) constraints.push(where('evaluatorUid', '==', scope.evaluatorUid));
+  if (scope.studentUid) constraints.push(where('studentUid', '==', scope.studentUid));
+  try {
+    return onSnapshot(
+      query(collection(db, 'evaluations'), ...constraints),
+      snap => callback(snap.docs.map(d => ({ id: d.id, ...d.data() }))),
+      onError,
+    );
+  } catch {
+    return () => {};
+  }
 }
 
 export async function updateUserRole(uid, role) {

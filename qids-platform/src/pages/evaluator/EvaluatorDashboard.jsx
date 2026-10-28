@@ -6,8 +6,9 @@ import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../../firebase';
 import { useAuth } from '../../context/AuthContext';
 import { getEvaluatorAssignments, getUserAssessments, getAllEvaluations } from '../../services/firestoreService';
+import { getEvaluatorSessions } from '../../services/interviewService';
 import { PILLARS } from '../../data/qidsData';
-import { Users, ClipboardList, CheckCircle, Clock, ChevronRight, RefreshCw, UserCheck } from 'lucide-react';
+import { Users, ClipboardList, CheckCircle, Clock, ChevronRight, RefreshCw, UserCheck, Mic } from 'lucide-react';
 import EmptyState from '../../components/EmptyState';
 export default function EvaluatorDashboard() {
   const {
@@ -23,15 +24,48 @@ export default function EvaluatorDashboard() {
   const [students, setStudents] = useState({});
   const [assessments, setAssessments] = useState({});
   const [evaluations, setEvaluations] = useState({});
+  const [interviews, setInterviews] = useState({});
   const [loading, setLoading] = useState(true);
   useEffect(() => {
     if (!user) return;
     loadData();
   }, [user]);
+
+  // Come back to this tab after a student submits and the console shows their
+  // new numbers without a manual refresh.
+  useEffect(() => {
+    const onFocus = () => { if (user) loadData(); };
+    const onVisible = () => { if (document.visibilityState === 'visible' && user) loadData(); };
+    window.addEventListener('focus', onFocus);
+    document.addEventListener('visibilitychange', onVisible);
+    return () => {
+      window.removeEventListener('focus', onFocus);
+      document.removeEventListener('visibilitychange', onVisible);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user]);
   const loadData = async () => {
     setLoading(true);
     const assigns = await getEvaluatorAssignments(user.uid);
     setAssignments(assigns);
+    // My interviews at a glance: one fetch, then folded per student so every
+    // row knows what state its interview is in (invited / in progress / done).
+    let sessions = [];
+    try {
+      sessions = await getEvaluatorSessions(user.uid);
+    } catch {
+      sessions = [];
+    }
+    // Newest session per candidate wins (Firestore Timestamps compare by
+    // toMillis, not by string, so sort first and keep the first hit).
+    const timeValue = s => s?.updatedAt?.toMillis?.() || s?.createdAt?.toMillis?.() || 0;
+    const sorted = [...sessions].sort((a, b) => timeValue(b) - timeValue(a));
+    const interviewMap = {};
+    for (const s of sorted) {
+      if (!s.candidateUid) continue;
+      if (!interviewMap[s.candidateUid]) interviewMap[s.candidateUid] = s;
+    }
+    setInterviews(interviewMap);
     const studentMap = {};
     const assessmentMap = {};
     const evalMap = {};
@@ -45,7 +79,10 @@ export default function EvaluatorDashboard() {
       const userAssessments = await getUserAssessments(a.studentUid);
       assessmentMap[a.studentUid] = userAssessments;
       for (const asm of userAssessments) {
-        const evals = await getAllEvaluations(asm.id);
+        // Scoped to this evaluator: an unscoped query can't satisfy the
+        // evaluations read rule, so it used to fail silently and every rubric
+        // tick read "Pending" forever.
+        const evals = await getAllEvaluations(asm.id, { evaluatorUid: user.uid });
         evalMap[asm.id] = evals.reduce((acc, e) => ({
           ...acc,
           [e.pillar]: e
@@ -60,6 +97,29 @@ export default function EvaluatorDashboard() {
   const getPillarStatus = (assessmentId, pillar) => {
     const pillarEvals = evaluations[assessmentId] || {};
     return pillarEvals[pillar] || null;
+  };
+  // Interview status folded per student: live states first, newest session wins.
+  const interviewStats = Object.values(interviews).reduce((acc, s) => {
+    if (['invited', 'accepted', 'in_progress'].includes(s.status)) acc.active += 1;
+    if (s.status === 'completed') acc.done += 1;
+    return acc;
+  }, {
+    active: 0, done: 0
+  });
+  const interviewChip = studentUid => {
+    const s = interviews[studentUid];
+    if (!s) return null;
+    const labels = {
+      invited: { label: 'INVITED — AWAITING CONFIRM', cls: 'text-gold' },
+      accepted: { label: 'CONFIRMED — READY TO BEGIN', cls: 'text-primary' },
+      in_progress: { label: `LIVE · Q${(s.liveQuestionIndex ?? 0) + 1}`, cls: 'text-primary' },
+      scheduled: { label: s.selfAssessment?.length ? 'SELF-ASSESSED' : 'AWAITING SELF-ASSESSMENT', cls: s.selfAssessment?.length ? 'text-primary' : 'text-outline' },
+      completed: { label: 'INTERVIEW DONE', cls: 'text-primary' },
+      declined: { label: 'DECLINED', cls: 'text-outline' },
+      cancelled: { label: 'CANCELLED', cls: 'text-outline' },
+    };
+    const info = labels[s.status] || { label: (s.status || 'UNKNOWN').toUpperCase(), cls: 'text-outline' };
+    return { id: s.id, status: s.status, mode: s.mode, ...info };
   };
   if (loading) {
     return <div className="page-pad max-w-[1280px] mx-auto animate-fade text-center pt-20">
@@ -81,7 +141,9 @@ export default function EvaluatorDashboard() {
           <div className="text-technical-sm font-technical-sm text-primary mb-2 uppercase tracking-[0.2em]">{t("EvaluatorDashboard.evaluation")}</div>
           <h1 className="text-headline-md font-headline-md text-on-background page-headline">{t("EvaluatorDashboard.evaluator_dashboard")}</h1>
           <p className="text-body-md text-on-surface-variant mt-2">
-            {assignments.length > 0 ? `${assignments.length} assigned student${assignments.length > 1 ? 's' : ''}` : 'No students assigned to you yet'}
+            {assignments.length > 0
+              ? `${assignments.length} assigned ${assignments.length > 1 ? 'people' : 'person'}${interviewStats.active > 0 ? ` · ${interviewStats.active} interview${interviewStats.active > 1 ? 's' : ''} in flight` : ''}`
+              : 'No students assigned to you yet'}
           </p>
         </div>
         <div className="flex items-center gap-3">
@@ -100,6 +162,9 @@ export default function EvaluatorDashboard() {
           {assignments.map(assignment => {
         
         const student = students[assignment.studentUid];
+        // /users is owner-or-admin read only, so a name may not be readable
+        // here; the assignment carries the student's own display name.
+        const studentName = student?.name || student?.email || assignment.studentName || '';
         const studentAssessments = assessments[assignment.studentUid] || [];
         const preAssessments = studentAssessments.filter(a => a.phase === 'pre');
         const postAssessments = studentAssessments.filter(a => a.phase === 'post');
@@ -114,6 +179,16 @@ export default function EvaluatorDashboard() {
           label: 'Post-Intervention',
           list: postAssessments
         }];
+        // Latest interview this evaluator has with this person (active or done).
+        const interviewStatusChip = interviewChip(assignment.studentUid);
+        // What this person is actually doing right now: their most recent
+        // result, the numbers on it, and what you still owe them.
+        const latest = studentAssessments[0] || null;
+        const pendingRubrics = latest
+          ? ['EQ', 'SQ', 'AQ'].filter(p => !getPillarStatus(latest.id, p)).length
+          : 0;
+        const latestPillars = latest?.pillarScores || {};
+        const latestDate = latest?.createdAt?.toDate?.() || (latest?.timestamp ? new Date(latest.timestamp) : null);
         return <div key={assignment.id} className="border-b-[0.5px] border-outline-variant group hover:bg-surface-container-low transition-colors">
                 {/* Student header — not clickable, just info display */}
                 <div className="h-14 md:h-16 flex items-center justify-between px-2">
@@ -121,10 +196,10 @@ export default function EvaluatorDashboard() {
                     <div className="size-8 flex items-center justify-center shrink-0 border-[0.5px] border-outline-variant text-technical-sm font-technical-sm text-primary bg-surface-container-low" style={{
                 borderRadius: '8px'
               }}>
-                      {(student?.name || student?.email || '?')[0].toUpperCase()}
+                      {(studentName || '?')[0].toUpperCase()}
                     </div>
                     <div className="min-w-0 flex-1">
-                      <div className="text-label-md font-label-md text-on-background truncate">{student?.name || 'Unnamed Student'}</div>
+                      <div className="text-label-md font-label-md text-on-background truncate">{studentName || 'Unnamed Student'}</div>
                       <div className="text-technical-sm font-technical-sm text-surface-variant truncate">
                         {student?.email || '—'}
                         {student?.context && <span> | {student.context}</span>}
@@ -134,7 +209,70 @@ export default function EvaluatorDashboard() {
                   <div className="flex items-center gap-3 md:gap-8 flex-shrink-0">
                     <span className={`text-technical-sm font-technical-sm ${preCount > 0 ? 'text-primary' : 'text-outline'}`}>{preCount} Pre</span>
                     <span className={`text-technical-sm font-technical-sm ${postCount > 0 ? 'text-primary' : 'text-outline'}`}>{postCount} Post</span>
+                    <button
+                      onClick={e => {
+                        e.stopPropagation();
+                        const st = interviewStatusChip;
+                        if (st && ['invited', 'accepted', 'in_progress', 'scheduled'].includes(st.status)) {
+                          navigate(st.mode === 'live' ? `/app/interview/live/${st.id}` : `/app/interview/scoring/${st.id}`);
+                        } else if (st && st.status === 'completed') {
+                          navigate(`/app/interview/report/${st.id}`);
+                        } else {
+                          navigate(`/app/interview/setup?candidateUid=${assignment.studentUid}&candidateName=${encodeURIComponent(studentName)}`);
+                        }
+                      }}
+                      className="inline-flex items-center gap-1.5 px-2.5 py-1.5 text-technical-sm font-technical-sm border-[0.5px] border-outline-variant text-on-surface-variant hover:text-gold hover:border-gold/50 transition-all cursor-pointer bg-transparent uppercase tracking-widest flex-shrink-0"
+                      style={{
+                        borderRadius: '6px'
+                      }}
+                      title="Start or resume an interview with this person"
+                    >
+                      <Mic size={11} />{interviewStatusChip ? 'Interview' : 'Run interview'}
+                    </button>
                   </div>
+                </div>
+                {/* Interview status strip */}
+                {interviewStatusChip && (
+                  <div className="px-2 md:px-8 pb-2 pt-1 flex items-center gap-2">
+                    <span className={`text-[10px] font-mono uppercase tracking-widest ${interviewStatusChip.cls}`}>{interviewStatusChip.label}</span>
+                  </div>
+                )}
+
+                {/* What this person is actually doing: latest result, its
+                    numbers, and what is still waiting on this evaluator. */}
+                <div className="px-2 md:px-8 pb-2.5 flex flex-wrap items-center gap-x-5 gap-y-1.5">
+                  {latest ? (
+                    <>
+                      <span className="flex items-center gap-2 text-technical-sm font-technical-sm text-surface-variant">
+                        <span className="uppercase tracking-[0.18em] text-primary">{latest.phase === 'post' ? 'Post' : 'Pre'}</span>
+                        {latestDate ? latestDate.toLocaleDateString() : 'No date'}
+                      </span>
+                      {['IQ', 'EQ', 'SQ', 'AQ'].map(p => (
+                        <span key={p} className="flex items-baseline gap-1 text-technical-sm font-technical-sm">
+                          <span className="text-surface-variant uppercase tracking-widest">{p}</span>
+                          <span className="mono-numbers text-on-background">{Math.round(latestPillars[p] ?? 0)}</span>
+                        </span>
+                      ))}
+                      {latest.result?.grade && (
+                        <span className="text-technical-sm font-technical-sm text-surface-variant">
+                          Grade <strong className="text-primary">{latest.result.grade}</strong>
+                        </span>
+                      )}
+                      {pendingRubrics > 0 ? (
+                        <span className="inline-flex items-center gap-1.5 text-technical-sm font-technical-sm text-gold uppercase tracking-widest">
+                          <Clock size={10} /> {pendingRubrics} rubric{pendingRubrics > 1 ? 's' : ''} pending
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1.5 text-technical-sm font-technical-sm text-primary uppercase tracking-widest">
+                          <CheckCircle size={10} /> all rubrics scored
+                        </span>
+                      )}
+                    </>
+                  ) : (
+                    <span className="text-technical-sm font-technical-sm text-surface-variant">
+                      Nothing submitted yet — they'll appear here the moment their first assessment lands.
+                    </span>
+                  )}
                 </div>
 
                 {/* Assessment list, grouped by phase */}

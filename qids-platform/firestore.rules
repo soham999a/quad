@@ -197,7 +197,13 @@ service cloud.firestore {
         resource.data.studentUid == request.auth.uid ||
         isAdmin()
       );
-      allow create: if isEvaluator() || isAdmin();
+      // A person choosing their own evaluator (self-link) is the normal path
+      // for individuals and students; an evaluator/admin assigning someone
+      // else stays allowed. `studentName` is the display name carried on the
+      // assignment so the evaluator console can show who they are looking
+      // after — /users is owner-or-admin read only, by design.
+      allow create: if (isSignedIn() && request.resource.data.studentUid == request.auth.uid)
+        || isEvaluator() || isAdmin();
       allow update: if isEvaluator() || isAdmin();
       allow delete: if isAdmin();
     }
@@ -261,27 +267,60 @@ service cloud.firestore {
     }
 
     // ── Interview Sessions ─────────────────────────────────────────────────
-    // Only the named evaluator or candidate may create a session.
+    // Two-party instrument: the evaluator scores, the candidate preps and
+    // self-assesses. Access is member-only (the named parties or admin), and
+    // once the candidate is a real platform user their update surface is
+    // field-scoped so a candidate can never write their own scores.
     match /interviewSessions/{sessionId} {
-      allow read: if isSignedIn() && (
-        resource.data.candidateUid == request.auth.uid ||
-        resource.data.evaluatorUid == request.auth.uid ||
-        isAdmin()
-      );
+      function isInterviewCandidate() {
+        return isSignedIn() && resource.data.candidateUid == request.auth.uid;
+      }
+      function isInterviewEvaluator() {
+        return isSignedIn() && (resource.data.evaluatorUid == request.auth.uid || isAdmin());
+      }
+      // Completed interviews are frozen for BOTH parties — the same
+      // immutability principle as publicCredentials / schoolAttempts: a
+      // published result can never silently change after the fact.
+      function interviewCompleted() { return resource.data.status == 'completed'; }
+
+      allow read: if isInterviewCandidate() || isInterviewEvaluator();
       allow create: if isSignedIn() && (
         request.resource.data.evaluatorUid == request.auth.uid ||
         request.resource.data.candidateUid == request.auth.uid
       );
-      allow update: if isSignedIn() && (
-        resource.data.candidateUid == request.auth.uid ||
-        resource.data.evaluatorUid == request.auth.uid ||
-        isAdmin()
+      // Field discipline:
+      //  - Candidate: their own prep surface only — self-assessment, typed
+      //    responses, and the ready-up gate transitions (invited → accepted /
+      //    declined). Never evaluatorAssessment, scores or status as data.
+      //  - Evaluator (or admin): the scoring surface, but never re-binding
+      //    the two parties mid-flight, and never stepping over the candidate's
+      //    ready-up gate (can't force in_progress before the candidate
+      //    accepted; cancelling an un-accepted invite stays allowed).
+      //  - Completed: frozen for everyone.
+      allow update: if isSignedIn() && !interviewCompleted() && (
+        (isInterviewCandidate()
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+            'status', 'selfAssessment', 'candidateResponses',
+            'candidateAcceptedAt', 'candidateDeclinedAt',
+            // updateInterviewSession always stamps updatedAt; it is a server
+            // bookkeeping field, never a scoring one, so it stays allowed.
+            'updatedAt'
+          ])
+          && ((request.resource.data.status == resource.data.status)
+              || (request.resource.data.status == null)
+              || (resource.data.status == 'invited'
+                  && request.resource.data.status in ['accepted', 'declined'])))
+        || (isInterviewEvaluator()
+          && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['candidateUid', 'evaluatorUid'])
+          && ((resource.data.status != 'invited')
+              || (request.resource.data.status == null)
+              || (request.resource.data.status == resource.data.status)
+              || (request.resource.data.status == 'cancelled')
+              || resource.data.candidateAcceptedAt != null))
       );
-      allow delete: if isSignedIn() && (
-        resource.data.candidateUid == request.auth.uid ||
-        resource.data.evaluatorUid == request.auth.uid ||
-        isAdmin()
-      );
+      // Deleting a scoring record is the recorder's or an admin's call — not
+      // the candidate's.
+      allow delete: if isInterviewEvaluator();
     }
 
     // ── School Classes ─────────────────────────────────────────────────────

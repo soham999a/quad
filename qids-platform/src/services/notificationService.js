@@ -8,7 +8,7 @@ import {
   collection, addDoc, updateDoc, deleteDoc, doc, query, where, orderBy, limit,
   onSnapshot, getDocs, serverTimestamp,
 } from 'firebase/firestore';
-import { db } from '../firebase';
+import { db, auth } from '../firebase';
 
 const NOTIFICATIONS = 'notifications';
 const MAX_UNREAD_FETCH = 50;
@@ -35,15 +35,20 @@ export function createNotification({ uid, type, title, body, link = '' }) {
 /** Live subscription to the user's latest notifications. Returns unsubscribe. */
 export function subscribeNotifications(uid, callback, max = 20) {
   if (!uid) return () => {};
+  // No orderBy on purpose: `uid == x` + `orderBy(createdAt)` needs a composite
+  // index this project does not ship, and the snapshot error is silent — which
+  // meant the bell never rendered a single notification. Sort client-side.
   const q = query(
     collection(db, NOTIFICATIONS),
     where('uid', '==', uid),
-    orderBy('createdAt', 'desc'),
-    limit(max),
+    limit(Math.max(max, 30)),
   );
   try {
     return onSnapshot(q, snap => {
-      callback(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+      const list = snap.docs
+        .map(d => ({ id: d.id, ...d.data() }))
+        .sort((a, b) => (b.createdAt?.toMillis?.() || 0) - (a.createdAt?.toMillis?.() || 0));
+      callback(list.slice(0, max));
     }, () => { /* rules or offline — stay silent */ });
   } catch {
     return () => {};
@@ -165,4 +170,139 @@ export function notifyEvaluatorAssigned({ evaluatorUid, studentName }) {
     body: `${studentName} selected you as their evaluator.`,
     link: '/app/evaluator',
   });
+}
+
+// ─── Event wiring added later (one helper per event, same discipline) ─────────
+
+/**
+ * Tell a person that an evaluator is now linked to them. Fired from every
+ * direction (they picked one themselves; an admin paired them) because the
+ * studio used to announce this to the evaluator only — the person whose
+ * results were about to be read never heard anything.
+ */
+export function notifyEvaluatorLinked({ studentUid, evaluatorName = 'An evaluator', detail }) {
+  createNotification({
+    uid: studentUid,
+    type: 'evaluator',
+    title: `${evaluatorName} is now your evaluator`,
+    body: detail || 'They can see your results and score your EQ, SQ and AQ rubrics. Your merged report updates when they finish.',
+    link: '/app/my-evaluator',
+  });
+}
+
+/**
+ * Tell an evaluator that one of their people submitted something new — the
+ * missing half of the loop: until now a student's activity was only visible if
+ * the evaluator happened to refresh the console.
+ */
+export function notifyEvaluatorStudentActivity({ evaluatorUid, studentName, detail, link = '/app/evaluator' }) {
+  if (!evaluatorUid) return;
+  createNotification({
+    uid: evaluatorUid,
+    type: 'attempt',
+    title: `${studentName || 'One of your students'} submitted an assessment`,
+    body: detail || 'Open your console to review the result and score the pending rubrics.',
+    link,
+  });
+}
+
+/** Notify a student that their evaluator finished scoring one of their pillars. */
+export function notifyEvaluationCompleted({ studentUid, evaluatorName = 'Your evaluator', pillar }) {
+  createNotification({
+    uid: studentUid,
+    type: 'evaluation',
+    title: `${evaluatorName} scored your ${pillar || 'assessment'} rubric`,
+    body: 'The merged average is live on your progress page.',
+    link: '/app/progress',
+  });
+}
+
+/** Notify a teacher that a student completed their assigned assessment. */
+export function notifyAssignmentCompleted({ teacherUid, studentName, title, classId }) {
+  createNotification({
+    uid: teacherUid,
+    type: 'attempt',
+    title: 'Student completed an assessment',
+    body: `${studentName || 'A student'} finished "${title || 'an assigned assessment'}".`,
+    link: classId ? `/app/class/${classId}` : '/app/school',
+  });
+}
+
+/** Notify the guardian that a child finished a practice chapter. */
+export function notifyChapterCompleted({ guardianUid, childName, chapterTitle }) {
+  createNotification({
+    uid: guardianUid,
+    type: 'kid',
+    title: 'Chapter complete',
+    body: childName
+      ? `${childName} finished "${chapterTitle || 'a practice chapter'}".`
+      : `Finished "${chapterTitle || 'a practice chapter'}".`,
+    link: '/app/kids/guardian',
+  });
+}
+
+/**
+ * Interview invitation — the candidate is a real platform user (they can be
+ * bell'd and they get the dashboard ready-up modal).
+ */
+export function notifyInterviewInvited({ candidateUid, evaluatorName, sessionId, mode = 'live' }) {
+  if (!candidateUid) return;
+  createNotification({
+    uid: candidateUid,
+    type: 'interview',
+    title: 'Interview invitation',
+    body: `${evaluatorName || 'Your evaluator'} wants to run a ${mode === 'live' ? 'live' : ''} interview with you. Confirm on your dashboard.`,
+    link: `/app/interview/candidate/${sessionId}`,
+  });
+}
+
+/**
+ * Interview report is final — delivered to every named party who is actually a
+ * platform user. Candidates are usually external (name/email only), in which
+ * case only the evaluator's copy makes sense to skip: they scored it, they're
+ * already on the report page.
+ */
+export function notifyInterviewResult({ candidateUid, evaluatorUid, candidateName, evaluatorName, sessionId, mode = 'live' }) {
+  const label = mode === 'live' ? 'Live interview' : 'Post-interview';
+  if (candidateUid && candidateUid !== evaluatorUid) {
+    createNotification({
+      uid: candidateUid,
+      type: 'interview',
+      title: 'Your interview result is ready',
+      body: `The ${label.toLowerCase()} with ${evaluatorName || 'your evaluator'} is scored. Open the report.`,
+      link: `/app/interview/report/${sessionId}`,
+    });
+  }
+  createNotification({
+    uid: evaluatorUid,
+    type: 'interview',
+    title: 'Interview report completed',
+    body: `${label} with ${candidateName || 'your candidate'} is scored and ready.`,
+    link: `/app/interview/report/${sessionId}`,
+  });
+}
+
+/**
+ * Tell the admins about a role/membership event via /api/notify-admins
+ * (Vercel). The server verifies the claim against the user doc, dedupes per
+ * subject/kind/day and fans out to every admin — the client only reports.
+ * Fire-and-forget: on localhost (no /api) or failure this is a silent no-op.
+ */
+export async function postToAdmins({ kind, subject, name, email, user } = {}) {
+  if (!kind) return false;
+  try {
+    const token = await (user || auth.currentUser)?.getIdToken();
+    if (!token) return false;
+    const res = await fetch('/api/notify-admins', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify({
+        ...(subject ? { subject } : {}),
+        ...(name ? { name } : {}),
+        ...(email ? { email } : {}),
+        kind,
+      }),
+    }).catch(() => null);
+    return !!res?.ok;
+  } catch { return false; }
 }

@@ -346,14 +346,19 @@ Return JSON:
 // Falls back to the static bank (LIVE_QUESTIONS) if the AI call fails, so a
 // session can always start.
 export async function generateInterviewQuestions({ role = '', candidateName = '', notes = '', ageGroup = '19-32', perDimension = 2 }) {
-  const dims = 'Communication, ProblemSolving, Leadership, EmotionalIntelligence, Adaptability, Teamwork, Integrity, CriticalThinking, Resilience';
+  // Must stay in sync with RUBRIC_DIMENSIONS in core/data/interviewRubrics.ts.
+  const RUBRIC_DIMENSION_IDS = [
+    'Communication', 'ProblemSolving', 'Leadership', 'EmotionalIntelligence',
+    'Adaptability', 'Teamwork', 'Integrity', 'CriticalThinking', 'Resilience',
+  ];
+  const dims = RUBRIC_DIMENSION_IDS.join(', ');
   const prompt = `Generate live structured-interview questions for a candidate interview.
 Candidate role/position: ${role || 'general'}.
 Candidate name: ${candidateName || 'unknown'}. Age group: ${ageGroup === '11-18' ? '11-18 (student)' : '19-32 (adult)'}.
 Interviewer preparation notes (context to probe into, if any): ${notes || 'none'}.
 
-Generate exactly ${perDimension} questions for EACH of these dimensions: ${dims}.
-Total: ${perDimension * 8} questions.
+Generate exactly ${perDimension} questions for EACH of these ${RUBRIC_DIMENSION_IDS.length} dimensions: ${dims}.
+Total: exactly ${perDimension * RUBRIC_DIMENSION_IDS.length} questions.
 
 Return JSON in this exact format:
 {

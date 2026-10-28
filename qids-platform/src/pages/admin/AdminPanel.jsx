@@ -3,6 +3,7 @@ import usePageTitle from '../../lib/usePageTitle';
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { getAllUsers, assignEvaluator, removeAssignment, getEvaluatorAssignments, updateUserRole, upsertPublicEvaluator, removePublicEvaluator, getFunnelSummary, getRecentErrorReports } from '../../services/firestoreService';
+import { postToAdmins, notifyEvaluatorAssigned, notifyEvaluatorLinked } from '../../services/notificationService';
 import { useToast } from '../../components/Toast';
 import { Shield, UserCheck, UserX, Users, Search, RefreshCw, ChevronDown, ChevronUp, TrendingUp, AlertTriangle, Filter } from 'lucide-react';
 import { ASSESSMENT_STEPS } from '../../lib/analytics';
@@ -59,8 +60,18 @@ export default function AdminPanel() {
   const evaluators = allUsers.filter(u => u.role === 'evaluator');
   const admins = allUsers.filter(u => u.role === 'admin');
   const handleAssign = async (studentUid, evaluatorUid) => {
-    const ok = await assignEvaluator(evaluatorUid, studentUid);
+    const target = allUsers.find(u => u.uid === studentUid);
+    const evaluator = allUsers.find(u => u.uid === evaluatorUid);
+    const ok = await assignEvaluator(evaluatorUid, studentUid, target?.name || '');
     if (ok) {
+      // A pairing made by an admin is invisible to both people unless we say
+      // so — the student used to learn about it by noticing new scores.
+      notifyEvaluatorAssigned({ evaluatorUid, studentName: target?.name || 'A student' });
+      notifyEvaluatorLinked({
+        studentUid,
+        evaluatorName: evaluator?.name || 'An evaluator',
+        detail: 'An administrator paired you with an evaluator. They can see your results and score your EQ, SQ and AQ rubrics.',
+      });
       setAssignments(prev => ({
         ...prev,
         [studentUid]: evaluatorUid
@@ -95,6 +106,9 @@ export default function AdminPanel() {
           name: u?.name,
           email: u?.email
         });
+        // Tell the admins someone gained the evaluator role — subject is the
+        // *target* user here (the server verifies their role and dedupes).
+        postToAdmins({ kind: 'evaluator-role', subject: uid, name: u?.name, email: u?.email });
       } else {
         await removePublicEvaluator(uid);
       }

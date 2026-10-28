@@ -3,7 +3,8 @@ import usePageTitle from '../../lib/usePageTitle';
 import React, { useState, useEffect } from 'react';
 import { useParams, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { saveEvaluation, getEvaluation } from '../../services/firestoreService';
+import { saveEvaluation, getEvaluation, getAssessment } from '../../services/firestoreService';
+import { notifyEvaluationCompleted } from '../../services/notificationService';
 import { useToast } from '../../components/Toast';
 import { PILLARS, EQ_QUESTIONS, SQ_QUESTIONS, AQ_QUESTIONS } from '../../data/qidsData';
 import { ArrowLeft, Save, CheckCircle, AlertCircle, Brain, Heart, Users, Shield } from 'lucide-react';
@@ -212,11 +213,20 @@ export default function EvaluatorScoring() {
   const location = useLocation();
   const navigate = useNavigate();
   const {
-    user
+    user, userProfile
   } = useAuth();
   const toast = useToast();
-  const student = location.state?.student;
-  const assessment = location.state?.assessment;
+  // Navigation state is a warm path only. It used to be the ONLY source, so a
+  // refresh, a deep link, or a click where the student profile wasn't readable
+  // ( /users is owner-or-admin only ) landed on "assessment not available"
+  // with the evaluator unable to do anything at all. The page now loads the
+  // assessment itself — which the evaluator is entitled to read — and takes the
+  // person's name from the intake captured on it.
+  const [assessment, setAssessment] = useState(location.state?.assessment || null);
+  const [studentUid, setStudentUid] = useState(location.state?.student?.uid || null);
+  const [studentName, setStudentName] = useState(location.state?.student?.name || '');
+  const [loadError, setLoadError] = useState(null);
+  const [booting, setBooting] = useState(!(location.state?.assessment && location.state?.student?.uid));
   const [scores, setScores] = useState({});
   const [existingEvals, setExistingEvals] = useState({});
   const [saving, setSaving] = useState(false);
@@ -243,10 +253,45 @@ export default function EvaluatorScoring() {
       }
     })();
   }, [assessmentId]);
-  if (!assessment || !student) {
+  // Self-load the assessment when navigation state is missing/incomplete.
+  // Declared above the early returns on purpose: a hook after a conditional
+  // return changes the hook order between renders and React throws.
+  useEffect(() => {
+    if (!assessmentId || (assessment && studentUid)) return undefined;
+    let alive = true;
+    (async () => {
+      try {
+        const a = await getAssessment(assessmentId);
+        if (!alive) return;
+        if (!a) {
+          setLoadError('This assessment no longer exists.');
+          return;
+        }
+        setAssessment(a);
+        setStudentUid(a.uid || null);
+        setStudentName(prev => prev || a.intake?.name || 'Student');
+      } catch (e) {
+        if (alive) setLoadError('Could not load this assessment.');
+      } finally {
+        if (alive) setBooting(false);
+      }
+    })();
+    return () => { alive = false; };
+  }, [assessmentId, assessment, studentUid]);
+  if (booting) {
+    return <div className="page-pad max-w-[960px] mx-auto animate-fade py-16">
+        <div className="card p-8">
+          <div className="skeleton h-6 w-40 mb-4" />
+          <div className="skeleton h-40 w-full" />
+        </div>
+      </div>;
+  }
+  if (!assessment || !studentUid) {
     return <div className="page-pad max-w-[960px] mx-auto animate-fade pt-[60px] text-center">
         <AlertCircle size={32} className="text-outline mb-3 mx-auto" />
-        <div className="text-label-md font-label-md text-on-surface-variant mb-4">{t("EvaluatorScoring.assessment_data_not_available")}</div>
+        <div className="text-label-md font-label-md text-on-surface-variant mb-4">
+          {loadError || t("EvaluatorScoring.assessment_data_not_available")}
+        </div>
         <button onClick={() => navigate('/app/evaluator')} className="px-4 py-2 border-[0.5px] border-primary text-primary text-technical-sm font-technical-sm uppercase tracking-wider cursor-pointer bg-transparent hover:bg-primary/10 transition-all" style={{
         borderRadius: '8px'
       }}>{t("EvaluatorScoring.back_to_dashboard")}</button>
@@ -274,19 +319,26 @@ export default function EvaluatorScoring() {
   const handleSave = async pillar => {
     setSaving(true);
     const pillarScores = scores[pillar] || {};
-    const ok = await saveEvaluation(assessmentId, user.uid, student.uid, pillar, pillarScores);
+    const ok = await saveEvaluation(assessmentId, user.uid, studentUid, pillar, pillarScores);
     if (ok) {
       setExistingEvals(prev => ({
         ...prev,
         [pillar]: true
       }));
       toast(`${PILLARS[pillar]?.label || pillar} rubric saved!`, 'success');
+      // The payoff moment the student used to miss entirely: their scores
+      // changed under them and nothing told them. Fire-and-forget.
+      notifyEvaluationCompleted({
+        studentUid,
+        evaluatorName: user.displayName || userProfile?.name || 'Your evaluator',
+        pillar: PILLARS[pillar]?.label || pillar,
+      });
     } else {
       toast('Failed to save evaluation', 'error');
     }
     setSaving(false);
   };
-  const studentName = student?.name || student?.email || 'this student';
+  const displayName = studentName || assessment?.intake?.name || 'this student';
   return <div className="page-pad max-w-[960px] mx-auto animate-fade">
       <button onClick={() => navigate('/app/evaluator')} className="inline-flex items-center gap-1.5 mb-6 px-3 py-1.5 border-[0.5px] border-outline-variant text-on-surface-variant hover:text-primary hover:border-primary text-technical-sm font-technical-sm uppercase tracking-wider cursor-pointer bg-transparent transition-all" style={{
       borderRadius: '8px'
@@ -295,7 +347,7 @@ export default function EvaluatorScoring() {
 
       <section className="mb-8">
         <div className="text-technical-sm font-technical-sm text-primary mb-2 uppercase tracking-[0.2em]">{t("EvaluatorScoring.scoring")}</div>
-        <h1 className="text-headline-md font-headline-md text-on-background page-headline">{studentName}</h1>
+        <h1 className="text-headline-md font-headline-md text-on-background page-headline">{displayName}</h1>
         <p className="text-body-md text-on-surface-variant mt-2">{t("EvaluatorScoring.fill_in_the_rubric")}</p>
       </section>
 

@@ -8,21 +8,8 @@ import {
   markAllNotificationsRead,
   cleanupOldNotifications,
 } from '../services/notificationService';
-import { Bell, ClipboardList, UserPlus, UserCheck, CheckCircle2 } from 'lucide-react';
-
-const TYPE_ICON = {
-  assignment: ClipboardList,
-  join: UserPlus,
-  evaluator: UserCheck,
-  attempt: CheckCircle2,
-};
-
-const TYPE_COLOR = {
-  assignment: 'var(--phase-pre)',
-  join: 'var(--status-ok)',
-  evaluator: 'var(--status-warn)',
-  attempt: 'var(--status-ok)',
-};
+import { notificationType } from '../lib/notificationTypes';
+import { Bell } from 'lucide-react';
 
 /**
  * NotificationBell — topbar bell with live unread badge and dropdown feed.
@@ -121,19 +108,20 @@ export default function NotificationBell() {
               </div>
             ) : (
               items.map(n => {
-                const Icon = TYPE_ICON[n.type] || Bell;
+                const { icon: Icon, color } = notificationType(n.type);
                 return (
                   <button
                     key={n.id}
                     type="button"
                     onClick={() => openItem(n)}
+                    aria-label={n.title}
                     className={`w-full flex items-start gap-3 px-4 py-3 text-left border-none cursor-pointer border-b-[0.5px] border-sidebar-border transition-colors ${n.read ? 'bg-transparent opacity-70' : 'bg-surface-container-low hover:bg-surface-container'}`}
                   >
                     <span
                       className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5"
-                      style={{ background: `color-mix(in srgb, ${TYPE_COLOR[n.type] || 'var(--gold)'} 15%, transparent)` }}
+                      style={{ background: `color-mix(in srgb, ${color} 15%, transparent)` }}
                     >
-                      <Icon size={13} style={{ color: TYPE_COLOR[n.type] || 'var(--gold)' }} />
+                      <Icon size={13} style={{ color }} />
                     </span>
                     <span className="min-w-0 flex-1">
                       <span className="block text-label-sm font-label-sm text-on-background">

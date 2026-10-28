@@ -171,7 +171,7 @@ export async function updateSchoolAssessment(assessmentId, updates) {
 // record the attempt in its own collection so teachers can see who finished
 // what — without giving students write access to the assessment documents.
 
-export async function recordSchoolAttempt({ schoolAssessmentId, classId, teacherUid, studentUid, studentName, assessmentId }) {
+export async function recordSchoolAttempt({ schoolAssessmentId, classId, teacherUid, studentUid, studentName, assessmentId, title }) {
   await addDoc(collection(db, 'schoolAttempts'), {
     schoolAssessmentId,
     classId,
@@ -181,6 +181,16 @@ export async function recordSchoolAttempt({ schoolAssessmentId, classId, teacher
     assessmentId,
     completedAt: new Date().toISOString(),
   });
+  // Symmetry with the student's own bell: the teacher used to have to poll
+  // analytics to learn a roster member finished. Fire-and-forget — a failed
+  // notification must never block the attempt record. Dynamic import avoids
+  // the schoolService <-> notificationService require cycle.
+  if (teacherUid) {
+    try {
+      const { notifyAssignmentCompleted } = await import('./notificationService');
+      notifyAssignmentCompleted({ teacherUid, studentName, title, classId });
+    } catch { /* best-effort */ }
+  }
 }
 
 export async function getClassAttempts(classId, teacherUid) {

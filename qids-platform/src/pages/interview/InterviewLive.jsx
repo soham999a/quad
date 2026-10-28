@@ -3,7 +3,8 @@ import usePageTitle from '../../lib/usePageTitle';
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { getInterviewSession, updateInterviewSession } from '../../services/interviewService';
+import { getInterviewSession, updateInterviewSession, subscribeSession } from '../../services/interviewService';
+import { notifyInterviewResult } from '../../services/notificationService';
 import { computeInterviewResult } from '../../core/engine/interviewScoring';
 import { LIVE_QUESTIONS, RUBRIC_MAP } from '../../core/data/interviewRubrics';
 import { useToast } from '../../components/Toast';
@@ -29,23 +30,51 @@ export default function InterviewLive() {
   const [elapsed, setElapsed] = useState(0);
   const [paused, setPaused] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [candidateLive, setCandidateLive] = useState(null);
   useEffect(() => {
     if (!sessionId) return;
     setLoading(true);
     getInterviewSession(sessionId).then(s => {
       setSession(s);
       setQuestionIdx(s?.liveQuestionIndex || 0);
-      setScores({});
-      setNotes({});
+      // Full resume: saved progress carries the scores, notes and the wall
+      // clock. Without this the evaluator would come back to blank state and
+      // re-score blindly while the timer restarts from zero.
+      const restored = { scores: {}, notes: {} };
+      for (const r of s?.liveResponses || []) {
+        if (r?.questionId) {
+          if (r.score != null) restored.scores[r.questionId] = r.score;
+          if (r.response) restored.notes[r.questionId] = r.response;
+        }
+      }
+      setScores(restored.scores);
+      setNotes(restored.notes);
+      setElapsed(Number.isFinite(s?.elapsedSeconds) ? s.elapsedSeconds : 0);
     }).catch(() => toast('Failed to load session', 'error')).finally(() => setLoading(false));
   }, [sessionId]);
 
-  // Timer
+  // Timer — only while the interview is genuinely running (candidate ready or
+  // already in progress). Waiting states must not burn the wall clock.
   useEffect(() => {
-    if (!session || session.status === 'completed' || paused) return;
+    if (!session || paused) return;
+    if (!['accepted', 'in_progress'].includes(session.status)) return;
     const interval = setInterval(() => setElapsed(e => e + 1), 1000);
     return () => clearInterval(interval);
-  }, [session?.status, paused]);
+  }, [session?.id, session?.status, paused]);
+
+  // Candidate live-sync: when the session has a platform-user candidate,
+  // mirror their ready-up state, typed answers and question position in real
+  // time — the two-screen experience over one Firestore doc.
+  useEffect(() => {
+    if (!session?.candidateUid || session.status === 'completed') return undefined;
+    return subscribeSession(session.id, s => {
+      if (!s) return;
+      setCandidateLive({
+        responses: s.candidateResponses || {},
+        status: s.status,
+      });
+    });
+  }, [session?.id, session?.candidateUid, session?.status]);
   // Question bank: session-specific AI questions when present, else the
   // standard bank. Rubric map still drives dimension labels/descriptors.
   const questionBank = (session?.liveQuestions?.length >= 4 ? session.liveQuestions : LIVE_QUESTIONS);
@@ -77,6 +106,7 @@ export default function InterviewLive() {
     try {
       await updateInterviewSession(session.id, {
         liveQuestionIndex: questionIdx,
+        elapsedSeconds: elapsed,
         liveResponses: questionBank.map(q => ({
           questionId: q.id,
           questionText: q.text,
@@ -96,16 +126,25 @@ export default function InterviewLive() {
     if (!session || !isComplete) return;
     setSaving(true);
     try {
-      // Build evaluator assessment from live scores
+      // Build evaluator assessment from live scores — aggregated over the
+      // ACTUAL question bank (AI-generated when present), not the static
+      // bank. The old loop over LIVE_QUESTIONS silently dropped every answer
+      // outside the static ids and bucketed reused ids under the static
+      // bank's dimension, so AI sessions completed wrong or half-empty.
       const dimScores = {};
-      LIVE_QUESTIONS.forEach(q => {
-        if (!dimScores[q.dimension]) dimScores[q.dimension] = [];
-        dimScores[q.dimension].push(scores[q.id]);
+      const dimNotes = {};
+      questionBank.forEach(q => {
+        const score = scores[q.id];
+        if (score != null) {
+          if (!dimScores[q.dimension]) { dimScores[q.dimension] = []; dimNotes[q.dimension] = []; }
+          dimScores[q.dimension].push(score);
+          if (notes[q.id]) dimNotes[q.dimension].push(notes[q.id]);
+        }
       });
       const evaluatorAssessment = Object.entries(dimScores).map(([dimId, dimScoreList]) => ({
         dimensionId: dimId,
         score: Math.round(dimScoreList.reduce((a, b) => a + b, 0) / dimScoreList.length),
-        notes: Object.entries(notes).filter(([qId]) => questionBank.some(q => q.id === qId && q.dimension === dimId)).map(([, txt]) => txt).filter(Boolean).join(' · ')
+        notes: dimNotes[dimId].filter(Boolean).join(' · ')
       }));
       const result = computeInterviewResult({
         selfAssessment: undefined,
@@ -115,6 +154,7 @@ export default function InterviewLive() {
       await updateInterviewSession(session.id, {
         evaluatorAssessment,
         liveQuestionIndex: questionIdx,
+        elapsedSeconds: elapsed,
         liveResponses: questionBank.map(q => ({
           questionId: q.id,
           questionText: q.text,
@@ -132,6 +172,17 @@ export default function InterviewLive() {
         completedAt: new Date().toISOString()
       });
       toast('Interview completed!', 'success');
+      // Bell the named parties. Usually just the evaluator themselves since
+      // candidates are external (name/email on the session doc). Fire-and-
+      // forget: a failed notification must never block the report.
+      notifyInterviewResult({
+        candidateUid: session.candidateUid || null,
+        evaluatorUid: session.evaluatorUid,
+        candidateName: session.candidateName,
+        evaluatorName: session.evaluatorName,
+        sessionId: session.id,
+        mode: session.mode || 'live',
+      });
       navigate(`/app/interview/report/${session.id}`);
     } catch (e) {
       console.error('Complete failed:', e);
@@ -154,7 +205,92 @@ export default function InterviewLive() {
         <button onClick={() => navigate('/app/interview')} className="btn-primary mt-6">{t("InterviewLive.back_to_dashboard")}</button>
       </div>;
   }
-  return <div className="page-pad max-w-[960px] mx-auto animate-fade">
+
+  // ── Ready-up gate (candidate participated flow) ────────────────────────────
+  // While the candidate hasn't accepted, the session is parked. The rules
+  // prevent the evaluator from jumping to in_progress before their
+  // candidateAcceptedAt exists — so this state is honest, not cosmetic.
+  const effectiveStatus = candidateLive?.status || session.status;
+
+  // Every question move is written to the session doc so the candidate's
+  // screen advances with the evaluator in real time — the live mirror. This
+  // used to live only in local state, which meant the candidate saw question 1
+  // forever until the evaluator happened to press Save. Best-effort: a failed
+  // position sync must never block the interview itself.
+  const persistPosition = idx => {
+    if (!session?.id) return;
+    updateInterviewSession(session.id, { liveQuestionIndex: idx }).catch(() => { /* offline — local state still moves */ });
+  };
+  const goTo = idx => {
+    const next = Math.max(0, Math.min(totalQuestions - 1, idx));
+    setQuestionIdx(next);
+    persistPosition(next);
+  };
+  const beginInterview = async () => {
+    if (saving) return;
+    setSaving(true);
+    try {
+      await updateInterviewSession(session.id, { status: 'in_progress', liveQuestionIndex: questionIdx });
+      toast('Interview started — the candidate\'s screen is now mirroring yours', 'success');
+    } catch {
+      toast('Could not start the interview — check your connection', 'error');
+    } finally {
+      setSaving(false);
+    }
+  };
+  if (session.candidateUid && effectiveStatus === 'invited') {
+    return <div className="page-pad max-w-[960px] mx-auto animate-fade py-16">
+        <div className="card p-8 md:p-10 text-center">
+          <div className="kicker mb-3 text-gold">Interview invited</div>
+          <h1 className="text-headline-md font-headline-md text-on-background mb-2">Waiting for {session.candidateName || 'your candidate'} to confirm</h1>
+          <p className="text-body-md text-on-surface-variant max-w-[480px] mx-auto">
+            {session.candidateName || 'They'} has been notified — their dashboard shows a confirmation now. This screen unlocks the moment they're ready.
+          </p>
+          <button onClick={() => navigate('/app/interview')} className="btn-outline mt-8">{t("InterviewLive.back_to_dashboard")}</button>
+        </div>
+      </div>;
+  }
+
+  // Confirmed by the candidate but not started: give the evaluator an explicit
+  // start. This is the write that flips the candidate's waiting screen into
+  // the live mirror, so it belongs to a human decision, not to page load.
+  if (session.candidateUid && session.mode === 'live' && effectiveStatus === 'accepted') {
+    return <div className="page-pad max-w-[960px] mx-auto animate-fade py-16">
+        <div className="card p-8 md:p-10 text-center">
+          <div className="kicker mb-3 text-primary">Candidate confirmed</div>
+          <h1 className="text-headline-md font-headline-md text-on-background mb-3">
+            {session.candidateName || 'Your candidate'} is ready
+          </h1>
+          <p className="text-body-md text-on-surface-variant max-w-[520px] mx-auto">
+            Their screen is live and waiting. When you begin, every question you move to appears on their screen instantly, and the notes they type come back to you here.
+          </p>
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mt-8">
+            <button onClick={beginInterview} disabled={saving} className="btn-primary glow inline-flex items-center gap-2 cursor-pointer disabled:opacity-60">
+              {saving ? 'Starting…' : 'Begin interview'} <ChevronRight size={14} />
+            </button>
+            <button onClick={() => navigate('/app/interview')} className="btn-outline cursor-pointer">{t("InterviewLive.back_to_dashboard")}</button>
+          </div>
+        </div>
+      </div>;
+  }
+
+  const candidateConfirmed = !!session.candidateUid && effectiveStatus === 'in_progress';
+  const candidateAnswer = candidateLive?.responses?.[currentQuestion?.id]?.response || '';
+
+  // The live runner itself — also the view the evaluator returns to mid-flight.
+  const renderRunner = () => <div className="page-pad max-w-[960px] mx-auto animate-fade">
+      {/* Candidate confirmed banner — the two-screen moment of truth */}
+      {candidateConfirmed && <div className="flex items-center justify-between px-4 py-3 mb-8 border-[0.5px] border-primary/30 bg-primary/5" style={{
+        borderRadius: '6px'
+      }}>
+          <div className="flex items-center gap-2.5 min-w-0">
+            <CheckCircle size={14} className="text-primary flex-shrink-0" />
+            <span className="text-body-sm font-body-sm text-on-surface-variant min-w-0">
+              <strong className="text-on-background">{session.candidateName || 'Your candidate'}</strong> is confirmed — start when you're ready. Their screen mirrors yours live.
+            </span>
+          </div>
+          <span className="text-technical-sm font-technical-sm uppercase tracking-widest text-primary flex-shrink-0">live sync active</span>
+        </div>}
       {/* Header */}
       <div className="flex items-center justify-between mb-8">
         <div>
@@ -228,6 +364,16 @@ export default function InterviewLive() {
             <textarea value={notes[currentQuestion.id] || ''} onChange={e => handleNotes(currentQuestion.id, e.target.value)} placeholder={t("InterviewLive.observations_about_the_candidate")} rows={2} className="input-field w-full resize-none" />
           </div>
 
+          {/* Live candidate answer — typed by the candidate on their own screen */}
+          {session.candidateUid && (
+            <div className="mb-6">
+              <div className="text-technical-sm font-technical-sm text-gold uppercase tracking-widest mb-2">Candidate's live notes</div>
+              {candidateAnswer
+                ? <div className="bg-surface-container-low p-3 border-[0.5px] border-gold/30 text-body-sm font-body-sm text-on-surface leading-relaxed whitespace-pre-wrap" style={{ borderRadius: '6px' }}>{candidateAnswer}</div>
+                : <div className="text-technical-sm font-technical-sm text-surface-variant italic">{candidateConfirmed || effectiveStatus === 'in_progress' ? 'Nothing typed yet for this question — they answer out loud, so watch for their notes.' : 'The candidate hasn\'t confirmed yet.'}</div>}
+            </div>
+          )}
+
           {/* Follow-up */}
           {currentQuestion.followUp && <div className="mt-4 bg-surface-container-low p-3 border-[0.5px] border-outline-variant">
               <div className="text-technical-sm font-technical-sm text-surface-variant">{t("inter.follow_up", { x: currentQuestion.followUp })}</div>
@@ -236,15 +382,16 @@ export default function InterviewLive() {
 
       {/* Navigation */}
       <div className="flex items-center justify-between">
-        <button onClick={() => setQuestionIdx(Math.max(0, questionIdx - 1))} disabled={questionIdx === 0} className="btn-outline flex items-center gap-2 disabled:opacity-30">
+        <button onClick={() => goTo(questionIdx - 1)} disabled={questionIdx === 0} className="btn-outline flex items-center gap-2 disabled:opacity-30">
           <ChevronLeft size={14} />{t("InterviewLive.previous")}</button>
         <div className="flex gap-3">
           <button onClick={handleSaveProgress} disabled={saving} className="btn-outline">{t("InterviewLive.save")}</button>
           {isComplete && <button onClick={handleComplete} disabled={saving} className="btn-primary glow flex items-center gap-2">
               <CheckCircle size={14} />{t("InterviewLive.complete")}</button>}
         </div>
-        <button onClick={() => setQuestionIdx(Math.min(totalQuestions - 1, questionIdx + 1))} disabled={questionIdx === totalQuestions - 1} className="btn-outline flex items-center gap-2 disabled:opacity-30">{t("InterviewLive.next")}<ChevronRight size={14} />
+        <button onClick={() => goTo(questionIdx + 1)} disabled={questionIdx === totalQuestions - 1} className="btn-outline flex items-center gap-2 disabled:opacity-30">{t("InterviewLive.next")}<ChevronRight size={14} />
         </button>
       </div>
     </div>;
+  return renderRunner();
 }

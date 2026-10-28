@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { getInterviewSession, updateInterviewSession } from '../../services/interviewService';
+import { notifyInterviewResult } from '../../services/notificationService';
 import { computeInterviewResult } from '../../core/engine/interviewScoring';
 import { RUBRIC_DIMENSIONS, RUBRIC_MAP } from '../../core/data/interviewRubrics';
 import { useToast } from '../../components/Toast';
@@ -95,6 +96,17 @@ export default function InterviewPostScoring() {
       await updateInterviewSession(session.id, updates);
       toast(andSubmit ? 'Session completed' : 'Draft saved', 'success');
       if (andSubmit) {
+        // Bell as a record: the completed session lands in the evaluator's
+        // feed with a direct link (candidate copy goes out only when the
+        // candidate is a platform user). Fire-and-forget.
+        notifyInterviewResult({
+          candidateUid: session.candidateUid || null,
+          evaluatorUid: session.evaluatorUid,
+          candidateName: session.candidateName,
+          evaluatorName: session.evaluatorName,
+          sessionId: session.id,
+          mode: session.mode || 'post',
+        });
         navigate(`/app/interview/report/${session.id}`);
       }
     } catch (e) {

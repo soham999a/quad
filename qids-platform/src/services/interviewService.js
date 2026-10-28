@@ -1,6 +1,6 @@
 import {
   collection, addDoc, updateDoc, getDoc, getDocs,
-  query, where, doc, serverTimestamp, deleteDoc,
+  query, where, doc, serverTimestamp, deleteDoc, onSnapshot, limit,
 } from 'firebase/firestore';
 import { db } from '../firebase';
 
@@ -75,4 +75,40 @@ export async function getEvaluatorSessions(uid) {
 /** Delete an interview session. */
 export async function deleteInterviewSession(sessionId) {
   await deleteDoc(doc(db, COLLECTION, sessionId));
+}
+
+/** Live subscription to one session — the realtime spine of candidate sync
+ *  (question advance, candidate typing, ready-up state). */
+export function subscribeSession(sessionId, callback, onError = () => {}) {
+  if (!sessionId) return () => {};
+  try {
+    return onSnapshot(doc(db, COLLECTION, sessionId), snap => {
+      callback(snap.exists() ? { id: snap.id, ...snap.data() } : null);
+    }, onError);
+  } catch {
+    return () => {};
+  }
+}
+
+/** Live list of the sessions where this user is the candidate (their hub). */
+export function subscribeSessionsForCandidate(uid, callback) {
+  if (!uid) return () => {};
+  // No orderBy here on purpose: `candidateUid == uid` + `orderBy(createdAt)`
+  // needs a composite index that this project does not define, and the
+  // failure is silent (snapshot error) — the hub would just look empty. Sort
+  // client-side instead, the same convention the other services follow.
+  const q = query(
+    collection(db, COLLECTION),
+    where('candidateUid', '==', uid),
+    limit(50),
+  );
+  try {
+    return onSnapshot(q, snap => {
+      const list = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      list.sort((a, b) => (b.createdAt?.toMillis?.() || 0) - (a.createdAt?.toMillis?.() || 0));
+      callback(list);
+    }, () => { /* rules/offline — stay silent */ });
+  } catch {
+    return () => {};
+  }
 }

@@ -3,8 +3,14 @@ import usePageTitle from '../../lib/usePageTitle';
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { getInterviewSession } from '../../services/interviewService';
+import { useAuth } from '../../context/AuthContext';
 import { RUBRIC_DIMENSIONS, RUBRIC_MAP } from '../../core/data/interviewRubrics';
 import { PILLARS } from '../../data/qidsData';
+
+// qidsData exports PILLARS as a keyed map ({ IQ: {...}, EQ: {...}, ... }).
+// The report renders pillars as an ordered list (radar positions matter), so
+// materialise the canonical IQ → EQ → SQ → AQ order once here.
+const PILLAR_LIST = ['IQ', 'EQ', 'SQ', 'AQ'].map(id => PILLARS[id]).filter(Boolean);
 import { Brain, Download, ChevronRight, AlertCircle, BarChart3, Target, Users } from 'lucide-react';
 const SHAPES = {
   T: {
@@ -38,21 +44,39 @@ export default function InterviewReport() {
     sessionId
   } = useParams();
   const navigate = useNavigate();
+  const {
+    user,
+    userProfile
+  } = useAuth();
   const [session, setSession] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const role = userProfile?.role || 'individual';
   useEffect(() => {
     if (!sessionId) return;
     setLoading(true);
     getInterviewSession(sessionId).then(s => {
-      
+
       if (!s) {
         setError(t("InterviewReport.session_not_found"));
         return;
       }
+      // Candidate personas (individual/student) may open a report only when
+      // they are the session's actual candidate — the report is otherwise an
+      // evaluator/admin/employer surface.
+      const isCandidate = ['individual', 'student'].includes(role) && s.candidateUid === user?.uid;
+      const isStaff = ['evaluator', 'employer', 'admin'].includes(role);
+      if (!isStaff && !isCandidate) {
+        setError(t("InterviewReport.session_not_found"));
+        return;
+      }
+      if (s.status !== 'completed') {
+        setError('This report is not final yet.');
+        return;
+      }
       setSession(s);
     }).catch(() => setError(t("InterviewReport.failed_to_load"))).finally(() => setLoading(false));
-  }, [sessionId]);
+  }, [sessionId, role, user?.uid]);
   if (loading) {
     return <div className="page-pad max-w-[960px] mx-auto animate-fade py-16">
         <div className="card p-8">
@@ -155,7 +179,7 @@ export default function InterviewReport() {
               }} />
                 </div>
                 <div className="text-technical-sm font-technical-sm text-surface-variant mt-2">
-                  Maps to {PILLARS.find(p => p.id === d.pillar)?.short || d.pillar}
+                  Maps to {PILLAR_LIST.find(p => p.id === d.pillar)?.short || d.pillar}
                 </div>
                 {evaluatorAssessment?.find(e => e.dimensionId === d.id)?.notes &&
                   <div className="mt-3 pt-3 border-t-[0.5px] border-outline-variant text-body-sm font-body-sm text-on-surface-variant italic">
@@ -177,21 +201,21 @@ export default function InterviewReport() {
                 {/* Grid circles */}
                 {[25, 50, 75, 100].map(r => <circle key={r} cx="0" cy="0" r={r} fill="none" stroke="var(--color-outline-variant)" strokeWidth="0.5" />)}
                 {/* Axis lines */}
-                {PILLARS.map((p, i) => {
-              const angle = i / PILLARS.length * 2 * Math.PI - Math.PI / 2;
+                {PILLAR_LIST.map((p, i) => {
+              const angle = i / PILLAR_LIST.length * 2 * Math.PI - Math.PI / 2;
               const x = Math.cos(angle) * 100;
               const y = Math.sin(angle) * 100;
               return <line key={p.id} x1="0" y1="0" x2={x} y2={y} stroke="var(--color-outline-variant)" strokeWidth="0.5" />;
             })}
                 {/* Data polygon */}
-                <polygon points={PILLARS.map((p, i) => {
-              const angle = i / PILLARS.length * 2 * Math.PI - Math.PI / 2;
+                <polygon points={PILLAR_LIST.map((p, i) => {
+              const angle = i / PILLAR_LIST.length * 2 * Math.PI - Math.PI / 2;
               const r = pillarScores[p.id] || 0;
               return `${Math.cos(angle) * r},${Math.sin(angle) * r}`;
             }).join(' ')} fill="var(--gold-grid)" stroke="var(--gold-strong)" strokeWidth="1.5" />
                 {/* Data points + labels */}
-                {PILLARS.map((p, i) => {
-              const angle = i / PILLARS.length * 2 * Math.PI - Math.PI / 2;
+                {PILLAR_LIST.map((p, i) => {
+              const angle = i / PILLAR_LIST.length * 2 * Math.PI - Math.PI / 2;
               const r = pillarScores[p.id] || 0;
               const x = Math.cos(angle) * r;
               const y = Math.sin(angle) * r;
@@ -209,7 +233,7 @@ export default function InterviewReport() {
 
             {/* Pillar Bars */}
             <div className="md:col-span-7 col-span-full space-y-3">
-              {PILLARS.map(p => <div key={p.id} className="card p-4">
+              {PILLAR_LIST.map(p => <div key={p.id} className="card p-4">
                   <div className="flex items-center justify-between mb-2">
                     <div className="flex items-center gap-2">
                       <span className="text-lg">{p.emoji}</span>

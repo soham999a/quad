@@ -5,7 +5,7 @@ import {
   ChevronRight, Menu, LogOut, Home, BookOpen, X, Shield, Users, Sparkles, Building2, Target, Lock,
   PanelLeftClose, PanelLeftOpen,
   Settings as SettingsIcon,
-  Search, Sun, Moon, LayoutGrid, History, GraduationCap, Puzzle,
+  Search, Sun, Moon, LayoutGrid, History, GraduationCap, Puzzle, Mic,
 } from 'lucide-react';
 import { PILLARS, mergeEvaluationScores } from './data/qidsData';
 import QidsMark from './components/QidsMark';
@@ -29,7 +29,8 @@ import GuideTour, { isTourDone, resetTour } from './components/GuideTour';
 import { ToastProvider } from './components/Toast';
 import LanguageSwitcher from './components/LanguageSwitcher';
 import NotificationBell from './components/NotificationBell';
-import { getLatestAssessment, getLatestPostAssessment, getAllEvaluations } from './services/firestoreService';
+import CandidateInterviewModal from './components/CandidateInterviewModal';
+import { getLatestAssessment, getLatestPostAssessment, subscribeEvaluations } from './services/firestoreService';
 
 // eagerly loaded (always on the critical path)
 import Landing from './pages/Landing';
@@ -64,6 +65,8 @@ const InterviewSetup = lazy(() => import('./pages/interview/InterviewSetup'));
 const InterviewPostScoring = lazy(() => import('./pages/interview/InterviewPostScoring'));
 const InterviewLive = lazy(() => import('./pages/interview/InterviewLive'));
 const InterviewReport = lazy(() => import('./pages/interview/InterviewReport'));
+const MyInterviews = lazy(() => import('./pages/interview/MyInterviews'));
+const CandidateSession = lazy(() => import('./pages/interview/CandidateSession'));
 const TeacherDashboard = lazy(() => import('./pages/school/TeacherDashboard'));
 const ClassManager = lazy(() => import('./pages/school/ClassManager'));
 const ClassCreate = lazy(() => import('./pages/school/ClassCreate'));
@@ -210,6 +213,7 @@ const PERSONA_NAV = {
     {
       label: 'MODULES',
       items: [
+        { path: '/app/interviews', label: 'nav.items.my_interviews', icon: Mic },
         { path: '/app/kids', label: 'nav.items.kids_practice', icon: Puzzle },
       ],
     },
@@ -240,6 +244,7 @@ const PERSONA_NAV = {
     {
       label: 'MODULES',
       items: [
+        { path: '/app/interviews', label: 'nav.items.my_interviews', icon: Mic },
         { path: '/app/kids', label: 'nav.items.kids_practice', icon: Puzzle },
       ],
     },
@@ -856,8 +861,11 @@ function AppShell() {
   }, [user]);
 
   useEffect(() => {
-    if (!assessmentData?.id) { setEvaluations([]); setMergedPillarScores(null); setEvalStatus({}); return; }
-    getAllEvaluations(assessmentData.id).then(evals => {
+    if (!assessmentData?.id) { setEvaluations([]); setMergedPillarScores(null); setEvalStatus({}); return undefined; }
+    // Live, not one-shot: when the evaluator saves a rubric the person's merged
+    // pillars and per-pillar status update in place, instead of waiting for a
+    // reload to "notice" the score.
+    const apply = evals => {
       setEvaluations(evals);
       const status = {};
       evals.forEach(e => { status[e.pillar] = true; });
@@ -872,8 +880,14 @@ function AppShell() {
       } else {
         setMergedPillarScores(null);
       }
-    }).catch(e => reportError(e, { kind: 'shell-evaluations' }));
-  }, [assessmentData?.id]);
+    };
+    return subscribeEvaluations(
+      assessmentData.id,
+      { studentUid: user?.uid },
+      apply,
+      e => reportError(e, { kind: 'shell-evaluations' }),
+    );
+  }, [assessmentData?.id, user?.uid]);
 
   return (
     <AppContext.Provider value={{ context, setContext, assessmentData, setAssessmentData, postData, setPostData, evaluations, mergedPillarScores, evalStatus, demoMode: false }}>
@@ -1002,10 +1016,19 @@ function AppShell() {
                   <PageSuspense><InterviewLive /></PageSuspense>
                 </RoleRoute>
               } />
+              {/* Report is reachable by the candidate too — the page itself
+                  enforces ownership (session.candidateUid === uid), so a
+                  persona gate here would lock the candidate out of their own
+                  result. */}
               <Route path="interview/report/:sessionId" element={
-                <RoleRoute roles={['evaluator', 'admin', 'employer']}>
-                  <PageSuspense><InterviewReport /></PageSuspense>
-                </RoleRoute>
+                <PageSuspense><InterviewReport /></PageSuspense>
+              } />
+
+              {/* Candidate side of the interview — any signed-in persona, with
+                  ownership enforced by the page and by Firestore rules. */}
+              <Route path="interviews" element={<PageSuspense><MyInterviews /></PageSuspense>} />
+              <Route path="interview/candidate/:sessionId" element={
+                <PageSuspense><CandidateSession /></PageSuspense>
               } />
 
               {/* School — teachers manage; admins oversee. */}
@@ -1057,6 +1080,9 @@ function AppShell() {
           onDone={() => setTourSteps(null)}
         />
       )}
+      {/* Ready-up gate: a live invitation appears on whatever screen the
+          candidate is on — mounted once, inside the shell. */}
+      <CandidateInterviewModal />
       <CommandPalette
         open={paletteOpen}
         onClose={() => setPaletteOpen(false)}

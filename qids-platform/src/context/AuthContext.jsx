@@ -15,6 +15,7 @@ import {
 import { doc, setDoc, getDoc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { auth, db } from '../firebase';
 import { upsertPublicEvaluator, removePublicEvaluator } from '../services/firestoreService';
+import { postToAdmins } from '../services/notificationService';
 
 const AuthContext = createContext(null);
 export const useAuth = () => useContext(AuthContext);
@@ -87,6 +88,9 @@ export function AuthProvider({ children }) {
     // the service logs failures; signup must not block on it.
     if (role === 'evaluator') {
       await upsertPublicEvaluator(cred.user.uid, { name, email });
+      // Ping the admins so a new evaluator never goes unnoticed (server
+      // verifies the claim and dedupes; silent no-op on localhost).
+      postToAdmins({ kind: 'evaluator-signup', name, email, user: cred.user });
     }
     setUserProfile(profile);
     return { user: cred.user, profile };
@@ -120,8 +124,10 @@ export function AuthProvider({ children }) {
         await setDoc(doc(db, 'users', u.uid), profile);
         // Directory entry at birth, same reason as in signup(): a first-time
         // Google profile with the evaluator role used to skip the directory.
+        // Admins are also told about it, server-verified and deduped.
         if (role === 'evaluator') {
           await upsertPublicEvaluator(u.uid, { name: profile.name, email: profile.email });
+          postToAdmins({ kind: 'evaluator-signup', name: profile.name, email: profile.email, user: u });
         }
         setUserProfile(profile);
       } else {
@@ -151,6 +157,14 @@ export function AuthProvider({ children }) {
         await upsertPublicEvaluator(uid, {
           name: userProfile?.name || user?.displayName || '',
           email: userProfile?.email || user?.email || '',
+        });
+        // Tell the admins about the role gain too (server-verified +
+        // deduped per day, so switching roles back and forth stays quiet).
+        postToAdmins({
+          kind: 'evaluator-role',
+          name: userProfile?.name || user?.displayName || '',
+          email: userProfile?.email || user?.email || '',
+          user,
         });
       } else if (isSelf && role !== 'evaluator') {
         await removePublicEvaluator(uid);
