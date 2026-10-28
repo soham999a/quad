@@ -3,7 +3,7 @@ import usePageTitle from '../../lib/usePageTitle';
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { getInterviewSession, updateInterviewSession } from '../../services/interviewService';
+import { getInterviewSession, updateInterviewSession, subscribeSession } from '../../services/interviewService';
 import { notifyInterviewResult } from '../../services/notificationService';
 import { computeInterviewResult } from '../../core/engine/interviewScoring';
 import { RUBRIC_DIMENSIONS, RUBRIC_MAP } from '../../core/data/interviewRubrics';
@@ -46,6 +46,23 @@ export default function InterviewPostScoring() {
       }
     }).catch(() => toast('Failed to load session', 'error')).finally(() => setLoading(false));
   }, [sessionId]);
+  // Live mirror of the candidate's side. Post mode runs in parallel: the
+  // evaluator scores on their screen while the candidate rates themselves on
+  // theirs, and the 60/40 merge needs both. Without this subscription the
+  // evaluator had no idea whether the candidate had even started — they were
+  // scoring blind against a person who might still be mid-self-assessment.
+  const [candidateStatus, setCandidateStatus] = useState(null);
+  useEffect(() => {
+    if (!sessionId) return undefined;
+    return subscribeSession(sessionId, s => {
+      setCandidateStatus(s ? {
+        status: s.status,
+        selfDone: (s.selfAssessment?.length || 0) > 0,
+        selfCount: s.selfAssessment?.length || 0,
+      } : null);
+    });
+  }, [sessionId]);
+
   const currentDim = RUBRIC_DIMENSIONS[currentDimIdx];
   const currentScore = scores[currentDim?.id] || 0;
   const currentNotes = notes[currentDim?.id] || '';
@@ -144,6 +161,27 @@ export default function InterviewPostScoring() {
         </div>
         <div className="gradient-rule mt-6" />
       </section>
+
+      {/* Candidate status — the other half of this merge, live */}
+      {candidateStatus && session?.mode !== 'live' && (
+        <div className="flex items-start gap-2.5 border-[0.5px] border-outline-variant bg-surface-container-low px-4 py-3 mb-8" style={{ borderRadius: '6px' }}>
+          <span className="w-1.5 h-1.5 rounded-full flex-shrink-0 mt-1.5" style={{
+            background: candidateStatus.selfDone ? 'var(--color-primary)' : 'var(--gold)',
+          }} />
+          <div className="min-w-0">
+            <div className="text-technical-sm font-technical-sm uppercase tracking-widest" style={{
+              color: candidateStatus.selfDone ? 'var(--color-primary)' : 'var(--gold)',
+            }}>
+              {candidateStatus.selfDone ? 'Self-assessment received' : 'Waiting on the candidate'}
+            </div>
+            <p className="text-body-sm text-on-surface-variant mt-1">
+              {candidateStatus.selfDone
+                ? `${session.candidateName || 'They'} rated ${candidateStatus.selfCount}/${RUBRIC_DIMENSIONS.length} dimensions. Score independently — the merge is 60% them / 40% you.`
+                : `${session.candidateName || 'The candidate'} is still doing their self-assessment. You can start scoring now; the merge picks up their ratings when they submit.`}
+            </p>
+          </div>
+        </div>
+      )}
 
       {/* Progress Bar */}
       <div className="mb-8">

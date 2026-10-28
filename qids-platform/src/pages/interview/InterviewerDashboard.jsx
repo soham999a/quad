@@ -8,6 +8,17 @@ import { ClipboardList, Users, Clock, CheckCircle, Plus, ChevronRight, Play, Fil
 import { deleteInterviewSession } from '../../services/interviewService';
 import SeedInterviewData from '../../components/SeedInterviewData';
 import { reportError } from '../../lib/errorReport';
+// Human labels — "ACCEPTED" meant nothing to a client scanning for what to do
+// next. Match the vocabulary the candidate's screen already uses.
+const STATUS_LABELS = {
+  invited: 'AWAITING CONFIRM',
+  accepted: 'CONFIRMED — READY',
+  in_progress: 'LIVE',
+  scheduled: 'SCHEDULED',
+  completed: 'DONE',
+  declined: 'DECLINED',
+  cancelled: 'CANCELLED',
+};
 const STATUS_STYLES = {
   scheduled: {
     bg: 'var(--gold-tint)',
@@ -149,7 +160,13 @@ export default function InterviewerDashboard() {
         return <div key={session.id} onClick={() => {
           if (session.status === 'completed') {
             navigate(`/app/interview/report/${session.id}`);
-          } else if (session.status === 'in_progress' && session.mode === 'live') {
+          } else if (session.mode === 'live') {
+            // Route by MODE, not status. The live room owns every live state:
+            // it parks on `invited` (waiting to confirm), offers an explicit
+            // Begin button on `accepted`, and runs the mirror on `in_progress`.
+            // Sending an `accepted` session to post-scoring deadlocked the loop —
+            // the candidate had confirmed, but nothing could ever flip the status
+            // to `in_progress`, so they waited forever on "waiting to begin".
             navigate(`/app/interview/live/${session.id}`);
           } else {
             navigate(`/app/interview/scoring/${session.id}`);
@@ -183,7 +200,7 @@ export default function InterviewerDashboard() {
               color: statusStyle.color,
               borderColor: statusStyle.border
             }}>
-                    {session.status === 'in_progress' ? 'LIVE' : session.status.toUpperCase()}
+                    {STATUS_LABELS[session.status] || session.status.toUpperCase()}
                   </span>
                   <button onClick={e => handleDelete(e, session)} aria-label={`Delete ${session.candidateName || 'session'}`} title={t("InterviewerDashboard.delete_session")} className="p-1.5 text-surface-variant hover:text-red-500 transition-colors cursor-pointer bg-transparent border-none">
                     <Trash2 size={13} />

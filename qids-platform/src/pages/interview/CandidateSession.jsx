@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { subscribeSession, updateInterviewSession } from '../../services/interviewService';
-import { RUBRIC_DIMENSIONS, RUBRIC_MAP } from '../../core/data/interviewRubrics';
+import { LIVE_QUESTIONS, RUBRIC_DIMENSIONS, RUBRIC_MAP } from '../../core/data/interviewRubrics';
 import { useToast } from '../../components/Toast';
 import { Mic, Clock, Send, ArrowRight, CheckCircle2 } from 'lucide-react';
 
@@ -60,7 +60,12 @@ export default function CandidateSession() {
 
   const candidateResponses = session?.candidateResponses || {};
   const isLive = session?.mode === 'live';
-  const questionBank = (session?.liveQuestions?.length >= 4 ? session.liveQuestions : null);
+  // MUST match the evaluator's expression exactly. The evaluator falls back to
+  // LIVE_QUESTIONS, so when a session carries fewer than 4 AI questions the two
+  // screens used to disagree: the evaluator ran off the standard bank while the
+  // candidate rendered `null` and sat on the "Interview is running…" placeholder
+  // with no question, no mirror and no textarea. Same bank, same truth.
+  const questionBank = (session?.liveQuestions?.length >= 4 ? session.liveQuestions : LIVE_QUESTIONS);
   const currentIdx = session?.liveQuestionIndex ?? 0;
   const currentQuestion = isLive && questionBank ? questionBank[Math.min(currentIdx, questionBank.length - 1)] : null;
   const myResponsesTyped = new Set(Object.keys(candidateResponses).filter(k => candidateResponses[k]?.response));
