@@ -286,6 +286,13 @@ export interface InterviewQuestion {
   dimension: RubricDimensionId;
   context?: string;
   followUp?: string;
+  /** Scoring anchor from the interview guide — what a strong/weak answer
+   *  sounds like (PIP page 7 format). */
+  strong?: string;
+  weak?: string;
+  /** Where the question came from: the platform interview guide ('pdf') AI
+   *  generation for this session ('ai'), or the original bank ('platform'). */
+  source?: 'pdf' | 'ai' | 'platform';
 }
 
 // ── School assessment types ───────────────────────────────────────────────────

@@ -204,7 +204,22 @@ service cloud.firestore {
       // after — /users is owner-or-admin read only, by design.
       allow create: if (isSignedIn() && request.resource.data.studentUid == request.auth.uid)
         || isEvaluator() || isAdmin();
-      allow update: if isEvaluator() || isAdmin();
+      // Two distinct writers, one statement:
+      //  - the evaluator/admin who owns the pairing,
+      //  - the person it is ABOUT. The second used to be missing, so a person
+      //    who picked their own evaluator could never undo it — `removeAssignment`
+      //    writes `active: false` as an update, and update required evaluator or
+      //    admin. The write is pinned: identities may not change and `active` must
+      //    stay a bool, so all this grants is link/unlink of their OWN pairing.
+      //    Reactivation is deliberately included, because `assignEvaluator` uses
+      //    setDoc — on an existing doc that is an update, so re-picking someone
+      //    you unlinked has to pass the same rule.
+      allow update: if isEvaluator() || isAdmin()
+        || (isSignedIn()
+            && resource.data.studentUid == request.auth.uid
+            && request.resource.data.evaluatorUid == resource.data.evaluatorUid
+            && request.resource.data.studentUid == resource.data.studentUid
+            && request.resource.data.active is bool);
       allow delete: if isAdmin();
     }
 
@@ -302,6 +317,10 @@ service cloud.firestore {
           && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
             'status', 'selfAssessment', 'candidateResponses',
             'candidateAcceptedAt', 'candidateDeclinedAt',
+            // WebRTC signalling: the candidate owns exactly these two fields —
+            // the answer to the evaluator's offer and their own ICE trickle.
+            // Offers and evaluator ICE stay evaluator-only, below.
+            'webrtcAnswer', 'webrtcCandIce',
             // updateInterviewSession always stamps updatedAt; it is a server
             // bookkeeping field, never a scoring one, so it stays allowed.
             'updatedAt'

@@ -4,6 +4,8 @@ import { useAuth } from '../../context/AuthContext';
 import { subscribeSession, updateInterviewSession } from '../../services/interviewService';
 import { LIVE_QUESTIONS, RUBRIC_DIMENSIONS, RUBRIC_MAP } from '../../core/data/interviewRubrics';
 import { useToast } from '../../components/Toast';
+import useInterviewCall from '../../lib/useInterviewCall';
+import VideoCallDock from '../../components/VideoCallDock';
 import { Mic, Clock, Send, ArrowRight, CheckCircle2 } from 'lucide-react';
 
 /**
@@ -36,6 +38,11 @@ export default function CandidateSession() {
   const [selfNotes, setSelfNotes] = useState({});
   const [selfIdx, setSelfIdx] = useState(0);
   const [savingSelf, setSavingSelf] = useState(false);
+  // Once submitted, post mode shows a real ending screen. This flag is only
+  // the way back into the form — the promise on the form is that answers stay
+  // editable until the evaluator finishes scoring, so the ending can't be a
+  // dead end.
+  const [revising, setRevising] = useState(false);
 
   const role = userProfile?.role || 'individual';
   const candidateEligible = role === 'individual' || role === 'student'
@@ -60,6 +67,14 @@ export default function CandidateSession() {
 
   const candidateResponses = session?.candidateResponses || {};
   const isLive = session?.mode === 'live';
+  // Video & audio (WebRTC) — the candidate answers the evaluator's offer, so
+  // they never call first; joining simply opens the camera and waits.
+  const call = useInterviewCall({ sessionId, isEvaluator: false });
+  // The interview ending (or being left) closes the call and releases the
+  // camera/mic — the device light stays honest.
+  useEffect(() => {
+    if (session?.status === 'completed') call.stop();
+  }, [session?.status, call]);
   // MUST match the evaluator's expression exactly. The evaluator falls back to
   // LIVE_QUESTIONS, so when a session carries fewer than 4 AI questions the two
   // screens used to disagree: the evaluator ran off the standard bank while the
@@ -119,6 +134,7 @@ export default function CandidateSession() {
           notes: selfNotes[d.id] || '',
         }));
       await updateInterviewSession(sessionId, { selfAssessment });
+      setRevising(false);
       toast('Self-assessment submitted — your evaluator will score next', 'success');
     } catch {
       toast('Submit failed', 'error');
@@ -163,16 +179,39 @@ export default function CandidateSession() {
 
   // ── Terminal states ────────────────────────────────────────────────────────
   if (session.status === 'completed') {
-    return <div className="page-pad max-w-[720px] mx-auto py-16 text-center">
+    const syncedCount = Object.keys(session.candidateResponses || {}).filter(k => session.candidateResponses[k]?.response).length;
+    const totalLive = session.liveQuestions?.length || 0;
+    const minutes = Math.round((Number(session.elapsedSeconds) || 0) / 60);
+    // A closing screen, not just a link: it names what actually happened so the
+    // end of an interview feels like an end, and points at the one thing left.
+    return <div className="page-pad max-w-[720px] mx-auto py-16 text-center animate-fade">
       <CheckCircle2 size={36} className="text-primary mx-auto mb-4" />
       <div className="kicker mb-2">Interview complete</div>
-      <h1 className="text-headline-md font-headline-md text-on-background mb-4">Your result is ready</h1>
-      <p className="text-body-md text-on-surface-variant mb-8">
-        {evaluatorName} finished scoring your {isLive ? 'live' : ''} interview.
+      <h1 className="text-headline-md font-headline-md text-on-background mb-4">That's a wrap — thank you</h1>
+      <p className="text-body-md text-on-surface-variant mb-6 max-w-[520px] mx-auto leading-relaxed">
+        {evaluatorName} has finished scoring your {isLive ? 'live' : 'post-interview'} session.
       </p>
-      <Link to={`/app/interview/report/${sessionId}`} className="btn-primary inline-flex items-center gap-2">
-        Open my report <ArrowRight size={13} />
-      </Link>
+
+      {isLive && (syncedCount > 0 || minutes > 0) && (
+        <div className="flex items-center justify-center gap-6 mb-8 text-technical-sm font-technical-sm text-surface-variant uppercase tracking-widest">
+          {totalLive > 0 && <span>{syncedCount}/{totalLive} answers synced</span>}
+          {minutes > 0 && <span className="flex items-center gap-1.5"><Clock size={11} /> {minutes} min</span>}
+        </div>
+      )}
+
+      <p className="text-body-sm text-on-surface-variant mb-8 max-w-[480px] mx-auto">
+        Your report merges your {isLive ? 'live answers' : 'self-assessment'} with their scoring —
+        60% you, 40% them. It opens right away.
+      </p>
+
+      <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+        <Link to={`/app/interview/report/${sessionId}`} className="btn-primary inline-flex items-center gap-2">
+          Open my report <ArrowRight size={13} />
+        </Link>
+        <Link to="/app/interviews" className="btn-outline inline-flex items-center gap-2">
+          My interviews
+        </Link>
+      </div>
     </div>;
   }
 
@@ -225,7 +264,9 @@ export default function CandidateSession() {
     }
     const dim = RUBRIC_MAP[currentQuestion.dimension];
     const myAnswer = candidateResponses[currentQuestion.id]?.response || '';
-    return <div className="page-pad max-w-[720px] mx-auto animate-fade">
+    return <div className="page-pad max-w-[1020px] mx-auto animate-fade">
+      <div className="flex flex-col lg:flex-row gap-6">
+      <div className="flex-1 min-w-0">
       <div className="mb-8">
         <div className="kicker mb-3 flex items-center gap-2">
           <span className="w-1.5 h-1.5 rounded-full bg-gold animate-pulse" style={{ background: 'var(--gold)' }} />
@@ -273,6 +314,15 @@ export default function CandidateSession() {
           Speak naturally. When the next question appears here, answer it. {evaluatorName} scores each dimension as you go.
         </p>
       </div>
+      </div>{/* left lane */}
+
+      {/* Right lane — live video & audio with the evaluator */}
+      <div className="lg:w-[300px] flex-shrink-0">
+        <div className="lg:sticky lg:top-6">
+          <VideoCallDock call={call} role="candidate" />
+        </div>
+      </div>
+      </div>{/* two-lane wrapper */}
     </div>;
   }
 
@@ -281,6 +331,45 @@ export default function CandidateSession() {
   // self-assessment", not "wait for a live room".
   const selfSubmitted = (session.selfAssessment?.length || 0) > 0;
   if (!isLive && ['scheduled', 'accepted', 'in_progress'].includes(session.status)) {
+    // ── The ending moment ──────────────────────────────────────────────────
+    // Submitting used to leave the candidate sitting on the same form with a
+    // small green banner — nothing signalled that their part was over. Give
+    // them a closing screen that says what they submitted and what happens
+    // next, with an explicit way back in while scoring is still open.
+    if (selfSubmitted && !revising) {
+      return <div className="page-pad max-w-[720px] mx-auto py-16 text-center animate-fade">
+        <CheckCircle2 size={36} className="text-primary mx-auto mb-4" />
+        <div className="kicker mb-2">Self-assessment submitted</div>
+        <h1 className="text-headline-md font-headline-md text-on-background mb-4">You've done your part</h1>
+        <p className="text-body-md text-on-surface-variant mb-8 max-w-[520px] mx-auto leading-relaxed">
+          All {session.selfAssessment.length} of {RUBRIC_DIMENSIONS.length} dimensions are in. {evaluatorName} now scores
+          the same nine independently, and the two views are merged — 60% yours, 40% theirs.
+        </p>
+        <div className="card p-5 mb-8 text-left max-w-[520px] mx-auto">
+          <div className="text-technical-sm font-technical-sm uppercase tracking-widest text-primary mb-3">What happens next</div>
+          <ol className="space-y-2.5">
+            {[
+              `${evaluatorName} scores your nine dimensions`,
+              'Your scores merge into one profile',
+              'You get a bell here the moment your report is ready',
+            ].map((step, i) => (
+              <li key={step} className="flex gap-3 text-body-sm text-on-surface-variant">
+                <span className="text-technical-sm font-technical-sm text-gold flex-shrink-0 tabular-nums">{i + 1}</span>
+                <span>{step}</span>
+              </li>
+            ))}
+          </ol>
+        </div>
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+          <Link to="/app/interviews" className="btn-primary inline-flex items-center gap-2">
+            My interviews <ArrowRight size={13} />
+          </Link>
+          <button type="button" onClick={() => setRevising(true)} className="btn-outline cursor-pointer">
+            Revise my answers
+          </button>
+        </div>
+      </div>;
+    }
     const dim = RUBRIC_DIMENSIONS[Math.min(selfIdx, RUBRIC_DIMENSIONS.length - 1)];
     const doneCount = RUBRIC_DIMENSIONS.filter(d => selfScores[d.id] > 0).length;
     const allDone = doneCount === RUBRIC_DIMENSIONS.length;
@@ -292,14 +381,16 @@ export default function CandidateSession() {
           Rate yourself first — {evaluatorName} scores independently afterwards and the two views are merged (60% you / 40% them).
         </p>
       </div>
-
       <div className="card p-6 md:p-8">
         {selfSubmitted && (
           <div className="flex items-start gap-2.5 border-[0.5px] border-primary/30 bg-primary/5 px-3.5 py-3 mb-5" style={{ borderRadius: '6px' }}>
             <CheckCircle2 size={14} className="text-primary flex-shrink-0 mt-0.5" />
             <span className="text-body-sm font-body-sm text-on-surface-variant">
-              Self-assessment submitted. You can still revise it until {evaluatorName} finishes scoring.
+              Submitted. Keep editing until {evaluatorName} finishes scoring.
             </span>
+            <button type="button" onClick={() => setRevising(false)} className="ml-auto flex-shrink-0 text-technical-sm font-technical-sm text-primary hover:underline cursor-pointer bg-transparent border-none">
+              Done
+            </button>
           </div>
         )}
         <div className="flex items-center justify-between mb-4">

@@ -366,8 +366,10 @@ Return JSON in this exact format:
     {
       "dimension": "one of the dimension names listed above",
       "text": "the interview question",
-      "context": "what this question assesses / what a strong answer looks like",
-      "followUp": "a suggested follow-up probe if the answer is shallow"
+      "context": "this question assesses",
+      "followUp": "a suggested follow-up probe if the answer is shallow",
+      "strongAnswer": "one line: what a strong answer sounds like",
+      "weakAnswer": "one line: what a weak answer sounds like"
     }
   ]
 }
@@ -393,5 +395,8 @@ Rules:
       dimension: String(q.dimension),
       context: q.context ? String(q.context) : '',
       followUp: q.followUp ? String(q.followUp) : '',
+      strong: q.strongAnswer ? String(q.strongAnswer) : '',
+      weak: q.weakAnswer ? String(q.weakAnswer) : '',
+      source: 'ai',
     }));
 }

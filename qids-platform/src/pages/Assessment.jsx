@@ -1063,8 +1063,15 @@ export default function Assessment() {
   };
   const handleAssignEvaluator = async evUid => {
     setLoadingEv(true);
+    // Both helpers return booleans rather than throwing, so a denied write
+    // looks exactly like success unless the return value is checked.
+    const ok = await assignEvaluator(evUid, user.uid, userProfile?.name || user.displayName || '');
+    if (!ok) {
+      toast('Could not assign evaluator — try again', 'error');
+      setLoadingEv(false);
+      return;
+    }
     try {
-      await assignEvaluator(evUid, user.uid, userProfile?.name || user.displayName || '');
       const ev = evaluators.find(e => e.uid === evUid);
       setCurrentEv(ev || null);
       setIntake(prev => ({
@@ -1086,18 +1093,19 @@ export default function Assessment() {
     setLoadingEv(false);
   };
   const handleRemoveEvaluator = async () => {
-    if (!currentEv) return;
+    if (!currentEv || loadingEv) return;
     setLoadingEv(true);
-    try {
-      await removeAssignment(currentEv.uid, user.uid);
+    const ok = await removeAssignment(currentEv.uid, user.uid);
+    if (ok) {
       setCurrentEv(null);
       setIntake(prev => ({
         ...prev,
         evaluator: '',
         _evUid: ''
       }));
-    } catch (e) {
-      toast('Failed to remove evaluator', 'error');
+      toast('Evaluator removed', 'success');
+    } else {
+      toast('Failed to remove evaluator — try again', 'error');
     }
     setLoadingEv(false);
   };

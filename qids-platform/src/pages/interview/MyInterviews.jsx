@@ -81,6 +81,7 @@ export default function MyInterviews() {
             {s.evaluatorName || 'Evaluator'} · {s.mode === 'live' ? 'Live' : 'Post-interview'}
           </div>
           <div className="text-technical-sm font-technical-sm text-surface-variant truncate mt-0.5">
+            {(s.sessionNumber || 1) > 1 && <span style={{ color: 'var(--color-primary)' }}>Attempt #{s.sessionNumber} · </span>}
             {s.role ? s.role : ''}{s.createdAt?.toDate ? ` · ${s.createdAt.toDate().toLocaleDateString()}` : ''}
           </div>
         </div>

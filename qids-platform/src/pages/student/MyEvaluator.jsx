@@ -39,8 +39,15 @@ export default function MyEvaluator() {
       setEvaluators(directory);
       const current = await getStudentEvaluator(user.uid);
       if (current) {
-        const ev = directory.find(u => u.uid === current.evaluatorUid);
-        setCurrentEvaluator(ev || null);
+        const ev = directory.find(u => u.uid === current.evaluatorUid)
+          // The directory is admin-curated, so someone can be legitimately
+          // linked to an evaluator who has no published entry. Treating that
+          // as "no evaluator" nulled the assigned card — and with it the only
+          // Remove button on this page — so unlinking looked permanently
+          // broken. Fall back to the assignment itself; the pairing is the
+          // source of truth, the directory is only a lookup for display.
+          || { uid: current.evaluatorUid, name: 'Your evaluator', email: '' };
+        setCurrentEvaluator(ev);
         // Load assessments and their evaluations
         const asms = await getUserAssessments(user.uid);
         const enriched = [];
@@ -87,14 +94,18 @@ export default function MyEvaluator() {
     setAssigning(false);
   };
   const handleRemove = async () => {
-    if (!currentEvaluator) return;
+    if (!currentEvaluator || assigning) return;
     setAssigning(true);
-    try {
-      await removeAssignment(currentEvaluator.uid, user.uid);
+    // `removeAssignment` swallows Firestore errors and returns false, so the
+    // return value is the only signal — without checking it this cleared local
+    // state and toasted "Evaluator removed" while the write was denied.
+    const ok = await removeAssignment(currentEvaluator.uid, user.uid);
+    if (ok) {
       setCurrentEvaluator(null);
+      setEvalAssessments([]);
       toast('Evaluator removed', 'success');
-    } catch (e) {
-      toast('Could not remove evaluator', 'error');
+    } else {
+      toast('Could not remove evaluator — try again', 'error');
     }
     setAssigning(false);
   };

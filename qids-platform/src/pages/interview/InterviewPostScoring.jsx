@@ -8,7 +8,7 @@ import { notifyInterviewResult } from '../../services/notificationService';
 import { computeInterviewResult } from '../../core/engine/interviewScoring';
 import { RUBRIC_DIMENSIONS, RUBRIC_MAP } from '../../core/data/interviewRubrics';
 import { useToast } from '../../components/Toast';
-import { Save, ChevronRight, ChevronLeft, AlertCircle } from 'lucide-react';
+import { Save, ChevronRight, ChevronLeft, AlertCircle, CheckCircle } from 'lucide-react';
 export default function InterviewPostScoring() {
   const {
     t
@@ -28,6 +28,9 @@ export default function InterviewPostScoring() {
   const [scores, setScores] = useState({});
   const [notes, setNotes] = useState({});
   const [saving, setSaving] = useState(false);
+  // Saved-and-submitted closing screen. Completing an interview used to be a
+  // toast plus an instant redirect — nothing that said "this is finished".
+  const [finished, setFinished] = useState(null);
   useEffect(() => {
     if (!sessionId) return;
     setLoading(true);
@@ -124,7 +127,12 @@ export default function InterviewPostScoring() {
           sessionId: session.id,
           mode: session.mode || 'post',
         });
-        navigate(`/app/interview/report/${session.id}`);
+        // Report navigation belongs to the ending screen, not to here.
+        setFinished({
+          unifiedScore: result.unifiedScore,
+          grade: result.grade,
+          scored: evaluatorAssessment.length,
+        });
       }
     } catch (e) {
       console.error('Save failed:', e);
@@ -147,6 +155,49 @@ export default function InterviewPostScoring() {
         <AlertCircle size={32} className="text-surface-variant mx-auto mb-4" />
         <div className="text-body-md font-body-md text-surface-variant">{t("InterviewPostScoring.session_not_found")}</div>
         <button onClick={() => navigate('/app/interview')} className="btn-primary mt-6">{t("InterviewPostScoring.back_to_dashboard")}</button>
+      </div>;
+  }
+
+  // ── The ending moment ────────────────────────────────────────────────────
+  if (finished) {
+    const selfCount = session.selfAssessment?.length || 0;
+    const selfGiven = session.mode === 'live' ? false : selfCount > 0;
+    return <div className="page-pad max-w-[720px] mx-auto py-16 text-center animate-fade">
+        <CheckCircle size={36} className="text-primary mx-auto mb-4" />
+        <div className="kicker mb-2">Interview ended</div>
+        <h1 className="text-headline-md font-headline-md text-on-background mb-4">Scoring complete</h1>
+        <p className="text-body-md text-on-surface-variant mb-8 max-w-[520px] mx-auto leading-relaxed">
+          {session.candidateName || 'Your candidate'}'s post-interview is scored and closed.
+          The report is built and they've been notified.
+        </p>
+
+        <div className="grid grid-cols-3 gap-3 max-w-[480px] mx-auto mb-8">
+          {[
+            { label: 'SCORE', value: finished.unifiedScore != null ? Math.round(finished.unifiedScore) : '—' },
+            { label: 'GRADE', value: finished.grade?.grade || '—' },
+            { label: 'RATED', value: `${finished.scored}/${RUBRIC_DIMENSIONS.length}` },
+          ].map(s => (
+            <div key={s.label} className="card px-3 py-4">
+              <div className="text-technical-sm font-technical-sm uppercase tracking-widest text-surface-variant mb-1.5">{s.label}</div>
+              <div className="text-headline-sm font-headline-sm text-on-background mono-numbers">{s.value}</div>
+            </div>
+          ))}
+        </div>
+
+        <p className="text-body-sm text-on-surface-variant mb-8 max-w-[480px] mx-auto">
+          {selfGiven
+            ? `Merged ${selfCount} of their self-assessments with your independent ratings — 60% them, 40% you.`
+            : 'Your ratings stand alone as the scoring record for this session.'}
+        </p>
+
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+          <button onClick={() => navigate(`/app/interview/report/${session.id}`)} className="btn-primary glow inline-flex items-center gap-2 cursor-pointer">
+            Open the report <ChevronRight size={14} />
+          </button>
+          <button onClick={() => navigate('/app/interview')} className="btn-outline cursor-pointer">
+            {t("InterviewPostScoring.back_to_dashboard")}
+          </button>
+        </div>
       </div>;
   }
   return <div className="page-pad max-w-[960px] mx-auto animate-fade">

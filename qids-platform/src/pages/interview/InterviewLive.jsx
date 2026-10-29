@@ -9,6 +9,8 @@ import { computeInterviewResult } from '../../core/engine/interviewScoring';
 import { LIVE_QUESTIONS, RUBRIC_MAP } from '../../core/data/interviewRubrics';
 import { useToast } from '../../components/Toast';
 import { Play, Pause, ChevronRight, ChevronLeft, CheckCircle, Clock } from 'lucide-react';
+import useInterviewCall from '../../lib/useInterviewCall';
+import VideoCallDock from '../../components/VideoCallDock';
 export default function InterviewLive() {
   const {
     t
@@ -31,6 +33,18 @@ export default function InterviewLive() {
   const [paused, setPaused] = useState(false);
   const [saving, setSaving] = useState(false);
   const [candidateLive, setCandidateLive] = useState(null);
+  // Video & audio (WebRTC) — the Meet-style call that rides alongside the
+  // question flow. The evaluator is the caller: their offer goes out on join.
+  const call = useInterviewCall({ sessionId, isEvaluator: true });
+  // Set instead of navigating straight to the report. Finishing an interview
+  // deserves a visible ending: the evaluator sees what they just produced and
+  // chooses when to move on, rather than the page vanishing behind a toast.
+  const [finished, setFinished] = useState(null);
+  // Ending the interview ends the call — no dangling media stream after the
+  // closing screen, and no mic left hot on the evaluator's machine.
+  useEffect(() => {
+    if (session?.status === 'completed') call.stop();
+  }, [session?.status, call]);
   useEffect(() => {
     if (!sessionId) return;
     setLoading(true);
@@ -76,7 +90,8 @@ export default function InterviewLive() {
     });
   }, [session?.id, session?.candidateUid, session?.status]);
   // Question bank: session-specific AI questions when present, else the
-  // standard bank. Rubric map still drives dimension labels/descriptors.
+  // standard bank (now the spec's Page-7 interview guide bank). Rubric map
+  // still drives dimension labels/descriptors.
   const questionBank = (session?.liveQuestions?.length >= 4 ? session.liveQuestions : LIVE_QUESTIONS);
   const currentQuestion = questionBank[questionIdx];
   const currentDim = currentQuestion ? RUBRIC_MAP[currentQuestion.dimension] : null;
@@ -172,6 +187,13 @@ export default function InterviewLive() {
         completedAt: new Date().toISOString()
       });
       toast('Interview completed!', 'success');
+      setFinished({
+        unifiedScore: result.unifiedScore,
+        grade: result.grade,
+        scored: evaluatorAssessment.length,
+        total: questionBank.length,
+        minutes: Math.round(elapsed / 60),
+      });
       // Bell the named parties. Usually just the evaluator themselves since
       // candidates are external (name/email on the session doc). Fire-and-
       // forget: a failed notification must never block the report.
@@ -183,7 +205,7 @@ export default function InterviewLive() {
         sessionId: session.id,
         mode: session.mode || 'live',
       });
-      navigate(`/app/interview/report/${session.id}`);
+      // The ending screen below owns the next step — no silent redirect.
     } catch (e) {
       console.error('Complete failed:', e);
       toast('Failed to complete', 'error');
@@ -203,6 +225,49 @@ export default function InterviewLive() {
     return <div className="page-pad max-w-[960px] mx-auto animate-fade py-16 text-center">
         <div className="text-body-md font-body-md text-surface-variant">{t("InterviewLive.session_not_found")}</div>
         <button onClick={() => navigate('/app/interview')} className="btn-primary mt-6">{t("InterviewLive.back_to_dashboard")}</button>
+      </div>;
+  }
+
+  // ── The ending moment ────────────────────────────────────────────────────
+  // Saved, scored, notified — now close the loop in front of the evaluator
+  // instead of teleporting them to a report they didn't ask to open yet.
+  if (finished) {
+    return <div className="page-pad max-w-[720px] mx-auto py-16 text-center animate-fade">
+        <CheckCircle size={36} className="text-primary mx-auto mb-4" />
+        <div className="kicker mb-2">Interview ended</div>
+        <h1 className="text-headline-md font-headline-md text-on-background mb-4">Session complete</h1>
+        <p className="text-body-md text-on-surface-variant mb-8 max-w-[520px] mx-auto leading-relaxed">
+          {session.candidateName || 'Your candidate'}'s live interview is scored and closed.
+          Their report is ready and they've been notified.
+        </p>
+
+        <div className="grid grid-cols-3 gap-3 max-w-[480px] mx-auto mb-8">
+          {[
+            { label: 'SCORE', value: finished.unifiedScore != null ? Math.round(finished.unifiedScore) : '—' },
+            { label: 'GRADE', value: finished.grade?.grade || '—' },
+            { label: 'SCORED', value: `${finished.scored}/${finished.total}` },
+          ].map(s => (
+            <div key={s.label} className="card px-3 py-4">
+              <div className="text-technical-sm font-technical-sm uppercase tracking-widest text-surface-variant mb-1.5">{s.label}</div>
+              <div className="text-headline-sm font-headline-sm text-on-background mono-numbers">{s.value}</div>
+            </div>
+          ))}
+        </div>
+
+        {finished.minutes > 0 && (
+          <p className="text-technical-sm font-technical-sm text-surface-variant uppercase tracking-widest mb-8 flex items-center justify-center gap-1.5">
+            <Clock size={11} /> {finished.minutes} minute session
+          </p>
+        )}
+
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+          <button onClick={() => navigate(`/app/interview/report/${session.id}`)} className="btn-primary glow inline-flex items-center gap-2 cursor-pointer">
+            Open the report <ChevronRight size={14} />
+          </button>
+          <button onClick={() => navigate('/app/interview')} className="btn-outline cursor-pointer">
+            {t("InterviewLive.back_to_dashboard")}
+          </button>
+        </div>
       </div>;
   }
 
@@ -278,7 +343,12 @@ export default function InterviewLive() {
   const candidateAnswer = candidateLive?.responses?.[currentQuestion?.id]?.response || '';
 
   // The live runner itself — also the view the evaluator returns to mid-flight.
-  const renderRunner = () => <div className="page-pad max-w-[960px] mx-auto animate-fade">
+  // Two lanes: the question flow on the left, the video/audio dock pinned to
+  // the right — the Meet-style conference view lives with the scoring, not in
+  // a separate tab.
+  const renderRunner = () => <div className="page-pad max-w-[1240px] mx-auto animate-fade">
+      <div className="flex flex-col lg:flex-row gap-6">
+      <div className="flex-1 min-w-0">
       {/* Candidate confirmed banner — the two-screen moment of truth */}
       {candidateConfirmed && <div className="flex items-center justify-between px-4 py-3 mb-8 border-[0.5px] border-primary/30 bg-primary/5" style={{
         borderRadius: '6px'
@@ -374,10 +444,25 @@ export default function InterviewLive() {
             </div>
           )}
 
-          {/* Follow-up */}
-          {currentQuestion.followUp && <div className="mt-4 bg-surface-container-low p-3 border-[0.5px] border-outline-variant">
-              <div className="text-technical-sm font-technical-sm text-surface-variant">{t("inter.follow_up", { x: currentQuestion.followUp })}</div>
-            </div>}
+          {/* Probe bank — follow-up probe + strong/weak anchors, PIP page 7 */}
+          {(currentQuestion.followUp || currentQuestion.strong || currentQuestion.weak) && (
+            <div className="mt-4 bg-surface-container-low border-[0.5px] border-outline-variant p-4" style={{ borderRadius: '6px' }}>
+              <div className="text-technical-sm font-technical-sm uppercase tracking-widest text-surface-variant mb-2">Interview guide</div>
+              {currentQuestion.followUp && <div className="text-body-sm font-body-sm text-on-surface-variant mb-3 leading-relaxed">
+                <span className="text-primary uppercase tracking-widest text-technical-sm font-technical-sm mr-2">Probe →</span>{currentQuestion.followUp}
+              </div>}
+              {(currentQuestion.strong || currentQuestion.weak) && <div className="grid sm:grid-cols-2 gap-3">
+                  {currentQuestion.strong && <div className="p-3 border-[0.5px]" style={{ borderColor: 'color-mix(in srgb, var(--color-success) 35%, transparent)', background: 'color-mix(in srgb, var(--color-success) 7%, transparent)', borderRadius: '6px' }}>
+                    <div className="text-technical-sm font-technical-sm uppercase tracking-widest mb-1" style={{ color: 'var(--color-success)' }}>Strong answer</div>
+                    <div className="text-body-sm font-body-sm text-on-surface-variant leading-relaxed">{currentQuestion.strong}</div>
+                  </div>}
+                  {currentQuestion.weak && <div className="p-3 border-[0.5px]" style={{ borderColor: 'color-mix(in srgb, var(--color-error, #e5484d) 35%, transparent)', background: 'color-mix(in srgb, var(--color-error, #e5484d) 7%, transparent)', borderRadius: '6px' }}>
+                    <div className="text-technical-sm font-technical-sm uppercase tracking-widest mb-1" style={{ color: 'var(--color-error, #e5484d)' }}>Weak answer</div>
+                    <div className="text-body-sm font-body-sm text-on-surface-variant leading-relaxed">{currentQuestion.weak}</div>
+                  </div>}
+                </div>}
+            </div>
+          )}
         </div>}
 
       {/* Navigation */}
@@ -392,6 +477,15 @@ export default function InterviewLive() {
         <button onClick={() => goTo(questionIdx + 1)} disabled={questionIdx === totalQuestions - 1} className="btn-outline flex items-center gap-2 disabled:opacity-30">{t("InterviewLive.next")}<ChevronRight size={14} />
         </button>
       </div>
+      </div>{/* left lane */}
+
+      {/* Right lane — the call, pinned while the scoring flows on the left */}
+      <div className="lg:w-[340px] flex-shrink-0">
+        <div className="lg:sticky lg:top-6">
+          <VideoCallDock call={call} role="evaluator" />
+        </div>
+      </div>
+      </div>{/* two-lane wrapper */}
     </div>;
   return renderRunner();
 }

@@ -2,14 +2,12 @@ import { useTranslation } from 'react-i18next';
 import usePageTitle from '../../lib/usePageTitle';
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { doc, getDoc } from 'firebase/firestore';
-import { db } from '../../firebase';
 import { useAuth } from '../../context/AuthContext';
-import { getEvaluatorAssignments, getUserAssessments, getAllEvaluations } from '../../services/firestoreService';
-import { getEvaluatorSessions } from '../../services/interviewService';
-import { PILLARS } from '../../data/qidsData';
-import { Users, ClipboardList, CheckCircle, Clock, ChevronRight, RefreshCw, UserCheck, Mic } from 'lucide-react';
+import { removeAssignment, subscribeEvaluatorAssignments, subscribeEvaluationsByEvaluator, subscribeUserAssessments } from '../../services/firestoreService';
+import { subscribeSessionsForEvaluator } from '../../services/interviewService';
+import { Users, ClipboardList, CheckCircle, Clock, ChevronRight, UserCheck, Mic, UserX } from 'lucide-react';
 import EmptyState from '../../components/EmptyState';
+import { useToast } from '../../components/Toast';
 export default function EvaluatorDashboard() {
   const {
     t
@@ -20,80 +18,109 @@ export default function EvaluatorDashboard() {
     userProfile
   } = useAuth();
   const navigate = useNavigate();
+  const toast = useToast();
   const [assignments, setAssignments] = useState([]);
-  const [students, setStudents] = useState({});
+  // Tracks an in-flight unlink so a double click can't fire two writes.
+  const [removingUid, setRemovingUid] = useState(null);
+  // Everything below arrives through live snapshots — no fetch-on-load.
   const [assessments, setAssessments] = useState({});
   const [evaluations, setEvaluations] = useState({});
   const [interviews, setInterviews] = useState({});
   const [loading, setLoading] = useState(true);
-  useEffect(() => {
-    if (!user) return;
-    loadData();
-  }, [user]);
 
-  // Come back to this tab after a student submits and the console shows their
-  // new numbers without a manual refresh.
+  // Unlink a person from this evaluator. Soft delete (`active: false`) on
+  // purpose: the assignment doc carries the historical name/id the rest of the
+  // console reads, and re-linking later must not have to recreate it. Rules
+  // scope this write to evaluators/admins, so it can only ever be the
+  // evaluator's own list. The service returns a boolean rather than throwing,
+  // so it MUST be checked — callers elsewhere used to optimistically clear
+  // local state and toast success on a denied write.
+  const handleRemove = async (assignment) => {
+    if (!user || removingUid) return;
+    const name = assignment.studentName || 'this person';
+    if (!window.confirm(`Remove ${name} from your list? Their assessments and scores stay intact — you just stop seeing them here.`)) return;
+    setRemovingUid(assignment.studentUid);
+    const ok = await removeAssignment(user.uid, assignment.studentUid);
+    if (ok) {
+      setAssignments(prev => prev.filter(a => a.id !== assignment.id));
+      toast(`${name} removed from your list`, 'success');
+    } else {
+      toast('Could not remove them — check your connection and try again', 'error');
+    }
+    setRemovingUid(null);
+  };
+
+  // The whole console is live: four snapshot listeners cover everything —
+  // assignments, this evaluator's interview sessions, every rubric they
+  // recorded, plus one assessments listener per assigned student. A student
+  // submitting a battery, confirming an interview, or advancing a live
+  // question lands on this page the instant it happens — on any device,
+  // with no refresh. Manual refetching died with the old loadData().
   useEffect(() => {
-    const onFocus = () => { if (user) loadData(); };
-    const onVisible = () => { if (document.visibilityState === 'visible' && user) loadData(); };
-    window.addEventListener('focus', onFocus);
-    document.addEventListener('visibilitychange', onVisible);
+    if (!user) return undefined;
+    setLoading(true);
+    const assignCache = { v: [] };
+    const sessCache = { v: [] };
+    const assessCache = {};
+    const evalCache = {};
+    let unsubStudents = [];
+
+    const push = () => {
+      // Newest session per candidate wins (Firestore Timestamps compare by
+      // toMillis, not by string, so sort first and keep the first hit).
+      const timeValue = s => s?.updatedAt?.toMillis?.() || s?.createdAt?.toMillis?.() || 0;
+      const sorted = [...sessCache.v].sort((a, b) => timeValue(b) - timeValue(a));
+      const interviewMap = {};
+      for (const s of sorted) {
+        if (!s.candidateUid) continue;
+        if (!interviewMap[s.candidateUid]) interviewMap[s.candidateUid] = s;
+      }
+      setInterviews(interviewMap);
+      setAssessments({ ...assessCache });
+      setEvaluations({ ...evalCache });
+      setAssignments(assignCache.v);
+      setLoading(false);
+    };
+
+    // One assessments listener per assigned student; rewired whenever the
+    // assignment list changes (a new link adds a name, an unlink drops one).
+    const wireStudents = () => {
+      unsubStudents.forEach(u => u());
+      unsubStudents = assignCache.v.map(a =>
+        subscribeUserAssessments(a.studentUid, v => {
+          assessCache[a.studentUid] = v;
+          push();
+        }));
+    };
+
+    const unsubs = [
+      subscribeEvaluatorAssignments(user.uid, v => {
+        assignCache.v = v;
+        wireStudents();
+        push();
+      }),
+      subscribeSessionsForEvaluator(user.uid, v => {
+        sessCache.v = v;
+        push();
+      }),
+      // Scoped to this evaluator by design: the evaluations rules only let the
+      // recorder read their own scores, so a single `evaluatorUid ==` query is
+      // one listener covering every rubric tick across every student.
+      subscribeEvaluationsByEvaluator(user.uid, list => {
+        for (const k of Object.keys(evalCache)) delete evalCache[k];
+        for (const e of list) {
+          (evalCache[e.assessmentId] ||= {})[e.pillar] = e;
+        }
+        push();
+      }),
+    ];
+
     return () => {
-      window.removeEventListener('focus', onFocus);
-      document.removeEventListener('visibilitychange', onVisible);
+      unsubs.forEach(u => u());
+      unsubStudents.forEach(u => u());
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
-  const loadData = async () => {
-    setLoading(true);
-    const assigns = await getEvaluatorAssignments(user.uid);
-    setAssignments(assigns);
-    // My interviews at a glance: one fetch, then folded per student so every
-    // row knows what state its interview is in (invited / in progress / done).
-    let sessions = [];
-    try {
-      sessions = await getEvaluatorSessions(user.uid);
-    } catch {
-      sessions = [];
-    }
-    // Newest session per candidate wins (Firestore Timestamps compare by
-    // toMillis, not by string, so sort first and keep the first hit).
-    const timeValue = s => s?.updatedAt?.toMillis?.() || s?.createdAt?.toMillis?.() || 0;
-    const sorted = [...sessions].sort((a, b) => timeValue(b) - timeValue(a));
-    const interviewMap = {};
-    for (const s of sorted) {
-      if (!s.candidateUid) continue;
-      if (!interviewMap[s.candidateUid]) interviewMap[s.candidateUid] = s;
-    }
-    setInterviews(interviewMap);
-    const studentMap = {};
-    const assessmentMap = {};
-    const evalMap = {};
-    for (const a of assigns) {
-      try {
-        const snap = await getDoc(doc(db, 'users', a.studentUid));
-        if (snap.exists()) studentMap[a.studentUid] = snap.data();
-      } catch (e) {
-        console.warn('Failed to load user doc', e);
-      }
-      const userAssessments = await getUserAssessments(a.studentUid);
-      assessmentMap[a.studentUid] = userAssessments;
-      for (const asm of userAssessments) {
-        // Scoped to this evaluator: an unscoped query can't satisfy the
-        // evaluations read rule, so it used to fail silently and every rubric
-        // tick read "Pending" forever.
-        const evals = await getAllEvaluations(asm.id, { evaluatorUid: user.uid });
-        evalMap[asm.id] = evals.reduce((acc, e) => ({
-          ...acc,
-          [e.pillar]: e
-        }), {});
-      }
-    }
-    setStudents(studentMap);
-    setAssessments(assessmentMap);
-    setEvaluations(evalMap);
-    setLoading(false);
-  };
   const getPillarStatus = (assessmentId, pillar) => {
     const pillarEvals = evaluations[assessmentId] || {};
     return pillarEvals[pillar] || null;
@@ -126,6 +153,32 @@ export default function EvaluatorDashboard() {
         <div className="text-technical-sm font-technical-sm text-surface-variant">{t("EvaluatorDashboard.loading_your_dashboard")}</div>
       </div>;
   }
+  // /users is owner-or-admin read only, so the assignment row itself carries
+  // the display name — derived straight from the live assignments instead of
+  // the doomed per-student user-doc fetch the old version ran.
+  const students = {};
+  for (const a of assignments) {
+    if (!students[a.studentUid]) {
+      students[a.studentUid] = { name: a.studentName || '', email: a.studentEmail || '' };
+    }
+  }
+
+  // Work-queue ordering, recomputed on every live update: people who are
+  // waiting on this evaluator float to the top — unpaid rubrics first, then
+  // interviews waiting on a go/no-go, everything else stays in link order.
+  const workScore = studentUid => {
+    const list = assessments[studentUid] || [];
+    const latest = list[0] || null;
+    const pending = latest
+      ? ['EQ', 'SQ', 'AQ'].filter(p => !(evaluations[latest.id] || {})[p]).length
+      : 0;
+    const session = interviews[studentUid];
+    const waiting = session && ['invited', 'accepted', 'in_progress'].includes(session.status) ? 2 : 0;
+    const scheduled = session && session.status === 'scheduled' ? 1 : 0;
+    return (pending > 0 ? 4 : 0) + waiting + scheduled;
+  };
+  const rankedAssignments = [...assignments].sort((a, b) => workScore(b.studentUid) - workScore(a.studentUid));
+
   const role = userProfile?.role || 'individual';
   if (role !== 'evaluator' && role !== 'admin') {
     return <div className="flex items-center justify-center min-h-[60vh] flex-col gap-3">
@@ -151,15 +204,16 @@ export default function EvaluatorDashboard() {
           borderRadius: '8px'
         }}>
             <UserCheck size={12} />{t("EvaluatorDashboard.interview_studio")}</button>
-          <button onClick={loadData} className="inline-flex items-center gap-1.5 px-3.5 py-2 text-technical-sm font-technical-sm border-[0.5px] border-outline-variant text-on-surface-variant hover:text-primary hover:border-primary transition-all cursor-pointer bg-transparent uppercase tracking-widest flex-shrink-0" style={{
+          <span className="inline-flex items-center gap-1.5 px-3.5 py-2 text-technical-sm font-technical-sm border-[0.5px] border-outline-variant text-on-surface-variant uppercase tracking-widest flex-shrink-0" style={{
           borderRadius: '8px'
-        }}>
-            <RefreshCw size={12} />{t("EvaluatorDashboard.refresh")}</button>
+        }} title="This console updates in real time — no refresh needed">
+            <span className="size-1.5 rounded-full" style={{ background: 'var(--color-success)' }} />LIVE
+          </span>
         </div>
       </section>
 
       {assignments.length === 0 ? <EmptyState icon={Users} title={t("EvaluatorDashboard.no_students_assigned")} description="Contact an admin to get assigned students to evaluate." /> : <div className="flex flex-col">
-          {assignments.map(assignment => {
+          {rankedAssignments.map(assignment => {
         
         const student = students[assignment.studentUid];
         // /users is owner-or-admin read only, so a name may not be readable
@@ -228,6 +282,19 @@ export default function EvaluatorDashboard() {
                       title="Start or resume an interview with this person"
                     >
                       <Mic size={11} />{interviewStatusChip ? 'Interview' : 'Run interview'}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={e => { e.stopPropagation(); handleRemove(assignment); }}
+                      disabled={removingUid === assignment.studentUid}
+                      aria-label={`Remove ${studentName || 'this person'} from your list`}
+                      title="Remove from your list — their data stays intact"
+                      className="inline-flex items-center gap-1.5 px-2.5 py-1.5 text-technical-sm font-technical-sm border-[0.5px] border-outline-variant text-surface-variant hover:text-error hover:border-error/50 transition-all cursor-pointer bg-transparent uppercase tracking-widest flex-shrink-0 disabled:opacity-50 disabled:cursor-wait"
+                      style={{
+                      borderRadius: '6px'
+                    }}
+                    >
+                      <UserX size={11} />{removingUid === assignment.studentUid ? 'Removing' : 'Remove'}
                     </button>
                   </div>
                 </div>

@@ -3,12 +3,13 @@ import usePageTitle from '../../lib/usePageTitle';
 import React, { useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { saveInterviewSession } from '../../services/interviewService';
+import { saveInterviewSession, getEvaluatorSessions } from '../../services/interviewService';
 import { notifyInterviewInvited } from '../../services/notificationService';
 import { generateInterviewQuestions } from '../../services/groqService';
 import { RUBRIC_DIMENSIONS } from '../../core/data/interviewRubrics';
 import { useToast } from '../../components/Toast';
 import { FileText, Play, ChevronRight, Brain, Sparkles, UserCheck } from 'lucide-react';
+import { useEffect } from 'react';
 export default function InterviewSetup() {
   const {
     t
@@ -34,6 +35,18 @@ export default function InterviewSetup() {
   const [saving, setSaving] = useState(false);
   const [generating, setGenerating] = useState(false);
   const [aiQuestions, setAiQuestions] = useState(true);
+  // Re-interview detection: how many sessions this evaluator already has for
+  // the pinned candidate. N > 0 means attempt N+1 — the whole flow (invitation
+  // popup, live mirror, merged report) simply runs again as attempt N+1.
+  const [priorSessions, setPriorSessions] = useState([]);
+  useEffect(() => {
+    if (!user || !candidateUid) return;
+    getEvaluatorSessions(user.uid)
+      .then(list => setPriorSessions(list.filter(s => s.candidateUid === candidateUid)))
+      .catch(() => {});
+  }, [user, candidateUid]);
+  const priorCompleted = priorSessions.filter(s => s.status === 'completed');
+  const attemptNo = priorSessions.length + 1;
   const canSubmit = candidateName.trim().length > 0;
   const handleStart = async () => {
     if (!canSubmit || !user) return;
@@ -49,6 +62,10 @@ export default function InterviewSetup() {
         notes: notes.trim()
       };
       if (candidateUid) payload.candidateUid = candidateUid;
+      // Attempt bookkeeping — steps up automatically on a re-interview.
+      payload.sessionNumber = priorSessions.length + 1;
+      const lastCompleted = priorCompleted[0];
+      if (lastCompleted) payload.previousSessionId = lastCompleted.id;
       payload.status = mode === 'live'
         ? (candidateUid ? 'invited' : 'in_progress')
         : 'scheduled';
@@ -147,7 +164,9 @@ export default function InterviewSetup() {
             <div className="mb-4 flex items-center gap-2.5 border-[0.5px] border-gold/30 bg-gold/5 px-3.5 py-2.5" style={{ borderRadius: '6px' }}>
               <UserCheck size={13} className="text-gold flex-shrink-0" />
               <span className="text-technical-sm font-technical-sm text-on-surface-variant">
-                Interview for <strong className="text-on-background">{pinnedCandidateName || 'platform user'}</strong> — they'll confirm on their dashboard before anything starts.
+                {attemptNo > 1
+                  ? <>Re-interview — <strong className="text-on-background">{pinnedCandidateName || 'platform user'}</strong>, attempt <strong className="text-gold">#{attemptNo}</strong> ({priorCompleted.length} completed before). They'll get the same confirmation popup before anything starts.</>
+                  : <>Interview for <strong className="text-on-background">{pinnedCandidateName || 'platform user'}</strong> — they'll confirm on their dashboard before anything starts.</>}
               </span>
             </div>
           )}

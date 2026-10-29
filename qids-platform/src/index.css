@@ -1222,6 +1222,33 @@ details[open] > .faq-a { grid-template-rows: 1fr; }
   svg text { fill: #111 !important; }
   .text-gradient, .gradient-rule { background: none !important; color: #111 !important; }
   .animate-fade { animation: none !important; }
+
+  /* ── Interview report: download as a clean PDF document ───────────────── */
+  /* Scopes every rule so the PIP report keeps its own treatment. */
+  @page { size: A4; margin: 14mm 12mm; }
+
+  /* Blanket: dark-theme text tokens resolve to near-white on paper — force
+     ink-black. Higher-specificity re-words below restore the colored bands. */
+  .interview-report * { color: #111 !important; }
+  .interview-report h1, .interview-report h2, .interview-report h3 { color: #111 !important; }
+  .interview-report .kicker { color: #666 !important; }
+
+  /* Colored moments (bands, deltas, grades) print in dark readable tones. */
+  .interview-report [style*="--color-success"] { color: #166534 !important; }
+  .interview-report [style*="--status-err"], .interview-report [style*="--color-error"] { color: #b91c1c !important; }
+  .interview-report [style*="--color-warning"] { color: #b45309 !important; }
+  .interview-report [style*="--color-primary"], .interview-report [style*="--color-info"] { color: #1e3a8a !important; }
+  .interview-report [style*="--gold-strong"], .interview-report [style*="--color-gold"] { color: #7c5a03 !important; }
+
+  /* Chips (bands, attempt number) print as quiet bordered labels. */
+  .interview-report .chip { background: #fff !important; color: #111 !important; border: 1px solid #ccc !important; }
+
+  /* Keep cards whole across page breaks; thin hairlines instead of shadows. */
+  .interview-report .card, .interview-report .card-gold { background: #fff !important; border: 1px solid #ddd !important; box-shadow: none !important; break-inside: avoid; }
+
+  /* The gauge/radar strokes carry theme vars — re-ink for paper. */
+  .interview-report svg circle, .interview-report svg line { stroke: #999 !important; }
+  .interview-report svg polygon { stroke: #7c5a03 !important; fill: #f5f0e6 !important; }
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════

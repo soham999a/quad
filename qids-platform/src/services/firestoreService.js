@@ -291,6 +291,51 @@ export async function getAllEvaluations(assessmentId, scope = {}) {
 }
 
 /**
+ * Live assignment list for one evaluator. New links (and unlinks via the
+ * `active: false` soft delete) appear the moment they happen, no refresh.
+ */
+export function subscribeEvaluatorAssignments(evaluatorUid, callback, onError = () => {}) {
+  if (!evaluatorUid) return () => {};
+  const td = typeof window !== 'undefined' ? window.__FIRESTORE_DATA__ : null;
+  if (td?.evaluatorAssignments?.[evaluatorUid]) {
+    callback(td.evaluatorAssignments[evaluatorUid].filter(a => a.active !== false));
+    return () => {};
+  }
+  const q = query(collection(db, 'evaluatorAssignments'), where('evaluatorUid', '==', evaluatorUid));
+  let cache = [];
+  return onSnapshot(q, (snap) => {
+    callback(snap.docs.map(d => ({ id: d.id, ...d.data() })).filter(a => a.active !== false));
+  }, (e) => {
+    console.warn('subscribeEvaluatorAssignments:', e.message);
+    callback(cache);
+  });
+}
+
+/**
+ * Live rubric scores recorded BY one evaluator, across all their students.
+ * The security rules scope evaluations reads to the recorder, so a single
+ * `evaluatorUid ==` query is one listener that covers every rubric tick at
+ * once — instead of one listener per assessment.
+ */
+export function subscribeEvaluationsByEvaluator(evaluatorUid, callback, onError = () => {}) {
+  if (!evaluatorUid) return () => {};
+  const td = typeof window !== 'undefined' ? window.__FIRESTORE_DATA__ : null;
+  if (td?.evaluations) {
+    callback(Object.values(td.evaluations).flat());
+    return () => {};
+  }
+  const q = query(collection(db, 'evaluations'), where('evaluatorUid', '==', evaluatorUid));
+  let cache = [];
+  return onSnapshot(q, (snap) => {
+    cache = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    callback(cache);
+  }, (e) => {
+    console.warn('subscribeEvaluationsByEvaluator:', e.message);
+    callback(cache);
+  });
+}
+
+/**
  * Live evaluations for one assessment, scoped to what the caller may read.
  * The student's merged report and the evaluator's rubric ticks update the
  * moment a score lands instead of on the next page load.

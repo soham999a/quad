@@ -96,6 +96,38 @@ export function weightedInterviewScore(pillarScores: PillarScores): number {
 }
 
 /**
+ * Interview band (PIP Page 7 vocabulary, adapted to the 1–5 rubric scale).
+ *
+ * The spec's band descriptors (Exceptional | Proficient | Developing | Emerging)
+ * are written for T-scores; interview dimensions are scored 1–5, so the bands
+ * are mapped onto that range with equivalent plain-language descriptors.
+ */
+export function interviewBand(score: number | null | undefined): {
+  label: 'Exceptional' | 'Proficient' | 'Developing' | 'Emerging';
+  short: string;
+  color: string;
+  desc: string;
+} | null {
+  if (score == null || !(score > 0)) return null;
+  if (score >= 4.5) return {
+    label: 'Exceptional', short: 'EXC', color: 'var(--color-success)',
+    desc: 'Consistently strong evidence in the room — specific behaviours, clear outcomes, fast recovery.',
+  };
+  if (score >= 3.5) return {
+    label: 'Proficient', short: 'PROF', color: 'var(--color-primary)',
+    desc: 'Solid capability in the room with occasional gaps under novelty or pressure.',
+  };
+  if (score >= 2.5) return {
+    label: 'Developing', short: 'DeV', color: 'var(--gold-strong, var(--color-primary))',
+    desc: 'Functional but inconsistent — answers trend generic or hypothetical under probing.',
+  };
+  return {
+    label: 'Emerging', short: 'EMG', color: 'var(--color-warning, var(--gold-strong, var(--color-primary)))',
+    desc: 'Limited evidence in the room — answers stay superficial, externalise cause, or avoid detail.',
+  };
+}
+
+/**
  * Compute the full interview result: merged scores → pillar scores → unified → grade.
  */
 export function computeInterviewResult(session: Pick<InterviewSession, 'selfAssessment' | 'evaluatorAssessment' | 'mode'>) {

@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { getEvaluatorSessions } from '../../services/interviewService';
-import { ClipboardList, Users, Clock, CheckCircle, Plus, ChevronRight, Play, FileText, Filter, Trash2 } from 'lucide-react';
+import { ClipboardList, Users, Clock, CheckCircle, Plus, ChevronRight, ChevronLeft, RotateCcw, Play, FileText, Filter, Trash2 } from 'lucide-react';
 import { deleteInterviewSession } from '../../services/interviewService';
 import SeedInterviewData from '../../components/SeedInterviewData';
 import { reportError } from '../../lib/errorReport';
@@ -53,12 +53,19 @@ export default function InterviewerDashboard() {
   const [sessions, setSessions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('all');
+  // Sessions list pagination — 8 per page, so a growing history (the
+  // re-interview flow multiplies rows) never drowns the dashboard.
+  const [page, setPage] = useState(1);
+  const PAGE_SIZE = 8;
   useEffect(() => {
     if (!user) return;
     setLoading(true);
     getEvaluatorSessions(user.uid).then(setSessions).catch(() => setSessions([])).finally(() => setLoading(false));
   }, [user]);
   const filtered = filter === 'all' ? sessions : sessions.filter(s => s.status === filter);
+  const pageCount = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const safePage = Math.min(page, pageCount);
+  const shown = filtered.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE);
   const counts = {
     total: sessions.length,
     scheduled: sessions.filter(s => s.status === 'scheduled').length,
@@ -129,7 +136,7 @@ export default function InterviewerDashboard() {
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-2">
           <Filter size={14} className="text-surface-variant" />
-          {['all', 'scheduled', 'in_progress', 'completed'].map(f => <button key={f} onClick={() => setFilter(f)} className={`px-3 py-1.5 text-technical-sm font-technical-sm uppercase tracking-widest border-[0.5px] transition-all cursor-pointer ${filter === f ? 'bg-primary/10 border-primary/30 text-primary' : 'bg-transparent border-outline-variant text-surface-variant hover:border-primary/20'}`}>
+          {['all', 'scheduled', 'in_progress', 'completed'].map(f => <button key={f} onClick={() => { setFilter(f); setPage(1); }} className={`px-3 py-1.5 text-technical-sm font-technical-sm uppercase tracking-widest border-[0.5px] transition-all cursor-pointer ${filter === f ? 'bg-primary/10 border-primary/30 text-primary' : 'bg-transparent border-outline-variant text-surface-variant hover:border-primary/20'}`}>
               {f === 'all' ? 'All' : f === 'in_progress' ? 'Live' : f.charAt(0).toUpperCase() + f.slice(1)}
             </button>)}
         </div>
@@ -151,8 +158,8 @@ export default function InterviewerDashboard() {
             </div>)}
         </div> : filtered.length === 0 && filter === 'all' ? <SeedInterviewData onDone={() => {
       getEvaluatorSessions(user.uid).then(setSessions).catch(e => reportError(e, { kind: 'interviewer-refresh' }));
-    }} /> : <div className="flex flex-col">
-          {filtered.map(session => {
+    }} />        : <div className="flex flex-col">
+          {shown.map(session => {
         
         const statusStyle = STATUS_STYLES[session.status] || STATUS_STYLES.scheduled;
         const score = session.unifiedScore;
@@ -182,7 +189,9 @@ export default function InterviewerDashboard() {
                       {session.role && <span className="text-surface-variant ml-2">— {session.role}</span>}
                     </div>
                     <div className="text-technical-sm font-technical-sm text-surface-variant truncate">
-                      {session.mode === 'live' ? 'Live Interview' : 'Post-Interview'} · {formatDate(session.createdAt)}
+                      {session.mode === 'live' ? 'Live Interview' : 'Post-Interview'}
+                      {(session.sessionNumber || 1) > 1 && <span style={{ color: 'var(--color-primary)' }}> · RE-INTERVIEW #{session.sessionNumber}</span>}
+                      {' · '}{formatDate(session.createdAt)}
                     </div>
                   </div>
                 </div>
@@ -195,6 +204,16 @@ export default function InterviewerDashboard() {
                         GRADE {grade.grade}
                       </div>
                     </div>}
+                  {session.status === 'completed' && session.candidateUid && (
+                    <button
+                      onClick={e => { e.stopPropagation(); navigate(`/app/interview/setup?candidateUid=${session.candidateUid}&candidateName=${encodeURIComponent(session.candidateName || '')}`); }}
+                      title="Run another interview for the same candidate — saved as the next attempt"
+                      className="inline-flex items-center gap-1.5 px-2.5 py-1.5 text-technical-sm font-technical-sm uppercase tracking-widest border-[0.5px] border-outline-variant text-surface-variant hover:border-primary/30 hover:text-primary transition-colors cursor-pointer bg-transparent"
+                      style={{ borderRadius: '6px' }}
+                    >
+                      <RotateCcw size={11} /> Re-interview
+                    </button>
+                  )}
                   <span className="chip text-[10px]" style={{
               background: statusStyle.bg,
               color: statusStyle.color,
@@ -209,6 +228,21 @@ export default function InterviewerDashboard() {
                 </div>
               </div>;
       })}
+
+          {/* Pager */}
+          {filtered.length > PAGE_SIZE && <div className="flex items-center justify-between mt-6">
+              <span className="text-technical-sm font-technical-sm text-surface-variant uppercase tracking-widest">
+                Page {safePage} of {pageCount} · {filtered.length} sessions
+              </span>
+              <div className="flex items-center gap-2">
+                <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={safePage === 1} className="btn-outline inline-flex items-center gap-1.5 disabled:opacity-40 cursor-pointer">
+                  <ChevronLeft size={13} /> Prev
+                </button>
+                <button onClick={() => setPage(p => Math.min(pageCount, p + 1))} disabled={safePage === pageCount} className="btn-outline inline-flex items-center gap-1.5 disabled:opacity-40 cursor-pointer">
+                  Next <ChevronRight size={13} />
+                </button>
+              </div>
+            </div>}
         </div>}
     </div>;
 }

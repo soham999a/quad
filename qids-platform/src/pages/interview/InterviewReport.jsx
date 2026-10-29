@@ -5,6 +5,8 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { getInterviewSession } from '../../services/interviewService';
 import { useAuth } from '../../context/AuthContext';
 import { RUBRIC_DIMENSIONS, RUBRIC_MAP } from '../../core/data/interviewRubrics';
+import { interviewBand } from '../../core/engine/interviewScoring';
+import { downloadInterviewReportPdf } from '../../lib/interviewReportPdf';
 import { PILLARS } from '../../data/qidsData';
 
 // qidsData exports PILLARS as a keyed map ({ IQ: {...}, EQ: {...}, ... }).
@@ -51,6 +53,32 @@ export default function InterviewReport() {
   const [session, setSession] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  // Re-interview context: the earlier attempt, for the delta comparison the
+  // assessor guidance calls for when the same candidate is interviewed again.
+  const [previous, setPrevious] = useState(null);
+  // The Download button saves a real PDF file (one click, no print dialog);
+  // jsPDF loads on demand inside the generator.
+  const [downloading, setDownloading] = useState(false);
+  const handleDownload = async () => {
+    if (!session || downloading) return;
+    setDownloading(true);
+    try {
+      await downloadInterviewReportPdf(session, previous);
+    } catch (e) {
+      console.warn('PDF download failed:', e);
+      // Last-resort fallback: the print dialog can still produce a PDF.
+      window.print();
+    } finally {
+      setDownloading(false);
+    }
+  };
+  useEffect(() => {
+    setPrevious(null);
+    if (!session?.previousSessionId) return;
+    getInterviewSession(session.previousSessionId)
+      .then(prev => { if (prev?.status === 'completed') setPrevious(prev); })
+      .catch(() => {});
+  }, [session?.previousSessionId]);
   const role = userProfile?.role || 'individual';
   useEffect(() => {
     if (!sessionId) return;
@@ -116,14 +144,27 @@ export default function InterviewReport() {
       angle: i / RUBRIC_DIMENSIONS.length * 2 * Math.PI - Math.PI / 2
     };
   });
-  return <div className="page-pad max-w-[960px] mx-auto animate-fade">
+  return <div className="page-pad max-w-[960px] mx-auto animate-fade interview-report">
       {/* Hero */}
       <section className="card-gold p-8 md:p-12 mb-8 text-center">
         <div className="kicker mb-3">{t("InterviewReport.interview_assessment_report")}</div>
         <h1 className="text-headline-lg font-headline-lg text-on-background mb-2">{session.candidateName}</h1>
         {session.role && <div className="text-body-md font-body-md text-surface-variant mb-6">{session.role}</div>}
-        <div className="text-body-sm font-body-sm text-surface-variant mb-8">
-          {mode === 'live' ? 'Live Interview' : 'Post-Interview'} · Scored by {session.evaluatorName}
+        <div className="flex items-center justify-center gap-2 mb-8 flex-wrap">
+          <div className="text-body-sm font-body-sm text-surface-variant">
+            {mode === 'live' ? 'Live Interview' : 'Post-Interview'} · Scored by {session.evaluatorName}
+          </div>
+          {(session.sessionNumber || 1) > 1 && <span className="chip text-[10px]" style={{ background: 'var(--gold-tint)', color: 'var(--color-primary)', borderColor: 'var(--gold-line)' }}>
+              Re-interview · Attempt #{session.sessionNumber}
+            </span>}
+          {previous?.unifiedScore != null && unifiedScore != null && (() => {
+            const delta = Math.round(unifiedScore) - Math.round(previous.unifiedScore);
+            const up = delta >= 0;
+            return <span className="text-technical-sm font-technical-sm uppercase tracking-widest"
+                style={{ color: up ? 'var(--color-success)' : 'var(--status-err)' }}>
+                {up ? '▲' : '▼'} {up ? '+' : ''}{delta} vs attempt #{previous.sessionNumber || 1}
+              </span>;
+          })()}
         </div>
 
         {/* Score Gauge */}
@@ -154,7 +195,8 @@ export default function InterviewReport() {
           </div>}
       </section>
 
-      {/* Dimension Scores */}
+      {/* Dimension Scores — each carries its band (spec band vocabulary) and,
+          for re-interviews, the movement against the previous attempt. */}
       <section className="mb-8">
         <div className="kicker mb-4">{t("InterviewReport.dimension_scores")}</div>
         <div className="gradient-rule mb-6" />
@@ -163,6 +205,9 @@ export default function InterviewReport() {
           const score = mergedScores?.[d.id] ?? 0;
           const pct = score / maxScore * 100;
           const evScore = evaluatorAssessment?.find(e => e.dimensionId === d.id)?.score;
+          const band = interviewBand(score || null);
+          const prevDim = previous?.mergedScores?.[d.id];
+          const delta = (score && prevDim != null) ? Math.round((score - prevDim) * 10) / 10 : null;
           return <div key={d.id} className="card p-4 md:p-5">
                 <div className="flex items-center justify-between mb-2">
                   <div className="text-label-sm font-label-sm text-on-background">{d.label}</div>
@@ -178,9 +223,20 @@ export default function InterviewReport() {
                 background: SCORE_COLORS[i % SCORE_COLORS.length]
               }} />
                 </div>
-                <div className="text-technical-sm font-technical-sm text-surface-variant mt-2">
-                  Maps to {PILLAR_LIST.find(p => p.id === d.pillar)?.short || d.pillar}
+                <div className="flex items-center justify-between gap-2 mt-2 flex-wrap">
+                  <div className="text-technical-sm font-technical-sm text-surface-variant">
+                    Maps to {PILLAR_LIST.find(p => p.id === d.pillar)?.short || d.pillar}
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {delta != null && <span className="text-technical-sm font-technical-sm" style={{ color: delta >= 0 ? 'var(--color-success)' : 'var(--status-err)' }}>
+                      {delta >= 0 ? '+' : ''}{delta.toFixed(1)}
+                    </span>}
+                    {band && <span className="text-technical-sm font-technical-sm uppercase tracking-widest" style={{ color: band.color }}>
+                      {band.label}
+                    </span>}
+                  </div>
                 </div>
+                {band && <div className="text-body-sm font-body-sm text-on-surface-variant mt-1">{band.desc}</div>}
                 {evaluatorAssessment?.find(e => e.dimensionId === d.id)?.notes &&
                   <div className="mt-3 pt-3 border-t-[0.5px] border-outline-variant text-body-sm font-body-sm text-on-surface-variant italic">
                     “{evaluatorAssessment.find(e => e.dimensionId === d.id).notes}”
@@ -188,6 +244,54 @@ export default function InterviewReport() {
               </div>;
         })}
         </div>
+      </section>
+
+      {/* Strengths & development focus — the interview-mode panel the spec
+          defines: top 3 strengths, then the two areas that deserve probing or
+          coaching next. Sorted on the merged scores, not the raw ones. */}
+      <section className="mb-8">
+        <div className="kicker mb-4">Strengths & development focus</div>
+        <div className="gradient-rule mb-6" />
+        {(() => {
+          const ranked = RUBRIC_DIMENSIONS
+            .map(d => ({ dim: d, score: mergedScores?.[d.id] }))
+            .filter(x => x.score > 0)
+            .sort((a, b) => b.score - a.score);
+          const strengths = ranked.slice(0, Math.min(3, ranked.length));
+          const gaps = ranked.slice().reverse().slice(0, 2).filter(x => !strengths.find(s => s.dim.id === x.dim.id));
+          return <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div className="card p-6">
+              <div className="flex items-center gap-2 mb-4">
+                <Target size={14} style={{ color: 'var(--color-success)' }} />
+                <span className="text-technical-sm font-technical-sm uppercase tracking-widest" style={{ color: 'var(--color-success)' }}>Top strengths</span>
+              </div>
+              <ol className="space-y-3">
+                {strengths.map((x, i) => <li key={x.dim.id} className="flex gap-3">
+                    <span className="text-technical-sm font-technical-sm text-surface-variant tabular-nums flex-shrink-0">{i + 1}</span>
+                    <div>
+                      <div className="text-label-sm font-label-sm text-on-background">{x.dim.label}</div>
+                      <div className="text-technical-sm font-technical-sm text-surface-variant">{x.score.toFixed(1)}/5 · {interviewBand(x.score)?.label}</div>
+                    </div>
+                  </li>)}
+              </ol>
+            </div>
+            <div className="card p-6">
+              <div className="flex items-center gap-2 mb-4">
+                <Target size={14} style={{ color: 'var(--gold-strong, var(--color-primary))' }} />
+                <span className="text-technical-sm font-technical-sm uppercase tracking-widest" style={{ color: 'var(--gold-strong, var(--color-primary))' }}>Develop next</span>
+              </div>
+              <ol className="space-y-3">
+                {gaps.length > 0 ? gaps.map((x, i) => <li key={x.dim.id} className="flex gap-3">
+                    <span className="text-technical-sm font-technical-sm text-surface-variant tabular-nums flex-shrink-0">{i + 1}</span>
+                    <div>
+                      <div className="text-label-sm font-label-sm text-on-background">{x.dim.label}</div>
+                      <div className="text-technical-sm font-technical-sm text-surface-variant">{x.score.toFixed(1)}/5 · {interviewBand(x.score)?.label}</div>
+                    </div>
+                  </li>) : <li className="text-body-sm text-on-surface-variant">Nothing flagged — every scored dimension landed in the top half.</li>}
+              </ol>
+            </div>
+          </div>;
+        })()}
       </section>
 
       {/* Pillar Radar + Bars */}
@@ -303,9 +407,13 @@ export default function InterviewReport() {
       <div className="flex items-center justify-between mt-12 mb-16">
         <button onClick={() => navigate('/app/interview')} className="btn-outline">{t("InterviewReport.back_to_dashboard_2")}</button>
         <div className="flex gap-3">
-          <button onClick={() => window.print()} className="btn-outline flex items-center gap-2">
-            <Download size={14} />{t("InterviewReport.download")}</button>
-          <button onClick={() => navigate('/app/interview/setup')} className="btn-primary glow flex items-center gap-2">{t("InterviewReport.new_session")}<ChevronRight size={14} />
+          <button onClick={handleDownload} disabled={downloading} className="btn-outline flex items-center gap-2 disabled:opacity-50">
+            <Download size={14} />{downloading ? 'Preparing…' : t("InterviewReport.download")}</button>
+          <button
+            onClick={() => session.candidateUid
+              ? navigate(`/app/interview/setup?candidateUid=${session.candidateUid}&candidateName=${encodeURIComponent(session.candidateName || '')}`)
+              : navigate('/app/interview/setup')}
+            className="btn-primary glow flex items-center gap-2">{t("InterviewReport.new_session")}<ChevronRight size={14} />
           </button>
         </div>
       </div>

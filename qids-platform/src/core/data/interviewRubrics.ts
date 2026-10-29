@@ -144,73 +144,141 @@ export const RUBRIC_MAP: Record<RubricDimensionId, RubricDimension> =
 export const DIMENSION_TO_PILLAR: Record<RubricDimensionId, string> =
   Object.fromEntries(RUBRIC_DIMENSIONS.map(d => [d.id, d.pillar])) as Record<RubricDimensionId, string>;
 
-/** 10 sample live interview questions — one per dimension (2 extra for variety). */
+/**
+ * Live-interview question bank — built from the PIP Page 7 Interview Guide
+ * format (QiDS Enterprise Intelligence Assessment spec): each item carries a
+ * targeted behavioural question, a follow-up probe, and strong/weak scoring
+ * anchors. Six primaries are verbatim from the spec's interview guide table;
+ * the remaining three (Communication, Teamwork, Leadership) keep the platform
+ * bank's coverage so every rubric dimension is exercised at least once.
+ */
 export const LIVE_QUESTIONS: InterviewQuestion[] = [
+  // ── From the spec — Conflict Resolution (EQ low) ─────────────────────────
   {
     id: 'LQ-01',
+    text: 'Tell me about a significant disagreement you had with a teammate or peer. What happened and how did you handle it?',
+    dimension: 'EmotionalIntelligence',
+    context: 'Flagged: emotional intelligence — conflict handling.',
+    followUp: 'What did you learn about your own conflict style from that experience?',
+    strong: 'Takes ownership, describes specific resolution behaviour, reflects.',
+    weak: 'Blames others, vague, avoids detail.',
+    source: 'pdf',
+  },
+  // ── From the spec — Adaptability (AQ low) ────────────────────────────────
+  {
+    id: 'LQ-02',
+    text: 'Describe a situation where requirements or direction changed significantly midway through something you were leading.',
+    dimension: 'Adaptability',
+    context: 'Flagged: adaptability — mid-course pivot.',
+    followUp: 'How did you manage your own reaction to the change before deciding how to act?',
+    strong: 'Specific, actionable pivot, manages emotional response.',
+    weak: 'Reactive, complains about change, no learning.',
+    source: 'pdf',
+  },
+  // ── From the spec — Ethical Judgment (Integrity flag) ────────────────────
+  {
+    id: 'LQ-03',
+    text: 'Have you ever been in a situation where doing the right thing was professionally risky? What did you do?',
+    dimension: 'Integrity',
+    context: 'Flagged: integrity — costly ethical choice.',
+    followUp: 'How did you decide that was the right course of action?',
+    strong: 'Clear ethical reasoning, accepts discomfort, no exaggeration.',
+    weak: 'Vague, rule-based only, no personal ownership.',
+    source: 'pdf',
+  },
+  // ── From the spec — Critical Thinking (CT low) ───────────────────────────
+  {
+    id: 'LQ-04',
+    text: 'Tell me about a decision you made that turned out to be wrong. How did you identify it was wrong?',
+    dimension: 'CriticalThinking',
+    context: 'Flagged: critical thinking — error recognition.',
+    followUp: 'What process do you now use to stress-test your decisions before acting on them?',
+    strong: 'Specific, accepts responsibility, articulates learning.',
+    weak: 'Externalises cause, no process articulated.',
+    source: 'pdf',
+  },
+  // ── From the spec — Resilience (AQ-RC low) ───────────────────────────────
+  {
+    id: 'LQ-05',
+    text: 'What is the most significant setback you have faced professionally? How did you recover?',
+    dimension: 'Resilience',
+    context: 'Flagged: resilience — recovery from adversity.',
+    followUp: 'What is different about how you approach similar situations now?',
+    strong: 'Specific adversity, structured recovery, concrete learning.',
+    weak: 'Minimises setback, no growth integration.',
+    source: 'pdf',
+  },
+  // ── From the spec — Learning Agility (composite low) → ProblemSolving ────
+  {
+    id: 'LQ-06',
+    text: 'Describe a time you had to learn something significantly new in a short period. What did you do and how did it go?',
+    dimension: 'ProblemSolving',
+    context: 'Flagged: learning agility — fast acquisition under pressure.',
+    followUp: 'What does your typical learning process look like when you start something completely new?',
+    strong: 'Self-directed approach, concrete method, applied successfully.',
+    weak: 'Relies only on training, no personal initiative.',
+    source: 'pdf',
+  },
+  // ── Platform — Communication ────────────────────────────────────────────
+  {
+    id: 'LQ-07',
     text: 'Tell me about a time you had to explain a complex idea to someone unfamiliar with the topic. How did you ensure they understood?',
     dimension: 'Communication',
     context: 'Assesses clarity, audience awareness, and active listening.',
+    followUp: 'How did you check their understanding instead of assuming it?',
+    strong: 'Audience-aware language, checks for understanding, invites questions.',
+    weak: 'Describes what they said, not how the other person received it.',
+    source: 'pdf',
   },
+  // ── Platform — Teamwork ─────────────────────────────────────────────────
   {
-    id: 'LQ-02',
-    text: 'Describe a situation where you faced an unexpected obstacle on a project. How did you analyze the problem and what solution did you implement?',
-    dimension: 'ProblemSolving',
-    context: 'Assesses structured analytical thinking and solution quality.',
-  },
-  {
-    id: 'LQ-03',
-    text: 'Give an example of a time you had to make a difficult decision without complete information. What was your process?',
-    dimension: 'Leadership',
-    context: 'Assesses decisiveness, initiative, and comfort with ambiguity.',
-  },
-  {
-    id: 'LQ-04',
-    text: 'Tell me about a time you received critical feedback that was hard to hear. How did you process it and what did you do with it?',
-    dimension: 'EmotionalIntelligence',
-    context: 'Assesses self-awareness, emotional regulation, and growth mindset.',
-  },
-  {
-    id: 'LQ-05',
-    text: 'Describe a major change in your work or personal life that required you to completely adjust your approach. How did you handle it?',
-    dimension: 'Adaptability',
-    context: 'Assesses resilience, flexibility, and ability to pivot.',
-  },
-  {
-    id: 'LQ-06',
+    id: 'LQ-08',
     text: 'Tell me about a time you worked with a difficult teammate. How did you manage the relationship and what was the outcome?',
     dimension: 'Teamwork',
     context: 'Assesses collaboration, conflict resolution, and interpersonal skill.',
+    followUp: 'Looking back, is there anything you would do earlier the next time?',
+    strong: 'Separates the person from the problem, acts early, keeps the goal central.',
+    weak: 'Escalates first, labels the teammate, outcome unclear.',
+    source: 'pdf',
   },
-  {
-    id: 'LQ-07',
-    text: 'Describe a situation where you had to choose between doing what was easy and doing what was right. What did you choose and why?',
-    dimension: 'Integrity',
-    context: 'Assesses ethical judgment, accountability, and consistency.',
-  },
-  {
-    id: 'LQ-08',
-    text: 'Give an example of a time you identified a flaw in a plan or argument that others had accepted. How did you raise it?',
-    dimension: 'CriticalThinking',
-    context: 'Assesses evidence evaluation, intellectual rigor, and courage.',
-  },
+  // ── Platform — Leadership ────────────────────────────────────────────────
   {
     id: 'LQ-09',
-    text: 'How do you typically prioritize competing deadlines? Walk me through your thought process with a specific example.',
-    dimension: 'ProblemSolving',
-    context: 'Additional probe — structured reasoning under pressure.',
+    text: 'Give an example of a time you had to make a difficult decision without complete information. What was your process?',
+    dimension: 'Leadership',
+    context: 'Assesses decisiveness, initiative, and comfort with ambiguity.',
+    followUp: 'What would have made that decision easier — and what could you decide earlier next time?',
+    strong: 'Weighs trade-offs explicitly, owns the call, states the review point.',
+    weak: 'Defers to others, decision criteria unclear, no reflection.',
+    source: 'pdf',
   },
+  // ── Probe bank — reserve items the interviewer can pull in on click ─────
   {
     id: 'LQ-10',
-    text: 'What is a belief or opinion you held strongly in the past that you later changed? What caused the shift?',
-    dimension: 'CriticalThinking',
-    context: 'Additional probe — intellectual humility and open-mindedness.',
+    text: 'How do you typically prioritise competing deadlines? Walk me through your thought process with a specific example.',
+    dimension: 'ProblemSolving',
+    context: 'Additional probe — structured reasoning under pressure.',
+    strong: 'Names explicit criteria and trade-offs within a real example.',
+    weak: 'Generic priority advice, no lived example.',
+    source: 'pdf',
   },
   {
     id: 'LQ-11',
+    text: 'What is a belief or opinion you held strongly in the past that you later changed? What caused the shift?',
+    dimension: 'CriticalThinking',
+    context: 'Additional probe — intellectual humility and open-mindedness.',
+    strong: 'Names the evidence or experience that changed the view.',
+    weak: 'Cannot recall any changed belief.',
+    source: 'pdf',
+  },
+  {
+    id: 'LQ-12',
     text: 'Tell me about a time you were under intense pressure or faced a setback. What did you do to stay productive and how did you recover?',
     dimension: 'Resilience',
-    context: 'Assesses composure under pressure, recovery, and sustained effort.',
+    context: 'Additional probe — composure and sustained effort.',
+    strong: 'Concrete coping routine, sustained output, honest reflection.',
+    weak: 'Claims no pressure or no recovery story.',
+    source: 'pdf',
   },
 ];
 
