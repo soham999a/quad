@@ -9,7 +9,9 @@ import { Mic, MicOff, Video, VideoOff, Phone, PhoneOff, Monitor, Loader2 } from 
  * waiting-to-connect and call-ended are all shown, never faked.
  */
 export default function VideoCallDock({ call, role = 'evaluator', className = '' }) {
-  const { status, muted, cameraOff, localStream, remoteStream, mediaError } = call;
+  const { status, muted, cameraOff, localStream, remoteStream, mediaError, connState, iceState, sigError } = call;
+
+  const retry = () => { try { call.stop(); } finally { setTimeout(() => call.start(), 400); } };
 
   // Attach streams to the video elements — srcObject is not a React attribute.
   const remoteRef = el => { if (el && remoteStream) el.srcObject = remoteStream; };
@@ -63,6 +65,13 @@ export default function VideoCallDock({ call, role = 'evaluator', className = ''
                 <div className="text-body-sm font-body-sm text-white/70">
                   {statusLine || 'Waiting…'}
                 </div>
+                {/* Wire truth while connecting: peer state and ICE state tell us
+                    whether failure is signalling or network — no more guessing. */}
+                {status === 'connecting' && (
+                  <div className="mt-2 text-[10px] font-mono uppercase tracking-widest text-white/40">
+                    pc {connState || '…'} · ice {iceState || '…'}{sigError ? ` · sig ${sigError}` : ''}
+                  </div>
+                )}
               </div>}
             {/* Own camera inset */}
             {localStream && <div className="absolute bottom-3 right-3 w-[112px] aspect-video bg-[#0b0d10] border border-white/10 overflow-hidden" style={{ borderRadius: '6px' }}>
@@ -96,12 +105,12 @@ export default function VideoCallDock({ call, role = 'evaluator', className = ''
               {cameraOff ? <VideoOff size={14} /> : <Video size={14} />}
               <span className="text-technical-sm font-technical-sm uppercase tracking-widest">{cameraOff ? 'Camera on' : 'Camera off'}</span>
             </button>
-            <button type="button" onClick={call.stop}
-              title="Leave the call"
+            <button type="button" onClick={status === 'failed' ? retry : call.stop}
+              title={status === 'failed' ? 'Retry the call' : 'Leave the call'}
               className="inline-flex items-center gap-2 px-3.5 py-2 border-[0.5px] border-red-400/40 text-red-400 bg-red-400/10 hover:bg-red-400/20 transition-colors cursor-pointer"
               style={{ borderRadius: '6px' }}>
               <PhoneOff size={14} />
-              <span className="text-technical-sm font-technical-sm uppercase tracking-widest">Leave</span>
+              <span className="text-technical-sm font-technical-sm uppercase tracking-widest">{status === 'failed' ? 'Retry' : 'Leave'}</span>
             </button>
           </div>
         </div>

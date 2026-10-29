@@ -27,6 +27,11 @@ export default function useInterviewCall({ sessionId, isEvaluator }) {
   const [localStream, setLocalStream] = useState(null);
   const [remoteStream, setRemoteStream] = useState(null);
   const [mediaError, setMediaError] = useState(null);
+  // Live wire stats — surfaced in the dock so "waiting to connect" is never
+  // a black box: pc state, ice state, and the last signalling error code.
+  const [connState, setConnState] = useState('idle');
+  const [iceState, setIceState] = useState('idle');
+  const [sigError, setSigError] = useState(null);
 
   const pcRef = useRef(null);
   const localRef = useRef(null);
@@ -47,6 +52,9 @@ export default function useInterviewCall({ sessionId, isEvaluator }) {
     pendingIceRef.current = [];
     setLocalStream(null);
     setRemoteStream(null);
+    setConnState('idle');
+    setIceState('idle');
+    setSigError(null);
   }, []);
 
   const stop = useCallback(() => {
@@ -80,12 +88,20 @@ export default function useInterviewCall({ sessionId, isEvaluator }) {
     pc.onicecandidate = e => {
       if (e.candidate) publish({ candidate: e.candidate.toJSON ? e.candidate.toJSON() : e.candidate });
     };
+    // Candidate-level ICE errors (firewall blocking UDP, dead TURN credentials,
+    // mDNS resolution): console-only, but the state ribbon surfaces the result.
+    pc.onicecandidateerror = e => {
+      console.warn('[interview-call] ICE candidate error', e.errorCode, e.errorText, e.url || '');
+    };
     pc.onconnectionstatechange = () => {
       const st = pc.connectionState;
+      setConnState(st);
       if (st === 'connected') setStatus('connected');
       else if (st === 'failed') setStatus('failed');
       else if (st === 'disconnected') setStatus('connecting'); // brief renegotiation window
+      else setStatus(s => (s === 'connected' ? s : 'connecting'));
     };
+    pc.oniceconnectionstatechange = () => setIceState(pc.iceConnectionState);
   }, []);
 
   const buildPeer = useCallback(sendIce => {
@@ -212,6 +228,11 @@ export default function useInterviewCall({ sessionId, isEvaluator }) {
           handledRef.current.iceByValue.add(norm);
           bufferOrApplyIce(pc, cand);
         }
+      }, err => {
+        // A dead subscription explains "stuck waiting to connect" with no
+        // other trace — never stay silent about it.
+        console.warn('[interview-call] signalling subscription error:', err?.code || err?.message);
+        setSigError(err?.code || 'signalling error');
       });
     } catch (e) {
       teardown();
@@ -243,5 +264,5 @@ export default function useInterviewCall({ sessionId, isEvaluator }) {
   // Unmount cleanup (routes away, completed session reload).
   useEffect(() => () => teardown(), [teardown]);
 
-  return { status, muted, cameraOff, localStream, remoteStream, mediaError, start, stop, toggleMute, toggleCamera };
+  return { status, muted, cameraOff, localStream, remoteStream, mediaError, connState, iceState, sigError, start, stop, toggleMute, toggleCamera };
 }

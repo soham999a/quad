@@ -106,7 +106,7 @@ export function publishWebRtcOffer(sessionId, offer) {
     webrtcEvalIce: [],
     webrtcCandIce: [],
     updatedAt: serverTimestamp(),
-  }).catch(() => { /* signalling is best-effort — the interview continues */ });
+  }).catch(e => console.warn('[interview-signal] publishWebRtcOffer failed:', e?.code || e?.message));
 }
 
 /** Candidate → evaluator session description answer. */
@@ -114,7 +114,7 @@ export function publishWebRtcAnswer(sessionId, answer) {
   return updateDoc(doc(db, COLLECTION, sessionId), {
     webrtcAnswer: answer,
     updatedAt: serverTimestamp(),
-  }).catch(() => {});
+  }).catch(e => console.warn('[interview-signal] publishWebRtcAnswer failed:', e?.code || e?.message));
 }
 
 /** Trickle one ICE candidate owned by the evaluator. */
@@ -122,7 +122,7 @@ export function addEvalIceCandidate(sessionId, candidate) {
   if (!candidate) return;
   return updateDoc(doc(db, COLLECTION, sessionId), {
     webrtcEvalIce: arrayUnion(candidate),
-  }).catch(() => {});
+  }).catch(e => console.warn('[interview-signal] addEvalIceCandidate failed:', e?.code || e?.message));
 }
 
 /** Trickle one ICE candidate owned by the candidate. */
@@ -130,7 +130,7 @@ export function addCandidateIceCandidate(sessionId, candidate) {
   if (!candidate) return;
   return updateDoc(doc(db, COLLECTION, sessionId), {
     webrtcCandIce: arrayUnion(candidate),
-  }).catch(() => {});
+  }).catch(e => console.warn('[interview-signal] addCandidateIceCandidate failed:', e?.code || e?.message));
 }
 
 /** Tear the call state down on the session doc. */
@@ -140,7 +140,7 @@ export function clearWebRtc(sessionId) {
     webrtcAnswer: null,
     webrtcEvalIce: null,
     webrtcCandIce: null,
-  }).catch(() => {});
+  }).catch(e => console.warn('[interview-signal] clearWebRtc failed:', e?.code || e?.message));
 }
 
 /** Live list of the sessions where this user is the evaluator — the realtime
