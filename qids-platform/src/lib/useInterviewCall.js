@@ -105,26 +105,30 @@ export default function useInterviewCall({ sessionId, isEvaluator }) {
   }, []);
 
   const buildPeer = useCallback(sendIce => {
+    // Media relays are the difference between "works on one network" and
+    // "works on any phone/PC anywhere". STUN alone cannot traverse symmetric
+    // or carrier-grade NAT — a TURN relay is mandatory for that world, and
+    // the dead-metered-openrelay experiment proved testing a dead relay is
+    // worse than none (the browser silently swallows the failed 100::1 path).
+    // Credentials live in the environment so the relay can be rotated or a
+    // dedicated commercial one swapped in without touching this code.
+    const stunServers = [
+      { urls: ['stun:stun.l.google.com:19302', 'stun:stun1.l.google.com:19302'] },
+    ];
+    const turnUrls = (import.meta.env?.VITE_TURN_URLS || '')
+      .split(',').map(s => s.trim()).filter(Boolean);
+    const iceServers = [
+      ...stunServers,
+      ...(turnUrls.length
+        ? [{
+            urls: turnUrls,
+            username: import.meta.env.VITE_TURN_USERNAME,
+            credential: import.meta.env.VITE_TURN_CREDENTIAL,
+          }]
+        : []),
+    ];
     const pc = new RTCPeerConnection({
-      iceServers: [
-        // STUN discovers public addresses; it is free and usually enough when
-        // both peers share a NAT or a permissive home connection.
-        { urls: ['stun:stun.l.google.com:19302', 'stun:stun1.l.google.com:19302'] },
-        // TURN relays media when the two peers sit behind carrier-grade or
-        // symmetric NAT (common on mobile data and corporate Wi-Fi). Without
-        // a relay in the list, "my camera works but their video never shows"
-        // is exactly the failure mode. Metered's open relay is a public demo
-        // relay — fine for a pilot; a private TURN follows with scale.
-        {
-          urls: [
-            'turn:openrelay.metered.ca:80',
-            'turn:openrelay.metered.ca:443',
-            'turn:openrelay.metered.ca:443?transport=tcp',
-          ],
-          username: 'openrelayproject',
-          credential: 'openrelayproject',
-        },
-      ],
+      iceServers,
       iceCandidatePoolSize: 4,
     });
     applyStream(pc);
