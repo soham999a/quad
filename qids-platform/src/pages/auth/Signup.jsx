@@ -133,7 +133,7 @@ export default function Signup() {
                 <div className="flex flex-col space-y-2">
                   <label className="font-technical-sm text-technical-sm uppercase text-on-surface-variant" htmlFor="password">{t('auth.access_key')}</label>
                   <div className="relative">
-                    <input className={inputClass} id="password" placeholder="••••••••" type={showPassword ? 'text' : 'password'} value={form.password} onChange={e => set('password', e.target.value)} required />
+                    <input className={inputClass} id="password" placeholder="••••••••" type={showPassword ? 'text' : 'password'} autoComplete="new-password" value={form.password} onChange={e => set('password', e.target.value)} required />
                     <button type="button" onClick={() => setShowPassword(v => !v)} aria-label={showPassword ? 'Hide password' : 'Show password'} aria-pressed={showPassword} className="absolute right-3 top-1/2 -translate-y-1/2 cursor-pointer border-none bg-transparent p-1 text-surface-variant transition-colors hover:text-on-surface">
                       {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                     </button>
@@ -141,7 +141,7 @@ export default function Signup() {
                 </div>
                 <div className="flex flex-col space-y-2">
                   <label className="font-technical-sm text-technical-sm uppercase text-on-surface-variant" htmlFor="confirm">{t('auth.confirm_key')}</label>
-                  <input className={inputClass} id="confirm" placeholder="••••••••" type={showPassword ? 'text' : 'password'} value={form.confirm} onChange={e => set('confirm', e.target.value)} required />
+                  <input className={inputClass} id="confirm" placeholder="••••••••" type={showPassword ? 'text' : 'password'} autoComplete="new-password" value={form.confirm} onChange={e => set('confirm', e.target.value)} required />
                 </div>
               </div>
 

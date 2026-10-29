@@ -32,7 +32,7 @@ export default function useInterviewCall({ sessionId, isEvaluator }) {
   const localRef = useRef(null);
   const remoteRef = useRef(null);
   const unsubRef = useRef(null);
-  const handledRef = useRef({ offer: false, answer: false, iceByValue: new Set() });
+  const handledRef = useRef({ offerSdp: null, answerSdp: null, iceByValue: new Set() });
   const pendingIceRef = useRef([]); // ICE seen before the peer description arrived
   const roleRef = useRef(isEvaluator);
   roleRef.current = isEvaluator;
@@ -43,7 +43,7 @@ export default function useInterviewCall({ sessionId, isEvaluator }) {
     localRef.current?.getTracks().forEach(t => t.stop());
     localRef.current = null;
     remoteRef.current = null;
-    handledRef.current = { offer: false, answer: false, iceByValue: new Set() };
+    handledRef.current = { offerSdp: null, answerSdp: null, iceByValue: new Set() };
     pendingIceRef.current = [];
     setLocalStream(null);
     setRemoteStream(null);
@@ -91,8 +91,25 @@ export default function useInterviewCall({ sessionId, isEvaluator }) {
   const buildPeer = useCallback(sendIce => {
     const pc = new RTCPeerConnection({
       iceServers: [
+        // STUN discovers public addresses; it is free and usually enough when
+        // both peers share a NAT or a permissive home connection.
         { urls: ['stun:stun.l.google.com:19302', 'stun:stun1.l.google.com:19302'] },
+        // TURN relays media when the two peers sit behind carrier-grade or
+        // symmetric NAT (common on mobile data and corporate Wi-Fi). Without
+        // a relay in the list, "my camera works but their video never shows"
+        // is exactly the failure mode. Metered's open relay is a public demo
+        // relay — fine for a pilot; a private TURN follows with scale.
+        {
+          urls: [
+            'turn:openrelay.metered.ca:80',
+            'turn:openrelay.metered.ca:443',
+            'turn:openrelay.metered.ca:443?transport=tcp',
+          ],
+          username: 'openrelayproject',
+          credential: 'openrelayproject',
+        },
       ],
+      iceCandidatePoolSize: 4,
     });
     applyStream(pc);
     wireIce(pc, sendIce);
@@ -142,34 +159,46 @@ export default function useInterviewCall({ sessionId, isEvaluator }) {
       // of state is kept that could drift from the doc.)
       unsubRef.current = subscribeSession(sessionId, data => {
         if (!data) return;
-        const pc = pcRef.current;
+        let pc = pcRef.current;
         if (!pc) return;
         const role = isEvaluator;
 
         if (!role) {
           // ── Candidate side ────────────────────────────────────────────
-          if (data.webrtcOffer && !handledRef.current.offer) {
-            handledRef.current.offer = true;
+          const offerSdp = data.webrtcOffer?.sdp || null;
+          if (offerSdp && handledRef.current.offerSdp !== offerSdp) {
+            // First offer, or the evaluator left and re-joined (a fresh offer
+            // means fresh negotiation). A pc can only take one remote
+            // description that changes the core session — rebuild instead.
+            handledRef.current.offerSdp = offerSdp;
+            handledRef.current.iceByValue = new Set();
+            pendingIceRef.current = [];
+            try { pc.close(); } catch { /* already closed */ }
+            pc = buildPeer(publishIce);
+            setStatus('connecting');
             pc.setRemoteDescription(data.webrtcOffer)
               .then(() => pc.createAnswer())
               .then(answer => pc.setLocalDescription(answer))
               .then(() => {
                 flushPendingIce(pc);
-                publishWebRtcAnswer(sessionId, {
+                return publishWebRtcAnswer(sessionId, {
                   type: pc.localDescription.type,
                   sdp: pc.localDescription.sdp,
                 });
               })
               .catch(() => setStatus('failed'));
-            return;
           }
-        } else if (data.webrtcAnswer && !handledRef.current.answer) {
-          // ── Evaluator side: consume the answer ──────────────────────
-          handledRef.current.answer = true;
-          pc.setRemoteDescription(data.webrtcAnswer)
-            .then(() => flushPendingIce(pc))
-            .catch(() => setStatus('failed'));
-          return;
+        } else if (data.webrtcAnswer) {
+          // ── Evaluator side: consume the answer (fresh SDP wins) ──────
+          const answerSdp = data.webrtcAnswer.sdp || '';
+          if (handledRef.current.answerSdp !== answerSdp) {
+            handledRef.current.answerSdp = answerSdp;
+            handledRef.current.iceByValue = new Set();
+            pendingIceRef.current = [];
+            pc.setRemoteDescription(data.webrtcAnswer)
+              .then(() => flushPendingIce(pc))
+              .catch(() => setStatus('failed'));
+          }
         }
 
         // ── Both sides: drain the OTHER side's ICE array ──────────────
