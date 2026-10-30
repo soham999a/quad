@@ -5,10 +5,12 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { getInterviewSession, updateInterviewSession, subscribeSession } from '../../services/interviewService';
 import { notifyInterviewResult } from '../../services/notificationService';
+import { getLatestAssessment } from '../../services/firestoreService';
 import { computeInterviewResult } from '../../core/engine/interviewScoring';
-import { LIVE_QUESTIONS, RUBRIC_MAP } from '../../core/data/interviewRubrics';
+import { LIVE_QUESTIONS, RUBRIC_DIMENSIONS, RUBRIC_MAP } from '../../core/data/interviewRubrics';
 import { useToast } from '../../components/Toast';
-import { Play, Pause, ChevronRight, ChevronLeft, CheckCircle, Clock } from 'lucide-react';
+import QIDSRadar from '../../components/RadarChart';
+import { Play, Pause, ChevronRight, ChevronLeft, CheckCircle, Clock, AlertTriangle, ShieldCheck } from 'lucide-react';
 import useInterviewCall from '../../lib/useInterviewCall';
 import VideoCallDock from '../../components/VideoCallDock';
 export default function InterviewLive() {
@@ -33,6 +35,19 @@ export default function InterviewLive() {
   const [paused, setPaused] = useState(false);
   const [saving, setSaving] = useState(false);
   const [candidateLive, setCandidateLive] = useState(null);
+  // Appendix B response-quality trail: the interviewer marks each question
+  // Covered / Strong / Weak — logged on the session doc for calibration.
+  const [guideMarks, setGuideMarks] = useState({});
+  // Appendix B "Live Note Integration": every note is timestamped at the last
+  // edit and travels with the response — the report transcript and the PDF
+  // audit trail both render it, and notes stay searchable post-interview.
+  const [noteTimes, setNoteTimes] = useState({});
+  // The candidate's prior PIP (their latest platform assessment), when the
+  // candidate is a real user: integrity status + comparison radar for the
+  // Appendix B Candidate Dashboard Panel.
+  const [pipData, setPipData] = useState(null);
+  // Calibration nudge dismissible once per session view.
+  const [nudgeDismissed, setNudgeDismissed] = useState(false);
   // Video & audio (WebRTC) — the Meet-style call that rides alongside the
   // question flow. The evaluator is the caller: their offer goes out on join.
   const call = useInterviewCall({ sessionId, isEvaluator: true });
@@ -54,18 +69,34 @@ export default function InterviewLive() {
       // Full resume: saved progress carries the scores, notes and the wall
       // clock. Without this the evaluator would come back to blank state and
       // re-score blindly while the timer restarts from zero.
-      const restored = { scores: {}, notes: {} };
+      const restored = { scores: {}, notes: {}, noteTimes: {} };
       for (const r of s?.liveResponses || []) {
         if (r?.questionId) {
           if (r.score != null) restored.scores[r.questionId] = r.score;
           if (r.response) restored.notes[r.questionId] = r.response;
+          if (r.answeredAt) restored.noteTimes[r.questionId] = r.answeredAt;
         }
       }
       setScores(restored.scores);
       setNotes(restored.notes);
+      setNoteTimes(restored.noteTimes);
+      setGuideMarks(s?.guideMarks || {});
       setElapsed(Number.isFinite(s?.elapsedSeconds) ? s.elapsedSeconds : 0);
     }).catch(() => toast('Failed to load session', 'error')).finally(() => setLoading(false));
   }, [sessionId]);
+
+  // Appendix B Candidate Dashboard Panel — the interviewer's in-room view of
+  // the candidate's assessment picture: integrity status from their latest
+  // platform PIP, fetched best-effort. External (email-only) candidates have
+  // no PIP; the panel then leans on the live scores alone.
+  useEffect(() => {
+    if (!session?.candidateUid) return;
+    let alive = true;
+    getLatestAssessment(session.candidateUid).then(a => {
+      if (alive && a) setPipData(a);
+    }).catch(() => { /* no PIP on file — panel degrades gracefully */ });
+    return () => { alive = false; };
+  }, [session?.candidateUid]);
 
   // Timer — only while the interview is genuinely running (candidate ready or
   // already in progress). Waiting states must not burn the wall clock.
@@ -98,6 +129,52 @@ export default function InterviewLive() {
   const totalQuestions = questionBank.length;
   const answeredCount = Object.keys(scores).length;
   const isComplete = answeredCount === totalQuestions && Object.values(scores).every(s => s > 0);
+
+  // ── Calibration Nudge — Appendix B ────────────────────────────────────────
+  // "If interviewer rates all candidates 'Strong', platform flags potential
+  // leniency bias and surfaces calibration reminder." Within one session the
+  // equivalent signal: every Covered/Strong/Weak mark is 'strong', or every
+  // score so far is a 4–5. Fires once enough data exists (3 marks / 4 scores)
+  // and is dismissible for the rest of this session.
+  const markValues = Object.values(guideMarks).filter(Boolean);
+  const scoreValues = Object.values(scores).filter(s => s > 0);
+  const allMarksStrong = markValues.length >= 3 && markValues.every(m => m === 'strong');
+  const allScoresTop = scoreValues.length >= 4 && scoreValues.every(s => s >= 4);
+  const showCalibrationNudge = !nudgeDismissed && (allMarksStrong || allScoresTop);
+
+  // ── Candidate Dashboard Panel (live) — Appendix B row 1 ───────────────────
+  // Rebuilt from the scores logged SO FAR: radar of the live pillar buckets,
+  // top 3 strengths, top 2 risks, integrity status from the candidate's prior
+  // PIP. Recomputes on every score change — "updates after each interview
+  // stage is logged".
+  const panel = (() => {
+    const dimAgg = {};
+    questionBank.forEach(q => {
+      const s = scores[q.id];
+      if (s != null) {
+        if (!dimAgg[q.dimension]) dimAgg[q.dimension] = [];
+        dimAgg[q.dimension].push(s);
+      }
+    });
+    const evAssessment = Object.entries(dimAgg).map(([dimId, list]) => ({
+      dimensionId: dimId,
+      score: Math.round(list.reduce((a, b) => a + b, 0) / list.length * 10) / 10,
+    }));
+    if (evAssessment.length === 0) return null;
+    const result = computeInterviewResult({ evaluatorAssessment: evAssessment, mode: 'live' });
+    if (!result?.mergedScores) return null;
+    const ranked = RUBRIC_DIMENSIONS
+      .map(d => ({ dim: d, score: result.mergedScores[d.id] }))
+      .filter(x => x.score > 0)
+      .sort((a, b) => b.score - a.score);
+    return {
+      pillarScores: result.pillarScores,
+      strengths: ranked.slice(0, Math.min(3, ranked.length)),
+      risks: ranked.slice().reverse()
+        .slice(0, 2)
+        .filter(x => !ranked.slice(0, 3).find(t => t.dim.id === x.dim.id)),
+    };
+  })();
   const formatTime = sec => {
     const m = Math.floor(sec / 60);
     const s = sec % 60;
@@ -114,6 +191,24 @@ export default function InterviewLive() {
       ...prev,
       [qId]: text
     }));
+    // Timestamp at the last edit — Appendix B wants timestamped notes. Each
+    // edit refreshes the clock; the value that survives is the time of the
+    // last edit before the next save, which is what the trail should show.
+    if (text.trim()) {
+      setNoteTimes(prev => ({ ...prev, [qId]: new Date().toISOString() }));
+    }
+  };
+  // Appendix B: "Platform logs response quality ratings". Three-state mark
+  // per question — clicking the active mark clears it. Fire-and-forget
+  // persist: a failed log must never rattle the question flow.
+  const marksCount = Object.keys(guideMarks).length;
+  const handleMark = (qId, mark) => {
+    if (!session) return;
+    const next = { ...guideMarks };
+    if (next[qId] === mark) delete next[qId]; else next[qId] = mark;
+    setGuideMarks(next);
+    updateInterviewSession(session.id, { guideMarks: next })
+      .catch(err => console.error('[interview-guide] mark log failed:', err?.code || err));
   };
   const handleSaveProgress = async () => {
     if (!session) return;
@@ -127,8 +222,10 @@ export default function InterviewLive() {
           questionText: q.text,
           dimension: q.dimension,
           response: notes[q.id] || '',
-          score: scores[q.id] || null
-        }))
+          score: scores[q.id] || null,
+          answeredAt: noteTimes[q.id] || null
+        })),
+        guideMarks
       });
       toast('Progress saved', 'success');
     } catch (e) {
@@ -175,8 +272,10 @@ export default function InterviewLive() {
           questionText: q.text,
           dimension: q.dimension,
           response: notes[q.id] || '',
-          score: scores[q.id] || null
+          score: scores[q.id] || null,
+          answeredAt: noteTimes[q.id] || null
         })),
+        guideMarks,
         mergedScores: result.mergedScores,
         pillarScores: result.pillarScores,
         unifiedScore: result.unifiedScore,
@@ -377,6 +476,7 @@ export default function InterviewLive() {
           </div>
           <div className="text-technical-sm font-technical-sm text-surface-variant">
             {answeredCount}/{totalQuestions}
+            {marksCount > 0 && <span className="text-primary ml-2" title="Questions marked in the interview guide">{marksCount} marked</span>}
           </div>
           <button onClick={() => setPaused(p => !p)} aria-label={paused ? 'Resume timer' : 'Pause timer'} title={paused ? 'Resume' : 'Pause'} className="flex items-center gap-2 px-3 py-2 bg-surface-container-high border-[0.5px] border-outline-variant text-body-sm font-body-sm text-on-surface cursor-pointer hover:bg-surface-container transition-colors">
             {paused ? <Play size={13} /> : <Pause size={13} />}
@@ -393,6 +493,23 @@ export default function InterviewLive() {
         }} />
         </div>
       </div>
+
+      {/* Calibration Nudge — Appendix B: potential leniency bias reminder. */}
+      {showCalibrationNudge && <div className="flex items-center justify-between gap-3 px-4 py-3 mb-8 border-[0.5px]" style={{
+        borderColor: 'color-mix(in srgb, var(--gold-strong, var(--color-primary)) 40%, transparent)',
+        background: 'color-mix(in srgb, var(--gold-tint, transparent) 60%, transparent)',
+        borderRadius: '6px'
+      }}>
+          <div className="flex items-center gap-2.5 min-w-0">
+            <AlertTriangle size={15} style={{ color: 'var(--gold-strong, var(--color-primary))' }} className="flex-shrink-0" />
+            <span className="text-body-sm font-body-sm text-on-surface-variant min-w-0">
+              <strong className="text-on-background">Calibration check.</strong> Every answer so far is rated Strong. The spec's calibration nudge flags potential leniency bias — re-read the scoring anchors and let a weak signal stay weak. Strong answers are <em>specific</em>: named situation, named action, named outcome.
+            </span>
+          </div>
+          <button onClick={() => setNudgeDismissed(true)} aria-label="Dismiss calibration nudge" title="Dismiss" className="text-technical-sm font-technical-sm uppercase tracking-widest flex-shrink-0 cursor-pointer bg-transparent border-none" style={{ color: 'var(--surface-variant, var(--color-outline))' }}>
+            Dismiss
+          </button>
+        </div>}
 
       {/* Question */}
       {currentQuestion && <div className="card p-6 md:p-8 mb-8">
@@ -444,12 +561,32 @@ export default function InterviewLive() {
             </div>
           )}
 
-          {/* Probe bank — follow-up probe + strong/weak anchors, PIP page 7 */}
-          {(currentQuestion.followUp || currentQuestion.strong || currentQuestion.weak) && (
+          {/* Probe bank — Appendix B: 2–3 follow-up probes shown on click,
+              plus the Covered / Strong / Weak response-quality marks that the
+              spec requires the platform to log (PIP page 7). */}
+          {(() => {
+            const probes = currentQuestion.probeBank?.length
+              ? currentQuestion.probeBank
+              : (currentQuestion.followUp ? [currentQuestion.followUp] : []);
+            if (!probes.length && !currentQuestion.strong && !currentQuestion.weak) return null;
+            const activeMark = guideMarks[currentQuestion.id];
+            return (
             <div className="mt-4 bg-surface-container-low border-[0.5px] border-outline-variant p-4" style={{ borderRadius: '6px' }}>
-              <div className="text-technical-sm font-technical-sm uppercase tracking-widest text-surface-variant mb-2">Interview guide</div>
-              {currentQuestion.followUp && <div className="text-body-sm font-body-sm text-on-surface-variant mb-3 leading-relaxed">
-                <span className="text-primary uppercase tracking-widest text-technical-sm font-technical-sm mr-2">Probe →</span>{currentQuestion.followUp}
+              <div className="flex items-center justify-between gap-3 mb-2">
+                <div className="text-technical-sm font-technical-sm uppercase tracking-widest text-surface-variant">Interview guide</div>
+                <div className="flex items-center gap-1.5 flex-shrink-0">
+                  <span className="text-technical-sm font-technical-sm uppercase tracking-widest text-surface-variant mr-1">Mark</span>
+                  {['covered', 'strong', 'weak'].map(m => (
+                    <button key={m} onClick={() => handleMark(currentQuestion.id, m)} className={`px-2 py-0.5 text-[10px] uppercase tracking-widest border-[0.5px] transition-colors cursor-pointer ${activeMark === m ? 'border-primary text-primary bg-primary/10' : 'border-outline-variant text-surface-variant hover:border-primary/30'}`} style={{ borderRadius: '4px' }}>
+                      {m}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              {probes.length > 0 && <div className="mb-3 space-y-1.5">
+                {probes.map((p, i) => <div key={i} className="text-body-sm font-body-sm text-on-surface-variant leading-relaxed">
+                  <span className="text-primary uppercase tracking-widest text-technical-sm font-technical-sm mr-2">{probes.length > 1 ? `Probe ${i + 1} →` : 'Probe →'}</span>{p}
+                </div>)}
               </div>}
               {(currentQuestion.strong || currentQuestion.weak) && <div className="grid sm:grid-cols-2 gap-3">
                   {currentQuestion.strong && <div className="p-3 border-[0.5px]" style={{ borderColor: 'color-mix(in srgb, var(--color-success) 35%, transparent)', background: 'color-mix(in srgb, var(--color-success) 7%, transparent)', borderRadius: '6px' }}>
@@ -462,7 +599,8 @@ export default function InterviewLive() {
                   </div>}
                 </div>}
             </div>
-          )}
+            );
+          })()}
         </div>}
 
       {/* Navigation */}
@@ -483,6 +621,67 @@ export default function InterviewLive() {
       <div className="lg:w-[340px] flex-shrink-0">
         <div className="lg:sticky lg:top-6">
           <VideoCallDock call={call} role="evaluator" />
+
+          {/* Candidate dashboard panel — Appendix B row 1: compact sidebar with
+              the radar chart, top 3 strengths, top 2 risks and integrity
+              status. Rebuilt from the scores logged so far, so it updates
+              after each interview stage. */}
+          <div className="card p-4 mt-4">
+            <div className="kicker mb-3">Candidate panel</div>
+            {panel && panel.pillarScores ? (
+              <>
+                <div className="flex justify-center mb-3">
+                  <QIDSRadar
+                    data={panel.pillarScores}
+                    compare={pipData?.pillarScores || null}
+                    size={190}
+                  />
+                </div>
+                <p className="text-technical-sm font-technical-sm text-surface-variant text-center mb-3">
+                  Live pillars · {pipData?.pillarScores ? 'dashed = prior PIP' : 'rebuilds as you score'}
+                </p>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <div className="text-technical-sm font-technical-sm uppercase tracking-widest mb-1.5" style={{ color: 'var(--color-success)' }}>Top strengths</div>
+                    {panel.strengths.length
+                      ? panel.strengths.map(x => (
+                        <div key={x.dim.id} className="text-body-sm font-body-sm text-on-surface-variant leading-snug">
+                          {x.dim.label} <span className="text-technical-sm text-surface-variant">{x.score.toFixed(1)}/5</span>
+                        </div>))
+                      : <div className="text-technical-sm text-surface-variant italic">—</div>}
+                  </div>
+                  <div>
+                    <div className="text-technical-sm font-technical-sm uppercase tracking-widest mb-1.5" style={{ color: 'var(--gold-strong, var(--color-primary))' }}>Risks</div>
+                    {panel.risks.length
+                      ? panel.risks.map(x => (
+                        <div key={x.dim.id} className="text-body-sm font-body-sm text-on-surface-variant leading-snug">
+                          {x.dim.label} <span className="text-technical-sm text-surface-variant">{x.score.toFixed(1)}/5</span>
+                        </div>))
+                      : <div className="text-technical-sm text-surface-variant italic">So far, none below the field</div>}
+                  </div>
+                </div>
+              </>
+            ) : (
+              <p className="text-body-sm font-body-sm text-on-surface-variant">
+                No scores logged yet — the radar, strengths and risks build here as you score.
+              </p>
+            )}
+            <div className="flex items-center gap-2 mt-3 pt-3 border-t-[0.5px] border-outline-variant">
+              <ShieldCheck size={13} className="flex-shrink-0" style={{
+                color: pipData?.integrity?.band === 'Concern' ? 'var(--status-err)'
+                  : pipData?.integrity?.band === 'Flag' ? 'var(--gold-strong, var(--color-primary))'
+                  : pipData?.integrity?.band === 'Pass' ? 'var(--color-success)'
+                  : 'var(--surface-variant, var(--color-outline))'
+              }} />
+              <span className="text-technical-sm font-technical-sm uppercase tracking-widest text-surface-variant">
+                Integrity · {
+                  pipData?.integrity?.band
+                    ? `PIP: ${pipData.integrity.band}`
+                    : pipData ? 'PIP: not flagged' : 'no PIP on file'
+                }
+              </span>
+            </div>
+          </div>
         </div>
       </div>
       </div>{/* two-lane wrapper */}

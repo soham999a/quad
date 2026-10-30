@@ -263,7 +263,8 @@ export interface InterviewSession {
   selfAssessment?: RubricEvaluation[];
   /** Evaluator rubric scores. */
   evaluatorAssessment?: RubricEvaluation[];
-  /** Merged scores (post = 60% self + 40% evaluator; live = 100% evaluator). */
+  /** Merged scores (post = weighted self/evaluator blend per INTERVIEW_WEIGHTS,
+   *  default 60% assessment + 40% interview; live = 100% evaluator). */
   mergedScores?: Record<RubricDimensionId, number>;
   /** Final pillar scores mapped from rubric dimensions. */
   pillarScores?: PillarScores;
@@ -277,7 +278,22 @@ export interface InterviewSession {
   /** Live mode fields. */
   liveStartedAt?: unknown;
   liveQuestionIndex?: number;
-  liveResponses?: { questionId: string; response: string; score?: number }[];
+  /** Per-question live log — one entry per bank question, rewritten on every
+   *  progress save and on completion. This IS the Appendix B decision audit
+   *  trail: notes (timestamped), per-question scores and the covered/strong/
+   *  weak marks all live here and on the session doc. */
+  liveResponses?: {
+    questionId: string;
+    questionText?: string;
+    dimension?: RubricDimensionId;
+    response: string;
+    score?: number;
+    /** ISO timestamp of the note's last edit (Appendix B: timestamped notes). */
+    answeredAt?: string | null;
+  }[];
+  /** Appendix B response-quality mark per question id: Covered / Strong /
+   *  Weak. Logged by the interviewer during the live flow. */
+  guideMarks?: Record<string, 'covered' | 'strong' | 'weak'>;
 }
 
 export interface InterviewQuestion {
@@ -286,6 +302,10 @@ export interface InterviewQuestion {
   dimension: RubricDimensionId;
   context?: string;
   followUp?: string;
+  /** Appendix B probe bank: 2–3 follow-up probes shown on click. The first
+   *  entry mirrors followUp (the spec's example probe); extras are derived
+   *  from the competency dictionary and each question's scoring anchor. */
+  probeBank?: string[];
   /** Scoring anchor from the interview guide — what a strong/weak answer
    *  sounds like (PIP page 7 format). */
   strong?: string;

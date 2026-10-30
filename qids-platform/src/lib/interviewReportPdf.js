@@ -15,7 +15,7 @@
  */
 
 import { RUBRIC_DIMENSIONS, RUBRIC_MAP } from '../core/data/interviewRubrics';
-import { interviewBand } from '../core/engine/interviewScoring';
+import { interviewBand, INTERVIEW_PEER_NORM } from '../core/engine/interviewScoring';
 import { PILLARS } from '../data/qidsData';
 
 const PILLAR_LIST = ['IQ', 'EQ', 'SQ', 'AQ'].map(id => PILLARS[id]).filter(Boolean);
@@ -155,7 +155,24 @@ export async function downloadInterviewReportPdf(session, previous = null) {
     session.mode === 'live' ? 'Live interview' : 'Post-interview',
     'Scored by ' + (session.evaluatorName || 'evaluator'),
   ];
+  if (session.role) metaBits.unshift('Target role: ' + session.role);
+  // Assessment date (PIP Page 1 header field) — the completion write is an
+  // ISO string; older/server-written docs may hold a Firestore Timestamp.
+  const completedAt = session.completedAt?.toDate
+    ? session.completedAt.toDate()
+    : session.completedAt ? new Date(session.completedAt) : null;
+  if (completedAt && Number.isFinite(completedAt.getTime())) {
+    metaBits.unshift('Assessed ' + completedAt.toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' }));
+  }
+  if (session.tier) metaBits.push(session.tier + ' tier');
+  metaBits.push('Assessing organisation: QIDS Assessment Division');
   if ((session.sessionNumber || 1) > 1) metaBits.push('Re-interview · Attempt #' + session.sessionNumber);
+  // Page-7 generator provenance: when the guide was ordered from the
+  // candidate's own assessment results, the development priority IS part of
+  // the record — the spec builds the interview from lowest-scoring areas.
+  if (session.flaggedPillars?.length >= 2) {
+    metaBits.push('Development priority: ' + session.flaggedPillars.join(' → '));
+  }
   let delta = null;
   if (previous?.unifiedScore != null && session.unifiedScore != null) {
     delta = Math.round(session.unifiedScore) - Math.round(previous.unifiedScore);
@@ -190,6 +207,28 @@ export async function downloadInterviewReportPdf(session, previous = null) {
   doc.rect(M, y, Math.max(2, score / 100 * W), 3, 'F');
   y += 10;
 
+  // ── Hiring Confidence traffic light (PIP Page 1) ────────────────────────
+  // The spec's thresholds sit on the 145-point PII (Green ≥105, Amber 90–104,
+  // Red <90). This report scores 0–100, so the same cut ratios apply
+  // (≈72 / ≈62) while keeping the spec's traffic-light language and rationale.
+  const confidence = session.unifiedScore == null ? null
+    : session.unifiedScore >= 72
+      ? { label: 'HIGH', color: C.success, note: 'Interview evidence tracks the strong band across most dimensions — proceed with hiring confidence.' }
+      : session.unifiedScore >= 62
+      ? { label: 'MODERATE', color: C.warning, note: 'Capability is present but uneven — probe the flagged areas before a decision.' }
+      : { label: 'CAUTION', color: C.error, note: 'Interview evidence stayed thin or weak — treat as a development risk for now.' };
+  if (confidence) {
+    ensure(12);
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(9);
+    doc.setTextColor(...confidence.color);
+    doc.circle(M + 2, y, 1.6, 'F');
+    doc.text('HIRING CONFIDENCE: ' + confidence.label, M + 6, y + 1);
+    y += 5;
+    para(confidence.note, 8.5, C.grey);
+    y += 2;
+  }
+
   // ── Dimension scores ────────────────────────────────────────────────────
   kicker('Dimension scores');
   rule();
@@ -214,7 +253,18 @@ export async function downloadInterviewReportPdf(session, previous = null) {
       doc.setFont('helvetica', 'normal');
       doc.setFontSize(7.5);
       setGrey();
-      doc.text(qsCount + ' question' + (qsCount > 1 ? 's' : '') + ' probed', M + doc.getTextWidth(d.label) + 3, y);
+      // Appendix B response-quality marks trail for this dimension.
+      let markNote = '';
+      if (session.guideMarks) {
+        const counts = { covered: 0, strong: 0, weak: 0 };
+        for (const r of session.liveResponses || []) {
+          const m = session.guideMarks[r.questionId];
+          if (r.dimension === d.id && m) counts[m] += 1;
+        }
+        const bits = ['covered', 'strong', 'weak'].filter(k => counts[k]).map(k => counts[k] + ' marked ' + k);
+        if (bits.length) markNote = ' · ' + bits.join(', ');
+      }
+      doc.text(qsCount + ' question' + (qsCount > 1 ? 's' : '') + ' probed' + markNote, M + doc.getTextWidth(d.label) + 3, y);
     }
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(10);
@@ -242,6 +292,91 @@ export async function downloadInterviewReportPdf(session, previous = null) {
     doc.setLineWidth(0.1);
     doc.line(M, y, PAGE_W - M, y);
     y += 4;
+  }
+
+  // ── Dimension radar (PIP Page 2) — candidate polygon + peer-norm dashed ─
+  // Axes are the nine rubric dimensions rescaled 0–100 from the 1–5 rubric;
+  // the dashed line is the standing PEER_NORM (pip.ts) plateau until the
+  // Phase 3 norming study (Appendix C) replaces it with real cohort tables.
+  const radarValues = RUBRIC_DIMENSIONS.map(d => {
+    const raw = session.mergedScores?.[d.id] ?? 0;
+    const v = Number(raw) || 0;
+    return v > 0 ? ((v - 1) / 4) * 100 : 0; // 1–5 rubric → 0–100
+  });
+  const R_RADAR = 44; // mm — radius of the drawn dimension radar
+  {
+    ensure(R_RADAR * 2 + 34);
+    kicker('Dimension radar — PIP Page 2');
+    rule();
+    const cx = PAGE_W / 2;
+    const cy = y + R_RADAR + 10;
+    const N = radarValues.length;
+    const pt = (i, r01, Rpx) => {
+      const ang = (i / N) * 2 * Math.PI - Math.PI / 2;
+      return [cx + Math.cos(ang) * Rpx * r01, cy + Math.sin(ang) * Rpx * r01];
+    };
+    const polyRing = (r01, Rpx) => {
+      const verts = Array.from({ length: N }, (_, i) => pt(i, r01, Rpx));
+      doc.setDrawColor(...C.hairline);
+      doc.setLineWidth(0.2);
+      for (let k = 0; k < verts.length; k++) {
+        const a = verts[k];
+        const b = verts[(k + 1) % verts.length];
+        doc.line(a[0], a[1], b[0], b[1]);
+      }
+    };
+    // Grid rings + axes
+    [0.25, 0.5, 0.75, 1].forEach(f => polyRing(f, R_RADAR));
+    doc.setDrawColor(...C.hairline);
+    doc.setLineWidth(0.2);
+    RUBRIC_DIMENSIONS.forEach((d, i) => {
+      const [ex, ey] = pt(i, 1, R_RADAR);
+      doc.line(cx, cy, ex, ey);
+    });
+    // Axis labels
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(6.5);
+    RUBRIC_DIMENSIONS.forEach((d, i) => {
+      const [lx, ly] = pt(i, 1, R_RADAR + 7);
+      doc.setTextColor(...C.grey);
+      doc.text(d.shortLabel, lx, ly, { align: 'center', baseline: 'middle' });
+    });
+    // Closed helper: relative vector list for doc.lines
+    const closedVecs = verts => {
+      const vecs = [];
+      for (let k = 1; k < verts.length; k++) vecs.push([verts[k][0] - verts[k - 1][0], verts[k][1] - verts[k - 1][1]]);
+      vecs.push([verts[0][0] - verts[verts.length - 1][0], verts[0][1] - verts[verts.length - 1][1]]);
+      return vecs;
+    };
+    // Peer-norm dashed line
+    const peerVerts = RUBRIC_DIMENSIONS.map((_, i) => pt(i, Math.max(0, Math.min(100, INTERVIEW_PEER_NORM[RUBRIC_DIMENSIONS[i].id])) / 100, R_RADAR));
+    doc.setDrawColor(...C.grey);
+    doc.setLineWidth(0.35);
+    doc.setLineDashPattern([1.4, 1.2], 0);
+    doc.lines(closedVecs(peerVerts), peerVerts[0][0], peerVerts[0][1], [1, 1], 'S', true);
+    doc.setLineDashPattern([], 0);
+    // Candidate polygon — tinted fill, gold edge
+    const candVerts = RUBRIC_DIMENSIONS.map((_, i) => pt(i, Math.max(0, Math.min(100, radarValues[i])) / 100, R_RADAR));
+    doc.setDrawColor(...C.gold);
+    doc.setFillColor(...C.tint);
+    doc.setLineWidth(0.6);
+    doc.lines(closedVecs(candVerts), candVerts[0][0], candVerts[0][1], [1, 1], 'FD', true);
+    // Legend
+    y = cy + R_RADAR + 12;
+    ensure(8);
+    doc.setFillColor(...C.gold);
+    doc.rect(M, y - 2, 8, 2, 'F');
+    doc.setFontSize(7.5);
+    setInk();
+    doc.text('Candidate (1–5 rubric rescaled to 0–100)', M + 11, y);
+    doc.setDrawColor(...C.grey);
+    doc.setLineWidth(0.35);
+    doc.setLineDashPattern([1.4, 1.2], 0);
+    doc.line(M + 96, y - 1, M + 104, y - 1);
+    doc.setLineDashPattern([], 0);
+    setGrey();
+    doc.text('Peer norm', M + 107, y);
+    y += 6;
   }
 
   // ── Strengths & development focus (Appendix B panel) ────────────────────
@@ -338,7 +473,20 @@ export async function downloadInterviewReportPdf(session, previous = null) {
     rule();
     responses.forEach((r, i) => {
       const dimLabel = RUBRIC_MAP?.[r.dimension]?.label || r.dimension || '';
-      const headLine = 'Q' + String(i + 1).padStart(2, '0') + (dimLabel ? ' · ' + dimLabel : '') + (r.score != null ? '   ' + r.score + '/5' : '');
+      // Notes are timestamped at last edit (Appendix B) — render it when present.
+      let timeLabel = null;
+      if (r.answeredAt) {
+        const d = /^\d+$/.test(r.answeredAt) ? new Date(Number(r.answeredAt)) : new Date(r.answeredAt);
+        if (Number.isFinite(d?.getTime())) {
+          timeLabel = d.toLocaleString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+        }
+      }
+      const mark = session.guideMarks?.[r.questionId];
+      const headLine = 'Q' + String(i + 1).padStart(2, '0')
+        + (dimLabel ? ' · ' + dimLabel : '')
+        + (timeLabel ? ' · ' + timeLabel : '')
+        + (mark ? ' · marked ' + mark.toUpperCase() : '')
+        + (r.score != null ? '   ' + r.score + '/5' : '');
       ensure(10);
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(8);
@@ -354,6 +502,17 @@ export async function downloadInterviewReportPdf(session, previous = null) {
       y += 4;
     });
   }
+
+  // ── Closing line — Appendix B decision audit trail scope ────────────────
+  ensure(10);
+  y += 2;
+  rule(true);
+  para(
+    'Decision audit trail: scores, timestamped notes and Covered/Strong/Weak ratings are retained with this session for the '
+    + '24-month compliance and bias-audit window (Appendix B). Interview ratings integrate with assessment evidence at the '
+    + 'configured weight (default 60% assessment / 40% interview).',
+    7.5, C.grey,
+  );
 
   footer();
   const attempt = (session.sessionNumber || 1) > 1 ? '-Attempt-' + session.sessionNumber : '';

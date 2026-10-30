@@ -6,7 +6,9 @@ import { useAuth } from '../../context/AuthContext';
 import { saveInterviewSession, getEvaluatorSessions } from '../../services/interviewService';
 import { notifyInterviewInvited } from '../../services/notificationService';
 import { generateInterviewQuestions } from '../../services/groqService';
-import { RUBRIC_DIMENSIONS } from '../../core/data/interviewRubrics';
+import { RUBRIC_DIMENSIONS, LIVE_QUESTIONS, DIMENSION_TO_PILLAR } from '../../core/data/interviewRubrics';
+import { getUserAssessments } from '../../services/firestoreService';
+import { IQ_MAX_SCORE } from '../../data/qidsData';
 import { useToast } from '../../components/Toast';
 import { FileText, Play, ChevronRight, Brain, Sparkles, UserCheck } from 'lucide-react';
 import { useEffect } from 'react';
@@ -91,6 +93,45 @@ export default function InterviewSetup() {
           } finally {
             setGenerating(false);
           }
+        }
+      }
+      // Page-7 premise: the interview guide is generated from the candidate's
+      // LOWEST-scoring sub-dimensions. When the candidate is a platform user
+      // with assessment data, order the bank weakest-pillar-first (normalized
+      // IQ vs the 0–100 pillars) and record the development priority on the
+      // session for the report. No assessment data → bank keeps its default
+      // order. Fetch failure must never block session creation.
+      if (candidateUid) {
+        try {
+          const assessments = await getUserAssessments(candidateUid);
+          const latest = assessments.find(a => a.phase === 'post') || assessments[0];
+          const ps = latest?.pillarScores || {};
+          const normalized = {
+            IQ: ((ps.IQ || 0) / IQ_MAX_SCORE) * 100,
+            EQ: ps.EQ || 0,
+            SQ: ps.SQ || 0,
+            AQ: ps.AQ || 0,
+          };
+          const priorities = Object.entries(normalized)
+            .sort((a, b) => a[1] - b[1])
+            .map(([pillar]) => pillar);
+          // Needs the full four-pillar picture to be a real development order.
+          if (latest && Object.values(ps).every(v => Number.isFinite(v))) {
+            payload.flaggedPillars = priorities;
+            const bank = payload.liveQuestions?.length ? payload.liveQuestions : [...LIVE_QUESTIONS];
+            // Stable sort: questions probing weaker pillars surface first;
+            // questions outside the pillar map keep their relative order at the end.
+            const prio = q => {
+              const p = DIMENSION_TO_PILLAR[q.dimension];
+              const i = p ? priorities.indexOf(p) : -1;
+              return i === -1 ? priorities.length : i;
+            };
+            bank.sort((a, b) => prio(a.dimension) - prio(b.dimension));
+            payload.liveQuestions = bank;
+            console.log('[interview-setup] guide ordered by development priority:', priorities.join(' → '));
+          }
+        } catch (err) {
+          console.warn('Guide-priority fetch failed (keeping bank order):', err?.message || err);
         }
       }
       const sessionId = await saveInterviewSession(payload);
