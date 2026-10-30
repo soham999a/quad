@@ -3,9 +3,9 @@ import usePageTitle from '../../lib/usePageTitle';
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { getEvaluatorSessions } from '../../services/interviewService';
-import { ClipboardList, Users, Clock, CheckCircle, Plus, ChevronRight, ChevronLeft, RotateCcw, Play, FileText, Filter, Trash2 } from 'lucide-react';
-import { deleteInterviewSession } from '../../services/interviewService';
+import { getEvaluatorSessions, enforceSessionRetention, deleteInterviewSession } from '../../services/interviewService';
+import { calibrationNudge } from '../../core/engine/interviewCalibration';
+import { ClipboardList, Users, Clock, CheckCircle, Plus, ChevronRight, ChevronLeft, RotateCcw, Play, FileText, Filter, Trash2, AlertTriangle } from 'lucide-react';
 import SeedInterviewData from '../../components/SeedInterviewData';
 import { reportError } from '../../lib/errorReport';
 // Human labels — "ACCEPTED" meant nothing to a client scanning for what to do
@@ -52,6 +52,14 @@ export default function InterviewerDashboard() {
   const navigate = useNavigate();
   const [sessions, setSessions] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [retentionNote, setRetentionNote] = useState('');
+  // Appendix B calibration data: the leniency pattern over the evaluator's
+  // recent completed sessions (the engine stays quiet below 3 sessions).
+  const nudge = calibrationNudge(sessions);
+  const nudgeDetail = [
+    nudge.marksShare != null ? `${Math.round(nudge.marksShare * 100)}% of your guide marks are 'strong'` : null,
+    nudge.meanRating != null ? `average live rating ${nudge.meanRating.toFixed(1)}/5` : null,
+  ].filter(Boolean).join(' · ');
   const [filter, setFilter] = useState('all');
   // Sessions list pagination — 8 per page, so a growing history (the
   // re-interview flow multiplies rows) never drowns the dashboard.
@@ -60,7 +68,21 @@ export default function InterviewerDashboard() {
   useEffect(() => {
     if (!user) return;
     setLoading(true);
-    getEvaluatorSessions(user.uid).then(setSessions).catch(() => setSessions([])).finally(() => setLoading(false));
+    getEvaluatorSessions(user.uid).then(async list => {
+      setSessions(list);
+      // Retention enforcement (Appendix B — Decision Audit Trail): lapse
+      // audit records past the 24-month window. Fire-and-forget: a failed
+      // sweep must never block the dashboard load.
+      try {
+        const { deleted, failed, survivors } = await enforceSessionRetention(list);
+        if (deleted > 0) {
+          setSessions(survivors);
+          setRetentionNote(`${deleted} audit record${deleted > 1 ? 's' : ''} past the 24-month compliance window ${(failed > 0 ? 'partially ' : '')}removed — Appendix B retention policy.`);
+        }
+      } catch (e) {
+        console.warn('[interview-retention] sweep failed:', e?.message || e);
+      }
+    }).catch(() => setSessions([])).finally(() => setLoading(false));
   }, [user]);
   const filtered = filter === 'all' ? sessions : sessions.filter(s => s.status === filter);
   const pageCount = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
@@ -140,9 +162,27 @@ export default function InterviewerDashboard() {
               {f === 'all' ? 'All' : f === 'in_progress' ? 'Live' : f.charAt(0).toUpperCase() + f.slice(1)}
             </button>)}
         </div>
-        <button onClick={() => navigate('/app/interview/setup')} className="btn-primary glow flex items-center gap-2">
-          <Plus size={14} />{t("InterviewerDashboard.new_session")}</button>
+        <div className="flex items-center gap-3">
+          <button onClick={() => navigate('/app/interview/compare')} className="btn-outline flex items-center gap-2" title="Side-by-side two completed candidates — Appendix B debrief">
+            <Users size={14} />Compare</button>
+          <button onClick={() => navigate('/app/interview/setup')} className="btn-primary glow flex items-center gap-2">
+            <Plus size={14} />{t("InterviewerDashboard.new_session")}</button>
+        </div>
       </div>
+
+      {/* Calibration nudge — Appendix B: leniency bias reminder */}
+      {nudge.leniency && <div className="flex items-start gap-3 px-4 py-3 mb-8 border-[0.5px]" style={{ borderColor: 'color-mix(in srgb, var(--color-warning, #e2a300) 40%, transparent)', background: 'color-mix(in srgb, var(--color-warning, #e2a300) 10%, transparent)', borderRadius: '6px' }}>
+          <AlertTriangle size={16} className="flex-shrink-0 mt-0.5" style={{ color: 'var(--color-warning, #e2a300)' }} />
+          <div className="min-w-0">
+            <div className="text-technical-sm font-technical-sm uppercase tracking-widest mb-1" style={{ color: 'var(--color-warning, #e2a300)' }}>Calibration reminder</div>
+            <div className="text-body-sm font-body-sm text-on-surface-variant leading-relaxed">
+              Your recent rating pattern looks uniformly strong{nudgeDetail ? ` (${nudgeDetail})` : ''}. The platform flags potential leniency bias (QiDS Appendix B) — on your next interview, calibrate hard: score what an average answer actually sounds like before reaching for 'Strong'.
+            </div>
+          </div>
+        </div>}
+      {retentionNote && <div className="px-4 py-2.5 mb-8 border-[0.5px] border-outline-variant bg-surface-container-low" style={{ borderRadius: '6px' }}>
+          <span className="text-technical-sm font-technical-sm text-surface-variant">{retentionNote}</span>
+        </div>}
 
       {/* Sessions List */}
       {loading ? <div className="space-y-3">

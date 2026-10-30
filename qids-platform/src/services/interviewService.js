@@ -7,6 +7,13 @@ import { db } from '../firebase';
 
 const COLLECTION = 'interviewSessions';
 
+// Retention note (Appendix B — Decision Audit Trail): every score, note,
+// Covered/Strong/Weak mark and live response lives on these session docs and
+// remains accessible for the 24-month compliance and bias-audit window.
+// After the window the records lapse: enforceSessionRetention deletes docs
+// past the boundary (the rules' evaluator delete right), and removal always
+// also happens on explicit user action (deleteInterviewSession).
+
 /** Save a new interview session. */
 export async function saveInterviewSession(data) {
   const docRef = await addDoc(collection(db, COLLECTION), {
@@ -76,6 +83,42 @@ export async function getEvaluatorSessions(uid) {
 /** Delete an interview session. */
 export async function deleteInterviewSession(sessionId) {
   await deleteDoc(doc(db, COLLECTION, sessionId));
+}
+
+/** 24 months; leap years averaged in. */
+export const RETENTION_WINDOW_MS = 24 * 365.25 * 24 * 3600 * 1000;
+
+/**
+ * Appendix B — Decision Audit Trail: "All scores, notes, and ratings stored
+ * per session. Accessible for 24 months for compliance and bias audit
+ * purposes." Enforcement, not just a note: sessions whose createdAt lies
+ * outside the window are deleted (the rules grant the evaluator the delete
+ * right). Never runs for anything inside the window, and every failure is
+ * logged and swallowed — retention can never block the dashboard.
+ *
+ * @returns {Promise<{deleted: number, failed: number, survivors: any[]}>}
+ */
+export async function enforceSessionRetention(sessions, nowMs = Date.now()) {
+  const cutoffMs = nowMs - RETENTION_WINDOW_MS;
+  const insideWindow = [];
+  const expired = [];
+  for (const s of sessions) {
+    const t = s?.createdAt?.toMillis?.() ?? 0;
+    if (t > 0 && t < cutoffMs) expired.push(s); else insideWindow.push(s);
+  }
+  if (!expired.length) return { deleted: 0, failed: 0, survivors: insideWindow };
+  const results = await Promise.allSettled(expired.map(s => deleteInterviewSession(s.id)));
+  const deleted = results.filter(r => r.status === 'fulfilled').length;
+  const failed = results.length - deleted;
+  if (deleted) console.log(`[interview-retention] expired ${deleted} session(s) past the 24-month audit window`);
+  results.forEach((r, i) => {
+    if (r.status === 'rejected') console.warn(`[interview-retention] delete failed for ${expired[i].id}:`, r.reason?.message || r.reason);
+  });
+  // Sessions whose delete failed stay visible on the next fetch; survivors
+  // here are simply what remains in this batch after a clean delete.
+  const survivors = insideWindow.concat(results.flatMap(
+    (r, i) => (r.status === 'rejected' ? [expired[i]] : [])));
+  return { deleted, failed, survivors };
 }
 
 /** Live subscription to one session — the realtime spine of candidate sync

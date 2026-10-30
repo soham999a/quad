@@ -8,14 +8,15 @@
  * the report route doesn't pay the bundle cost until someone downloads).
  *
  * Content is the spec content, not a screenshot of the dark screen: the
- * Section 14 band vocabulary with plain-language descriptors, the Appendix B
- * strengths / develop-next panel, pillar scores, career profile, and the full
- * decision-audit transcript. Ink-on-paper styling — it reads like the PDF
- * spec's own report layer.
+ * Section 14 band vocabulary with plain-language descriptors, Section 7.2
+ * T-scores, the Appendix B strengths / develop-next panel, pillar scores,
+ * career profile, and the full decision-audit transcript. Ink-on-paper
+ * styling — it reads like the PDF spec's own report layer.
  */
 
 import { RUBRIC_DIMENSIONS, RUBRIC_MAP } from '../core/data/interviewRubrics';
 import { interviewBand, INTERVIEW_PEER_NORM } from '../core/engine/interviewScoring';
+import { interviewTScore } from '../core/engine/interviewCalibration';
 import { PILLARS } from '../data/qidsData';
 
 const PILLAR_LIST = ['IQ', 'EQ', 'SQ', 'AQ'].map(id => PILLARS[id]).filter(Boolean);
@@ -283,7 +284,11 @@ export async function downloadInterviewReportPdf(session, previous = null) {
     }
     y += 4.5;
     if (band) {
-      para(band.desc, 8, C.grey, 'italic');
+      // Section 7.2: T-scores (mean 50) alongside the Section 14 band. The
+      // linear anchor is pinned to the spec's own band boundaries — see
+      // interviewCalibration for the derivation and the Phase 3 caveat.
+      const ts = interviewTScore(score5);
+      para(band.desc + (ts ? `  (T ${ts.t} · ${ts.percentile})` : ''), 8, C.grey, 'italic');
     }
     const evNote = (session.evaluatorAssessment || []).find(e => e.dimensionId === d.id)?.notes;
     if (evNote) para('“' + evNote + '”', 8, C.primary, 'italic');

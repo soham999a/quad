@@ -367,7 +367,8 @@ Return JSON in this exact format:
       "dimension": "one of the dimension names listed above",
       "text": "the interview question",
       "context": "this question assesses",
-      "followUp": "a suggested follow-up probe if the answer is shallow",
+      "probes": ["2-3 follow-up probes that drill into the same competency, each a separate question the interviewer can fire one at a time"],
+      "followUp": "the single best follow-up probe (must equal probes[0])",
       "strongAnswer": "one line: what a strong answer sounds like",
       "weakAnswer": "one line: what a weak answer sounds like"
     }
@@ -378,25 +379,43 @@ Rules:
 - Behavioral/situational questions ("Tell me about a time...", "How would you...") — no trivia
 - Adjust seniority and vocabulary to the role and age group
 - If notes mention specifics, weave 2-3 questions around them naturally
-- Each question must map to exactly one dimension from the list`;
+- Each question must map to exactly one dimension from the list
+- Every question carries 2-3 DISTINCT probes (QiDS spec Appendix B probe bank);
+  they must explore different angles (e.g. decision process / what they'd change today /
+  evidence the lessons stuck) rather than rewording the same ask`;
 
   const content = await groqChat([
     { role: 'system', content: QIDS_SYSTEM_PROMPT },
     { role: 'user', content: prompt },
-  ], { jsonMode: true, temperature: 0.75, maxTokens: 2200 });
+  ], { jsonMode: true, temperature: 0.75, maxTokens: 3000 });
 
   const parsed = parseModelJson(content);
   const qs = Array.isArray(parsed.questions) ? parsed.questions : [];
   return qs
     .filter(q => q.text && q.dimension)
-    .map((q, i) => ({
-      id: `LQ-${String(i + 1).padStart(2, '0')}`,
-      text: String(q.text),
-      dimension: String(q.dimension),
-      context: q.context ? String(q.context) : '',
-      followUp: q.followUp ? String(q.followUp) : '',
-      strong: q.strongAnswer ? String(q.strongAnswer) : '',
-      weak: q.weakAnswer ? String(q.weakAnswer) : '',
-      source: 'ai',
-    }));
+    .map((q, i) => {
+      const followUp = q.followUp ? String(q.followUp) : '';
+      // Probe bank (Appendix B: 2–3 follow-up probes displayed on click).
+      // The model's list is normalised, de-duplicated and always anchored by
+      // the follow-up so a question never renders one probe less than it has.
+      const rawProbes = Array.isArray(q.probes) ? q.probes.map(String) : [];
+      const bank = followUp ? [followUp] : [];
+      for (const p of rawProbes) {
+        const cleaned = p.trim();
+        if (cleaned && !bank.some(b => b.toLowerCase() === cleaned.toLowerCase())) bank.push(cleaned);
+      }
+      if (bank.length < 2 && followUp) bank.push('What would you do differently if you faced the same situation next week?');
+      const probeBank = bank.slice(0, 3).length > 1 ? bank.slice(0, 3) : (followUp ? [followUp] : []);
+      return {
+        id: `LQ-${String(i + 1).padStart(2, '0')}`,
+        text: String(q.text),
+        dimension: String(q.dimension),
+        context: q.context ? String(q.context) : '',
+        followUp,
+        probeBank,
+        strong: q.strongAnswer ? String(q.strongAnswer) : '',
+        weak: q.weakAnswer ? String(q.weakAnswer) : '',
+        source: 'ai',
+      };
+    });
 }
