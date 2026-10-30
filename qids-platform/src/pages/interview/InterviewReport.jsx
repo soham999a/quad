@@ -5,7 +5,8 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { getInterviewSession } from '../../services/interviewService';
 import { useAuth } from '../../context/AuthContext';
 import { RUBRIC_DIMENSIONS, RUBRIC_MAP } from '../../core/data/interviewRubrics';
-import { interviewBand } from '../../core/engine/interviewScoring';
+import { interviewBand, INTERVIEW_PEER_NORM } from '../../core/engine/interviewScoring';
+import { RadarSvg } from '../../components/charts';
 import { downloadInterviewReportPdf } from '../../lib/interviewReportPdf';
 import { PILLARS } from '../../data/qidsData';
 
@@ -80,6 +81,8 @@ export default function InterviewReport() {
       .catch(() => {});
   }, [session?.previousSessionId]);
   const role = userProfile?.role || 'individual';
+  // Appendix B "searchable post-interview": transcript/notes search filter.
+  const [transcriptQuery, setTranscriptQuery] = useState('');
   useEffect(() => {
     if (!sessionId) return;
     setLoading(true);
@@ -130,20 +133,43 @@ export default function InterviewReport() {
     evaluatorAssessment,
     mode
   } = session;
+  // Hiring Confidence traffic light — PIP Page 1. The spec's thresholds are
+  // written on the 145-point PII (Green ≥105, Amber 90–104, Red <90); the
+  // interview report scores 0–100, so the same cut ratios apply (≈72 / ≈62)
+  // and keep the spec's Green/Amber/Red language and rationale structure.
+  const hiringConfidence = unifiedScore == null ? null
+    : unifiedScore >= 72 ? {
+        label: 'High', color: 'var(--color-success)',
+        rationale: 'Interview evidence tracks the strong band across most dimensions — proceed with hiring confidence.',
+      }
+    : unifiedScore >= 62 ? {
+        label: 'Moderate', color: 'var(--gold-strong, var(--color-primary))',
+        rationale: 'Capability is present but uneven — probe the flagged areas before a decision.',
+      }
+    : {
+        label: 'Caution', color: 'var(--status-err, #e5484d)',
+        rationale: 'Interview evidence stayed thin or weak — treat as a development risk for now.',
+      };
+
   const shape = skillShape ? SHAPES[skillShape] : null;
   const career = careerProfile || null;
 
-  // Compute radar dimensions for the 8 rubric dimensions
-  const maxScore = 5;
-  const radarPoints = RUBRIC_DIMENSIONS.map((d, i) => {
+  // PIP Page 2 — the dimension radar with the peer-norm dashed line. axes
+  // are the nine rubric dimensions rescaled 0–100 from the 1–5 rubric; the
+  // peer norm comes from the platform's standing PEER_NORM (see
+  // INTERVIEW_PEER_NORM) until the Phase 3 norming study replaces it.
+  const radarRows = RUBRIC_DIMENSIONS.map(d => {
     const score = mergedScores?.[d.id] ?? 0;
     return {
-      label: d.shortLabel,
-      fullLabel: d.label,
-      score,
-      angle: i / RUBRIC_DIMENSIONS.length * 2 * Math.PI - Math.PI / 2
+      subject: d.shortLabel,
+      Candidate: score > 0 ? ((score - 1) / 4) * 100 : 0,
+      'Peer Norm': INTERVIEW_PEER_NORM[d.id],
     };
   });
+  const radarSeries = [
+    { key: 'Peer Norm', color: 'var(--slate-muted, var(--color-outline))', fillOpacity: 0 },
+    { key: 'Candidate', color: 'var(--gold-strong, var(--color-primary))', fillOpacity: 0.18 },
+  ];
   return <div className="page-pad max-w-[960px] mx-auto animate-fade interview-report">
       {/* Hero */}
       <section className="card-gold p-8 md:p-12 mb-8 text-center">
@@ -153,6 +179,10 @@ export default function InterviewReport() {
         <div className="flex items-center justify-center gap-2 mb-8 flex-wrap">
           <div className="text-body-sm font-body-sm text-surface-variant">
             {mode === 'live' ? 'Live Interview' : 'Post-Interview'} · Scored by {session.evaluatorName}
+            {session.completedAt && (() => {
+              const d = session.completedAt?.toDate ? session.completedAt.toDate() : new Date(session.completedAt);
+              return Number.isFinite(d?.getTime()) ? ` · ${d.toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' })}` : '';
+            })()}
           </div>
           {(session.sessionNumber || 1) > 1 && <span className="chip text-[10px]" style={{ background: 'var(--gold-tint)', color: 'var(--color-primary)', borderColor: 'var(--gold-line)' }}>
               Re-interview · Attempt #{session.sessionNumber}
@@ -183,6 +213,17 @@ export default function InterviewReport() {
           </div>
         </div>
 
+        {/* Hiring Confidence — PIP Page 1 traffic light */}
+        {hiringConfidence && <div className="inline-flex items-center gap-2 px-3 py-1.5 border-[0.5px] mb-4" style={{
+            borderColor: hiringConfidence.color,
+            background: `color-mix(in srgb, ${hiringConfidence.color} 8%, transparent)`,
+            borderRadius: '6px'
+          }}>
+            <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ background: hiringConfidence.color }} />
+            <span className="text-label-sm font-label-sm" style={{ color: hiringConfidence.color }}>{hiringConfidence.label} confidence</span>
+            <span className="text-body-sm font-body-sm text-surface-variant hidden sm:inline">— {hiringConfidence.rationale}</span>
+          </div>}
+
         {/* Skill Shape Badge */}
         {shape && <div className="inline-flex items-center gap-2 px-4 py-2 bg-surface-container-low border-[0.5px] border-outline-variant">
             <Target size={14} style={{
@@ -202,6 +243,7 @@ export default function InterviewReport() {
         <div className="gradient-rule mb-6" />
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           {RUBRIC_DIMENSIONS.map((d, i) => {
+          const maxScore = 5;
           const score = mergedScores?.[d.id] ?? 0;
           const pct = score / maxScore * 100;
           const evScore = evaluatorAssessment?.find(e => e.dimensionId === d.id)?.score;
@@ -294,45 +336,30 @@ export default function InterviewReport() {
         })()}
       </section>
 
-      {/* Pillar Radar + Bars */}
+      {/* PIP Page 2: dimension radar (peer norm dashed) + pillar bars */}
       {pillarScores && <section className="mb-8">
-          <div className="kicker mb-4">{t("InterviewReport.qids_pillar_scores")}</div>
+          <div className="kicker mb-4">Dimension radar · peer norm — QIDS pillar scores</div>
           <div className="gradient-rule mb-6" />
           <div className="responsive-grid-12 gap-6">
-            {/* Radar */}
-            <div className="md:col-span-5 col-span-full card p-6 md:p-8 flex items-center justify-center">
-              <svg viewBox="-110 -110 220 220" className="w-full max-w-[280px]">
-                {/* Grid circles */}
-                {[25, 50, 75, 100].map(r => <circle key={r} cx="0" cy="0" r={r} fill="none" stroke="var(--color-outline-variant)" strokeWidth="0.5" />)}
-                {/* Axis lines */}
-                {PILLAR_LIST.map((p, i) => {
-              const angle = i / PILLAR_LIST.length * 2 * Math.PI - Math.PI / 2;
-              const x = Math.cos(angle) * 100;
-              const y = Math.sin(angle) * 100;
-              return <line key={p.id} x1="0" y1="0" x2={x} y2={y} stroke="var(--color-outline-variant)" strokeWidth="0.5" />;
-            })}
-                {/* Data polygon */}
-                <polygon points={PILLAR_LIST.map((p, i) => {
-              const angle = i / PILLAR_LIST.length * 2 * Math.PI - Math.PI / 2;
-              const r = pillarScores[p.id] || 0;
-              return `${Math.cos(angle) * r},${Math.sin(angle) * r}`;
-            }).join(' ')} fill="var(--gold-grid)" stroke="var(--gold-strong)" strokeWidth="1.5" />
-                {/* Data points + labels */}
-                {PILLAR_LIST.map((p, i) => {
-              const angle = i / PILLAR_LIST.length * 2 * Math.PI - Math.PI / 2;
-              const r = pillarScores[p.id] || 0;
-              const x = Math.cos(angle) * r;
-              const y = Math.sin(angle) * r;
-              const lx = Math.cos(angle) * 115;
-              const ly = Math.sin(angle) * 115;
-              return <g key={p.id}>
-                      <circle cx={x} cy={y} r="3" fill={p.color} />
-                      <text x={lx} y={ly} textAnchor="middle" dominantBaseline="middle" fill="var(--color-on-surface)" fontSize="9" fontFamily="var(--font-technical)">
-                        {p.short}
-                      </text>
-                    </g>;
-            })}
-              </svg>
+            {/* Dimension radar — PIP Page 2: candidate polygon vs the peer-norm
+                dashed line (platform norm until the Phase 3 norming study). */}
+            <div className="md:col-span-5 col-span-full card p-6 md:p-8 flex flex-col items-center justify-center">
+              <RadarSvg
+                data={radarRows}
+                series={radarSeries}
+                dashed={['Peer Norm']}
+                height={260}
+                ariaLabel={radarRows.map(r =>
+                  `${r.subject} candidate ${Math.round(r.Candidate)} vs peer norm ${r['Peer Norm']}`).join(', ')}
+              />
+              <div className="flex items-center gap-4 mt-2 text-technical-sm font-technical-sm">
+                <span className="flex items-center gap-1.5">
+                  <span className="inline-block w-3 h-1.5 rounded" style={{ background: 'var(--gold-strong, var(--color-primary))' }} /> Candidate
+                </span>
+                <span className="flex items-center gap-1.5">
+                  <span className="inline-block w-3 border-t-2 border-dashed" style={{ borderColor: 'var(--slate-muted, var(--color-outline))' }} /> Peer norm
+                </span>
+              </div>
             </div>
 
             {/* Pillar Bars */}
@@ -380,26 +407,59 @@ export default function InterviewReport() {
           </div>
         </section>}
 
-      {/* Session transcript — per-question responses and interviewer notes */}
+      {/* Session transcript — per-question responses, interviewer notes,
+          timestamps and marks. Appendix B wants notes timestamped, linked to
+          the competency, and searchable post-interview. */}
       {Array.isArray(session?.liveResponses) && session.liveResponses.length > 0 &&
         session.liveResponses.some(r => (r.response && r.response.trim()) || r.score != null) &&
         <section className="mb-8">
-          <div className="kicker mb-4">{t("InterviewReport.session_transcript")}</div>
-          <div className="gradient-rule mb-6" />
+          <div className="flex items-end justify-between gap-4 mb-4 flex-wrap">
+            <div>
+              <div className="kicker mb-4">{t("InterviewReport.session_transcript")}</div>
+              <div className="gradient-rule mb-0" />
+            </div>
+            <input
+              type="search"
+              value={transcriptQuery}
+              onChange={e => setTranscriptQuery(e.target.value)}
+              placeholder="Search notes, answers, competencies…"
+              aria-label="Search the session transcript"
+              className="input-field w-full sm:w-[300px]"
+            />
+          </div>
           <div className="space-y-4">
-            {session.liveResponses.map((r, i) => {
-              const dimLabel = RUBRIC_MAP?.[r.dimension]?.label || r.dimension || '';
-              const hasContent = (r.response && r.response.trim()) || r.score != null;
-              if (!hasContent) return null;
-              return <div key={r.questionId || i} className="card p-5">
-                <div className="flex items-center justify-between mb-2">
-                  <div className="text-technical-sm font-technical-sm text-surface-variant">Q{String(i + 1).padStart(2, '0')}{dimLabel ? ` · ${dimLabel}` : ''}</div>
-                  {r.score != null && <span className="text-technical-sm font-technical-sm text-primary">{r.score}/5</span>}
-                </div>
-                {r.questionText && <div className="text-label-sm font-label-sm text-on-background mb-2">{r.questionText}</div>}
-                {r.response && r.response.trim() && <div className="text-body-sm font-body-sm text-on-surface-variant italic">“{r.response}”</div>}
-              </div>;
-            })}
+            {(() => {
+              // Question, note text, competency and recorded time are all
+              // searchable (Appendix B). Numbering keeps the original
+              // position so "Q03" still matches the audit trail.
+              const q = transcriptQuery.trim().toLowerCase();
+              const matches = session.liveResponses.map((r, i) => ({ r, i })).filter(({ r }) => {
+                const dimLabelF = RUBRIC_MAP?.[r.dimension]?.label || r.dimension || '';
+                const hasContentF = (r.response && r.response.trim()) || r.score != null;
+                if (!hasContentF) return false;
+                if (!q) return true;
+                return [r.questionText, r.response, dimLabelF, r.answeredAt || ''].join(' ').toLowerCase().includes(q);
+              });
+              if (matches.length === 0) return <p className="text-body-sm text-on-surface-variant">No transcript entries match “{transcriptQuery}”.</p>;
+              return matches.map(({ r, i }) => {
+                const dimLabel = RUBRIC_MAP?.[r.dimension]?.label || r.dimension || '';
+                const answeredAt = r.answeredAt ? (() => {
+                  const d = /^\d+$/.test(r.answeredAt) ? new Date(Number(r.answeredAt)) : new Date(r.answeredAt);
+                  return Number.isFinite(d?.getTime()) ? d.toLocaleString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : null;
+                })() : null;
+                return <div key={r.questionId || i} className="card p-5">
+                  <div className="flex items-center justify-between mb-2 flex-wrap gap-2">
+                    <div className="text-technical-sm font-technical-sm text-surface-variant">Q{String(i + 1).padStart(2, '0')}{dimLabel ? ` · ${dimLabel}` : ''}{answeredAt ? ` · ${answeredAt}` : ''}</div>
+                    <div className="flex items-center gap-2">
+                      {session.guideMarks?.[r.questionId] && <span className="chip text-[10px]" style={{ background: 'var(--gold-tint)', color: 'var(--color-primary)', borderColor: 'var(--gold-line)' }}>{session.guideMarks[r.questionId]}</span>}
+                      {r.score != null && <span className="text-technical-sm font-technical-sm text-primary">{r.score}/5</span>}
+                    </div>
+                  </div>
+                  {r.questionText && <div className="text-label-sm font-label-sm text-on-background mb-2">{r.questionText}</div>}
+                  {r.response && r.response.trim() && <div className="text-body-sm font-body-sm text-on-surface-variant italic">“{r.response}”</div>}
+                </div>;
+              });
+            })()}
           </div>
         </section>}
 

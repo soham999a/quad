@@ -65,6 +65,7 @@ const InterviewSetup = lazy(() => import('./pages/interview/InterviewSetup'));
 const InterviewPostScoring = lazy(() => import('./pages/interview/InterviewPostScoring'));
 const InterviewLive = lazy(() => import('./pages/interview/InterviewLive'));
 const InterviewReport = lazy(() => import('./pages/interview/InterviewReport'));
+const CompareInterviews = lazy(() => import('./pages/interview/CompareInterviews'));
 const MyInterviews = lazy(() => import('./pages/interview/MyInterviews'));
 const CandidateSession = lazy(() => import('./pages/interview/CandidateSession'));
 const TeacherDashboard = lazy(() => import('./pages/school/TeacherDashboard'));
@@ -1004,6 +1005,14 @@ function AppShell() {
               <Route path="interview/setup" element={
                 <RoleRoute roles={['evaluator', 'admin', 'employer']}>
                   <PageSuspense><InterviewSetup /></PageSuspense>
+                </RoleRoute>
+              } />
+              {/* Debrief comparison — Appendix B "Candidate Comparison in
+                  Interview": two completed sessions, side by side per
+                  competency. Evaluator surface like the rest of the studio. */}
+              <Route path="interview/compare" element={
+                <RoleRoute roles={['evaluator', 'admin', 'employer']}>
+                  <PageSuspense><CompareInterviews /></PageSuspense>
                 </RoleRoute>
               } />
               <Route path="interview/scoring/:sessionId" element={

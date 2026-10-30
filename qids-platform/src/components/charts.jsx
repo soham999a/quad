@@ -35,6 +35,9 @@ export function RadarSvg({
   labelColor = 'var(--neutral-mid)',
   gridColor = 'var(--gold-grid)',
   series: seriesProp,
+  /** Series keys drawn as a dashed outline with no fill — the PIP Page 2
+   *  peer-norm line. Optional; every existing consumer keeps solid fills. */
+  dashed,
   ariaLabel,
 }) {
   if (!Array.isArray(data) || data.length < 3) return null;
@@ -85,17 +88,19 @@ export function RadarSvg({
         return <line key={row.subject} x1={cx} y1={cy} x2={x} y2={y} stroke={gridColor} strokeWidth={0.5} opacity={0.6} />;
       })}
 
-      {series.map(s => (
-        <polygon
+      {series.map(s => {
+        const isDashed = dashed?.includes(s.key);
+        return <polygon
           key={`shape-${s.key}`}
           points={pointsFor(s.key)}
-          fill={s.color}
-          fillOpacity={s.fillOpacity ?? 0.2}
+          fill={isDashed ? 'none' : s.color}
+          fillOpacity={isDashed ? 0 : (s.fillOpacity ?? 0.2)}
           stroke={s.color}
-          strokeWidth={2}
+          strokeWidth={isDashed ? 1.5 : 2}
+          strokeDasharray={isDashed ? '4 3' : undefined}
           strokeLinejoin="round"
-        />
-      ))}
+        />;
+      })}
 
       {series.flatMap(s => data.map((row, i) => {
         const [x, y] = radarPoint({ cx, cy, radius: (clamp(row[s.key]) / max) * radius, index: i, count });

@@ -5,11 +5,50 @@ import type {
 import { RUBRIC_DIMENSIONS, RUBRIC_MAP } from '../data/interviewRubrics';
 import { getGrade } from '../../data/qidsData';
 import { getSkillShape, getCareerProfile, WEIGHTS } from './scoring';
+import { PEER_NORM } from '../report/pip';
+
+/**
+ * Peer-norm reference per rubric dimension, 0–100 scale — the PIP Page 2
+ * dashed line, adapted to the interview radar's axes.
+ *
+ * Sourced from the platform's standing PEER_NORM (core/report/pip.ts), mapped
+ * through each dimension's pillar; Critical Thinking uses its own spec axis
+ * rather than the IQ pillar value. Placeholders like these stay honest until
+ * the Phase 3 norming study (Appendix C) supplies real cohort tables.
+ */
+export const INTERVIEW_PEER_NORM: Record<RubricDimensionId, number> =
+  Object.fromEntries(
+    RUBRIC_DIMENSIONS.map(d => [
+      d.id,
+      d.id === 'CriticalThinking' ? PEER_NORM.CT
+        : d.pillar === 'IQ' ? PEER_NORM.IQ
+        : d.pillar === 'EQ' ? PEER_NORM.EQ
+        : d.pillar === 'SQ' ? PEER_NORM.SQ
+        : PEER_NORM.AQ,
+    ]),
+  ) as Record<RubricDimensionId, number>;
+
+/**
+ * Post-Interview Score Integration weights — Appendix B: "Structured interview
+ * ratings (1–5 per competency) averaged with assessment scores at configurable
+ * weight (default: 40% interview, 60% assessment)."
+ *
+ * `assessment` blends the candidate's own pre/post assessment evidence, and
+ * `interview` the evaluator's structured rating — the two must sum to 1.
+ * Exported so an organisation can re-weight via a config surface without
+ * touching the engine: pass a custom `{ interview, assessment }` to
+ * `mergeInterviewScores` / `computeInterviewResult`.
+ */
+export const INTERVIEW_WEIGHTS: { interview: number; assessment: number } = {
+  interview: 0.4,
+  assessment: 0.6,
+};
 
 /**
  * Merge self + evaluator assessments into a single score per dimension.
  *
- * Post-interview mode: 60% self + 40% evaluator.
+ * Post-interview mode: `weights.assessment` self + `weights.interview`
+ * evaluator (spec default 60% / 40%, see INTERVIEW_WEIGHTS).
  * Live interview mode: 100% evaluator (self-assessment is null).
  *
  * Only dimensions present in the evaluator assessment are included. Dimensions
@@ -20,6 +59,7 @@ export function mergeInterviewScores(
   selfAssessment: RubricEvaluation[] | undefined,
   evaluatorAssessment: RubricEvaluation[],
   mode: InterviewMode,
+  weights: { interview: number; assessment: number } = INTERVIEW_WEIGHTS,
 ): Record<RubricDimensionId, number> {
   const merged: Record<string, number> = {};
   const evalById = new Map(evaluatorAssessment.map(e => [e.dimensionId, e]));
@@ -37,7 +77,7 @@ export function mergeInterviewScores(
     const selfEval = selfAssessment?.find(e => e.dimensionId === dim.id);
     const selfScore = selfEval?.score;
     if (selfScore != null) {
-      merged[dim.id] = Math.round((selfScore * 0.6 + evEval.score * 0.4) * 10) / 10;
+      merged[dim.id] = Math.round((selfScore * weights.assessment + evEval.score * weights.interview) * 10) / 10;
     } else {
       merged[dim.id] = evEval.score;
     }
@@ -130,14 +170,17 @@ export function interviewBand(score: number | null | undefined): {
 /**
  * Compute the full interview result: merged scores → pillar scores → unified → grade.
  */
-export function computeInterviewResult(session: Pick<InterviewSession, 'selfAssessment' | 'evaluatorAssessment' | 'mode'>) {
+export function computeInterviewResult(
+  session: Pick<InterviewSession, 'selfAssessment' | 'evaluatorAssessment' | 'mode'>,
+  weights: { interview: number; assessment: number } = INTERVIEW_WEIGHTS,
+) {
   const { selfAssessment, evaluatorAssessment, mode } = session;
 
   if (!evaluatorAssessment || evaluatorAssessment.length === 0) {
     return { mergedScores: null, pillarScores: null, unifiedScore: null, grade: null, skillShape: null, careerProfile: null };
   }
 
-  const mergedScores = mergeInterviewScores(selfAssessment, evaluatorAssessment, mode);
+  const mergedScores = mergeInterviewScores(selfAssessment, evaluatorAssessment, mode, weights);
   const pillarScores = rubricToPillarScores(mergedScores);
   const unifiedScore = weightedInterviewScore(pillarScores) || 0;
   const grade = getGrade(unifiedScore);

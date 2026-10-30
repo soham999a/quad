@@ -1,5 +1,5 @@
-import React from 'react';
-import { Mic, MicOff, Video, VideoOff, Phone, PhoneOff, Monitor, Loader2 } from 'lucide-react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { Mic, MicOff, Video, VideoOff, Phone, PhoneOff, Monitor, Loader2, Volume2 } from 'lucide-react';
 
 /**
  * VideoCallDock — the video/audio dock for the live interview, shared by the
@@ -9,13 +9,43 @@ import { Mic, MicOff, Video, VideoOff, Phone, PhoneOff, Monitor, Loader2 } from 
  * waiting-to-connect and call-ended are all shown, never faked.
  */
 export default function VideoCallDock({ call, role = 'evaluator', className = '' }) {
-  const { status, muted, cameraOff, localStream, remoteStream, mediaError, connState, iceState, sigError } = call;
+  const { status, muted, cameraOff, localStream, remoteStream, mediaError, connState, iceState, sigError, hasTurn } = call;
+  // Autoplay policies are the classic "connected but nothing plays" culprit:
+  // the remote stream carries sound, so the browser may silently reject an
+  // implicit unmuted play(). Attach + play explicitly, fall back to muted
+  // playback, and surface a one-tap "enable sound/video" button.
+  const [remoteEl, setRemoteEl] = useState(null);
+  const [remoteTapNeeded, setRemoteTapNeeded] = useState(false);
+  useEffect(() => {
+    if (!remoteEl) return undefined;
+    if (remoteStream) remoteEl.srcObject = remoteStream;
+    else remoteEl.srcObject = null;
+    if (!remoteStream) {
+      setRemoteTapNeeded(false);
+      return undefined;
+    }
+    setRemoteTapNeeded(false);
+    remoteEl.muted = false;
+    remoteEl.play().catch(() => {
+      // Unmuted autoplay refused — try muted autoplay so at least the picture
+      // lands, and let the user unlock sound with one tap.
+      remoteEl.muted = true;
+      remoteEl.play().catch(() => { /* nothing renders without a gesture */ });
+      setRemoteTapNeeded(true);
+    });
+    return undefined;
+  }, [remoteEl, remoteStream]);
+
+  const unlockRemote = useCallback(() => {
+    if (!remoteEl) return;
+    remoteEl.muted = false;
+    remoteEl.play().catch(() => setRemoteTapNeeded(true));
+  }, [remoteEl]);
 
   const retry = () => { try { call.stop(); } finally { setTimeout(() => call.start(), 400); } };
 
-  // Attach streams to the video elements — srcObject is not a React attribute.
-  const remoteRef = el => { if (el && remoteStream) el.srcObject = remoteStream; };
-  const localRef = el => { if (el && localStream) el.srcObject = localStream; };
+  // Attach the local (self-view) stream — srcObject is not a React attribute.
+  const localRef = el => { if (el && localStream && el.srcObject !== localStream) el.srcObject = localStream; };
 
   const statusLine = {
     idle: null,
@@ -56,7 +86,7 @@ export default function VideoCallDock({ call, role = 'evaluator', className = ''
           {/* Remote peer — the main stage */}
           <div className="relative aspect-video bg-[#0b0d10]">
             <video
-              ref={remoteRef}
+              ref={setRemoteEl}
               autoPlay playsInline
               className={`w-full h-full object-cover ${remoteStream ? '' : 'hidden'}`}
             />
@@ -72,7 +102,18 @@ export default function VideoCallDock({ call, role = 'evaluator', className = ''
                     pc {connState || '…'} · ice {iceState || '…'}{sigError ? ` · sig ${sigError}` : ''}
                   </div>
                 )}
+                {status === 'connecting' && !hasTurn && (
+                  <div className="mt-1 text-[10px] font-mono uppercase tracking-widest text-white/30">
+                    stun only — no turn relay configured
+                  </div>
+                )}
               </div>}
+            {/* Autoplay unlock — appears when the browser refused unmuted playback */}
+            {remoteStream && remoteTapNeeded && <button type="button" onClick={unlockRemote}
+                className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-black/50 text-white cursor-pointer">
+                <Volume2 size={22} />
+                <span className="text-body-sm font-body-sm">Tap to enable sound</span>
+              </button>}
             {/* Own camera inset */}
             {localStream && <div className="absolute bottom-3 right-3 w-[112px] aspect-video bg-[#0b0d10] border border-white/10 overflow-hidden" style={{ borderRadius: '6px' }}>
                 <video ref={localRef} autoPlay playsInline muted
@@ -82,11 +123,16 @@ export default function VideoCallDock({ call, role = 'evaluator', className = ''
           </div>
 
           {/* Status ribbon */}
-          <div className="flex items-center gap-2 px-4 py-2 border-y-[0.5px] border-outline-variant bg-surface-container-low">
-            <span className={`w-1.5 h-1.5 flex-shrink-0 ${stateDot || 'bg-outline-variant'}`} />
-            <span className="text-technical-sm font-technical-sm uppercase tracking-widest text-on-surface-variant truncate">
-              {statusLine || 'Idle'}
-            </span>
+          <div className="flex flex-col">
+            <div className="flex items-center gap-2 px-4 py-2 border-y-[0.5px] border-outline-variant bg-surface-container-low">
+              <span className={`w-1.5 h-1.5 flex-shrink-0 ${stateDot || 'bg-outline-variant'}`} />
+              <span className="text-technical-sm font-technical-sm uppercase tracking-widest text-on-surface-variant truncate">
+                {statusLine || 'Idle'}
+              </span>
+            </div>
+            {status === 'failed' && !hasTurn && !mediaError && <div className="px-4 py-2 bg-surface-container-low text-technical-sm font-technical-sm text-surface-variant">
+                No TURN relay configured — calls between devices on different networks will hang here. Set VITE_TURN_URLS / VITE_TURN_USERNAME / VITE_TURN_CREDENTIAL (see .env.example) for cross-network calls.
+              </div>}
           </div>
 
           {/* Controls */}

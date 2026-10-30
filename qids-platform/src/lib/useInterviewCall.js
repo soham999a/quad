@@ -32,6 +32,10 @@ export default function useInterviewCall({ sessionId, isEvaluator }) {
   const [connState, setConnState] = useState('idle');
   const [iceState, setIceState] = useState('idle');
   const [sigError, setSigError] = useState(null);
+  // Whether a TURN relay is configured for this session. Without a relay the
+  // call can only cross a permissive network path — worth telling the user
+  // about explicitly when the connection fails.
+  const [hasTurn, setHasTurn] = useState(false);
 
   const pcRef = useRef(null);
   const localRef = useRef(null);
@@ -55,6 +59,7 @@ export default function useInterviewCall({ sessionId, isEvaluator }) {
     setConnState('idle');
     setIceState('idle');
     setSigError(null);
+    setHasTurn(false);
   }, []);
 
   const stop = useCallback(() => {
@@ -65,7 +70,9 @@ export default function useInterviewCall({ sessionId, isEvaluator }) {
 
   const applyStream = useCallback(pc => {
     pc.ontrack = e => {
-      const stream = e.streams?.[0];
+      // e.streams[0] is the normal path; some renegotiation edge cases deliver
+      // the track with no stream — wrap it so the dock always has one.
+      const stream = e.streams?.[0] || new MediaStream([e.track]);
       if (stream && stream !== remoteRef.current) {
         remoteRef.current = stream;
         setRemoteStream(stream);
@@ -117,9 +124,13 @@ export default function useInterviewCall({ sessionId, isEvaluator }) {
     ];
     const turnUrls = (import.meta.env?.VITE_TURN_URLS || '')
       .split(',').map(s => s.trim()).filter(Boolean);
+    // A relay entry without real credentials only burns ICE latency — require
+    // both to be present before adding the relay at all, so an incomplete env
+    // degrades to plain STUN (still works same-LAN) instead of erroring.
+    const hasTurnCreds = Boolean(import.meta.env.VITE_TURN_USERNAME && import.meta.env.VITE_TURN_CREDENTIAL);
     const iceServers = [
       ...stunServers,
-      ...(turnUrls.length
+      ...(turnUrls.length && hasTurnCreds
         ? [{
             urls: turnUrls,
             username: import.meta.env.VITE_TURN_USERNAME,
@@ -127,6 +138,7 @@ export default function useInterviewCall({ sessionId, isEvaluator }) {
           }]
         : []),
     ];
+    setHasTurn(turnUrls.length > 0 && hasTurnCreds);
     const pc = new RTCPeerConnection({
       iceServers,
       iceCandidatePoolSize: 4,
@@ -163,7 +175,10 @@ export default function useInterviewCall({ sessionId, isEvaluator }) {
 
       if (isEvaluator) {
         const pc = buildPeer(publishIce);
-        const offer = await pc.createOffer({ offerToReceiveAudio: true, offerToReceiveVideo: true });
+        // No legacy offerToReceive* options: local tracks are already attached
+        // in buildPeer, so those m-lines are sendrecv anyway — and the legacy
+        // keywords can throw on Safari.
+        const offer = await pc.createOffer();
         await pc.setLocalDescription(offer);
         setStatus('connecting');
         publishWebRtcOffer(sessionId, { type: offer.type, sdp: pc.localDescription.sdp });
@@ -268,5 +283,5 @@ export default function useInterviewCall({ sessionId, isEvaluator }) {
   // Unmount cleanup (routes away, completed session reload).
   useEffect(() => () => teardown(), [teardown]);
 
-  return { status, muted, cameraOff, localStream, remoteStream, mediaError, connState, iceState, sigError, start, stop, toggleMute, toggleCamera };
+  return { status, muted, cameraOff, localStream, remoteStream, mediaError, connState, iceState, sigError, hasTurn, start, stop, toggleMute, toggleCamera };
 }
