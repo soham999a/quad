@@ -1,25 +1,35 @@
 /**
  * interviewReportPdf — the one-click download behind the interview report's
- * Download button.
+ * Download button. Dynamically imports jsPDF so the report route doesn't pay
+ * the bundle cost until someone downloads.
  *
- * The old button called window.print(), which only opens the browser's print
- * dialog — the user had to fiddle with "Save as PDF" themselves. This draws a
- * real, self-contained PDF document directly (jsPDF, dynamically imported so
- * the report route doesn't pay the bundle cost until someone downloads).
+ * Layout: the QiDS_sample_profile_report two-page professional profile —
  *
- * Content is the spec content, not a screenshot of the dark screen: the
- * Section 14 band vocabulary with plain-language descriptors, Section 7.2
- * T-scores, the Appendix B strengths / develop-next panel, pillar scores,
- * career profile, and the full decision-audit transcript. Ink-on-paper
- * styling — it reads like the PDF spec's own report layer.
+ *   Page 1  Professional Intelligence Profile
+ *           hero ("a profile for development, not a pass/fail label"),
+ *           the index block, the read-this-profile box with stand-out asset
+ *           and growth edge, the dimension radar snapshot, and the band-coded
+ *           competency heatmap.
+ *   Page 2  Profile Interpretation & Development — from scores to observable
+ *           behaviours: what the pattern could mean at work, the work-style /
+ *           career alignment block, the likely working pattern (at best /
+ *           when stretched / interview prompt), the role lens, the
+ *           development-priority ranking and the 90-day development
+ *           conversation built from the Section 16 development library.
+ *   Page 3+ Decision audit trail (Appendix B) — the full session transcript,
+ *           which the sample report condenses out for readability.
+ *
+ * Every number is real session data; sample-report furniture that assumed
+ * synthetic values (145-point PII, invented profile IDs) is mapped to the
+ * interview scale the platform actually scores (0–100 index) without
+ * pretending to be a PII.
  */
 
 import { RUBRIC_DIMENSIONS, RUBRIC_MAP } from '../core/data/interviewRubrics';
 import { interviewBand, INTERVIEW_PEER_NORM } from '../core/engine/interviewScoring';
 import { interviewTScore } from '../core/engine/interviewCalibration';
-import { PILLARS } from '../data/qidsData';
-
-const PILLAR_LIST = ['IQ', 'EQ', 'SQ', 'AQ'].map(id => PILLARS[id]).filter(Boolean);
+import { DEVELOPMENT_LIBRARY } from '../core/data/enterprise';
+import { GRADE_BANDS } from '../data/qidsData';
 
 // Ink-on-paper palette — deliberately NOT the dark-theme tokens, which print
 // near-white on white and previously made downloads unreadable.
@@ -50,6 +60,24 @@ const SHAPE_LABELS = {
   X: 'X-Shaped — balanced high performance',
   M: 'M-Shaped — multi-disciplinary strength',
 };
+
+// Section 16 development library has no exact entry for every rubric
+// dimension; where the dictionary is silent the nearest competency is used
+// (documented here, not silently):
+const LIBRARY_MAP = {
+  EmotionalIntelligence: 'Emotional Regulation',
+  Teamwork: 'Conflict Navigation',
+  Integrity: 'Ethical Judgment',
+  CriticalThinking: 'Critical Thinking',
+  ProblemSolving: 'Decision Quality',
+  Adaptability: 'Adaptability',
+  Resilience: 'Adaptability', // nearest fit — recovery behaviour lives in the adaptability entry
+  Communication: 'Empathy',   // nearest fit — audience awareness built on perspective-taking
+  Leadership: 'Decision Quality', // nearest fit — ownership of ambiguous calls
+};
+
+/** 1–5 rubric → the sample's 0–100 snapshot scale. */
+const to100 = v => v > 0 ? ((Number(v) - 1) / 4) * 100 : 0;
 
 /**
  * Build and save the interview report as a PDF file.
@@ -92,8 +120,8 @@ export async function downloadInterviewReportPdf(session, previous = null) {
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(7);
     setGrey();
-    doc.text('QIDS Assessment Division — Interview Intelligence · ' + today, M, PAGE_H - 10);
-    doc.text('Page ' + pages, PAGE_W - M, PAGE_H - 10, { align: 'right' });
+    doc.text('QiDS | Quotient Intelligence & Development System — Interview Record · ' + today, M, PAGE_H - 10);
+    doc.text(String(pages) + ' / ' + doc.getNumberOfPages(), PAGE_W - M, PAGE_H - 10, { align: 'right' });
   };
 
   const rule = (lighter = false) => {
@@ -133,186 +161,153 @@ export async function downloadInterviewReportPdf(session, previous = null) {
     }
   };
 
-  // ── Header ──────────────────────────────────────────────────────────────
+  const box = (h, fillColor = C.tint, borderColor = C.hairline) => {
+    ensure(h + 4);
+    doc.setFillColor(...fillColor);
+    doc.setDrawColor(...borderColor);
+    doc.setLineWidth(0.3);
+    doc.rect(M, y, W, h, 'FD');
+    y += 6;
+  };
+
+  // ── Derived profile data (every block below reads from here) ─────────────
+  const ranked = RUBRIC_DIMENSIONS
+    .map(d => ({ dim: d, score: Number(session.mergedScores?.[d.id]) || 0 }))
+    .filter(x => x.score > 0)
+    .sort((a, b) => b.score - a.score);
+  const best = ranked[0] || null;
+  const worst = ranked[ranked.length - 1] || null;
+  const bestBand = best ? interviewBand(best.score) : null;
+  const worstBand = worst ? interviewBand(worst.score) : null;
+  const score = session.unifiedScore ?? null;
+  const grade = session.grade || (score != null ? GRADE_BANDS.find(b => score >= b.min && score <= b.max) : null);
+  const gradeColor = GRADE_COLORS[grade?.grade] || C.primary;
+
+  // The sample's confidence language (PIP Page 1) — thresholds sit on the
+  // 145-point PII (Green ≥105, Amber 90–104, Red <90); this report scores
+  // 0–100, so the same cut ratios apply (≈72 / ≈62), documented openly.
+  const confidence = score == null ? null
+    : score >= 72
+      ? { label: 'HIGH', color: C.success, note: 'Interview evidence tracks the strong band across most dimensions — proceed with hiring confidence.' }
+      : score >= 62
+        ? { label: 'MODERATE', color: C.warning, note: 'Capability is present but uneven — probe the flagged areas before a decision.' }
+        : { label: 'CAUTION', color: C.error, note: 'Interview evidence stayed thin or weak — treat as a development risk for now.' };
+
+  // Interview prompt for the growth edge — drawn live from the session bank.
+  const promptQ = session.liveQuestions?.find(q => worst && q.dimension === worst.dim.id);
+  const promptText = promptQ?.probeBank?.[0] || promptQ?.followUp || promptQ?.text || null;
+
+  // Development library entry for the growth edge.
+  const library = worst ? DEVELOPMENT_LIBRARY.find(e => e.subDimension === LIBRARY_MAP[worst.dim.id]) : null;
+
+  /* ══════════════════════════════ PAGE 1 ══════════════════════════════ */
+
+  // Masthead — sample: "QiDS | Quotient Intelligence & Development System"
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(8);
   setGold();
-  doc.text('QIDS — INTERVIEW INTELLIGENCE REPORT', M, y);
-  doc.setFont('helvetica', 'normal');
-  setGrey();
-  doc.setFontSize(7.5);
-  doc.text('Generated ' + today, PAGE_W - M, y, { align: 'right' });
+  doc.text('QIDS | QUOTIENT INTELLIGENCE & DEVELOPMENT SYSTEM', M, y);
   y += 3;
-  rule();
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(7);
+  setGrey();
+  doc.text('INTERVIEW INTELLIGENCE PROFILE · COMPLETED INTERVIEW RECORD — NOT SYNTHETIC DATA', M, y);
+  y += 8;
 
-  // ── Hero ────────────────────────────────────────────────────────────────
+  // Hero
   doc.setFont('helvetica', 'bold');
-  doc.setFontSize(24);
+  doc.setFontSize(16);
   setInk();
-  doc.text(session.candidateName || 'Candidate', M, y + 8);
-  y += 14;
+  doc.text('A profile for development, not a pass/fail label.', M, y);
+  y += 6;
 
-  const metaBits = [
-    session.mode === 'live' ? 'Live interview' : 'Post-interview',
-    'Scored by ' + (session.evaluatorName || 'evaluator'),
-  ];
-  if (session.role) metaBits.unshift('Target role: ' + session.role);
-  // Assessment date (PIP Page 1 header field) — the completion write is an
-  // ISO string; older/server-written docs may hold a Firestore Timestamp.
-  const completedAt = session.completedAt?.toDate
-    ? session.completedAt.toDate()
-    : session.completedAt ? new Date(session.completedAt) : null;
-  if (completedAt && Number.isFinite(completedAt.getTime())) {
-    metaBits.unshift('Assessed ' + completedAt.toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' }));
-  }
-  if (session.tier) metaBits.push(session.tier + ' tier');
-  metaBits.push('Assessing organisation: QIDS Assessment Division');
-  if ((session.sessionNumber || 1) > 1) metaBits.push('Re-interview · Attempt #' + session.sessionNumber);
-  // Page-7 generator provenance: when the guide was ordered from the
-  // candidate's own assessment results, the development priority IS part of
-  // the record — the spec builds the interview from lowest-scoring areas.
-  if (session.flaggedPillars?.length >= 2) {
-    metaBits.push('Development priority: ' + session.flaggedPillars.join(' → '));
-  }
-  let delta = null;
-  if (previous?.unifiedScore != null && session.unifiedScore != null) {
-    delta = Math.round(session.unifiedScore) - Math.round(previous.unifiedScore);
-    metaBits.push((delta >= 0 ? '+' : '') + delta + ' vs attempt #' + (previous.sessionNumber || 1));
-  }
-  para(metaBits.filter(Boolean).join('  ·  '), 9.5, C.grey);
+  // Meta line — sample: "Sample QPIA-style profile · target role: ... · Example profile ID:"
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(8.5);
+  setGrey();
+  const metaBits = ['QIDS interview profile'];
+  if (session.role) metaBits.push('target role: ' + session.role);
+  metaBits.push('record id: ' + String(session.id).slice(0, 8).toUpperCase());
+  if ((session.sessionNumber || 1) > 1) metaBits.push('attempt #' + session.sessionNumber);
+  metaBits.push('interviewed by ' + (session.evaluatorName || 'evaluator'));
+  doc.text(metaBits.join('  ·  '), M, y);
+  y += 7;
 
-  // Focal score block
-  const score = Math.round(session.unifiedScore ?? 0);
-  ensure(26);
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(32);
-  setInk();
-  doc.text(String(score), M, y + 10);
-  doc.setFontSize(10);
-  doc.text('/ 100', M + 20, y + 10);
-  const gradeColor = GRADE_COLORS[session.grade?.grade] || C.primary;
-  doc.setFontSize(10);
-  doc.setTextColor(...gradeColor);
-  doc.text(session.grade?.grade ? 'GRADE ' + session.grade.grade : '', M + 36, y + 10);
-  if (session.skillShape && SHAPE_LABELS[session.skillShape]) {
+  // ── Index block (sample: Professional Intelligence Index 108 / 145) ─────
+  {
+    ensure(52);
+    box(44);
+    kicker('Interview Intelligence Index', C.gold);
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(30);
+    setInk();
+    doc.text(score != null ? String(Math.round(score)) : '—', M + 4, y + 9);
+    const w30 = score != null ? doc.getTextWidth(String(Math.round(score))) : 8;
+    doc.setFontSize(12);
+    doc.setTextColor(...C.grey);
+    doc.text('/ 100', M + 8 + w30, y + 9);
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(9);
+    const bandLine = [
+      grade ? 'Grade ' + grade.grade + ' · ' + grade.label + ' band' : null,
+      confidence ? confidence.label + ' confidence' : null,
+      confidence?.note,
+    ].filter(Boolean).join('  —  ');
+    doc.setTextColor(...(confidence?.color || C.ink));
+    const bandLines = doc.splitTextToSize(bandLine, W - 10);
+    doc.text(bandLines[0], M + 4, y + 16);
     doc.setFont('helvetica', 'normal');
-    doc.setFontSize(9);
-    setGrey();
-    doc.text(SHAPE_LABELS[session.skillShape], M + 62, y + 10);
+    doc.setFontSize(8);
+    for (let i = 1; i < bandLines.length; i++) doc.text(bandLines[i], M + 4, y + 16 + i * 4);
+    y += 22 + Math.max(0, bandLines.length - 1) * 4;
   }
-  // Score bar
-  y += 14;
-  doc.setFillColor(...C.tint);
-  doc.rect(M, y, W, 3, 'F');
-  doc.setFillColor(...gradeColor);
-  doc.rect(M, y, Math.max(2, score / 100 * W), 3, 'F');
-  y += 10;
 
-  // ── Hiring Confidence traffic light (PIP Page 1) ────────────────────────
-  // The spec's thresholds sit on the 145-point PII (Green ≥105, Amber 90–104,
-  // Red <90). This report scores 0–100, so the same cut ratios apply
-  // (≈72 / ≈62) while keeping the spec's traffic-light language and rationale.
-  const confidence = session.unifiedScore == null ? null
-    : session.unifiedScore >= 72
-      ? { label: 'HIGH', color: C.success, note: 'Interview evidence tracks the strong band across most dimensions — proceed with hiring confidence.' }
-      : session.unifiedScore >= 62
-      ? { label: 'MODERATE', color: C.warning, note: 'Capability is present but uneven — probe the flagged areas before a decision.' }
-      : { label: 'CAUTION', color: C.error, note: 'Interview evidence stayed thin or weak — treat as a development risk for now.' };
-  if (confidence) {
-    ensure(12);
+  // Re-interview delta chip, when a previous attempt exists.
+  if (previous?.unifiedScore != null && session.unifiedScore != null) {
+    const delta = Math.round(session.unifiedScore) - Math.round(previous.unifiedScore);
+    ensure(8);
     doc.setFont('helvetica', 'bold');
-    doc.setFontSize(9);
-    doc.setTextColor(...confidence.color);
-    doc.circle(M + 2, y, 1.6, 'F');
-    doc.text('HIRING CONFIDENCE: ' + confidence.label, M + 6, y + 1);
+    doc.setFontSize(8.5);
+    doc.setTextColor(...(delta >= 0 ? C.success : C.error));
+    doc.text('Attempt #' + (previous.sessionNumber || 1) + ' to #' + (session.sessionNumber || 1) + ': '
+      + (delta >= 0 ? '+' : '') + delta + ' index points', M, y);
     y += 5;
-    para(confidence.note, 8.5, C.grey);
-    y += 2;
   }
 
-  // ── Dimension scores ────────────────────────────────────────────────────
-  kicker('Dimension scores');
-  rule();
-
-  for (const d of RUBRIC_DIMENSIONS) {
-    const raw = session.mergedScores?.[d.id] ?? 0;
-    const score5 = Number(raw) || 0;
-    if (!(score5 > 0)) continue;
-    const band = interviewBand(score5);
-    const qsCount = (session.liveResponses || []).filter(r => r.dimension === d.id).length;
-    const prevDim = previous?.mergedScores?.[d.id];
-    const deltaD = prevDim != null ? Math.round((score5 - prevDim) * 10) / 10 : null;
-
-    // Two-column row: name + provenance on the left, numbers on the right.
-    const need = 9 + (band ? 5 : 0) + (session.evaluatorAssessment?.length ? 5 : 0);
-    ensure(need + 4);
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(10);
-    setInk();
-    doc.text(d.label, M, y);
-    if (qsCount > 0) {
+  // ── Read-this-profile box (sample) ───────────────────────────────────────
+  {
+    ensure(46);
+    box(42);
+    kicker('Read this profile as', C.ink);
+    para('A snapshot of likely work behaviours across the QiDS framework. Pair the interview record with the structured assessment, role evidence and the candidate\u2019s own context. Cover/Strong/Weak marks and notes throughout are the evaluator\u2019s live judgement — a prompt for conversation, not a verdict.', 8.5, C.grey);
+    y += 1;
+    if (best) {
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(9);
+      setInk();
+      doc.text('Stand-out asset', M, y);
+      doc.text('Growth edge', M + W / 2, y);
+      y += 4.5;
       doc.setFont('helvetica', 'normal');
-      doc.setFontSize(7.5);
+      doc.setFontSize(9);
       setGrey();
-      // Appendix B response-quality marks trail for this dimension.
-      let markNote = '';
-      if (session.guideMarks) {
-        const counts = { covered: 0, strong: 0, weak: 0 };
-        for (const r of session.liveResponses || []) {
-          const m = session.guideMarks[r.questionId];
-          if (r.dimension === d.id && m) counts[m] += 1;
-        }
-        const bits = ['covered', 'strong', 'weak'].filter(k => counts[k]).map(k => counts[k] + ' marked ' + k);
-        if (bits.length) markNote = ' · ' + bits.join(', ');
-      }
-      doc.text(qsCount + ' question' + (qsCount > 1 ? 's' : '') + ' probed' + markNote, M + doc.getTextWidth(d.label) + 3, y);
-    }
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(10);
-    setInk();
-    doc.text(score5.toFixed(1) + ' / 5', PAGE_W - M, y, { align: 'right' });
-    if (band) {
-      doc.setTextColor(...(BAND_COLORS[band.label] || C.primary));
+      doc.text(best.dim.label, M, y);
+      doc.text(worst ? worst.dim.label : '', M + W / 2, y);
+      y += 4.5;
       doc.setFontSize(8);
-      doc.text(band.label.toUpperCase(), PAGE_W - M - 16, y, { align: 'right' });
+      doc.text(bestBand ? bestBand.label + ' · ' + Math.round(to100(best.score)) + '/100' : '', M, y);
+      doc.text(worstBand ? worstBand.label + ' · ' + Math.round(to100(worst.score)) + '/100' : '', M + W / 2, y);
+      y += 5;
     }
-    if (deltaD != null) {
-      doc.setFont('helvetica', 'normal');
-      doc.setFontSize(8);
-      doc.setTextColor(...(deltaD >= 0 ? C.success : C.error));
-      doc.text((deltaD >= 0 ? '+' : '') + deltaD.toFixed(1), PAGE_W - M - 36, y, { align: 'right' });
-    }
-    y += 4.5;
-    if (band) {
-      // Section 7.2: T-scores (mean 50) alongside the Section 14 band. The
-      // linear anchor is pinned to the spec's own band boundaries — see
-      // interviewCalibration for the derivation and the Phase 3 caveat.
-      const ts = interviewTScore(score5);
-      para(band.desc + (ts ? `  (T ${ts.t} · ${ts.percentile})` : ''), 8, C.grey, 'italic');
-    }
-    const evNote = (session.evaluatorAssessment || []).find(e => e.dimensionId === d.id)?.notes;
-    if (evNote) para('“' + evNote + '”', 8, C.primary, 'italic');
-    y += 1.5;
-    doc.setDrawColor(...C.hairline);
-    doc.setLineWidth(0.1);
-    doc.line(M, y, PAGE_W - M, y);
-    y += 4;
   }
 
-  // ── Dimension radar (PIP Page 2) — candidate polygon + peer-norm dashed ─
-  // Axes are the nine rubric dimensions rescaled 0–100 from the 1–5 rubric;
-  // the dashed line is the standing PEER_NORM (pip.ts) plateau until the
-  // Phase 3 norming study (Appendix C) replaces it with real cohort tables.
-  const radarValues = RUBRIC_DIMENSIONS.map(d => {
-    const raw = session.mergedScores?.[d.id] ?? 0;
-    const v = Number(raw) || 0;
-    return v > 0 ? ((v - 1) / 4) * 100 : 0; // 1–5 rubric → 0–100
-  });
-  const R_RADAR = 44; // mm — radius of the drawn dimension radar
+  // ── Radar profile (sample page-1 snapshot, candidate + peer line) ────────
+  const radarValues = RUBRIC_DIMENSIONS.map(d => to100(session.mergedScores?.[d.id]));
+  const R_RADAR = 42;
   {
     ensure(R_RADAR * 2 + 34);
-    kicker('Dimension radar — PIP Page 2');
-    rule();
+    kicker('Nine-dimension snapshot');
+    rule(true);
     const cx = PAGE_W / 2;
     const cy = y + R_RADAR + 10;
     const N = radarValues.length;
@@ -330,15 +325,12 @@ export async function downloadInterviewReportPdf(session, previous = null) {
         doc.line(a[0], a[1], b[0], b[1]);
       }
     };
-    // Grid rings + axes
     [0.25, 0.5, 0.75, 1].forEach(f => polyRing(f, R_RADAR));
-    doc.setDrawColor(...C.hairline);
     doc.setLineWidth(0.2);
-    RUBRIC_DIMENSIONS.forEach((d, i) => {
+    RUBRIC_DIMENSIONS.forEach((_, i) => {
       const [ex, ey] = pt(i, 1, R_RADAR);
       doc.line(cx, cy, ex, ey);
     });
-    // Axis labels
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(6.5);
     RUBRIC_DIMENSIONS.forEach((d, i) => {
@@ -346,139 +338,278 @@ export async function downloadInterviewReportPdf(session, previous = null) {
       doc.setTextColor(...C.grey);
       doc.text(d.shortLabel, lx, ly, { align: 'center', baseline: 'middle' });
     });
-    // Closed helper: relative vector list for doc.lines
     const closedVecs = verts => {
       const vecs = [];
       for (let k = 1; k < verts.length; k++) vecs.push([verts[k][0] - verts[k - 1][0], verts[k][1] - verts[k - 1][1]]);
       vecs.push([verts[0][0] - verts[verts.length - 1][0], verts[0][1] - verts[verts.length - 1][1]]);
       return vecs;
     };
-    // Peer-norm dashed line
     const peerVerts = RUBRIC_DIMENSIONS.map((_, i) => pt(i, Math.max(0, Math.min(100, INTERVIEW_PEER_NORM[RUBRIC_DIMENSIONS[i].id])) / 100, R_RADAR));
     doc.setDrawColor(...C.grey);
     doc.setLineWidth(0.35);
     doc.setLineDashPattern([1.4, 1.2], 0);
     doc.lines(closedVecs(peerVerts), peerVerts[0][0], peerVerts[0][1], [1, 1], 'S', true);
     doc.setLineDashPattern([], 0);
-    // Candidate polygon — tinted fill, gold edge
     const candVerts = RUBRIC_DIMENSIONS.map((_, i) => pt(i, Math.max(0, Math.min(100, radarValues[i])) / 100, R_RADAR));
     doc.setDrawColor(...C.gold);
     doc.setFillColor(...C.tint);
     doc.setLineWidth(0.6);
     doc.lines(closedVecs(candVerts), candVerts[0][0], candVerts[0][1], [1, 1], 'FD', true);
-    // Legend
     y = cy + R_RADAR + 12;
-    ensure(8);
     doc.setFillColor(...C.gold);
     doc.rect(M, y - 2, 8, 2, 'F');
+    doc.setFont('helvetica', 'normal');
     doc.setFontSize(7.5);
     setInk();
-    doc.text('Candidate (1–5 rubric rescaled to 0–100)', M + 11, y);
+    doc.text('Candidate — radar profile (broad shape, not precise ranking)', M + 11, y);
     doc.setDrawColor(...C.grey);
     doc.setLineWidth(0.35);
     doc.setLineDashPattern([1.4, 1.2], 0);
-    doc.line(M + 96, y - 1, M + 104, y - 1);
+    doc.line(M + 97, y - 1, M + 105, y - 1);
     doc.setLineDashPattern([], 0);
     setGrey();
-    doc.text('Peer norm', M + 107, y);
-    y += 6;
+    doc.text('Peer reference', M + 108, y);
+    y += 8;
   }
 
-  // ── Strengths & development focus (Appendix B panel) ────────────────────
-  const ranked = RUBRIC_DIMENSIONS
-    .map(d => ({ dim: d, score: session.mergedScores?.[d.id] }))
-    .filter(x => x.score > 0)
-    .sort((a, b) => b.score - a.score);
-  if (ranked.length > 0) {
-    ensure(40);
-    kicker('Strengths & development focus');
-    rule();
-    const strengths = ranked.slice(0, Math.min(3, ranked.length));
-    const gaps = ranked.slice().reverse().slice(0, 2).filter(x => !strengths.find(s => s.dim.id === x.dim.id));
-    const colW = (W - 8) / 2;
-    const listBlock = (title, titleColor, items, x) => {
-      const startY = y;
+  // ── Competency heatmap (sample page-1 table with band-coded rows) ────────
+  {
+    ensure(ranked.length * 8 + 24);
+    kicker('Competency heatmap · interview indicators');
+    rule(true);
+    const barW = 56;
+    const rowH = 7;
+    for (const x of ranked) {
+      const v = to100(x.score);
+      const band = interviewBand(x.score);
+      const ts = interviewTScore(x.score);
       doc.setFont('helvetica', 'bold');
-      doc.setFontSize(8);
-      doc.setTextColor(...titleColor);
-      doc.text(title.toUpperCase(), x, startY);
-      let yy = startY + 6;
       doc.setFontSize(9);
-      items.forEach((x_, i) => {
-        doc.setFont('helvetica', 'bold');
-        setInk();
-        doc.text(x_.dim.label, x + 5, yy);
-        yy += 4;
-        doc.setFont('helvetica', 'normal');
-        setGrey();
-        doc.setFontSize(8);
-        doc.text(x_.score.toFixed(1) + '/5 · ' + (interviewBand(x_.score)?.label || ''), x + 5, yy);
-        yy += 6;
-        doc.setFontSize(9);
-      });
-      if (items.length === 0) {
-        doc.setFont('helvetica', 'italic');
-        setGrey();
-        doc.setFontSize(8);
-        doc.text('Nothing flagged — every dimension landed in the top half.', x + 5, yy);
-      }
-      return yy;
-    };
-    const yEndL = listBlock('Top strengths', C.success, strengths, M);
-    const yEndR = listBlock('Develop next', C.gold, gaps, M + colW + 8);
-    y = Math.max(yEndL, yEndR) + 2;
-  }
-
-  // ── Pillar scores ───────────────────────────────────────────────────────
-  if (session.pillarScores) {
-    ensure(40);
-    kicker('QIDS pillar scores');
-    rule();
-    for (const p of PILLAR_LIST) {
-      const v = session.pillarScores[p.id] || 0;
-      ensure(10);
-      doc.setFont('helvetica', 'bold');
-      doc.setFontSize(9.5);
       setInk();
-      doc.text(p.short || p.id, M, y);
-      doc.setFont('helvetica', 'normal');
-      doc.text(String(v) + ' / 100', PAGE_W - M, y, { align: 'right' });
-      y += 3.5;
+      doc.text(x.dim.label, M, y);
+      // Band-coded bar — colour is redundant with the written band, never the sole encoding.
       doc.setFillColor(...C.tint);
-      doc.rect(M, y, W, 2.6, 'F');
-      doc.setFillColor(...gradeColor);
-      doc.rect(M, y, Math.max(1, v / 100 * W), 2.6, 'F');
-      y += 8;
+      doc.rect(M + 62, y - 3, barW, 3.4, 'F');
+      doc.setFillColor(...(BAND_COLORS[band?.label] || C.primary));
+      doc.rect(M + 62, y - 3, Math.max(1.5, v / 100 * barW), 3.4, 'F');
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(8.5);
+      setInk();
+      doc.text(String(Math.round(v)), M + 62 + barW + 5, y, { align: 'right' });
+      setGrey();
+      doc.setFontSize(7.5);
+      doc.text(band ? band.label + (ts ? ' · T ' + ts.t : '') : '', M + 62 + barW + 10, y);
+      y += rowH;
     }
+    y += 2;
+    // Legend + how-to note (sample wording, adapted to interview data)
+    const bandOrder = ['Exceptional', 'Proficient', 'Developing', 'Emerging'];
+    let lx = M;
+    for (const b of bandOrder) {
+      doc.setFillColor(...BAND_COLORS[b]);
+      doc.rect(lx, y - 2.4, 4, 2.6, 'F');
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(7.5);
+      setGrey();
+      doc.text(b, lx + 5.5, y);
+      lx += 5.5 + doc.getTextWidth(b) + 5;
+    }
+    y += 4.5;
+    para('How to use the heatmap: scan for clusters, then read the specific behaviour behind each score. Colour is always redundant with a written band label and number. Every indicator is the evaluator\u2019s 1–5 rubric rating rescaled to 0–100.', 7.5, C.grey);
   }
 
-  // ── Career profile ──────────────────────────────────────────────────────
+  // Page 1 ends here — the sample's layout is explicit about it.
+  footer();
+  doc.addPage();
+  y = M + 2;
+
+  /* ══════════════════════════════ PAGE 2 ══════════════════════════════ */
+
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(8);
+  setGold();
+  doc.text('PROFILE INTERPRETATION & DEVELOPMENT', M, y);
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(7);
+  setGrey();
+  doc.text('FROM SCORES TO OBSERVABLE BEHAVIOURS', M, y + 4);
+  y += 10;
+
+  // ── What this pattern could mean at work ────────────────────────────────
+  if (best && worst) {
+    kicker('What this pattern could mean at work');
+    rule(true);
+    const edgeWords = worstBand?.label ? ' currently sits in the ' + worstBand.label.toLowerCase() + ' band' : ' is the development edge';
+    para(
+      'Real interpretation based on this session\u2019s completed ratings. In the room, the candidate '
+      + 'demonstrated strongest evidence on ' + best.dim.label.toLowerCase() + ' (' + (bestBand?.label.toLowerCase() || '') + '), while '
+      + worst.dim.label.toLowerCase() + edgeWords + '. Development effort converts most quickly where signals were '
+      + 'concrete, so the priorities and 90-day conversation below are anchored on '
+      + worst.dim.label.toLowerCase() + '. Treat every interpretation as a prompt for conversation, not a verdict.',
+      9, C.ink,
+    );
+  }
+
+  // ── Work-style archetype / career alignment (sample: The Integrator) ─────
   const career = session.careerProfile;
   if (career?.label) {
     ensure(30);
-    kicker('Career alignment profile');
-    rule();
+    kicker('Work-style & career alignment');
+    rule(true);
     doc.setFont('helvetica', 'bold');
-    doc.setFontSize(11);
+    doc.setFontSize(13);
     setInk();
     doc.text(career.label, M, y + 2);
     y += 7;
-    if (career.condition) para(career.condition, 8.5, C.grey);
-    if (Array.isArray(career.roles) && career.roles.length > 0) {
-      para('Recommended paths: ' + career.roles.join(' · '), 9, C.ink);
+    if (session.skillShape && SHAPE_LABELS[session.skillShape]) {
+      para('Shape: ' + SHAPE_LABELS[session.skillShape], 8.5, C.grey);
+    }
+    if (career.condition) para('Signal: ' + career.condition + '.', 9, C.ink);
+    if (career.desc) para(career.desc, 9, C.grey);
+  }
+
+  // ── Likely working pattern (at best / when stretched / interview prompt) ─
+  if (best && worst) {
+    ensure(50);
+    kicker('Likely working pattern');
+    rule(true);
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(9);
+    setInk();
+    doc.text('At their best:', M, y);
+    y += 4.5;
+    para(best.dim.descriptors?.[Math.round(best.score) >= 4 ? 4 : Math.max(2, Math.round(best.score))] || '', 9, C.grey);
+    y += 1;
+    doc.setFont('helvetica', 'bold');
+    setInk();
+    doc.text('When stretched:', M, y);
+    y += 4.5;
+    para(worst.dim.descriptors?.[Math.max(2, Math.round(worst.score))] || '', 9, C.grey);
+    y += 1;
+    if (promptText) {
+      doc.setFont('helvetica', 'bold');
+      setInk();
+      doc.text('Interview prompt:', M, y);
+      y += 4.5;
+      para('\u201C' + promptText + '\u201D', 9, C.gold, 'italic');
     }
   }
 
-  // ── Session transcript (decision audit trail) ───────────────────────────
+  // ── Role lens (sample: Role lens · Business Analyst) ─────────────────────
+  if (session.role || career) {
+    ensure(30);
+    kicker('Role lens' + (session.role ? ' · ' + session.role : ''));
+    rule(true);
+    const roleBits = [];
+    if (best) roleBits.push(best.dim.label + ' reads as a relative asset');
+    if (worst) roleBits.push('also test ' + worst.dim.label.toLowerCase() + ' against ambiguous requirements, rapid feedback and unfamiliar tools');
+    para(
+      (session.role ? 'For this specific role, the interview pattern offers a plausible foundation: ' : 'In the room, ')
+      + roleBits.join(', while the pattern suggests the debrief should ')
+      + '. This is not a validated role-match percentage; fit should be weighed against the employer\u2019s configured competency weights and the complete assessment data.',
+      9, C.grey,
+    );
+  }
+
+  // ── Assessment-guided development priority (Page-7 generator provenance) ─
+  if (session.flaggedPillars?.length >= 2) {
+    ensure(8);
+    para('Assessment-guided development priority (Page 7 Guide): ' + session.flaggedPillars.join(' · '), 8, C.grey);
+  }
+
+  // ── Development priorities — visual ranking (sample) ─────────────────────
+  if (ranked.length > 0) {
+    ensure(ranked.length * 7 + 18);
+    kicker('Development priorities · visual ranking');
+    rule(true);
+    // Show the full ranking lowest-first, as the sample anchors on the edge.
+    const shown = ranked.slice().reverse();
+    for (const x of shown) {
+      const band = interviewBand(x.score);
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(8.5);
+      setInk();
+      doc.text(x.dim.label, M, y);
+      doc.setFillColor(...C.tint);
+      doc.rect(M + 62, y - 3, 56, 3, 'F');
+      doc.setFillColor(...(BAND_COLORS[band?.label] || C.primary));
+      doc.rect(M + 62, y - 3, Math.max(1.5, to100(x.score) / 100 * 56), 3, 'F');
+      doc.setFont('helvetica', 'normal');
+      setGrey();
+      doc.text(String(Math.round(to100(x.score))), M + 62 + 56 + 5, y, { align: 'right' });
+      y += 7;
+    }
+    y += 1;
+    para('A lower score indicates a development conversation — not a risk label. Scale: 0–100.', 7.5, C.grey);
+  }
+
+  // ── 90-day development conversation (sample page-2 stages) ───────────────
+  if (library) {
+    ensure(52);
+    kicker('90-day development conversation');
+    rule(true);
+    para('One measurable action per stage, from the QiDS development library, anchored on ' + worst.dim.label.toLowerCase() + ':', 8.5, C.grey);
+    y += 2;
+    const stage = (label, body) => {
+      ensure(16);
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(8);
+      setGold();
+      doc.text(label, M, y);
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(9);
+      setGrey();
+      const lines = doc.splitTextToSize(body, W);
+      let yy = y + 5;
+      for (const line of lines) {
+        ensure(5);
+        doc.text(line, M + 4, yy);
+        yy += 4;
+      }
+      y = yy + 2;
+    };
+    stage('DAYS 1–30 · BUILD', library.day30);
+    stage('DAYS 31–90 · STRETCH', library.day90);
+    stage('BY DAY 180 · APPLY', library.day180);
+  } else if (worst) {
+    para('Development library: no sourced entry for ' + worst.dim.label + ' — flag for the content pipeline rather than inventing one here.', 7.5, C.grey);
+  }
+
+  // ── Foundation line: what evidence this profile rests on (honest, replaces
+  //    the sample's "fictional placeholders" disclaimer with the real state).
+  ensure(16);
+  y += 2;
+  rule(true);
+  para(
+    'Interpretation note. Every score, band and narrative on these pages derives from one structured interview session with this candidate — not from norm-referenced psychometrics. Real hiring decisions pair this profile with the candidate\u2019s QiDS assessment data (60% assessment / 40% interview default weight), role evidence and their own context. Visual conventions follow the DataViz project guidance: radar as a broad profile shape, heatmap bands always redundant with written labels.',
+    7.5, C.grey,
+  );
+
+  /* ════════════════════ PAGE 3+ — DECISION AUDIT TRAIL ═════════════════ */
   const responses = (session.liveResponses || []).filter(r =>
     (r.response && r.response.trim()) || r.score != null || r.questionText);
   if (responses.length > 0) {
-    ensure(20);
-    kicker('Session transcript — decision audit trail');
-    rule();
+    footer();
+    doc.addPage();
+    y = M + 2;
+    kicker('Decision audit trail — session record');
+    rule(true);
+    para('Appendix B: all scores, timestamped notes and Covered/Strong/Weak ratings stored per session, retained for the 24-month compliance and bias-audit window.', 7.5, C.grey);
+    y += 2;
+    // Per-dimension evaluator anchors (the merged interview record's verbatim
+    // judgement), so the audit trail carries the reasoning, not just the marks.
+    (session.evaluatorAssessment || []).forEach(ev => {
+      if (!ev?.notes) return;
+      ensure(8);
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(8);
+      setGrey();
+      doc.text((RUBRIC_MAP?.[ev.dimensionId]?.label || ev.dimensionId || '') + ' — anchor', M, y);
+      y += 4.5;
+      para('\u201C' + ev.notes + '\u201D', 9, C.ink, 'italic');
+    });
     responses.forEach((r, i) => {
       const dimLabel = RUBRIC_MAP?.[r.dimension]?.label || r.dimension || '';
-      // Notes are timestamped at last edit (Appendix B) — render it when present.
       let timeLabel = null;
       if (r.answeredAt) {
         const d = /^\d+$/.test(r.answeredAt) ? new Date(Number(r.answeredAt)) : new Date(r.answeredAt);
@@ -499,7 +630,7 @@ export async function downloadInterviewReportPdf(session, previous = null) {
       doc.text(headLine, M, y);
       y += 4.5;
       if (r.questionText) para(r.questionText, 9, C.ink, 'bold');
-      if (r.response && r.response.trim()) para('“' + r.response.trim() + '”', 9, C.grey, 'italic');
+      if (r.response && r.response.trim()) para('\u201C' + r.response.trim() + '\u201D', 9, C.grey, 'italic');
       y += 2;
       doc.setDrawColor(...C.hairline);
       doc.setLineWidth(0.1);
@@ -508,19 +639,11 @@ export async function downloadInterviewReportPdf(session, previous = null) {
     });
   }
 
-  // ── Closing line — Appendix B decision audit trail scope ────────────────
+  // Closing line — merge provenance, same as the sample's footer scope note.
   ensure(10);
-  y += 2;
-  rule(true);
-  para(
-    'Decision audit trail: scores, timestamped notes and Covered/Strong/Weak ratings are retained with this session for the '
-    + '24-month compliance and bias-audit window (Appendix B). Interview ratings integrate with assessment evidence at the '
-    + 'configured weight (default 60% assessment / 40% interview).',
-    7.5, C.grey,
-  );
 
   footer();
   const attempt = (session.sessionNumber || 1) > 1 ? '-Attempt-' + session.sessionNumber : '';
   const name = (session.candidateName || 'candidate').replace(/[^a-z0-9\-_ ]/gi, '').trim().replace(/\s+/g, '-') || 'candidate';
-  doc.save('QIDS-Interview-' + name + attempt + '.pdf');
+  doc.save('QiDS-Profile-' + name + attempt + '.pdf');
 }

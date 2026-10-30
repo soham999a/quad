@@ -1,0 +1,15 @@
+{
+  "compilerOptions": {
+    "module": "commonjs",
+    "target": "es2022",
+    "esModuleInterop": true,
+    "moduleResolution": "node",
+    "strict": true,
+    "skipLibCheck": true,
+    "allowJs": true,
+    "outDir": "../tests/.report-smoke-out",
+    "rootDir": ".."
+  },
+  "include": ["../src/lib/interviewReportPdf.js", "../src/core/engine/interviewScoring.ts", "../src/core/engine/interviewCalibration.ts"],
+  "exclude": ["node_modules"]
+}
