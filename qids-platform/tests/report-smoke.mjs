@@ -105,6 +105,7 @@ const expectations = [
   ['priorities', 'DEVELOPMENT PRIORITIES'],
   ['priorities scale note', 'not a risk label'],
   ['90day', '90-DAY DEVELOPMENT CONVERSATION'],
+  ['stage title', 'Make the alternative visible'],
   ['build stage', 'BUILD'],
   ['stretch stage', 'STRETCH'],
   ['apply stage', 'APPLY'],

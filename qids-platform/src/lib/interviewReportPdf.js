@@ -25,7 +25,7 @@
  * pretending to be a PII.
  */
 
-import { RUBRIC_DIMENSIONS, RUBRIC_MAP } from '../core/data/interviewRubrics';
+import { RUBRIC_DIMENSIONS, RUBRIC_MAP, LIVE_QUESTIONS } from '../core/data/interviewRubrics';
 import { interviewBand, INTERVIEW_PEER_NORM } from '../core/engine/interviewScoring';
 import { interviewTScore } from '../core/engine/interviewCalibration';
 import { DEVELOPMENT_LIBRARY } from '../core/data/enterprise';
@@ -193,12 +193,28 @@ export async function downloadInterviewReportPdf(session, previous = null) {
         ? { label: 'MODERATE', color: C.warning, note: 'Capability is present but uneven — probe the flagged areas before a decision.' }
         : { label: 'CAUTION', color: C.error, note: 'Interview evidence stayed thin or weak — treat as a development risk for now.' };
 
-  // Interview prompt for the growth edge — drawn live from the session bank.
-  const promptQ = session.liveQuestions?.find(q => worst && q.dimension === worst.dim.id);
+  // Interview prompt for the growth edge — drawn from the session bank, with
+  // the standard spec bank as fallback (older session docs predate the
+  // per-session bank storage and must still render their prompt).
+  const bank = session.liveQuestions?.length ? session.liveQuestions : LIVE_QUESTIONS;
+  const promptQ = worst ? bank.find(q => q.dimension === worst.dim.id) : null;
   const promptText = promptQ?.probeBank?.[0] || promptQ?.followUp || promptQ?.text || null;
 
-  // Development library entry for the growth edge.
+  // Development library entry for the growth edge. Where the library has no
+  // exact competency, the nearest entry is used and labelled; the sample's
+  // stage titles are authored per competency (the source library carries
+  // actions but no titles).
+  const DEVELOPMENT_STAGE_TITLES = {
+    'Emotional Regulation': ['See the triggers early', 'Hold composure under live pressure', 'Own the regulation strategy'],
+    'Empathy': ['Listen for the feeling', 'Step into different views', 'Be the person who hears'],
+    'Conflict Navigation': ['Map your default style', 'Hold the hard conversation', 'Your framework in the open'],
+    'Critical Thinking': ['Name the assumptions', 'Run the pre-mortem', 'Rigour as a habit'],
+    'Decision Quality': ['Write the choice down', 'Decide inside ambiguity', 'A decision journal, kept'],
+    'Adaptability': ['Make the alternative visible', 'Learn outside the comfort zone', 'Pivot at scale'],
+    'Ethical Judgment': ['Map calls to principles', 'Open the grey-area talk', 'Known for raising it'],
+  };
   const library = worst ? DEVELOPMENT_LIBRARY.find(e => e.subDimension === LIBRARY_MAP[worst.dim.id]) : null;
+  const libraryNearest = worst && library ? LIBRARY_MAP[worst.dim.id] : null;
 
   /* ══════════════════════════════ PAGE 1 ══════════════════════════════ */
 
@@ -545,22 +561,33 @@ export async function downloadInterviewReportPdf(session, previous = null) {
 
   // ── 90-day development conversation (sample page-2 stages) ───────────────
   if (library) {
-    ensure(52);
+    const titles = DEVELOPMENT_STAGE_TITLES[library.subDimension] || ['', '', ''];
+    ensure(56);
     kicker('90-day development conversation');
     rule(true);
-    para('One measurable action per stage, from the QiDS development library, anchored on ' + worst.dim.label.toLowerCase() + ':', 8.5, C.grey);
+    const anchorNote = worst.dim.label === library.subDimension
+      ? 'One measurable action per stage, from the QiDS development library, anchored on ' + worst.dim.label.toLowerCase() + ':'
+      : 'One measurable action per stage. The development library has no exact entry for ' + worst.dim.label.toLowerCase()
+        + ', so the nearest competency (' + library.subDimension.toLowerCase() + ') carries this plan:';
+    para(anchorNote, 8.5, C.grey);
     y += 2;
-    const stage = (label, body) => {
-      ensure(16);
+    const stage = (label, title, body) => {
+      ensure(20);
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(8);
       setGold();
       doc.text(label, M, y);
+      if (title) {
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(9.5);
+        setInk();
+        doc.text(title, M, y + 4.5);
+      }
       doc.setFont('helvetica', 'normal');
-      doc.setFontSize(9);
+      doc.setFontSize(8.5);
       setGrey();
       const lines = doc.splitTextToSize(body, W);
-      let yy = y + 5;
+      let yy = y + (title ? 9.5 : 5);
       for (const line of lines) {
         ensure(5);
         doc.text(line, M + 4, yy);
@@ -568,9 +595,9 @@ export async function downloadInterviewReportPdf(session, previous = null) {
       }
       y = yy + 2;
     };
-    stage('DAYS 1–30 · BUILD', library.day30);
-    stage('DAYS 31–90 · STRETCH', library.day90);
-    stage('BY DAY 180 · APPLY', library.day180);
+    stage('DAYS 1–30 · BUILD', titles[0], library.day30);
+    stage('DAYS 31–90 · STRETCH', titles[1], library.day90);
+    stage('BY DAY 180 · APPLY', titles[2], library.day180);
   } else if (worst) {
     para('Development library: no sourced entry for ' + worst.dim.label + ' — flag for the content pipeline rather than inventing one here.', 7.5, C.grey);
   }
