@@ -136,6 +136,16 @@ export default function EvaluatorDashboard() {
   const interviewChip = studentUid => {
     const s = interviews[studentUid];
     if (!s) return null;
+    if (s.mode === 'exam') {
+      const labels = {
+        invited: { label: 'EXAM — AWAITING CONFIRM', cls: 'text-gold' },
+        accepted: { label: 'EXAM CONFIRMED', cls: 'text-primary' },
+        in_progress: { label: `EXAM LIVE · ${(s.examProgress?.answered ?? 0)}/${s.examProgress?.total ?? '?'}`, cls: 'text-primary' },
+        completed: { label: 'EXAM DONE', cls: 'text-primary' },
+      };
+      const info = labels[s.status] || { label: (s.status || 'UNKNOWN').toUpperCase(), cls: 'text-outline' };
+      return { id: s.id, status: s.status, mode: s.mode, ...info };
+    }
     const labels = {
       invited: { label: 'INVITED — AWAITING CONFIRM', cls: 'text-gold' },
       accepted: { label: 'CONFIRMED — READY TO BEGIN', cls: 'text-primary' },
@@ -268,7 +278,8 @@ export default function EvaluatorDashboard() {
                         e.stopPropagation();
                         const st = interviewStatusChip;
                         if (st && ['invited', 'accepted', 'in_progress', 'scheduled'].includes(st.status)) {
-                          navigate(st.mode === 'live' ? `/app/interview/live/${st.id}` : `/app/interview/scoring/${st.id}`);
+                          navigate(st.mode === 'exam' ? `/app/interview/exam-watch/${st.id}`
+                            : st.mode === 'live' ? `/app/interview/live/${st.id}` : `/app/interview/scoring/${st.id}`);
                         } else if (st && st.status === 'completed') {
                           navigate(`/app/interview/report/${st.id}`);
                         } else {

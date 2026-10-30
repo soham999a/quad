@@ -68,6 +68,8 @@ const InterviewReport = lazy(() => import('./pages/interview/InterviewReport'));
 const CompareInterviews = lazy(() => import('./pages/interview/CompareInterviews'));
 const MyInterviews = lazy(() => import('./pages/interview/MyInterviews'));
 const CandidateSession = lazy(() => import('./pages/interview/CandidateSession'));
+const ExamSession = lazy(() => import('./pages/interview/ExamSession'));
+const ExamWatch = lazy(() => import('./pages/interview/ExamWatch'));
 const TeacherDashboard = lazy(() => import('./pages/school/TeacherDashboard'));
 const ClassManager = lazy(() => import('./pages/school/ClassManager'));
 const ClassCreate = lazy(() => import('./pages/school/ClassCreate'));
@@ -1038,6 +1040,19 @@ function AppShell() {
               <Route path="interviews" element={<PageSuspense><MyInterviews /></PageSuspense>} />
               <Route path="interview/candidate/:sessionId" element={
                 <PageSuspense><CandidateSession /></PageSuspense>
+              } />
+
+              {/* Assigned exam (candidate side) — the candidate's own surface;
+                  ownership enforced by the page + rules like CandidateSession. */}
+              <Route path="interview/exam/:sessionId" element={
+                <PageSuspense><ExamSession /></PageSuspense>
+              } />
+              {/* Assigned exam (evaluator watch room) — the proctored live
+                  view over the candidate's session. */}
+              <Route path="interview/exam-watch/:sessionId" element={
+                <RoleRoute roles={['evaluator', 'admin', 'employer']}>
+                  <PageSuspense><ExamWatch /></PageSuspense>
+                </RoleRoute>
               } />
 
               {/* School — teachers manage; admins oversee. */}

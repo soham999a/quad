@@ -307,6 +307,13 @@ service cloud.firestore {
       //  - Candidate: their own prep surface only — self-assessment, typed
       //    responses, and the ready-up gate transitions (invited → accepted /
       //    declined). Never evaluatorAssessment, scores or status as data.
+      //  - Assigned exam (mode == 'exam'): the candidate also owns the exam
+      //    surface — the started marker, the live-streaming progress/selection
+      //    mirror the evaluator watches, the response sheet, and the
+      //    completion fields. examCompletedAt gates the only status change a
+      //    candidate can make beyond the ready-up gate: flipping their exam
+      //    session to 'completed' (never on live/post sessions — those freeze
+      //    only with evaluatorAssessment, which the candidate can't write).
       //  - Evaluator (or admin): the scoring surface, but never re-binding
       //    the two parties mid-flight, and never stepping over the candidate's
       //    ready-up gate (can't force in_progress before the candidate
@@ -317,6 +324,10 @@ service cloud.firestore {
           && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
             'status', 'selfAssessment', 'candidateResponses',
             'candidateAcceptedAt', 'candidateDeclinedAt',
+            // Assigned-exam surface: started marker, live hourly progress mirror,
+            // answer sheet, and completion. Written only by the candidate.
+            'examStartedAt', 'examProgress', 'examResponses',
+            'examCompletedAt', 'examSummary',
             // WebRTC signalling: the candidate owns exactly these two fields —
             // the answer to the evaluator's offer and their own ICE trickle.
             // Offers and evaluator ICE stay evaluator-only, below.
@@ -328,7 +339,9 @@ service cloud.firestore {
           && ((request.resource.data.status == resource.data.status)
               || (request.resource.data.status == null)
               || (resource.data.status == 'invited'
-                  && request.resource.data.status in ['accepted', 'declined'])))
+                  && request.resource.data.status in ['accepted', 'declined'])
+              || (request.resource.data.status == 'completed'
+                  && resource.data.examStartedAt != null)))
         || (isInterviewEvaluator()
           && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['candidateUid', 'evaluatorUid'])
           && ((resource.data.status != 'invited')

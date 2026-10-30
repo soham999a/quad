@@ -45,6 +45,15 @@ export default function MyInterviews() {
   const closed = sessions.filter(s => s.status === 'declined' || s.status === 'cancelled');
 
   const statusChip = s => {
+    if (s.mode === 'exam') {
+      const map = {
+        invited: { label: `EXAM — CONFIRM TO START${s.examTier ? ` · ${s.examTier}` : ''}`, cls: 'text-gold', dot: 'var(--gold)' },
+        accepted: { label: 'EXAM — READY TO BEGIN', cls: 'text-primary', dot: 'var(--color-primary)' },
+        in_progress: { label: 'EXAM IN PROGRESS', cls: 'text-primary', dot: 'var(--color-primary)' },
+        completed: { label: 'EXAM RESULT READY', cls: 'text-primary', dot: 'var(--color-primary)' },
+      };
+      return map[s.status] || map.invited;
+    }
     const map = {
       invited: { label: 'CONFIRM TO START', cls: 'text-gold', dot: 'var(--gold)' },
       accepted: { label: 'WAITING TO BEGIN', cls: 'text-primary', dot: 'var(--color-primary)' },
@@ -62,9 +71,11 @@ export default function MyInterviews() {
     const livePending = ['invited', 'accepted', 'in_progress'].includes(s.status);
     const dest = s.status === 'completed'
       ? `/app/interview/report/${s.id}`
-      : s.mode === 'live' && livePending
-        ? `/app/interview/candidate/${s.id}`
-        : `/app/interview/candidate/${s.id}`;
+      : s.mode === 'exam'
+        ? `/app/interview/exam/${s.id}`
+        : s.mode === 'live' && livePending
+          ? `/app/interview/candidate/${s.id}`
+          : `/app/interview/candidate/${s.id}`;
     return (
       <button
         key={s.id}
@@ -78,7 +89,7 @@ export default function MyInterviews() {
             <span className={`text-[10px] font-mono uppercase tracking-widest ${chip.cls}`}>{chip.label}</span>
           </div>
           <div className="text-label-md font-label-md text-on-background truncate">
-            {s.evaluatorName || 'Evaluator'} · {s.mode === 'live' ? 'Live' : 'Post-interview'}
+            {s.evaluatorName || 'Evaluator'} · {s.mode === 'exam' ? `Assigned exam${s.examTier ? ` · ${s.examTier}` : ''}` : s.mode === 'live' ? 'Live' : 'Post-interview'}
           </div>
           <div className="text-technical-sm font-technical-sm text-surface-variant truncate mt-0.5">
             {(s.sessionNumber || 1) > 1 && <span style={{ color: 'var(--color-primary)' }}>Attempt #{s.sessionNumber} · </span>}

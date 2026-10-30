@@ -178,7 +178,9 @@ export default function InterviewReport() {
         {session.role && <div className="text-body-md font-body-md text-surface-variant mb-6">{session.role}</div>}
         <div className="flex items-center justify-center gap-2 mb-8 flex-wrap">
           <div className="text-body-sm font-body-sm text-surface-variant">
-            {mode === 'live' ? 'Live Interview' : 'Post-Interview'} · Scored by {session.evaluatorName}
+            {mode === 'exam'
+              ? `Assigned Exam · ${session.examTier || ''}`
+              : mode === 'live' ? 'Live Interview' : 'Post-Interview'} · Scored by {session.evaluatorName}
             {session.completedAt && (() => {
               const d = session.completedAt?.toDate ? session.completedAt.toDate() : new Date(session.completedAt);
               return Number.isFinite(d?.getTime()) ? ` · ${d.toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' })}` : '';
@@ -235,6 +237,48 @@ export default function InterviewReport() {
             <span className="text-body-sm font-body-sm text-surface-variant">— {shape.desc}</span>
           </div>}
       </section>
+
+      {/* Assigned-exam panel — the battery's own numbers: PII composite, per-
+          module T-scores, work style and integrity, straight from the exam
+          engine. The rest of this page reuses the interview report layout via
+          the exam's mergedScores/pillarScores/unifiedScore fields. */}
+      {session.examSummary && <section className="mb-8">
+          <div className="kicker mb-4">Exam battery detail · {session.examSummary.tier}</div>
+          <div className="gradient-rule mb-6" />
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4">
+            {[{
+              label: 'PII composite',
+              value: session.examSummary.pii?.score != null ? Math.round(session.examSummary.pii.score) : '—',
+              sub: session.examSummary.pii?.band || '',
+            }, {
+              label: 'Integrity',
+              value: session.examSummary.integrity?.band || '—',
+              sub: session.examSummary.integrity?.flaggedItems?.length ? `${session.examSummary.integrity.flaggedItems.length} flagged item(s)` : 'no flags',
+            }, {
+              label: 'Learning agility',
+              value: session.examSummary.learningAgility?.label || '—',
+              sub: session.examSummary.learningAgility?.score != null ? `index ${session.examSummary.learningAgility.score}` : '',
+            }].map(b => <div key={b.label} className="card p-5">
+                <div className="text-technical-sm font-technical-sm uppercase tracking-widest text-surface-variant mb-2">{b.label}</div>
+                <div className="text-headline-sm font-headline-sm text-on-background">{b.value}</div>
+                {b.sub && <div className="text-technical-sm font-technical-sm text-surface-variant mt-1">{b.sub}</div>}
+              </div>)}
+          </div>
+          {session.examSummary.moduleScores && Object.keys(session.examSummary.moduleScores).length > 0 && <div className="card p-6">
+              <div className="text-technical-sm font-technical-sm uppercase tracking-widest text-surface-variant mb-4">Module T-scores</div>
+              <div className="space-y-3">
+                {Object.entries(session.examSummary.moduleScores).filter(([, s]) => s && s.max > 0).sort((a, b) => (b[1].tScore || 0) - (a[1].tScore || 0)).map(([id, s]) => <div key={id}>
+                    <div className="flex items-center justify-between mb-1.5">
+                      <span className="text-label-sm font-label-sm text-on-background">{id}</span>
+                      <span className="text-technical-sm font-technical-sm text-surface-variant">{s.band} · P{String(s.percentile ?? '—').padStart(2, '0')} · T{s.tScore}</span>
+                    </div>
+                    <div className="h-2 bg-surface-container-high overflow-hidden">
+                      <div className="h-full transition-all duration-700" style={{ width: `${Math.max(s.tScore || 0, 2)}%`, background: 'var(--color-primary)' }} />
+                    </div>
+                  </div>)}
+              </div>
+            </div>}
+        </section>}
 
       {/* Dimension Scores — each carries its band (spec band vocabulary) and,
           for re-interviews, the movement against the previous attempt. */}

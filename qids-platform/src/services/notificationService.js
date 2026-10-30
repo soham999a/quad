@@ -245,14 +245,19 @@ export function notifyChapterCompleted({ guardianUid, childName, chapterTitle })
  * Interview invitation — the candidate is a real platform user (they can be
  * bell'd and they get the dashboard ready-up modal).
  */
-export function notifyInterviewInvited({ candidateUid, evaluatorName, sessionId, mode = 'live' }) {
+export function notifyInterviewInvited({ candidateUid, evaluatorName, sessionId, mode = 'live', examTier = '' }) {
   if (!candidateUid) return;
+  // Exam mode invites are entry links to the exam surface, not the live room.
+  const isExam = mode === 'exam';
+  const body = isExam
+    ? `${evaluatorName || 'Your evaluator'} has assigned you a proctored assessment exam${examTier ? ` (${examTier})` : ''}. Confirm on your dashboard to begin.`
+    : `${evaluatorName || 'Your evaluator'} wants to run a ${mode === 'live' ? 'live' : ''} interview with you. Confirm on your dashboard.`;
   createNotification({
     uid: candidateUid,
     type: 'interview',
-    title: 'Interview invitation',
-    body: `${evaluatorName || 'Your evaluator'} wants to run a ${mode === 'live' ? 'live' : ''} interview with you. Confirm on your dashboard.`,
-    link: `/app/interview/candidate/${sessionId}`,
+    title: isExam ? 'Assessment exam assigned' : 'Interview invitation',
+    body,
+    link: isExam ? `/app/interview/exam/${sessionId}` : `/app/interview/candidate/${sessionId}`,
   });
 }
 
@@ -262,8 +267,8 @@ export function notifyInterviewInvited({ candidateUid, evaluatorName, sessionId,
  * case only the evaluator's copy makes sense to skip: they scored it, they're
  * already on the report page.
  */
-export function notifyInterviewResult({ candidateUid, evaluatorUid, candidateName, evaluatorName, sessionId, mode = 'live' }) {
-  const label = mode === 'live' ? 'Live interview' : 'Post-interview';
+export function notifyInterviewResult({ candidateUid, evaluatorUid, candidateName, evaluatorName, sessionId, mode = 'live', examTier = '' }) {
+  const label = mode === 'exam' ? `assessment exam${examTier ? ` (${examTier})` : ''}` : mode === 'live' ? 'Live interview' : 'Post-interview';
   if (candidateUid && candidateUid !== evaluatorUid) {
     createNotification({
       uid: candidateUid,

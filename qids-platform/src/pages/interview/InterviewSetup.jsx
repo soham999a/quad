@@ -10,8 +10,27 @@ import { RUBRIC_DIMENSIONS, LIVE_QUESTIONS, DIMENSION_TO_PILLAR } from '../../co
 import { getUserAssessments } from '../../services/firestoreService';
 import { IQ_MAX_SCORE } from '../../data/qidsData';
 import { useToast } from '../../components/Toast';
-import { FileText, Play, ChevronRight, Brain, Sparkles, UserCheck } from 'lucide-react';
+import { FileText, Play, ChevronRight, Brain, Sparkles, UserCheck, MonitorPlay } from 'lucide-react';
 import { useEffect } from 'react';
+// Assigned-exam batteries — the evaluator picks the tier, the candidate takes
+// the QIDS battery under proctoring (same engines as the Talent plan runner).
+const EXAM_TIERS = [
+  {
+    id: 'QGRA',
+    label: 'Fresh Grade',
+    desc: 'Entry battery — cognitive readiness, critical thinking, integrity & work style',
+  },
+  {
+    id: 'QPIA',
+    label: 'Lateral',
+    desc: 'Experienced battery — adds emotional intelligence, decision quality & workplace judgement',
+  },
+  {
+    id: 'QLIA',
+    label: 'Leadership',
+    desc: 'Leadership battery — adds leadership readiness, strategic thinking & organisational impact',
+  },
+];
 export default function InterviewSetup() {
   const {
     t
@@ -30,6 +49,7 @@ export default function InterviewSetup() {
   const pinnedCandidateName = (searchParams.get('candidateName') || '').trim();
   const toast = useToast();
   const [mode, setMode] = useState('post');
+  const [examTier, setExamTier] = useState('QGRA');
   const [candidateName, setCandidateName] = useState(pinnedCandidateName);
   const [candidateEmail, setCandidateEmail] = useState('');
   const [role, setRole] = useState('');
@@ -49,7 +69,11 @@ export default function InterviewSetup() {
   }, [user, candidateUid]);
   const priorCompleted = priorSessions.filter(s => s.status === 'completed');
   const attemptNo = priorSessions.length + 1;
-  const canSubmit = candidateName.trim().length > 0;
+  // An exam needs a platform-user candidate: they take it on their own
+  // dashboard surface with the live mirror, so a name/email-only session
+  // would have nowhere to run.
+  const examNeedsCandidate = mode === 'exam' && !candidateUid;
+  const canSubmit = candidateName.trim().length > 0 && !examNeedsCandidate;
   const handleStart = async () => {
     if (!canSubmit || !user) return;
     setSaving(true);
@@ -64,11 +88,18 @@ export default function InterviewSetup() {
         notes: notes.trim()
       };
       if (candidateUid) payload.candidateUid = candidateUid;
+      if (mode === 'exam') {
+        // The evaluator decides the battery, not the candidate.
+        payload.examTier = examTier;
+        // Seeded deployment so evaluator + candidate + report all reconstruct
+        // the exact same paper from the item banks (mulberry32, replayable).
+        payload.examSeed = Math.floor(Math.random() * 1e9);
+      }
       // Attempt bookkeeping — steps up automatically on a re-interview.
       payload.sessionNumber = priorSessions.length + 1;
       const lastCompleted = priorCompleted[0];
       if (lastCompleted) payload.previousSessionId = lastCompleted.id;
-      payload.status = mode === 'live'
+      payload.status = (mode === 'live' || mode === 'exam')
         ? (candidateUid ? 'invited' : 'in_progress')
         : 'scheduled';
       if (mode === 'live') {
@@ -101,7 +132,7 @@ export default function InterviewSetup() {
       // IQ vs the 0–100 pillars) and record the development priority on the
       // session for the report. No assessment data → bank keeps its default
       // order. Fetch failure must never block session creation.
-      if (candidateUid) {
+      if (candidateUid && mode !== 'exam') {
         try {
           const assessments = await getUserAssessments(candidateUid);
           const latest = assessments.find(a => a.phase === 'post') || assessments[0];
@@ -144,12 +175,16 @@ export default function InterviewSetup() {
           evaluatorName: payload.evaluatorName,
           sessionId,
           mode,
+          examTier: mode === 'exam' ? examTier : undefined,
         });
       }
       toast('Session created', 'success');
       if (payload.liveQuestions) toast(`${payload.liveQuestions.length} questions generated for this role`, 'success');
       if (mode === 'live') {
         navigate(`/app/interview/live/${sessionId}`);
+      } else if (mode === 'exam') {
+        // The evaluator's side of the exam is the live watch room.
+        navigate(`/app/interview/exam-watch/${sessionId}`);
       } else {
         navigate(`/app/interview/scoring/${sessionId}`);
       }
@@ -174,7 +209,7 @@ export default function InterviewSetup() {
           {/* Mode Selection */}
           <div>
             <div className="text-technical-sm font-technical-sm text-surface-variant uppercase tracking-widest mb-4">{t("InterviewSetup.interview_mode")}</div>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-3 gap-3">
               {[{
               id: 'post',
               label: 'Post-Interview',
@@ -185,6 +220,11 @@ export default function InterviewSetup() {
               label: 'Live Interview',
               desc: 'Score in real-time during the interview',
               icon: Play
+            }, {
+              id: 'exam',
+              label: 'Assigned Exam',
+              desc: 'Candidate takes a full proctored battery — you watch live',
+              icon: MonitorPlay
             }].map(({
               id,
               label,
@@ -199,6 +239,28 @@ export default function InterviewSetup() {
                 </button>)}
             </div>
           </div>
+
+          {/* Exam battery selection — the evaluator decides which tier the
+              candidate takes. Only shown (and required) in exam mode. */}
+          {mode === 'exam' && <div>
+              <div className="text-technical-sm font-technical-sm text-surface-variant uppercase tracking-widest mb-4">Exam battery — you decide, they take it</div>
+              <div className="grid grid-cols-3 gap-3">
+                {EXAM_TIERS.map(tr => <button key={tr.id} onClick={() => setExamTier(tr.id)} className={`p-4 text-left border-[0.5px] transition-all cursor-pointer ${examTier === tr.id ? 'border-primary/50 bg-primary/5' : 'border-outline-variant bg-surface-container-low hover:border-primary/20'}`}>
+                    <div className="flex items-center gap-3 mb-2">
+                      <MonitorPlay size={15} className={examTier === tr.id ? 'text-primary' : 'text-surface-variant'} />
+                      <div className={`text-label-md font-label-md ${examTier === tr.id ? 'text-primary' : 'text-on-surface'}`}>{tr.id}</div>
+                    </div>
+                    <div className="text-label-sm font-label-sm text-on-background">{tr.label}</div>
+                    <div className="text-technical-sm font-technical-sm text-surface-variant mt-1">{tr.desc}</div>
+                  </button>)}
+              </div>
+              {!candidateUid && <div className="mt-3 flex items-start gap-2.5 border-[0.5px] border-gold/30 bg-gold/5 px-3.5 py-2.5" style={{ borderRadius: '6px' }}>
+                  <UserCheck size={13} className="text-gold flex-shrink-0 mt-0.5" />
+                  <span className="text-technical-sm font-technical-sm text-on-surface-variant">
+                    Assigned exams need a signed-in platform candidate — launch from <strong className="text-on-background">Evaluator Dashboard</strong> with a linked person, so they get the confirmation popup and the live mirror runs.
+                  </span>
+                </div>}
+            </div>}
 
           {/* Candidate Info */}
           {candidateUid && (

@@ -5,7 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { getEvaluatorSessions, enforceSessionRetention, deleteInterviewSession } from '../../services/interviewService';
 import { calibrationNudge } from '../../core/engine/interviewCalibration';
-import { ClipboardList, Users, Clock, CheckCircle, Plus, ChevronRight, ChevronLeft, RotateCcw, Play, FileText, Filter, Trash2, AlertTriangle } from 'lucide-react';
+import { ClipboardList, Users, Clock, CheckCircle, Plus, ChevronRight, ChevronLeft, RotateCcw, Play, FileText, Filter, Trash2, AlertTriangle, MonitorPlay } from 'lucide-react';
 import SeedInterviewData from '../../components/SeedInterviewData';
 import { reportError } from '../../lib/errorReport';
 // Human labels — "ACCEPTED" meant nothing to a client scanning for what to do
@@ -207,6 +207,11 @@ export default function InterviewerDashboard() {
         return <div key={session.id} onClick={() => {
           if (session.status === 'completed') {
             navigate(`/app/interview/report/${session.id}`);
+          } else if (session.mode === 'exam') {
+            // Assigned exam: the watch room owns every pre-completion state —
+            // parked on `invited`, running on `in_progress`. Scored exams fall
+            // through to the report above.
+            navigate(`/app/interview/exam-watch/${session.id}`);
           } else if (session.mode === 'live') {
             // Route by MODE, not status. The live room owns every live state:
             // it parks on `invited` (waiting to confirm), offers an explicit
@@ -221,7 +226,7 @@ export default function InterviewerDashboard() {
         }} className="card p-5 md:p-6 flex items-center justify-between hover:bg-surface-container-low transition-colors cursor-pointer border-b-[0.5px] border-outline-variant">
                 <div className="flex items-center gap-4 md:gap-6">
                   <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
-                    {session.mode === 'live' ? <Play size={16} className="text-primary" /> : <FileText size={16} className="text-primary" />}
+                    {session.mode === 'exam' ? <MonitorPlay size={16} className="text-primary" /> : session.mode === 'live' ? <Play size={16} className="text-primary" /> : <FileText size={16} className="text-primary" />}
                   </div>
                   <div className="min-w-0">
                     <div className="text-label-md font-label-md text-on-background truncate">
@@ -229,7 +234,7 @@ export default function InterviewerDashboard() {
                       {session.role && <span className="text-surface-variant ml-2">— {session.role}</span>}
                     </div>
                     <div className="text-technical-sm font-technical-sm text-surface-variant truncate">
-                      {session.mode === 'live' ? 'Live Interview' : 'Post-Interview'}
+                      {session.mode === 'exam' ? `Assigned Exam${session.examTier ? ` · ${session.examTier}` : ''}` : session.mode === 'live' ? 'Live Interview' : 'Post-Interview'}
                       {(session.sessionNumber || 1) > 1 && <span style={{ color: 'var(--color-primary)' }}> · RE-INTERVIEW #{session.sessionNumber}</span>}
                       {' · '}{formatDate(session.createdAt)}
                     </div>
